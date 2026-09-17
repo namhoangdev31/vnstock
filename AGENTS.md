@@ -145,6 +145,17 @@ To ensure strict alignment with the latest `vnstock` v4 architectural standards,
 > - All order placement, balance modifications, fills, cancellations, and PnL metrics MUST reside exclusively within the isolated `paper_trading` / `simulation` database schemas, models, and endpoints.
 > - **Context-Level Isolation & Clean Fields**: Clarify simulation context at the Entity/Table/Model level (e.g., `PaperPortfolio`, `PaperOrder`, `SimulationSession`, or `/api/v1/simulation/...`). Internal fields and attributes SHOULD use clean, standard domain terminology (e.g., `balance`, `price`, `volume`, `pnl`, `status`) without requiring redundant prefixes like `simulated_balance` or `virtual_price`.
 
+> [!CAUTION]
+> ### RULE 3: DATA INTEGRITY, PERSISTENCE & FORECAST AUDITABILITY
+> - **NO FABRICATED DATA**: Never invent, hallucinate, or hardcode market prices, volumes, or financial figures. Every value MUST originate from a verifiable source (a `vnstock` adapter) or a persisted DB row. If data is missing or unavailable, the system MUST surface the gap explicitly — it MUST NOT guess or interpolate silently.
+> - **NO LOOK-AHEAD BIAS**: Signals, backtests, and model training MUST only use information available *at the decision timestamp*. Future data must never leak into a historical evaluation.
+> - **NO SURVIVORSHIP BIAS**: Universe construction and backtests MUST account for delisted/suspended symbols and historical index constituents — not only today's survivors.
+> - **MANDATORY FORECAST LEDGER**: Every forecast/signal emitted MUST be persisted with its prediction (value/direction), timestamp, and contributing engine weights. Once reality resolves, the ledger MUST be back-filled with the actual outcome, error, and score. No forecast may be generated without leaving an auditable trail (see Section 9).
+
+> [!CAUTION]
+> ### RULE 4: OUTPUTS ARE INFORMATIONAL, NOT INVESTMENT ADVICE
+> - Every forecast, Long/Short trigger, price target, and portfolio suggestion MUST be presented as **informational/educational simulation output**, accompanied by a clear risk disclaimer.
+> - The system MUST NOT claim certainty, guarantee returns, or instruct the user to place a specific real order. Final decision authority remains **100% human** (reinforces RULE 1).
 
 ---
 
@@ -178,9 +189,16 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
 - **Primary Source**: `VCI` (Vietcap) / `TCBS`.
 - **Fallback Source**: `KBS` (KB Securities) / `MSN`.
 
-### 7.2 Caching & Anti-Ban Safeguards
-- **PostgreSQL-First Storage**: Historical data (Daily OHLCV, Company Profiles, Financial Reports) MUST be stored permanently in PostgreSQL and served from DB first. Only backfill from external APIs if DB has missing date ranges.
-- **In-Memory TTL Caching**:
+### 7.2 Caching, Tiered Persistence & Anti-Ban Safeguards
+- **Tiered Persistence Policy** (data MUST reach PostgreSQL, but at the right granularity — see Section 9 for the forecast journal):
+  | Tier | Data | Retention / Granularity |
+  |---|---|---|
+  | **Raw tick (`Quote.intraday`)** | Every matched tick | Persist only the **last N days** (configurable, default ~30). Beyond that, keep aggregated/downsampled form. |
+  | **1-minute bars** | Intraday OHLCV + buy/sell delta | Aggregate ticks → 1m and persist **indefinitely**; raw ticks may be pruned once aggregated. |
+  | **Daily OHLCV / Financials / Profiles** | Historical bars, financial statements, company metadata | Persist **permanently**; serve DB-first. |
+  | **Derived data (forecasts, signals, scores)** | Every prediction & realized outcome | Persist **100%, indefinitely** — this is the learning substrate (Section 9). |
+- **PostgreSQL-First Storage**: Historical data MUST be served from DB first. Only backfill from external APIs when the DB has missing date ranges (enforces RULE 3 — no fabricated/guessed data).
+- **In-Memory TTL Caching** (latency layer on top of persistence, never a substitute for it):
   - Realtime 1m/tick prices: TTL **3 to 5 seconds** in memory (never hit external APIs on every single user request).
   - Metadata / Symbol listings: TTL **24 hours**.
 - **No Aggressive Web Scraping**: Rate-limit batch data pipelines; insert minimum delays (0.2s - 0.5s) between batch symbol requests to prevent IP blacklisting.
@@ -201,3 +219,53 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
 - **Type Safety**: No raw `any` types in route loaders, components, or API data mappers.
 - **Route Definitions**: Use `createFileRoute` and maintain `@tanstack/router-plugin` generated tree in `routeTree.gen.ts`.
 - **Code Quality**: Every frontend change MUST pass `npm run build` cleanly.
+
+---
+
+## 9. FORECAST JOURNAL & CONTROLLED SELF-LEARNING LOOP
+
+The system MUST learn from its own past mistakes. This is achieved through two layers — a cheap **recording/measurement** layer (mandatory, always on) and a governed **recalibration** layer (heavier, auditable, reversible). The learning loop MUST NOT degenerate into overfitting on noise.
+
+### 9.1 Layer A — Forecast Ledger (Record & Measure)
+Every forecast/signal emitted by the Ensemble (Section 2) MUST be written to a persistent ledger at prediction time, then back-filled with the realized outcome.
+
+- **Suggested model — `ForecastJournal`** (SQLModel, lives in the analytics DB):
+
+  | Field | Meaning |
+  |---|---|
+  | `id` | Unique signal identifier |
+  | `asset` / `symbol` | Target instrument (e.g. `VN30F1M`, equity ticker) |
+  | `horizon` | ATC / T+1 / Weekly / Monthly / Quarterly |
+  | `predicted_at` | UTC timestamp of the prediction (anchors the no-look-ahead guarantee) |
+  | `predicted_value` / `predicted_direction` | The forecast itself |
+  | `engine_weights` | JSON snapshot of Engine 1/2/3 contributions |
+  | `model_version` / `parameter_snapshot` | Which calibration produced it (for traceability & rollback) |
+  | `actual_value` / `realized_at` | Back-filled once reality resolves |
+  | `error` / `score` | e.g. MAE for value targets, directional accuracy / Brier score for probabilities |
+  | `status` | `pending` → `resolved` → `scored` |
+
+- **Scoring metrics**: directional accuracy, Brier score (probabilistic calibration), MAE/RMSE (price targets). Computed automatically once `status = resolved`.
+
+### 9.2 Layer B — Controlled Recalibration Loop (Learn)
+The ledger feeds a **governed** feedback loop. It adjusts analytical calibration — it does NOT freely self-modify model code, and it NEVER touches real order execution (RULE 1) or escapes the simulation boundary (RULE 2).
+
+- **What it MAY adjust**: ensemble engine weights, signal thresholds, regime-detection parameters, probability calibration (e.g. Platt/isotonic on the ledger).
+- **Hard guardrails**:
+  - **Auditable & reversible**: every recalibration MUST write a new `model_version` + `parameter_snapshot`. The previous version MUST remain restorable (rollback).
+  - **No live mutation by default**: a recalibration MUST pass a validation/walk-forward gate on the ledger before it becomes active; it is never applied to the live signal path un-reviewed.
+  - **Human-in-the-loop for promotion**: promoting a new calibration to the active path is a human-approved action, consistent with the informational-only stance (RULE 4).
+  - **Anti-overfit**: validate out-of-sample; refuse recalibrations whose improvement is within noise, and cap how aggressively weights may shift per cycle.
+
+### 9.3 Continuous Loop
+```
+predict ──► write ForecastJournal (pending)
+   │
+   ▼ (reality resolves)
+back-fill actual ──► score ──► aggregate accuracy by engine/horizon/regime
+   │
+   ▼ (governed, gated)
+recalibrate weights/thresholds ──► new model_version (snapshot)
+   │
+   ▼ (walk-forward validation + human approval)
+promote to active signal path  ◄── rollback always available
+```
