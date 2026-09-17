@@ -1,27 +1,142 @@
 # Project Charter & AI Assistant Boundaries (Master Rules)
 
-## 1. Project Goal & Core Scope
-This project is an **Investment Decision-Support, Quantitative Analysis, and Simulation Sandbox** tailored specifically for the Vietnamese Financial Market (VN30F1M index futures and underlying equities).
+## 1. Prime Mission & Core Objective
+This platform is a **Continuous 24/7 Quantitative Research, Predictive Analytics, and Simulation Engine** dedicated exclusively to the Vietnamese Financial Market (derivatives `VN30F1M` and underlying equities).
 
-The platform comprises exactly four functional pillars:
-1. **Actionable Signals & Position Recommendations**:
-   - Quantitative indicators, algorithmic setups, and technical analysis generating structured trading signals (Entry, Target Take-Profit, Stop-Loss, Risk/Reward Ratio).
-2. **Live Market Monitoring**:
-   - Real-time quote tracking, order-book depth, candlestick visualization (1-minute, daily, and tick-by-tick) to empower informed human decisions.
-3. **Paper Trading & Sandbox Engine**:
-   - Virtual order simulation, hypothetical portfolio performance measurement, slippage/fee accounting, and historical strategy backtesting.
-4. **Portfolio & Cash Flow Modeling (T+2 Settlement)**:
-   - Cash flow and purchasing power modeling compliant with Vietnam's **T+2** settlement cycle (equities buy on day T, settle at 13:00 on day T+2).
-   - Risk management rules for margin limits, drawdown thresholds, and capital allocation.
+### 1.1 Core Mission Statement
+- The system operates continuously (**24/7 autonomous background calculation and simulation**) to analyze market dynamics, model scenarios, and generate actionable foresight.
+- **Primary Deliverables**:
+  1. **ATC Session & Next-Day Forecasting**: High-probability scenario analysis for the ongoing day's ATC call auction (14:30 - 14:45) and directional/volatility forecasts for the following trading day (T+1).
+  2. **Optimal Derivatives Positioning (Full-Session Live + 24/7 Paper Trading)**:
+     - **Full-Session Active Tracking**: For derivatives (`VN30F1M`), the tracking loop MUST run without interruption through all session phases: **Pre-open (08:45 ATO) -> Morning Continuous (09:00 - 11:30) -> Afternoon Continuous (13:00 - 14:30) -> Closing Call Auction (14:30 - 14:45 ATC)**.
+     - Continuous position optimization: Realtime Long/Short triggers, basis arbitrage monitoring, intraday trailing stops, and overnight hedge recommendations.
+  3. **Multi-Horizon Equity Portfolios (T+2 Compliant)**: Automated periodic rebalancing and selection of the highest-alpha stock baskets across **Weekly**, **Monthly**, and **Quarterly** horizons.
 
 ---
 
-## 2. ABSOLUTE PROHIBITIONS (ZERO-TOLERANCE RULES)
+## 2. TRI-ENGINE ANALYTICS ARCHITECTURE (3 ENGINES)
+
+All analytical computations, signal generations, and forecasting pipelines MUST pass through or combine the following **Three Analytical Engines**:
+
+```
++-----------------------------------------------------------------------------------+
+|                        24/7 CONTINUOUS RESEARCH PIPELINE                          |
++-------------------------+-------------------------------+-------------------------+
+|        ENGINE 1         |           ENGINE 2            |        ENGINE 3         |
+|  Technical & Price-Vol  |   Macro, Cashflow & Liquidity | Quantitative ML & Prob  |
++-------------------------+-------------------------------+-------------------------+
+| - Multi-timeframe OHLCV | - Foreign flow (Khối ngoại)   | - Volatility modeling   |
+| - Order-book & Ticks    | - Proprietary flow (Tự doanh) | - Basis spread model    |
+| - Momentum, Breakouts   | - T+2 Cashflow settlement     | - Regime classification |
+| - Support/Resistance    | - Market breadth & liquidity  | - Probabilistic outcome |
++-------------------------+-------------------------------+-------------------------+
+                          |                               |
+                          +---------------+---------------+
+                                          |
+                                          v
+                    +-------------------------------------------+
+                    |        ENSEMBLE DECISION & SCENARIO       |
+                    | - Full ATO-to-ATC Volatility Response     |
+                    | - Current ATC Auction Forecast            |
+                    | - Next-Day (T+1) Trend & Price Targets    |
+                    | - Optimal VN30F1M Signal (Long/Short/SL)  |
+                    | - Periodic Stock Portfolio (Week/Mo/Qtr)  |
+                    +-------------------------------------------+
+```
+
+### 2.1 Engine 1: Technical & Price-Action Engine
+- Multi-timeframe analysis (1-minute, 5-minute, 15-minute, Hourly, Daily).
+- Tick-by-tick order matching flow via `Quote.intraday()` (Aggressive Buy vs. Aggressive Sell imbalances).
+- Classical indicators (RSI, MACD, Bollinger Bands, ATR, VWAP) combined with Price Action (Liquidity Sweeps, Fair Value Gaps, Key Levels).
+
+### 2.2 Engine 2: Liquidity, Flow & T+2 Cash Flow Engine
+- Tracking institutional capital flows: **Foreign Investors (Khối ngoại)** and **Proprietary Desks (Tự doanh)**.
+- Market breadth metrics (Advance/Decline lines, New Highs/Lows, Sector rotation).
+- Macroeconomic context: Gold prices and exchange rates via `Retail` (USD/VND, SJC gold trends impacting liquidity).
+- Strict modeling of the **T+2** equity settlement cycle: purchasing power constraints, margin availability, pending settlement shares, and cash return projections.
+
+### 2.3 Engine 3: Quantitative, Statistical & Machine Learning Engine
+- Derivatives-to-Spot Basis spread tracking (`VN30F1M` vs. `VN30` cash index) and arbitrage boundaries.
+- Volatility forecasting (HV, GARCH, Implied Volatility proxies) and Monte Carlo scenario simulation.
+- Probabilistic classification for session transitions:
+  - **ATO Transition (08:45 - 09:00)**: Opening gap distribution and early sentiment bias.
+  - **Continuous -> ATC Transition (14:15 - 14:45)**: Closing call auction equilibrium projection.
+  - **Post-Market to Next-Day (15:00 - 08:45 T+1)**: Overnight probability landscape.
+
+---
+
+## 3. FULL-SESSION DERIVATIVES PROTOCOL (ATO TO ATC)
+
+To capture volatility and protect positions effectively, the `VN30F1M` pipeline operates across all session regimes:
+
+| Phase | Time Window | System Responsibility |
+|---|:---:|---|
+| **Pre-ATO / Morning Preparation** | 08:30 - 08:45 | Sync previous settlement prices, compute overnight basis divergence, update key pivots |
+| **ATO Call Auction** | 08:45 - 09:00 | Monitor ATO estimated match prices, detect opening gap severity (Bullish/Bearish Gap) |
+| **Morning Continuous** | 09:00 - 11:30 | High-frequency 1m & tick processing, VWAP tracking, trend breakouts, intraday paper trades |
+| **Midday Intermission** | 11:30 - 13:00 | Background re-computation, basis drift check against VN30 basket, midday scenario updates |
+| **Afternoon Continuous** | 13:00 - 14:30 | Institutional flow re-evaluation, liquidity sweep checks, preparation for T+2 settlement impacts |
+| **Pre-ATC Setup** | 14:15 - 14:30 | **ATC Prediction Engine Trigger**: Calculate expected rebalancing volume & target closing price |
+| **ATC Call Auction** | 14:30 - 14:45 | Full auction monitoring: Track simulated ATC settlement impact, basis closing spread, and finalize day's PnL |
+| **Post-Market / Evening (24/7)** | 14:45 - 08:30 | Overnight paper position tuning, scenario simulations, T+1 outlook generation, equity basket rebalancing |
+
+---
+
+## 4. MAXIMUM VNSTOCK CAPABILITY HARNESSING & DOCUMENTATION MAPPING
+
+The system MUST exploit the full capability surface of the `vnstock` v4 ecosystem mapped directly from official documentation ([https://vnstocks.com/docs/vnstock](https://vnstocks.com/docs/vnstock)):
+
+### 4.1 Core Module Hierarchy
+
+```python
+# Modern Unified Adapters (Primary Layer)
+from vnstock import Quote, Listing, Company, Finance
+
+# High-Level Semantic Explorer Layer (Alternative / Complementary)
+from vnstock.ui import Reference, Market, Fundamental, Retail, Broker
+```
+
+1. **`Quote` / `Market` (Price, Volatility & Order Matching)**:
+   - `Quote.history(interval='1m', count_back=...)`: High-frequency intraday candlestick series.
+   - `Quote.history(interval='1D', start=..., end=...)`: Historical bars for training, backtest, and daily baseline.
+   - `Quote.intraday(page_size=...)`: Live tick-by-tick order-matching flow (bid/ask aggression, buy/sell volume delta).
+   - `Market.quote()`, `Market.futures()`: Cross-asset quote exploration (derivatives, indices, equities).
+2. **`Listing` / `Reference` (Universe, Structure & Corporate Metadata)**:
+   - `Listing.all_symbols()`: Dynamic ticker universe synchronization across HOSE, HNX, UPCOM, and DERIVATIVES.
+   - `Listing.symbols_by_group(group='VN30')`: Component stock weight tracking for basis calculation.
+   - `Listing.industries_icb()`: Industry classification for multi-horizon sector rotation models.
+   - `Reference.company()`, `Reference.futures()`: Reference data and metadata queries.
+3. **`Company` (Corporate Profiles & Ownership)**:
+   - `Company.overview()`: Fundamental metadata (shares outstanding, charter capital, market cap).
+   - `Company.shareholders()`, `Company.officers()`, `Company.subsidiaries()`: Institutional ownership and governance tracking.
+4. **`Finance` / `Fundamental` (Financial Statements & Valuation)**:
+   - `Finance.income_statement(period='quarter'|'annual')`: Revenue, operating profit, net income growth.
+   - `Finance.balance_sheet()`, `Finance.cash_flow()`, `Finance.ratio()`: Balance sheet health, free cash flow, ROE, ROIC, and debt ratios for Quarterly equity selection.
+   - `Fundamental.equity()`: High-level equity valuation and fundamental metrics.
+5. **`Retail` (Macro, Commodities & Currency Flows)**:
+   - `Retail.gold()`: Domestic and global gold price movement as a macro sentiment / inflation hedge indicator.
+   - `Retail.exchange_rate()`: Foreign exchange rates (USD/VND) to gauge institutional liquidity pressure and foreign investor behavior.
+
+### 4.2 Official Documentation Reference Index
+To ensure strict alignment with the latest `vnstock` v4 architectural standards, agents should adhere to the following reading order and feature matrix:
+- **Introduction & Scope**: [Giới thiệu vnstock](https://vnstocks.com/docs/vnstock/gioi-thieu-vnstock) (Community scope & limits).
+- **Architecture**: [Kiến trúc thư viện](https://vnstocks.com/docs/vnstock-data/kien-truc-thu-vien) (Modular structure & data sources).
+- **Reference Data**: [Tra cứu Reference](https://vnstocks.com/docs/vnstock/tra-cuu-thong-tin-tham-chieu-reference) (`Reference` class).
+- **Market Data**: [Dữ liệu giao dịch Market Data](https://vnstocks.com/docs/vnstock/du-lieu-thi-truong-market-data) (`Market`, `Quote` classes).
+- **Fundamental Data**: [Phân tích cơ bản Fundamental](https://vnstocks.com/docs/vnstock/phan-tich-co-ban-fundamental) (`Fundamental`, `Finance` classes).
+- **Retail & Commodities**: [Hàng hoá & Bán lẻ Retail](https://vnstocks.com/docs/vnstock/du-lieu-thi-truong-hang-hoa-retail) (`Retail` class for Gold & FX).
+- **Visualization**: [Biểu diễn trực quan](https://vnstocks.com/docs/vnstock/bieu-dien-du-lieu) (`vnstock_ezchart`).
+- **Alerts & Messaging**: [Gửi tin nhắn Telegram, Lark, Slack](https://vnstocks.com/docs/vnstock/gui-tin-nhan-telegram-slack-larksuite) (Automated signal notification integration).
+- **Edition Parity**: [So sánh Free vs Sponsor](https://vnstocks.com/docs/vnstock/so-sanh-free-va-sponsor) (Feature differences & upgrade paths).
+
+---
+
+## 5. ABSOLUTE PROHIBITIONS (ZERO-TOLERANCE RULES)
 
 > [!CAUTION]
 > ### RULE 1: STRICTLY NO REAL-MONEY AUTO-EXECUTION BOTS
 > - **DO NOT IMPLEMENT** any automated order execution agent, background daemon, webhook, or cron script that connects to any real brokerage account to execute real trades or deploy real capital.
-> - **DO NOT INTEGRATE** with proprietary broker trading APIs (e.g., VPS, SSI FastConnect, TCBS, DNSE, VNDIRECT, HSC, Mirae Asset) for order routing or live trade placement.
+> - **DO NOT INTEGRATE** with proprietary broker trading APIs (e.g., VPS, SSI FastConnect, TCBS, DNSE, VNDIRECT, HSC, Mirae Asset) for live trade placement.
 > - **DO NOT STORE, ACCEPT, OR PROMPT FOR** live brokerage credentials: login passwords, trading PINs, 2FA/OTP tokens, or session private keys.
 > - **MANDATORY HUMAN-IN-THE-LOOP**: All actual market actions and real capital deployments remain 100% human-driven. The system's output stops at visual recommendations and paper simulation.
 
@@ -32,11 +147,11 @@ The platform comprises exactly four functional pillars:
 
 ---
 
-## 3. VIETNAM MARKET TRADING CONSTRAINTS (DOMAIN LOGIC)
+## 6. VIETNAM MARKET TRADING CONSTRAINTS (DOMAIN LOGIC)
 
 Any quantitative model, simulation, or financial calculation MUST adhere strictly to the rules of the Vietnamese market:
 
-### 3.1 Equities (HOSE, HNX, UPCOM)
+### 6.1 Equities (HOSE, HNX, UPCOM)
 - **Settlement Cycle**: **T+2** (Purchased shares become sellable in the afternoon session of T+2; sold cash settles in the afternoon of T+2).
 - **Price Limits (Daily Ceilings / Floors)**:
   - **HOSE**: ±7% from reference price.
@@ -48,25 +163,21 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
   - ATC (Closing Call Auction): 14:30 - 14:45.
   - Put-Through (Thỏa thuận): 09:00 - 15:00.
 
-### 3.2 Derivatives (VN30F1M Futures)
+### 6.2 Derivatives (VN30F1M Futures)
 - **Settlement**: T+0 (Intraday buy and sell of the same contract is allowed).
 - **Daily Price Limit**: ±7% from previous settlement price.
 - **Contract Code Format**: Use standard **`VN30F1M`** (1-month rolling contract). Do NOT use non-standard tokens like `VN301M` or `VN30F`.
-- **Trading Hours**: 08:45 - 11:30 & 13:00 - 14:45 (derivates market opens 15 minutes before the stock market).
+- **Trading Hours**: 08:45 - 11:30 & 13:00 - 14:45 (derivatives market opens 15 minutes before the stock market).
 
 ---
 
-## 4. MARKET DATA ACQUISITION & RATE-LIMITING RULES
+## 7. MARKET DATA ACQUISITION & RATE-LIMITING RULES
 
-### 4.1 Data Engine Architecture
-- Use `vnstock` v4 (Community Edition) via dedicated adapters:
-  ```python
-  from vnstock import Quote, Listing, Company, Finance
-  ```
+### 7.1 Data Source Orchestration
 - **Primary Source**: `VCI` (Vietcap) / `TCBS`.
 - **Fallback Source**: `KBS` (KB Securities) / `MSN`.
 
-### 4.2 Caching & Anti-Ban Safeguards
+### 7.2 Caching & Anti-Ban Safeguards
 - **PostgreSQL-First Storage**: Historical data (Daily OHLCV, Company Profiles, Financial Reports) MUST be stored permanently in PostgreSQL and served from DB first. Only backfill from external APIs if DB has missing date ranges.
 - **In-Memory TTL Caching**:
   - Realtime 1m/tick prices: TTL **3 to 5 seconds** in memory (never hit external APIs on every single user request).
@@ -75,9 +186,9 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
 
 ---
 
-## 5. CODEBASE ARCHITECTURAL CONVENTIONS
+## 8. CODEBASE ARCHITECTURAL CONVENTIONS
 
-### 5.1 Backend (FastAPI + SQLModel + PostgreSQL)
+### 8.1 Backend (FastAPI + SQLModel + PostgreSQL)
 - **Authentication**: All `/api/v1/stock/*` and `/api/v1/simulation/*` endpoints MUST be protected with JWT via `CurrentUser` dependency.
 - **SQLModel Patterns**:
   - Always use `session.exec(select(Model))` and wrap order columns in `col()` (e.g., `.order_by(col(StockOHLCVDaily.trading_date))`).
@@ -85,7 +196,7 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
 - **Code Quality**:
   - Every backend modification MUST pass `uv run ruff check`, `uv run ruff format --check`, and `uv run ty check` with **0 errors**.
 
-### 5.2 Frontend (React + Vite + TanStack Router + TailwindCSS)
+### 8.2 Frontend (React + Vite + TanStack Router + TailwindCSS)
 - **Type Safety**: No raw `any` types in route loaders, components, or API data mappers.
 - **Route Definitions**: Use `createFileRoute` and maintain `@tanstack/router-plugin` generated tree in `routeTree.gen.ts`.
 - **Code Quality**: Every frontend change MUST pass `npm run build` cleanly.
