@@ -18,6 +18,8 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
+import { Route as LayoutStockRouteImport } from './routes/_layout/stock'
+import { Route as LayoutStockSymbolRouteImport } from './routes/_layout/stock/$symbol'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -63,6 +65,16 @@ const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutStockRoute = LayoutStockRouteImport.update({
+  id: '/stock',
+  path: '/stock',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutStockSymbolRoute = LayoutStockSymbolRouteImport.update({
+  id: '/$symbol',
+  path: '/$symbol',
+  getParentRoute: () => LayoutStockRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
@@ -73,6 +85,8 @@ export interface FileRoutesByFullPath {
   '/admin': typeof LayoutAdminRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
+  '/stock': typeof LayoutStockRouteWithChildren
+  '/stock/$symbol': typeof LayoutStockSymbolRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -82,7 +96,9 @@ export interface FileRoutesByTo {
   '/admin': typeof LayoutAdminRoute
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
+  '/stock': typeof LayoutStockRouteWithChildren
   '/': typeof LayoutIndexRoute
+  '/stock/$symbol': typeof LayoutStockSymbolRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,7 +110,9 @@ export interface FileRoutesById {
   '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
+  '/_layout/stock': typeof LayoutStockRouteWithChildren
   '/_layout/': typeof LayoutIndexRoute
+  '/_layout/stock/$symbol': typeof LayoutStockSymbolRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +125,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/items'
     | '/settings'
+    | '/stock'
+    | '/stock/$symbol'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -116,7 +136,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/items'
     | '/settings'
+    | '/stock'
     | '/'
+    | '/stock/$symbol'
   id:
     | '__root__'
     | '/_layout'
@@ -127,7 +149,9 @@ export interface FileRouteTypes {
     | '/_layout/admin'
     | '/_layout/items'
     | '/_layout/settings'
+    | '/_layout/stock'
     | '/_layout/'
+    | '/_layout/stock/$symbol'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -203,13 +227,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/stock': {
+      id: '/_layout/stock'
+      path: '/stock'
+      fullPath: '/stock'
+      preLoaderRoute: typeof LayoutStockRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/stock/$symbol': {
+      id: '/_layout/stock/$symbol'
+      path: '/$symbol'
+      fullPath: '/stock/$symbol'
+      preLoaderRoute: typeof LayoutStockSymbolRouteImport
+      parentRoute: typeof LayoutStockRoute
+    }
   }
 }
+
+interface LayoutStockRouteChildren {
+  LayoutStockSymbolRoute: typeof LayoutStockSymbolRoute
+}
+
+const LayoutStockRouteChildren: LayoutStockRouteChildren = {
+  LayoutStockSymbolRoute: LayoutStockSymbolRoute,
+}
+
+const LayoutStockRouteWithChildren = LayoutStockRoute._addFileChildren(
+  LayoutStockRouteChildren,
+)
 
 interface LayoutRouteChildren {
   LayoutAdminRoute: typeof LayoutAdminRoute
   LayoutItemsRoute: typeof LayoutItemsRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
+  LayoutStockRoute: typeof LayoutStockRouteWithChildren
   LayoutIndexRoute: typeof LayoutIndexRoute
 }
 
@@ -217,6 +268,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutAdminRoute: LayoutAdminRoute,
   LayoutItemsRoute: LayoutItemsRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
+  LayoutStockRoute: LayoutStockRouteWithChildren,
   LayoutIndexRoute: LayoutIndexRoute,
 }
 

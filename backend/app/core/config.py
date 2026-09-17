@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     SENTRY_DSN: HttpUrl | None = None
     DATABASE_URL: PostgresDsn
 
+    # vnstock config
+    VNSTOCK_SOURCE: str = "TCBS"
+    VNSTOCK_FALLBACK_SOURCE: str = "VCI"
+    VNSTOCK_REALTIME_CACHE_TTL: int = 5  # seconds
+    VNSTOCK_METADATA_CACHE_TTL: int = 86400  # 24 hours
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def _use_psycopg_driver(cls, value: str | PostgresDsn) -> str:
