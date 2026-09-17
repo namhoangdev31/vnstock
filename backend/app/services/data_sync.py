@@ -12,7 +12,7 @@ from datetime import UTC, date, datetime
 import pandas as pd
 from sqlmodel import Session, col, select
 
-from app.models_stock import (
+from app.models.models_stock import (
     CompanyProfile,
     DataSyncLog,
     FinancialReport,

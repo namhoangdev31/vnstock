@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models_stock import (
+from app.models.models_stock import (
     CompanyOverviewPublic,
     CompanyProfile,
     DataSyncLog,

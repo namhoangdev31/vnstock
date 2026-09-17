@@ -33,8 +33,12 @@ class Settings(BaseSettings):
     # vnstock config
     VNSTOCK_SOURCE: str = "TCBS"
     VNSTOCK_FALLBACK_SOURCE: str = "VCI"
+    VNSTOCK_TERTIARY_SOURCE: str = "KBS"
     VNSTOCK_REALTIME_CACHE_TTL: int = 5  # seconds
     VNSTOCK_METADATA_CACHE_TTL: int = 86400  # 24 hours
+    # Minimum spacing between external vnstock requests (anti-ban, AGENTS §7.2).
+    # Spec mandates 0.2–0.5s; 0.3s is a safe default.
+    VNSTOCK_REQUEST_MIN_DELAY: float = 0.3
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

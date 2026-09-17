@@ -269,3 +269,7 @@ recalibrate weights/thresholds ──► new model_version (snapshot)
    ▼ (walk-forward validation + human approval)
 promote to active signal path  ◄── rollback always available
 ```
+
+<!-- vnai-bootstrap | auto-generated -->
+# Vnstock Vibe Onboarding
+Please visit https://vnstocks.com/onboard/agent-guide to learn how to setup AI Agents for vnstock.
