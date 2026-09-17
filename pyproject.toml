@@ -12,6 +12,10 @@ github-actions = [
 [tool.uv.workspace]
 members = ["backend"]
 
+[tool.ty.environment]
+python = ".venv"
+
+
 [tool.typos.files]
 extend-exclude = [
     "img/",

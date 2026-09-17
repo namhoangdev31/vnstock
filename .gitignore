@@ -1,5 +1,7 @@
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
+backend/.venv
 node_modules/
 backend/app/frontend/
 /test-results/
