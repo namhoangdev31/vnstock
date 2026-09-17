@@ -142,8 +142,9 @@ To ensure strict alignment with the latest `vnstock` v4 architectural standards,
 
 > [!CAUTION]
 > ### RULE 2: STRICT ISOLATION OF SIMULATION FROM REAL CAPITAL
-> - All order placement, balance modifications, fills, cancellations, and PnL metrics MUST reside exclusively within the isolated `paper_trading` / `simulation` database schemas and models.
-> - Any state that simulates money MUST be explicitly labeled with simulated prefixes (e.g., `simulated_balance`, `paper_portfolio`, `virtual_order`).
+> - All order placement, balance modifications, fills, cancellations, and PnL metrics MUST reside exclusively within the isolated `paper_trading` / `simulation` database schemas, models, and endpoints.
+> - **Context-Level Isolation & Clean Fields**: Clarify simulation context at the Entity/Table/Model level (e.g., `PaperPortfolio`, `PaperOrder`, `SimulationSession`, or `/api/v1/simulation/...`). Internal fields and attributes SHOULD use clean, standard domain terminology (e.g., `balance`, `price`, `volume`, `pnl`, `status`) without requiring redundant prefixes like `simulated_balance` or `virtual_price`.
+
 
 ---
 
