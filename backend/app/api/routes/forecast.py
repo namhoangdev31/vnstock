@@ -1,12 +1,12 @@
 """Forecast journal API — the RULE 3 audit ledger (AGENTS §9.1).
 
 Endpoints:
-- POST /forecast            record a new forecast (pending)
-- GET  /forecast            list forecasts (filterable)
+- POST /forecast record a new forecast (pending)
+- GET /forecast list forecasts (filterable)
 - GET  /forecast/{id}       fetch one
-- POST /forecast/{id}/resolve  back-fill the realized outcome (no look-ahead)
-- POST /forecast/{id}/score    compute MAE / directional accuracy
-- GET  /forecast/aggregate  accuracy rollup (read-only Layer B input)
+- POST /forecast/{id}/resolve back-fill the realized outcome (no look-ahead)
+- POST /forecast/{id}/score compute MAE / directional accuracy
+- GET /forecast/aggregate accuracy rollup (read-only Layer B input)
 
 All endpoints are JWT-protected. Recording/resolving/scoring are SuperUser-only
 since they mutate the learning substrate.
@@ -120,7 +120,7 @@ def resolve_forecast(
     forecast_id: UUID,
     payload: ForecastResolve,
 ) -> Any:
-    """Back-fill the realized outcome (status → resolved).
+    """Backfill the realized outcome (status → resolved).
 
     The original ``predicted_at`` is never modified — this is the no-look-ahead
     anchor (TEST-JRN-02).
