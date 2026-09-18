@@ -21,6 +21,7 @@ import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutStockRouteImport } from './routes/_layout/stock'
 import { Route as LayoutStockSymbolRouteImport } from './routes/_layout/stock/$symbol'
 import { Route as LayoutTrdPhase1RouteImport } from './routes/_layout/trd/phase-1'
+import { Route as LayoutTrdPhase2RouteImport } from './routes/_layout/trd/phase-2'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -81,6 +82,11 @@ const LayoutTrdPhase1Route = LayoutTrdPhase1RouteImport.update({
   path: '/trd/phase-1',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutTrdPhase2Route = LayoutTrdPhase2RouteImport.update({
+  id: '/trd/phase-2',
+  path: '/trd/phase-2',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/stock': typeof LayoutStockRouteWithChildren
   '/stock/$symbol': typeof LayoutStockSymbolRoute
   '/trd/phase-1': typeof LayoutTrdPhase1Route
+  '/trd/phase-2': typeof LayoutTrdPhase2Route
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/': typeof LayoutIndexRoute
   '/stock/$symbol': typeof LayoutStockSymbolRoute
   '/trd/phase-1': typeof LayoutTrdPhase1Route
+  '/trd/phase-2': typeof LayoutTrdPhase2Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_layout/': typeof LayoutIndexRoute
   '/_layout/stock/$symbol': typeof LayoutStockSymbolRoute
   '/_layout/trd/phase-1': typeof LayoutTrdPhase1Route
+  '/_layout/trd/phase-2': typeof LayoutTrdPhase2Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/stock'
     | '/stock/$symbol'
     | '/trd/phase-1'
+    | '/trd/phase-2'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/'
     | '/stock/$symbol'
     | '/trd/phase-1'
+    | '/trd/phase-2'
   id:
     | '__root__'
     | '/_layout'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/_layout/'
     | '/_layout/stock/$symbol'
     | '/_layout/trd/phase-1'
+    | '/_layout/trd/phase-2'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -260,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutTrdPhase1RouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/trd/phase-2': {
+      id: '/_layout/trd/phase-2'
+      path: '/trd/phase-2'
+      fullPath: '/trd/phase-2'
+      preLoaderRoute: typeof LayoutTrdPhase2RouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
@@ -282,6 +301,7 @@ interface LayoutRouteChildren {
   LayoutStockRoute: typeof LayoutStockRouteWithChildren
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutTrdPhase1Route: typeof LayoutTrdPhase1Route
+  LayoutTrdPhase2Route: typeof LayoutTrdPhase2Route
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -291,6 +311,7 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutStockRoute: LayoutStockRouteWithChildren,
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutTrdPhase1Route: LayoutTrdPhase1Route,
+  LayoutTrdPhase2Route: LayoutTrdPhase2Route,
 }
 
 const LayoutRouteWithChildren =
