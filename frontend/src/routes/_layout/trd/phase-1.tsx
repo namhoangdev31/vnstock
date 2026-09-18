@@ -1023,18 +1023,36 @@ export function Phase1TRDPage() {
                     >
                       FastAPI Configure Swagger UI
                     </a>{" "}
-                    (kích hoạt <code>persistAuthorization</code>, <code>filter</code>, <code>syntaxHighlight.theme: obsidian</code>, <code>tryItOutEnabled</code> và <code>defaultModelsExpandDepth: 2</code>).
+                    (kích hoạt <code>persistAuthorization</code>,{" "}
+                    <code>filter</code>,{" "}
+                    <code>syntaxHighlight.theme: obsidian</code>,{" "}
+                    <code>tryItOutEnabled</code> và{" "}
+                    <code>defaultModelsExpandDepth: 2</code>).
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="default" size="sm" asChild className="gap-1.5 text-xs">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    asChild
+                    className="gap-1.5 text-xs"
+                  >
                     <a href="/docs" target="_blank" rel="noreferrer">
                       <ExternalLink className="h-3.5 w-3.5" />
                       Mở /docs tab riêng
                     </a>
                   </Button>
-                  <Button variant="outline" size="sm" asChild className="gap-1.5 text-xs">
-                    <a href="/api/v1/openapi.json" target="_blank" rel="noreferrer">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="gap-1.5 text-xs"
+                  >
+                    <a
+                      href="/api/v1/openapi.json"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       <FileCode className="h-3.5 w-3.5" />
                       OpenAPI JSON
                     </a>
@@ -1043,7 +1061,7 @@ export function Phase1TRDPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="w-full h-[800px] border rounded-lg overflow-hidden bg-background">
+              <div className="w-full h-200 border rounded-lg overflow-hidden bg-background">
                 <iframe
                   src="/docs"
                   title="FastAPI Swagger UI Documentation"
