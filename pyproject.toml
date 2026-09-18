@@ -9,6 +9,7 @@ members = ["backend"]
 
 [tool.ty.environment]
 python = ".venv"
+python-version = "3.12"
 
 
 [tool.typos.files]

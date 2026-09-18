@@ -82,6 +82,7 @@ error-on-warning = true
 
 [tool.ty.environment]
 python = "../.venv"
+python-version = "3.12"
 
 [tool.fastapi]
 entrypoint = "app.main:app"

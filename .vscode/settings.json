@@ -1,7 +1,6 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-  "python.analysis.extraPaths": [
-    "${workspaceFolder}/backend"
-  ],
-  "biome.lsp.bin": "./node_modules/.bin/biome"
+	"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+	"python.analysis.extraPaths": ["${workspaceFolder}/backend"],
+	"biome.lsp.bin": "./node_modules/.bin/biome",
+	"ty.interpreter": ["${workspaceFolder}/.venv/bin/python"]
 }
