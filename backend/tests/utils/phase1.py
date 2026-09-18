@@ -20,7 +20,7 @@ from sqlmodel import Session, SQLModel
 import app.models  # noqa: F401 — register all tables with SQLModel.metadata
 from app.api.deps import get_current_user, get_db
 from app.core.security import create_access_token
-from app.main import app
+from app.main import app as fastapi_app
 from app.models import User
 
 
@@ -69,11 +69,11 @@ def api_client(session: Session, user: User) -> Generator[TestClient]:
     def _override_user() -> User:
         return user
 
-    app.dependency_overrides[get_db] = _override_db
-    app.dependency_overrides[get_current_user] = _override_user
-    with TestClient(app) as client:
+    fastapi_app.dependency_overrides[get_db] = _override_db
+    fastapi_app.dependency_overrides[get_current_user] = _override_user
+    with TestClient(fastapi_app) as client:
         yield client
-    app.dependency_overrides.clear()
+    fastapi_app.dependency_overrides.clear()
 
 
 def auth_headers(user: User) -> dict[str, str]:

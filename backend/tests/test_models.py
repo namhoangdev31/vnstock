@@ -178,6 +178,7 @@ def test_macro_and_market_breadth_models() -> None:
     tick = TickFlowAggregated(
         symbol="VN30F1M",
         timestamp=get_datetime_utc(),
+        source="vci",
         aggressive_buy_volume=150,
         aggressive_sell_volume=90,
         volume_delta=60,

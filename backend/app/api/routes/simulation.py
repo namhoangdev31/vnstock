@@ -201,9 +201,7 @@ def close_position(
     position = session.get(SimulationPosition, position_id)
     if position is None:
         raise HTTPException(status_code=404, detail="Position not found")
-    portfolio = _owned_portfolio(
-        engine, position.portfolio_id, current_user.id
-    )
+    portfolio = _owned_portfolio(engine, position.portfolio_id, current_user.id)
     try:
         trade = engine.close_position(
             portfolio=portfolio,
