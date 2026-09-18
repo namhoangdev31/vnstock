@@ -207,9 +207,7 @@ class SimulationEngine:
         )
 
         if order_type == OrderType.MARKET:
-            reject_reason = self._precheck(
-                portfolio, order, deriv=deriv, intent=intent
-            )
+            reject_reason = self._precheck(portfolio, order, deriv=deriv, intent=intent)
             if reject_reason is not None:
                 order.status = OrderStatus.REJECTED
                 order.reject_reason = reject_reason[:255]
@@ -246,13 +244,17 @@ class SimulationEngine:
     # Intent classification
     # ------------------------------------------------------------------
 
-    def _classify(self, portfolio_id: UUID, symbol: str, side: str) -> tuple[str, SimulationPosition | None]:
+    def _classify(
+        self, portfolio_id: UUID, symbol: str, side: str
+    ) -> tuple[str, SimulationPosition | None]:
         """Decide whether ``side`` reduces an opposite position or opens one.
 
         Returns ``("reduce", opposite_position)`` or ``("open", same_direction_position_or_None)``.
         """
         target = PositionSide.LONG if side in _BULLISH_SIDES else PositionSide.SHORT
-        opposite = PositionSide.SHORT if target == PositionSide.LONG else PositionSide.LONG
+        opposite = (
+            PositionSide.SHORT if target == PositionSide.LONG else PositionSide.LONG
+        )
 
         opp_pos = self._open_position(portfolio_id, symbol, opposite)
         if opp_pos is not None:
@@ -377,9 +379,7 @@ class SimulationEngine:
         target_side = (
             PositionSide.LONG if order.side in _BULLISH_SIDES else PositionSide.SHORT
         )
-        margin_add = (
-            notional * self.config.derivative_margin_rate if deriv else 0.0
-        )
+        margin_add = notional * self.config.derivative_margin_rate if deriv else 0.0
 
         if deriv:
             portfolio.cash_balance = round_money(
@@ -394,7 +394,9 @@ class SimulationEngine:
 
         if existing is None:
             settlement = (
-                None if deriv else _business_days_after(date.today(), EQUITY_SETTLEMENT_DAYS)
+                None
+                if deriv
+                else _business_days_after(date.today(), EQUITY_SETTLEMENT_DAYS)
             )
             position = SimulationPosition(
                 portfolio_id=portfolio.id,
@@ -503,9 +505,7 @@ class SimulationEngine:
             order_id=None,
             symbol=position.symbol,
             side=(
-                OrderSide.SELL
-                if position.side == PositionSide.LONG
-                else OrderSide.BUY
+                OrderSide.SELL if position.side == PositionSide.LONG else OrderSide.BUY
             ),
             quantity=quantity,
             price=price,
@@ -586,7 +586,5 @@ class SimulationEngine:
         ).first()
 
     def _fee(self, notional: float, deriv: bool) -> float:
-        rate = (
-            self.config.derivative_fee_rate if deriv else self.config.equity_fee_rate
-        )
+        rate = self.config.derivative_fee_rate if deriv else self.config.equity_fee_rate
         return round_money(notional * rate)

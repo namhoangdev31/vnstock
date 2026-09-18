@@ -13,15 +13,19 @@ version, then back-filled with the realized outcome and score.
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import JSON, DateTime, UniqueConstraint
-from sqlmodel import Field
+from sqlalchemy import DateTime, UniqueConstraint
+from sqlmodel import Field, SQLModel
 
 from app.models.enums import (
     ForecastDirection,
     ForecastHorizon,
     ForecastStatus,
 )
-from app.models.models_base import AwareSQLModel, get_datetime_utc
+from app.models.models_base import (
+    AwareSQLModel,
+    JSONBVariant,
+    get_datetime_utc,
+)
 
 # ---------------------------------------------------------------------------
 # forecast_journal — Audit & self-learning substrate (RULE 3, AGENTS §9.1)
@@ -42,9 +46,9 @@ class ForecastJournal(AwareSQLModel, table=True):
     )
     predicted_value: float | None = None
     predicted_direction: str = Field(default=ForecastDirection.NEUTRAL, max_length=10)
-    engine_weights: dict = Field(default_factory=dict, sa_type=JSON)
+    engine_weights: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
     model_version: str = Field(max_length=40)
-    parameter_snapshot: dict = Field(default_factory=dict, sa_type=JSON)
+    parameter_snapshot: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
 
     # Back-filled once reality resolves.
     actual_value: float | None = None
@@ -158,3 +162,92 @@ class MarketBreadth(AwareSQLModel, table=True):
     floor_count: int = 0
     total_volume: int = 0
     total_value: float = 0.0
+
+
+# ---------------------------------------------------------------------------
+# Response / Request models (non-table, for API use)
+# ---------------------------------------------------------------------------
+
+
+class MacroIndicatorPublic(SQLModel):
+    indicator_code: str
+    recorded_date: date
+    value: float
+    change_pct: float | None = None
+    source: str
+
+
+class MacroLatestResponse(SQLModel):
+    """Latest macro snapshot keyed by indicator code."""
+
+    as_of: date
+    data: list[MacroIndicatorPublic]
+
+
+class SymbolGroupResponse(SQLModel):
+    group: str
+    count: int
+    symbols: list[str]
+
+
+class ForecastJournalPublic(SQLModel):
+    id: uuid.UUID
+    symbol: str
+    horizon: str
+    predicted_at: datetime
+    predicted_value: float | None = None
+    predicted_direction: str
+    engine_weights: dict
+    model_version: str
+    parameter_snapshot: dict
+    actual_value: float | None = None
+    actual_direction: str | None = None
+    realized_at: datetime | None = None
+    error: float | None = None
+    score: float | None = None
+    status: str
+
+
+class ForecastCreate(SQLModel):
+    """Payload to record a new forecast (engine-emitted)."""
+
+    symbol: str = Field(max_length=20)
+    horizon: str = Field(default=ForecastHorizon.T_PLUS_1, max_length=20)
+    predicted_at: datetime
+    predicted_value: float | None = None
+    predicted_direction: str = Field(default=ForecastDirection.NEUTRAL, max_length=10)
+    engine_weights: dict = Field(default_factory=dict)
+    model_version: str = Field(max_length=40)
+    parameter_snapshot: dict = Field(default_factory=dict)
+
+
+class ForecastResolve(SQLModel):
+    actual_value: float
+    actual_direction: str = Field(max_length=10)
+    realized_at: datetime | None = None
+
+
+class ForecastScoredPublic(SQLModel):
+    id: uuid.UUID
+    error: float | None = None
+    score: float | None = None
+    status: str
+
+
+class ForecastAggregateResponse(SQLModel):
+    count: int
+    mae: float | None = None
+    directional_accuracy: float | None = None
+    scored_with_error: int
+
+
+class InstitutionalFlowPublic(SQLModel):
+    trading_date: date
+    symbol: str
+    foreign_buy_value: float | None = None
+    foreign_sell_value: float | None = None
+    foreign_net_value: float | None = None
+    prop_buy_value: float | None = None
+    prop_sell_value: float | None = None
+    prop_net_value: float | None = None
+    source: str

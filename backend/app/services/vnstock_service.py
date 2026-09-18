@@ -12,7 +12,7 @@ import logging
 from datetime import date
 
 import pandas as pd
-from vnstock import Company, Finance, Listing, Quote, Retail , Trading
+from vnstock import Company, Finance, Listing, Quote, Retail
 
 from app.core.config import settings
 from app.services.rate_limit import RateLimiter

@@ -19,6 +19,12 @@ from app.models.models_simulation import (
     SimulationPosition,
     SimulationTrade,
 )
+from app.models.models_stock import (
+    CompanyOverviewPublic,
+    CompanyProfile,
+    DataSyncLog,
+    FinancialReport,
+)
 from app.models.models_user import (
     Item,
     ItemBase,
@@ -39,13 +45,6 @@ from app.models.models_user import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
-)
-
-from app.models.models_stock import (
-    CompanyProfile,
-    DataSyncLog,
-    FinancialReport,
-    CompanyOverviewPublic,
 )
 
 __all__ = [

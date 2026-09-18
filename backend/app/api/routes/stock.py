@@ -9,9 +9,17 @@ from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import col, func, select
+from sqlmodel import and_, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.models.models_quant import (
+    InstitutionalFlow,
+    InstitutionalFlowPublic,
+    MacroIndicator,
+    MacroIndicatorPublic,
+    MacroLatestResponse,
+    SymbolGroupResponse,
+)
 from app.models.models_stock import (
     CompanyOverviewPublic,
     CompanyProfile,
@@ -27,7 +35,7 @@ from app.models.models_stock import (
     StockSymbolsPublic,
     SyncStatusPublic,
 )
-from app.services.cache import realtime_cache
+from app.services.cache import metadata_cache, realtime_cache
 from app.services.data_sync import DataSyncManager
 from app.services.vnstock_service import VnstockServiceError, vnstock_service
 
@@ -350,3 +358,110 @@ def get_sync_status(
     ).all()
 
     return [SyncStatusPublic.model_validate(log) for log in logs]
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/symbols/group/{group} — Index-basket constituents (e.g. VN30)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/symbols/group/{group}", response_model=SymbolGroupResponse)
+def get_symbol_group(
+    current_user: CurrentUser,  # noqa: ARG001
+    group: str,
+) -> Any:
+    """Get the constituent symbols of an index group (VN30, VNDIAMOND, ...).
+
+    Served from vnstock with a 24h metadata cache (AGENTS §7.2).
+    """
+    cache_key = f"symbols_group:{group.upper()}"
+    cached = metadata_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        symbols = vnstock_service.fetch_group_symbols(group=group)
+    except VnstockServiceError:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Symbol group {group} unavailable from all data sources",
+        )
+
+    result = SymbolGroupResponse(
+        group=group.upper(), count=len(symbols), symbols=symbols
+    )
+    metadata_cache.set(cache_key, result)
+    return result
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/macro/latest — Latest gold & FX snapshot
+# ---------------------------------------------------------------------------
+
+
+@router.get("/macro/latest", response_model=MacroLatestResponse)
+def get_macro_latest(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+) -> Any:
+    """Latest macro indicator per code (USD/VND, SJC gold buy/sell).
+
+    Returns the most recent persisted row for each indicator code. If no macro
+    data exists yet, the response is empty — the gap is surfaced, never guessed
+    (RULE 3).
+    """
+    subq = (
+        select(
+            MacroIndicator.indicator_code,
+            func.max(MacroIndicator.recorded_date).label("max_date"),
+        )
+        .group_by(col(MacroIndicator.indicator_code))
+        .subquery()
+    )
+    rows = session.exec(
+        select(MacroIndicator)
+        .join(
+            subq,
+            and_(
+                col(MacroIndicator.indicator_code) == subq.c.indicator_code,
+                col(MacroIndicator.recorded_date) == subq.c.max_date,
+            ),
+        )
+        .order_by(col(MacroIndicator.indicator_code))
+    ).all()
+
+    data = [MacroIndicatorPublic.model_validate(r) for r in rows]
+    as_of = max((r.recorded_date for r in rows), default=None)
+    if as_of is None:
+        raise HTTPException(status_code=404, detail="No macro data available yet")
+    return MacroLatestResponse(as_of=as_of, data=data)
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/institutional-flow — Foreign & proprietary flow (DB-backed)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/institutional-flow", response_model=list[InstitutionalFlowPublic])
+def get_institutional_flow(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    trading_date: date | None = None,
+    symbol: str | None = None,
+    limit: int = Query(default=30, ge=1, le=200),
+) -> Any:
+    """Persisted institutional flow rows (foreign + proprietary desk).
+
+    Schema-only in Phase 1: vnstock v4 exposes no proprietary-desk values, so
+    this returns whatever a verified source has stored — possibly nothing. It
+    never fabricates flow (RULE 3).
+    """
+    query = select(InstitutionalFlow)
+    if trading_date is not None:
+        query = query.where(InstitutionalFlow.trading_date == trading_date)
+    if symbol is not None:
+        query = query.where(InstitutionalFlow.symbol == symbol)
+    rows = session.exec(
+        query.order_by(col(InstitutionalFlow.trading_date).desc()).limit(limit)
+    ).all()
+    return [InstitutionalFlowPublic.model_validate(r) for r in rows]

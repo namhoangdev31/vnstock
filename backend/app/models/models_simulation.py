@@ -14,7 +14,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import DateTime, UniqueConstraint
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.enums import (
     DEFAULT_INITIAL_BALANCE,
@@ -204,3 +204,91 @@ def derivative_pnl(
 def round_money(value: float) -> float:
     """Round a monetary amount to the nearest VND (no fractional dong)."""
     return float(Decimal(str(value)).quantize(Decimal("1")))
+
+
+# ---------------------------------------------------------------------------
+# Response / Request models (non-table, for API use)
+# ---------------------------------------------------------------------------
+
+
+class SimulationPortfolioCreate(SQLModel):
+    name: str = Field(max_length=255)
+    initial_balance: float = DEFAULT_INITIAL_BALANCE
+
+
+class SimulationPortfolioPublic(SQLModel):
+    id: uuid.UUID
+    name: str
+    initial_balance: float
+    cash_balance: float
+    equity: float
+    margin_used: float
+    created_at: datetime
+    updated_at: datetime
+
+
+class SimulationPortfoliosPublic(SQLModel):
+    data: list[SimulationPortfolioPublic]
+    count: int
+
+
+class SimulationOrderCreate(SQLModel):
+    symbol: str = Field(max_length=20)
+    side: str = Field(max_length=10)
+    quantity: int = Field(gt=0)
+    price: float = Field(gt=0)
+    order_type: str = Field(default=OrderType.MARKET, max_length=10)
+    stop_price: float | None = None
+
+
+class SimulationOrderPublic(SQLModel):
+    id: uuid.UUID
+    symbol: str
+    side: str
+    order_type: str
+    price: float
+    stop_price: float | None = None
+    quantity: int
+    filled_quantity: int
+    filled_price: float | None = None
+    fee: float
+    tax: float
+    status: str
+    reject_reason: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class SimulationPositionPublic(SQLModel):
+    id: uuid.UUID
+    symbol: str
+    side: str
+    quantity: int
+    entry_price: float
+    current_price: float
+    unrealized_pnl: float
+    realized_pnl: float
+    margin_required: float
+    settlement_date: date | None = None
+    status: str
+
+
+class SimulationTradePublic(SQLModel):
+    id: uuid.UUID
+    symbol: str
+    side: str
+    quantity: int
+    price: float
+    fee: float
+    tax: float
+    realized_pnl: float
+    executed_at: datetime
+
+
+class SimulationPositionClose(SQLModel):
+    quantity: int = Field(gt=0)
+    price: float = Field(gt=0)
+
+
+class SimulationMarkToMarket(SQLModel):
+    prices: dict[str, float] = Field(default_factory=dict)

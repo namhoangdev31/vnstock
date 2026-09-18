@@ -220,9 +220,7 @@ class QuantSyncManager:
     # Tick order-flow → 1-minute aggregated delta
     # ------------------------------------------------------------------
 
-    def sync_tick_orderflow(
-        self, symbol: str, *, page_size: int = 100
-    ) -> DataSyncLog:
+    def sync_tick_orderflow(self, symbol: str, *, page_size: int = 100) -> DataSyncLog:
         """Fetch matched ticks and persist aggregated 1-minute delta bars."""
         log = self._create_log("tick_orderflow", symbol=symbol)
         try:

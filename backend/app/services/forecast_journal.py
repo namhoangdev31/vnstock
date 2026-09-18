@@ -164,15 +164,11 @@ class ForecastJournalService:
         self.session.add(entry)
         self.session.commit()
         self.session.refresh(entry)
-        logger.info(
-            "Scored forecast %s -> error=%s score=%s", entry.id, error, score
-        )
+        logger.info("Scored forecast %s -> error=%s score=%s", entry.id, error, score)
         return entry
 
     @staticmethod
-    def _directional_score(
-        predicted: str | None, actual: str | None
-    ) -> float:
+    def _directional_score(predicted: str | None, actual: str | None) -> float:
         """Directional accuracy reward in [0, 1]."""
         if predicted is None or actual is None:
             return 0.5

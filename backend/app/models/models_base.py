@@ -11,10 +11,10 @@ Provides:
 """
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import field_validator
-from sqlalchemy import JSON
+from sqlalchemy import JSON, Table
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import SQLModel
 from sqlmodel.main import SQLModelConfig
@@ -36,6 +36,7 @@ class AwareSQLModel(SQLModel):
     """
 
     model_config = SQLModelConfig(validate_assignment=True)
+    __table__: ClassVar[Table]
 
     @field_validator("*", mode="before")
     @classmethod

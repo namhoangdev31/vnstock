@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Building2,
@@ -7,17 +7,17 @@ import {
   Globe,
   RefreshCw,
   TrendingUp,
-} from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -25,47 +25,47 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { type FinancialReportItem, StockService } from "@/client"
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { type FinancialReportItem, StockService } from "@/client";
 
 export const Route = createFileRoute("/_layout/stock/$symbol")({
   component: StockDetail,
   head: ({ params }) => ({
     meta: [{ title: `${params.symbol} - Stock Detail` }],
   }),
-})
+});
 
 function StockDetail() {
-  const { symbol } = Route.useParams()
-  const [dateRange, setDateRange] = useState("3M")
+  const { symbol } = Route.useParams();
+  const [dateRange, setDateRange] = useState("3M");
 
   const getStartDate = (range: string) => {
-    const now = new Date()
+    const now = new Date();
     switch (range) {
       case "1W":
-        now.setDate(now.getDate() - 7)
-        break
+        now.setDate(now.getDate() - 7);
+        break;
       case "1M":
-        now.setMonth(now.getMonth() - 1)
-        break
+        now.setMonth(now.getMonth() - 1);
+        break;
       case "3M":
-        now.setMonth(now.getMonth() - 3)
-        break
+        now.setMonth(now.getMonth() - 3);
+        break;
       case "6M":
-        now.setMonth(now.getMonth() - 6)
-        break
+        now.setMonth(now.getMonth() - 6);
+        break;
       case "1Y":
-        now.setFullYear(now.getFullYear() - 1)
-        break
+        now.setFullYear(now.getFullYear() - 1);
+        break;
       case "3Y":
-        now.setFullYear(now.getFullYear() - 3)
-        break
+        now.setFullYear(now.getFullYear() - 3);
+        break;
       default:
-        now.setMonth(now.getMonth() - 3)
+        now.setMonth(now.getMonth() - 3);
     }
-    return now.toISOString().split("T")[0]
-  }
+    return now.toISOString().split("T")[0];
+  };
 
   const { data: priceData, isLoading: priceLoading } = useQuery({
     queryKey: ["stock-price", symbol, dateRange],
@@ -78,14 +78,13 @@ function StockDetail() {
         },
       }),
     staleTime: 60_000,
-  })
+  });
 
   const { data: overview } = useQuery({
     queryKey: ["stock-overview", symbol],
-    queryFn: () =>
-      StockService.getCompanyOverview({ path: { symbol } }),
+    queryFn: () => StockService.getCompanyOverview({ path: { symbol } }),
     staleTime: 86_400_000,
-  })
+  });
 
   const { data: financials } = useQuery({
     queryKey: ["stock-financials", symbol],
@@ -95,10 +94,11 @@ function StockDetail() {
         query: { report_type: "income_statement", period: "quarterly" },
       }),
     staleTime: 86_400_000,
-  })
+  });
 
-  const ohlcvData = priceData?.data ?? []
-  const lastPrice = ohlcvData.length > 0 ? ohlcvData[ohlcvData.length - 1] : null
+  const ohlcvData = priceData?.data ?? [];
+  const lastPrice =
+    ohlcvData.length > 0 ? ohlcvData[ohlcvData.length - 1] : null;
 
   return (
     <div className="space-y-6">
@@ -275,15 +275,17 @@ function StockDetail() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {financials.data.slice(0, 12).map((r: FinancialReportItem, idx: number) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-mono">
-                          {r.report_type}
-                        </TableCell>
-                        <TableCell>{r.year}</TableCell>
-                        <TableCell>{r.quarter ?? "Cả năm"}</TableCell>
-                      </TableRow>
-                    ))}
+                    {financials.data
+                      .slice(0, 12)
+                      .map((r: FinancialReportItem, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-mono">
+                            {r.report_type}
+                          </TableCell>
+                          <TableCell>{r.year}</TableCell>
+                          <TableCell>{r.quarter ?? "Cả năm"}</TableCell>
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               ) : (
@@ -296,7 +298,7 @@ function StockDetail() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 /* --- Sub-components --- */
@@ -305,15 +307,15 @@ function InfoRow({
   label,
   value,
 }: {
-  label: string
-  value: string | null | undefined
+  label: string;
+  value: string | null | undefined;
 }) {
   return (
     <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value || "—"}</span>
     </div>
-  )
+  );
 }
 
 /**
@@ -324,113 +326,115 @@ function PriceChart({
   data,
 }: {
   data: Array<{
-    trading_date: string
-    open: number
-    high: number
-    low: number
-    close: number
-    volume: number
-  }>
+    trading_date: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }>;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas || data.length === 0) return
+    const canvas = canvasRef.current;
+    if (!canvas || data.length === 0) return;
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    ctx.scale(dpr, dpr)
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
 
-    const w = rect.width
-    const h = rect.height
-    const padding = { top: 20, right: 60, bottom: 30, left: 10 }
-    const chartW = w - padding.left - padding.right
-    const chartH = h - padding.top - padding.bottom
+    const w = rect.width;
+    const h = rect.height;
+    const padding = { top: 20, right: 60, bottom: 30, left: 10 };
+    const chartW = w - padding.left - padding.right;
+    const chartH = h - padding.top - padding.bottom;
 
-    const closes = data.map((d) => d.close)
-    const minPrice = Math.min(...closes) * 0.998
-    const maxPrice = Math.max(...closes) * 1.002
-    const priceRange = maxPrice - minPrice
+    const closes = data.map((d) => d.close);
+    const minPrice = Math.min(...closes) * 0.998;
+    const maxPrice = Math.max(...closes) * 1.002;
+    const priceRange = maxPrice - minPrice;
 
     // Background
-    ctx.fillStyle = getComputedStyle(canvas).getPropertyValue("--background") || "#fff"
-    ctx.fillRect(0, 0, w, h)
+    ctx.fillStyle =
+      getComputedStyle(canvas).getPropertyValue("--background") || "#fff";
+    ctx.fillRect(0, 0, w, h);
 
     // Grid lines
-    ctx.strokeStyle = "#e5e7eb"
-    ctx.lineWidth = 0.5
-    const gridLines = 5
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 0.5;
+    const gridLines = 5;
     for (let i = 0; i <= gridLines; i++) {
-      const y = padding.top + (i / gridLines) * chartH
-      ctx.beginPath()
-      ctx.moveTo(padding.left, y)
-      ctx.lineTo(w - padding.right, y)
-      ctx.stroke()
+      const y = padding.top + (i / gridLines) * chartH;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(w - padding.right, y);
+      ctx.stroke();
 
       // Price labels
-      const price = maxPrice - (i / gridLines) * priceRange
-      ctx.fillStyle = "#6b7280"
-      ctx.font = "11px system-ui"
-      ctx.textAlign = "left"
-      ctx.fillText(price.toFixed(0), w - padding.right + 8, y + 4)
+      const price = maxPrice - (i / gridLines) * priceRange;
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "11px system-ui";
+      ctx.textAlign = "left";
+      ctx.fillText(price.toFixed(0), w - padding.right + 8, y + 4);
     }
 
     // Gradient fill
-    const gradient = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom)
-    gradient.addColorStop(0, "rgba(59, 130, 246, 0.15)")
-    gradient.addColorStop(1, "rgba(59, 130, 246, 0)")
+    const gradient = ctx.createLinearGradient(
+      0,
+      padding.top,
+      0,
+      h - padding.bottom,
+    );
+    gradient.addColorStop(0, "rgba(59, 130, 246, 0.15)");
+    gradient.addColorStop(1, "rgba(59, 130, 246, 0)");
 
-    ctx.beginPath()
+    ctx.beginPath();
     data.forEach((d, i) => {
-      const x = padding.left + (i / (data.length - 1)) * chartW
-      const y = padding.top + ((maxPrice - d.close) / priceRange) * chartH
-      if (i === 0) ctx.moveTo(x, y)
-      else ctx.lineTo(x, y)
-    })
+      const x = padding.left + (i / (data.length - 1)) * chartW;
+      const y = padding.top + ((maxPrice - d.close) / priceRange) * chartH;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
     // Fill
-    const lastX = padding.left + chartW
-    ctx.lineTo(lastX, h - padding.bottom)
-    ctx.lineTo(padding.left, h - padding.bottom)
-    ctx.closePath()
-    ctx.fillStyle = gradient
-    ctx.fill()
+    const lastX = padding.left + chartW;
+    ctx.lineTo(lastX, h - padding.bottom);
+    ctx.lineTo(padding.left, h - padding.bottom);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
 
     // Line
-    ctx.beginPath()
+    ctx.beginPath();
     data.forEach((d, i) => {
-      const x = padding.left + (i / (data.length - 1)) * chartW
-      const y = padding.top + ((maxPrice - d.close) / priceRange) * chartH
-      if (i === 0) ctx.moveTo(x, y)
-      else ctx.lineTo(x, y)
-    })
-    ctx.strokeStyle = "#3b82f6"
-    ctx.lineWidth = 2
-    ctx.stroke()
+      const x = padding.left + (i / (data.length - 1)) * chartW;
+      const y = padding.top + ((maxPrice - d.close) / priceRange) * chartH;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = "#3b82f6";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
     // Date labels
-    ctx.fillStyle = "#6b7280"
-    ctx.font = "10px system-ui"
-    ctx.textAlign = "center"
-    const labelCount = Math.min(6, data.length)
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "10px system-ui";
+    ctx.textAlign = "center";
+    const labelCount = Math.min(6, data.length);
     for (let i = 0; i < labelCount; i++) {
-      const idx = Math.floor((i / (labelCount - 1)) * (data.length - 1))
-      const x = padding.left + (idx / (data.length - 1)) * chartW
-      const dateStr = data[idx].trading_date.slice(5) // MM-DD
-      ctx.fillText(dateStr, x, h - 8)
+      const idx = Math.floor((i / (labelCount - 1)) * (data.length - 1));
+      const x = padding.left + (idx / (data.length - 1)) * chartW;
+      const dateStr = data[idx].trading_date.slice(5); // MM-DD
+      ctx.fillText(dateStr, x, h - 8);
     }
-  }, [data])
+  }, [data]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="w-full"
-      style={{ height: "400px" }}
-    />
-  )
+    <canvas ref={canvasRef} className="w-full" style={{ height: "400px" }} />
+  );
 }
