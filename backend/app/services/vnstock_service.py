@@ -141,7 +141,7 @@ class VnstockService:
                     if "exchange" in df.columns:
                         filtered = df[
                             df["exchange"].str.upper() == exchange.upper()
-                            ].copy()
+                        ].copy()
                         if not filtered.empty:
                             logger.info(
                                 "Đã tải %d mã thuộc sàn %s qua nguồn %s",
@@ -551,10 +551,10 @@ class VnstockService:
     def fetch_price_history(
         self,
         symbol: str,
-            start: date | None = None,
-            end: date | None = None,
-            interval: str = "1D",
-            count: int | None = None,
+        start: date | None = None,
+        end: date | None = None,
+        interval: str = "1D",
+        count: int | None = None,
     ) -> pd.DataFrame:
         """Tải dữ liệu nến lịch sử OHLCV của cổ phiếu hoặc phái sinh.
 
@@ -653,9 +653,9 @@ class VnstockService:
         raise VnstockServiceError(f"Không thể tải dữ liệu nến intraday cho mã {symbol}")
 
     def fetch_tick_orderflow(
-            self,
-            symbol: str,
-            page_size: int = 100,
+        self,
+        symbol: str,
+        page_size: int = 100,
     ) -> pd.DataFrame:
         """Tải luồng khớp lệnh từng tick (tick-by-tick) và phân loại lệnh chủ động mua/bán.
 
@@ -719,12 +719,12 @@ class VnstockService:
         return pd.DataFrame()
 
     def fetch_index_ohlcv(
-            self,
-            symbol: str = "VNINDEX",
-            start: date | None = None,
-            end: date | None = None,
-            interval: str = "1D",
-            count: int | None = None,
+        self,
+        symbol: str = "VNINDEX",
+        start: date | None = None,
+        end: date | None = None,
+        interval: str = "1D",
+        count: int | None = None,
     ) -> pd.DataFrame:
         """Tải nến lịch sử và nến intraday chuyên biệt cho các chỉ số thị trường (VNINDEX, VN30, HNX-INDEX).
 
@@ -799,9 +799,9 @@ class VnstockService:
     def fetch_financials(
         self,
         symbol: str,
-            report_type: str = "income_statement",
-            period: str = "quarter",
-            orient: str = "report",
+        report_type: str = "income_statement",
+        period: str = "quarter",
+        orient: str = "report",
     ) -> pd.DataFrame:
         """Tải báo cáo tài chính của doanh nghiệp (Kết quả KD, Cân đối kế toán, Lưu chuyển tiền tệ).
 
@@ -885,7 +885,7 @@ class VnstockService:
         )
 
     def fetch_financial_ratios(
-            self, symbol: str, orient: str = "report"
+        self, symbol: str, orient: str = "report"
     ) -> pd.DataFrame:
         """Lấy bộ 58 chỉ số tài chính và định giá định lượng (P/E, P/B, EPS, ROE, ROA, đòn bẩy D/E,...).
 
@@ -937,9 +937,9 @@ class VnstockService:
     # =========================================================================
 
     def fetch_gold_prices(
-            self,
-            date_str: str | None = None,
-            source: str = "sjc",
+        self,
+        date_str: str | None = None,
+        source: str = "sjc",
     ) -> pd.DataFrame:
         """Tải dữ liệu giá vàng trong nước (mua/bán) qua phân hệ Retail.
 
