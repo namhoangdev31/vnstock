@@ -37,6 +37,7 @@ class AwareSQLModel(SQLModel):
 
     model_config = SQLModelConfig(validate_assignment=True)
     __table__: ClassVar[Table]
+    __tablename__: ClassVar[str]
 
     @field_validator("*", mode="before")
     @classmethod

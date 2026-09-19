@@ -9,11 +9,33 @@ from enum import StrEnum
 
 
 class ForecastHorizon(StrEnum):
+    ATO = "ATO"
     ATC = "ATC"
+    INTRADAY = "INTRADAY"
     T_PLUS_1 = "T_PLUS_1"
+    T_PLUS_2 = "T_PLUS_2"
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
     QUARTERLY = "QUARTERLY"
+    OVERNIGHT = "OVERNIGHT"
+
+
+class SessionPhase(StrEnum):
+    PRE_ATO = "PRE_ATO"
+    ATO = "ATO"
+    MORNING_CONTINUOUS = "MORNING_CONTINUOUS"
+    MIDDAY_INTERMISSION = "MIDDAY_INTERMISSION"
+    AFTERNOON_CONTINUOUS = "AFTERNOON_CONTINUOUS"
+    PRE_ATC = "PRE_ATC"
+    ATC = "ATC"
+    POST_MARKET = "POST_MARKET"
+
+
+class AnalyticsEngine(StrEnum):
+    TECHNICAL = "technical"
+    FLOW_LIQUIDITY = "flow_liquidity"
+    QUANT_ML = "quant_ml"
+    ENSEMBLE = "ensemble"
 
 
 class ForecastDirection(StrEnum):
