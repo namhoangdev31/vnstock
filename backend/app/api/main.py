@@ -10,6 +10,7 @@ from app.api.routes import (
     stock,
     users,
     utils,
+    vn_stock,
 )
 from app.core.config import settings
 
@@ -22,6 +23,7 @@ api_router.include_router(stock.router)
 api_router.include_router(forecast.router)
 api_router.include_router(simulation.router)
 api_router.include_router(quant.router)
+api_router.include_router(vn_stock.router)
 
 
 if settings.FASTAPI_ENV == "development":
