@@ -22,6 +22,10 @@ import { Route as LayoutStockRouteImport } from './routes/_layout/stock'
 import { Route as LayoutStockSymbolRouteImport } from './routes/_layout/stock/$symbol'
 import { Route as LayoutTrdPhase1RouteImport } from './routes/_layout/trd/phase-1'
 import { Route as LayoutTrdPhase2RouteImport } from './routes/_layout/trd/phase-2'
+import { Route as LayoutTrdPhase3RouteImport } from './routes/_layout/trd/phase-3'
+import { Route as LayoutTrdPhase4RouteImport } from './routes/_layout/trd/phase-4'
+import { Route as LayoutTrdPhase5RouteImport } from './routes/_layout/trd/phase-5'
+import { Route as LayoutTrdPhase6RouteImport } from './routes/_layout/trd/phase-6'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -87,6 +91,26 @@ const LayoutTrdPhase2Route = LayoutTrdPhase2RouteImport.update({
   path: '/trd/phase-2',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutTrdPhase3Route = LayoutTrdPhase3RouteImport.update({
+  id: '/trd/phase-3',
+  path: '/trd/phase-3',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTrdPhase4Route = LayoutTrdPhase4RouteImport.update({
+  id: '/trd/phase-4',
+  path: '/trd/phase-4',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTrdPhase5Route = LayoutTrdPhase5RouteImport.update({
+  id: '/trd/phase-5',
+  path: '/trd/phase-5',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutTrdPhase6Route = LayoutTrdPhase6RouteImport.update({
+  id: '/trd/phase-6',
+  path: '/trd/phase-6',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
@@ -101,6 +125,10 @@ export interface FileRoutesByFullPath {
   '/stock/$symbol': typeof LayoutStockSymbolRoute
   '/trd/phase-1': typeof LayoutTrdPhase1Route
   '/trd/phase-2': typeof LayoutTrdPhase2Route
+  '/trd/phase-3': typeof LayoutTrdPhase3Route
+  '/trd/phase-4': typeof LayoutTrdPhase4Route
+  '/trd/phase-5': typeof LayoutTrdPhase5Route
+  '/trd/phase-6': typeof LayoutTrdPhase6Route
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -115,6 +143,10 @@ export interface FileRoutesByTo {
   '/stock/$symbol': typeof LayoutStockSymbolRoute
   '/trd/phase-1': typeof LayoutTrdPhase1Route
   '/trd/phase-2': typeof LayoutTrdPhase2Route
+  '/trd/phase-3': typeof LayoutTrdPhase3Route
+  '/trd/phase-4': typeof LayoutTrdPhase4Route
+  '/trd/phase-5': typeof LayoutTrdPhase5Route
+  '/trd/phase-6': typeof LayoutTrdPhase6Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,6 +163,10 @@ export interface FileRoutesById {
   '/_layout/stock/$symbol': typeof LayoutStockSymbolRoute
   '/_layout/trd/phase-1': typeof LayoutTrdPhase1Route
   '/_layout/trd/phase-2': typeof LayoutTrdPhase2Route
+  '/_layout/trd/phase-3': typeof LayoutTrdPhase3Route
+  '/_layout/trd/phase-4': typeof LayoutTrdPhase4Route
+  '/_layout/trd/phase-5': typeof LayoutTrdPhase5Route
+  '/_layout/trd/phase-6': typeof LayoutTrdPhase6Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +183,10 @@ export interface FileRouteTypes {
     | '/stock/$symbol'
     | '/trd/phase-1'
     | '/trd/phase-2'
+    | '/trd/phase-3'
+    | '/trd/phase-4'
+    | '/trd/phase-5'
+    | '/trd/phase-6'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -161,6 +201,10 @@ export interface FileRouteTypes {
     | '/stock/$symbol'
     | '/trd/phase-1'
     | '/trd/phase-2'
+    | '/trd/phase-3'
+    | '/trd/phase-4'
+    | '/trd/phase-5'
+    | '/trd/phase-6'
   id:
     | '__root__'
     | '/_layout'
@@ -176,6 +220,10 @@ export interface FileRouteTypes {
     | '/_layout/stock/$symbol'
     | '/_layout/trd/phase-1'
     | '/_layout/trd/phase-2'
+    | '/_layout/trd/phase-3'
+    | '/_layout/trd/phase-4'
+    | '/_layout/trd/phase-5'
+    | '/_layout/trd/phase-6'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -279,6 +327,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutTrdPhase2RouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/trd/phase-3': {
+      id: '/_layout/trd/phase-3'
+      path: '/trd/phase-3'
+      fullPath: '/trd/phase-3'
+      preLoaderRoute: typeof LayoutTrdPhase3RouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/trd/phase-4': {
+      id: '/_layout/trd/phase-4'
+      path: '/trd/phase-4'
+      fullPath: '/trd/phase-4'
+      preLoaderRoute: typeof LayoutTrdPhase4RouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/trd/phase-5': {
+      id: '/_layout/trd/phase-5'
+      path: '/trd/phase-5'
+      fullPath: '/trd/phase-5'
+      preLoaderRoute: typeof LayoutTrdPhase5RouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/trd/phase-6': {
+      id: '/_layout/trd/phase-6'
+      path: '/trd/phase-6'
+      fullPath: '/trd/phase-6'
+      preLoaderRoute: typeof LayoutTrdPhase6RouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
@@ -302,6 +378,10 @@ interface LayoutRouteChildren {
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutTrdPhase1Route: typeof LayoutTrdPhase1Route
   LayoutTrdPhase2Route: typeof LayoutTrdPhase2Route
+  LayoutTrdPhase3Route: typeof LayoutTrdPhase3Route
+  LayoutTrdPhase4Route: typeof LayoutTrdPhase4Route
+  LayoutTrdPhase5Route: typeof LayoutTrdPhase5Route
+  LayoutTrdPhase6Route: typeof LayoutTrdPhase6Route
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -312,6 +392,10 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutTrdPhase1Route: LayoutTrdPhase1Route,
   LayoutTrdPhase2Route: LayoutTrdPhase2Route,
+  LayoutTrdPhase3Route: LayoutTrdPhase3Route,
+  LayoutTrdPhase4Route: LayoutTrdPhase4Route,
+  LayoutTrdPhase5Route: LayoutTrdPhase5Route,
+  LayoutTrdPhase6Route: LayoutTrdPhase6Route,
 }
 
 const LayoutRouteWithChildren =

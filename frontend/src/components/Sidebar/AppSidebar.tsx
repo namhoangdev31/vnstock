@@ -1,4 +1,15 @@
-import { Briefcase, Cpu, FileText, Home, TrendingUp, Users } from "lucide-react"
+import {
+  Briefcase,
+  Clock,
+  Cpu,
+  FileText,
+  History,
+  Home,
+  Layers,
+  LineChart,
+  TrendingUp,
+  Users,
+} from "lucide-react"
 
 import { SidebarAppearance } from "@/components/Common/Appearance"
 import { Logo } from "@/components/Common/Logo"
@@ -19,8 +30,12 @@ const baseItems: Item[] = [
     icon: FileText,
     title: "TRD",
     items: [
-      { icon: FileText, title: "Phase 1", path: "/trd/phase-1" },
-      { icon: Cpu, title: "Phase 2", path: "/trd/phase-2" },
+      { icon: FileText, title: "Phase 1: Nền tảng", path: "/trd/phase-1" },
+      { icon: Cpu, title: "Phase 2: Tri-Engine", path: "/trd/phase-2" },
+      { icon: Clock, title: "Phase 3: Daemon 24/7", path: "/trd/phase-3" },
+      { icon: Layers, title: "Phase 4: Paper & T+2", path: "/trd/phase-4" },
+      { icon: History, title: "Phase 5: Forecast Journal", path: "/trd/phase-5" },
+      { icon: LineChart, title: "Phase 6: Dashboards", path: "/trd/phase-6" },
     ],
   },
   { icon: Briefcase, title: "Items", path: "/items" },
