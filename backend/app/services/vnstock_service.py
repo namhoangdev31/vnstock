@@ -99,13 +99,24 @@ class VnstockService:
         """Lấy danh sách tất cả các mã cổ phiếu đang niêm yết trên thị trường (HOSE, HNX, UPCOM).
 
         Trả về:
-            pd.DataFrame chứa danh sách mã và thông tin sàn niêm yết.
+            pd.DataFrame chứa danh sách mã, tên tổ chức và thông tin sàn niêm yết.
         """
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
         for src in valid_sources:
             try:
                 self._throttle()
                 lst = Listing(source=src, show_log=False)
+                # Ưu tiên symbols_by_exchange để có sẵn thông tin cột sàn niêm yết (exchange)
+                if hasattr(lst, "symbols_by_exchange"):
+                    df = lst.symbols_by_exchange()
+                    if df is not None and not df.empty:
+                        logger.info(
+                            "Đã tải %d mã cổ phiếu (kèm cột sàn) qua nguồn %s",
+                            len(df),
+                            src,
+                        )
+                        return df
+
                 df = lst.all_symbols()
                 if df is not None and not df.empty:
                     logger.info("Đã tải %d mã cổ phiếu qua nguồn %s", len(df), src)
@@ -122,14 +133,14 @@ class VnstockService:
             "Không thể tải danh sách mã cổ phiếu từ tất cả các nguồn"
         )
 
-    def fetch_symbols_by_exchange(self, exchange: str = "HOSE") -> pd.DataFrame:
-        """Lấy danh sách các mã cổ phiếu lọc theo sàn niêm yết (HOSE, HNX, UPCOM).
+    def fetch_symbols_by_exchange(self, exchange: str | None = None) -> pd.DataFrame:
+        """Lấy danh sách các mã cổ phiếu có thông tin sàn niêm yết (HOSE, HNX, UPCOM).
 
         Tham số:
-            exchange: Tên sàn giao dịch ('HOSE', 'HNX', 'UPCOM').
+            exchange: Tên sàn giao dịch ('HOSE', 'HNX', 'UPCOM') hoặc None để lấy toàn bộ các sàn.
 
         Trả về:
-            pd.DataFrame chứa danh sách cổ phiếu thuộc sàn được chỉ định.
+            pd.DataFrame chứa danh sách cổ phiếu kèm thông tin sàn niêm yết.
         """
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
         for src in valid_sources:
@@ -138,29 +149,38 @@ class VnstockService:
                 lst = Listing(source=src, show_log=False)
                 df = lst.symbols_by_exchange()
                 if df is not None and not df.empty:
-                    if "exchange" in df.columns:
+                    if exchange and "exchange" in df.columns:
+                        target_exs = (
+                            {"HOSE", "HSX"}
+                            if exchange.upper() in ("HOSE", "HSX")
+                            else {exchange.upper()}
+                        )
                         filtered = df[
-                            df["exchange"].str.upper() == exchange.upper()
+                            df["exchange"].str.upper().isin(target_exs)
                         ].copy()
-                        if not filtered.empty:
-                            logger.info(
-                                "Đã tải %d mã thuộc sàn %s qua nguồn %s",
-                                len(filtered),
-                                exchange,
-                                src,
-                            )
-                            return filtered
+                        logger.info(
+                            "Đã tải %d mã thuộc sàn %s qua nguồn %s",
+                            len(filtered),
+                            exchange,
+                            src,
+                        )
+                        return filtered
+                    logger.info(
+                        "Đã tải toàn bộ %d mã kèm sàn qua nguồn %s", len(df), src
+                    )
                     return df
             except Exception:
                 logger.warning(
                     "Lỗi tải mã theo sàn %s qua nguồn %s, thử nguồn khác...",
-                    exchange,
+                    exchange or "tất cả",
                     src,
                     exc_info=True,
                 )
                 continue
 
-        raise VnstockServiceError(f"Không thể tải danh sách mã thuộc sàn {exchange}")
+        raise VnstockServiceError(
+            f"Không thể tải danh sách mã chứng khoán theo sàn ({exchange or 'tất cả'})"
+        )
 
     def fetch_symbols_by_industry(self) -> pd.DataFrame:
         """Lấy danh sách mã chứng khoán phân loại theo ngành (chuẩn ICB/KBS).

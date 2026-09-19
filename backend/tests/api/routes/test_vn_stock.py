@@ -9,13 +9,14 @@ from app.core.config import settings
 from app.main import app
 
 
-@patch("app.api.routes.vn_stock.vnstock_service.fetch_all_symbols")
-def test_get_vnstock_symbols(mock_fetch_all_symbols):
-    """Kiểm tra endpoint GET /api/v1/vnstock trả về danh sách {symbol, organ_name}."""
-    mock_fetch_all_symbols.return_value = pd.DataFrame(
+@patch("app.api.routes.vn_stock.vnstock_service.fetch_symbols_by_exchange")
+def test_get_vnstock_symbols(mock_fetch_symbols):
+    """Kiểm tra endpoint GET /api/v1/vnstock trả về danh sách {symbol, organ_name, exchange}."""
+    mock_fetch_symbols.return_value = pd.DataFrame(
         {
-            "symbol": ["VNM", "FPT"],
-            "organ_name": ["Công ty Cổ phần Sữa Việt Nam", "Công ty Cổ phần FPT"],
+            "symbol": ["VNM", "SHB"],
+            "organ_name": ["Vinamilk", "Ngân hàng SHB"],
+            "exchange": ["HOSE", "HNX"],
         }
     )
     client = TestClient(app)
@@ -25,26 +26,30 @@ def test_get_vnstock_symbols(mock_fetch_all_symbols):
     assert isinstance(data, list)
     assert len(data) == 2
     assert data[0]["symbol"] == "VNM"
-    assert data[0]["organ_name"] == "Công ty Cổ phần Sữa Việt Nam"
-    assert data[1]["symbol"] == "FPT"
-    assert data[1]["organ_name"] == "Công ty Cổ phần FPT"
+    assert data[0]["organ_name"] == "Vinamilk"
+    assert data[0]["exchange"] == "HOSE"
+    assert data[1]["symbol"] == "SHB"
+    assert data[1]["exchange"] == "HNX"
 
 
-@patch("app.api.routes.vn_stock.vnstock_service.fetch_all_symbols")
-def test_get_vnstock_symbols_trailing_slash(mock_fetch_all_symbols):
-    """Kiểm tra endpoint GET /api/v1/vnstock/ có dấu gạch chéo cuối."""
-    mock_fetch_all_symbols.return_value = pd.DataFrame(
+@patch("app.api.routes.vn_stock.vnstock_service.fetch_symbols_by_exchange")
+def test_get_vnstock_symbols_filter_exchange(mock_fetch_symbols):
+    """Kiểm tra endpoint GET /api/v1/vnstock?exchange=HOSE có lọc theo sàn."""
+    mock_fetch_symbols.return_value = pd.DataFrame(
         {
             "symbol": ["VNM"],
             "organ_name": ["Vinamilk"],
+            "exchange": ["HOSE"],
         }
     )
     client = TestClient(app)
-    response = client.get(f"{settings.API_V1_STR}/vnstock/")
+    response = client.get(f"{settings.API_V1_STR}/vnstock?exchange=HOSE")
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
     assert data[0]["symbol"] == "VNM"
+    assert data[0]["exchange"] == "HOSE"
+    mock_fetch_symbols.assert_called_once_with(exchange="HOSE")
 
 
 def test_get_vnstock_sources():
