@@ -252,23 +252,31 @@ class InstitutionalFlowPublic(SQLModel):
     prop_net_value: float | None = None
     source: str
 
+
 class TechnicalEngineResponse(SQLModel):
     """Response payload for Engine 1 (Technical & Price-Action Engine)."""
+
     symbol: str
     as_of: datetime
     score: float  # -1.0 to +1.0
     rsi: float | None = None
-    macd: dict = Field(default_factory=dict)  # {"dif": float, "dea": float, "hist": float}
+    macd: dict = Field(
+        default_factory=dict
+    )  # {"dif": float, "dea": float, "hist": float}
     vwap: float | None = None
     order_imbalance: float = 0.0  # -1.0 to +1.0
     volume_delta: int = 0
-    camarilla_levels: dict = Field(default_factory=dict)  # {"r4": ..., "r3": ..., "s3": ..., "s4": ...}
+    camarilla_levels: dict = Field(
+        default_factory=dict
+    )  # {"r4": ..., "r3": ..., "s3": ..., "s4": ...}
     fvg_detected: bool = False
     fvg_details: dict = Field(default_factory=dict)
     liquidity_sweeps: dict = Field(default_factory=dict)
 
+
 class FlowLiquidityEngineResponse(SQLModel):
     """Response payload for Engine 2 (Liquidity, Flow & T+2 Cashflow Engine)."""
+
     as_of: datetime
     score: float  # -1.0 to +1.0
     institutional_momentum: float = 0.0
@@ -276,8 +284,10 @@ class FlowLiquidityEngineResponse(SQLModel):
     t2_pressure: float = 0.0  # 0.0 to 1.0
     macro_sentiment: float = 0.0
 
+
 class QuantMLEngineResponse(SQLModel):
     """Response payload for Engine 3 (Quantitative ML & Statistical Engine)."""
+
     symbol: str
     as_of: datetime
     score: float  # -1.0 to +1.0
@@ -286,16 +296,24 @@ class QuantMLEngineResponse(SQLModel):
     historical_vol: float = 0.0
     parkinson_vol: float = 0.0
     session_phase: str = "CONTINUOUS"
-    monte_carlo_targets: dict = Field(default_factory=dict)  # {"p05": ..., "p50": ..., "p95": ...}
+    monte_carlo_targets: dict = Field(
+        default_factory=dict
+    )  # {"p05": ..., "p50": ..., "p95": ...}
+
 
 class EnsembleSignalRequest(SQLModel):
     """Payload to request an ensemble prediction & trigger auto-ledger logging."""
+
     symbol: str = Field(default="VN30F1M", max_length=20)
     horizon: str = Field(default=ForecastHorizon.INTRADAY, max_length=20)
-    custom_weights: dict | None = None  # Optional override {"w1": float, "w2": float, "w3": float}
+    custom_weights: dict | None = (
+        None  # Optional override {"w1": float, "w2": float, "w3": float}
+    )
+
 
 class EnsembleSignalResponse(SQLModel):
     """Response payload for Ensemble Decision System & Audit Journal confirmation."""
+
     journal_id: uuid.UUID
     symbol: str
     horizon: str
@@ -313,15 +331,20 @@ class EnsembleSignalResponse(SQLModel):
         "CẢNH BÁO RỦI RO (RULE 4): Tín hiệu mô phỏng định lượng mang tính chất tham khảo "
         "và nghiên cứu giáo dục, không phải là lời khuyên đầu tư tài chính hay khuyến nghị đặt lệnh."
     )
+
+
 class EnsembleWeightsResponse(SQLModel):
     """Current dynamic time-of-day weights structure."""
+
     session_phase: str
     current_time_utc: datetime
     weights: dict  # {"w1": float, "w2": float, "w3": float}
     schedule: dict
 
+
 class EnsembleWeightsUpdate(SQLModel):
     """Payload to update custom ensemble weights."""
+
     w1: float = Field(ge=0.0, le=1.0)
     w2: float = Field(ge=0.0, le=1.0)
     w3: float = Field(ge=0.0, le=1.0)

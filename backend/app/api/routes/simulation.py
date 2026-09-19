@@ -5,9 +5,9 @@ brokerage credential is ever accepted or stored, and no order leaves this
 process (RULE 1: no real-money execution).
 
 Endpoints:
-- POST   /simulation/portfolios                  create a paper account
-- GET    /simulation/portfolios                  list own portfolios
-- GET    /simulation/portfolios/{id}             fetch one (ownership-checked)
+- POST /simulation/portfolios create a paper account
+- GET /simulation/portfolios list their own portfolios
+- GET /simulation/portfolios/{id} fetch one (ownership-checked)
 - GET    /simulation/portfolios/{id}/positions   open positions
 - POST   /simulation/portfolios/{id}/mark        mark-to-market from a price map
 - POST   /simulation/orders                      place a paper order

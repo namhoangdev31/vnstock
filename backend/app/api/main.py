@@ -5,6 +5,7 @@ from app.api.routes import (
     items,
     login,
     private,
+    quant,
     simulation,
     stock,
     users,
@@ -20,6 +21,7 @@ api_router.include_router(items.router)
 api_router.include_router(stock.router)
 api_router.include_router(forecast.router)
 api_router.include_router(simulation.router)
+api_router.include_router(quant.router)
 
 
 if settings.FASTAPI_ENV == "development":
