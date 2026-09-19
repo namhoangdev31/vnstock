@@ -55,6 +55,7 @@ export const Route = createFileRoute("/_layout/trd/phase-5")({
 
 interface TestCase {
   id: string;
+  category: "MAIN" | "SUB" | "EDGE";
   group:
     | "Forecast Ledger & Immutability"
     | "Automated Scoring (Post-Market)"
@@ -66,24 +67,57 @@ interface TestCase {
 }
 
 const testCases: TestCase[] = [
+  // --- FORECAST LEDGER & IMMUTABILITY ---
   {
     id: "TEST-JOURNAL-01",
+    category: "MAIN",
     group: "Forecast Ledger & Immutability",
-    scenario: "Ensemble sinh tín hiệu Long VN30F1M",
+    scenario: "Ensemble sinh tín hiệu Long VN30F1M hoặc dự báo ATC",
     expectation:
-      "Tự động tạo 1 row trong ForecastJournal với status = PENDING, predicted_at lưu chuẩn UTC",
+      "Tự động tạo 1 row trong ForecastJournal với status = PENDING, predicted_at UTC, snapshot model_version và engine_weights",
     status: "READY",
   },
   {
     id: "TEST-JOURNAL-02",
+    category: "MAIN",
     group: "Forecast Ledger & Immutability",
-    scenario: "Thử cập nhật trường predicted_target_price của một dự báo trong quá khứ",
+    scenario: "Kiểm tra quan hệ khóa ngoại (Foreign Key) giữa ForecastJournal và ModelVersionSnapshot",
     expectation:
-      "Hệ thống từ chối cập nhật hoặc kiểm toán phát hiện vi phạm tính bất biến",
+      "Bản ghi dự báo liên kết chính xác với phiên bản mô hình đang active tại thời điểm phát tín hiệu",
     status: "READY",
   },
   {
     id: "TEST-JOURNAL-03",
+    category: "SUB",
+    group: "Forecast Ledger & Immutability",
+    scenario: "Truy vấn lọc ForecastJournal theo horizon (ATC, T+1, WEEKLY, MONTHLY) và trạng thái PENDING/RESOLVED",
+    expectation:
+      "Trả về đúng tập bản ghi theo bộ lọc, hỗ trợ phân trang chuẩn xác",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-04",
+    category: "EDGE",
+    group: "Forecast Ledger & Immutability",
+    scenario: "Thử gửi lệnh UPDATE trực tiếp lên các trường dự báo (predicted_target_price, predicted_direction, predicted_at)",
+    expectation:
+      "Hệ thống từ chối cập nhật (HTTP 403 / Database Rule), đảm bảo tính bất biến 100% của sổ nhật ký",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-05",
+    category: "EDGE",
+    group: "Forecast Ledger & Immutability",
+    scenario: "Trùng lặp tín hiệu trong cùng 1 tick hoặc 1 phút khảo sát",
+    expectation:
+      "Cơ chế Idempotency Key ngăn chặn sinh nhiều bản ghi trùng lặp cho cùng một mốc thời gian",
+    status: "READY",
+  },
+
+  // --- AUTOMATED SCORING (POST-MARKET) ---
+  {
+    id: "TEST-JOURNAL-06",
+    category: "MAIN",
     group: "Automated Scoring (Post-Market)",
     scenario: "Chạy bộ chấm điểm ATC: Dự báo Tăng (P=0.8), thực tế giá Tăng",
     expectation:
@@ -91,7 +125,8 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-JOURNAL-04",
+    id: "TEST-JOURNAL-07",
+    category: "MAIN",
     group: "Automated Scoring (Post-Market)",
     scenario: "Chạy bộ chấm điểm ATC: Dự báo Tăng (P=0.7), thực tế giá Giảm",
     expectation:
@@ -99,15 +134,64 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-JOURNAL-05",
+    id: "TEST-JOURNAL-08",
+    category: "MAIN",
     group: "Automated Scoring (Post-Market)",
-    scenario: "Tính toán sai số tuyệt đối MAE cho dự báo giá 1310 khi thực tế là 1305",
+    scenario: "Tính toán sai số tuyệt đối MAE cho dự báo giá 1310 khi thực tế giá đóng cửa là 1305",
     expectation:
       "absolute_error = abs(1310 - 1305) = 5.0 điểm",
     status: "READY",
   },
   {
-    id: "TEST-JOURNAL-06",
+    id: "TEST-JOURNAL-09",
+    category: "SUB",
+    group: "Automated Scoring (Post-Market)",
+    scenario: "Dự báo hòa hoặc giá đóng cửa không đổi (biên độ giá |delta| < 0.2 điểm)",
+    expectation:
+      "Xác định ngưỡng threshold phân định rõ ràng (neutral), không phạt sai lệch phương hướng",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-10",
+    category: "SUB",
+    group: "Automated Scoring (Post-Market)",
+    scenario: "Tính toán tổng hợp KPI 30 ngày (Directional Accuracy, Mean Brier Score, RMSE) trên 100+ bản ghi resolved",
+    expectation:
+      "Kết quả trả về khớp chính xác công thức thống kê, sẵn sàng hiển thị trên biểu đồ radar",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-11",
+    category: "EDGE",
+    group: "Automated Scoring (Post-Market)",
+    scenario: "Phiên giao dịch bị hoãn hoặc sự cố kết nối sàn HSX dẫn đến thiếu giá đóng cửa thực tế",
+    expectation:
+      "Bản ghi giữ trạng thái PENDING_MANUAL_REVIEW, không tự ý tính nhầm điểm 0 hay sai lệch thống kê",
+    status: "READY",
+  },
+
+  // --- RECALIBRATION & ANTI-OVERFIT ---
+  {
+    id: "TEST-JOURNAL-12",
+    category: "MAIN",
+    group: "Recalibration & Anti-Overfit",
+    scenario: "Chạy thuật toán Softmax Recalibration trên chu kỳ 30 ngày gần nhất",
+    expectation:
+      "Trọng số mới w_new của 3 Engine luôn có tổng bằng 1.0 (100%)",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-13",
+    category: "MAIN",
+    group: "Recalibration & Anti-Overfit",
+    scenario: "Trọng số của Engine 1 sau tính toán nằm trong dải ràng buộc kỹ thuật [0.15, 0.60]",
+    expectation:
+      "Đảm bảo không engine nào bị triệt tiêu hoàn toàn (weight collapse), duy trì tính đa dạng mô hình",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-14",
+    category: "SUB",
     group: "Recalibration & Anti-Overfit",
     scenario: "Đề xuất trọng số mới tính ra chênh lệch +12% so với trọng số cũ",
     expectation:
@@ -115,27 +199,77 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-JOURNAL-07",
+    id: "TEST-JOURNAL-15",
+    category: "SUB",
     group: "Recalibration & Anti-Overfit",
-    scenario: "Sinh phiên bản trọng số mới qua thuật toán Softmax 30 ngày",
+    scenario: "Sinh phiên bản trọng số mới qua tác vụ định kỳ ban đêm",
     expectation:
       "Bản ghi ModelVersionSnapshot được lưu với is_active = False, chưa tác động luồng live",
     status: "READY",
   },
   {
-    id: "TEST-JOURNAL-08",
-    group: "Model Versioning & Rollback",
-    scenario: "Admin gọi API POST /promote phiên bản mới",
+    id: "TEST-JOURNAL-16",
+    category: "EDGE",
+    group: "Recalibration & Anti-Overfit",
+    scenario: "Trong 30 ngày có chuỗi ngoại lai bất thường (Flash Crash -100 điểm)",
     expectation:
-      "Phiên bản cũ chuyển is_active = False, phiên bản mới chuyển is_active = True an toàn",
+      "Thuật toán Winsorization cắt tỉa outlier để không làm méo mó trọng số dài hạn",
     status: "READY",
   },
   {
-    id: "TEST-JOURNAL-09",
+    id: "TEST-JOURNAL-17",
+    category: "EDGE",
+    group: "Recalibration & Anti-Overfit",
+    scenario: "Kiểm định Walk-Forward Validation: Trọng số mới có Brier Score Out-of-Sample tệ hơn trọng số cũ",
+    expectation:
+      "Hệ thống tự động từ chối đề xuất recalibration, giữ nguyên phiên bản tham số hiện hành",
+    status: "READY",
+  },
+
+  // --- MODEL VERSIONING & ROLLBACK ---
+  {
+    id: "TEST-JOURNAL-18",
+    category: "MAIN",
+    group: "Model Versioning & Rollback",
+    scenario: "Admin gọi API POST /promote phiên bản v1.1.0",
+    expectation:
+      "Phiên bản cũ v1.0.0 chuyển is_active = False, v1.1.0 chuyển is_active = True an toàn",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-19",
+    category: "MAIN",
     group: "Model Versioning & Rollback",
     scenario: "Gọi API POST /rollback về phiên bản v1.0.0 trước đó",
     expectation:
       "Hệ thống đổi cờ is_active tức thì, luồng live nhận lại trọng số cũ trong 1 nốt nhạc",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-20",
+    category: "SUB",
+    group: "Model Versioning & Rollback",
+    scenario: "Truy vấn GET /api/v1/quant/versions",
+    expectation:
+      "Trả về danh sách đầy đủ lịch sử tất cả version kèm engine_weights snapshot và người phê duyệt",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-21",
+    category: "EDGE",
+    group: "Model Versioning & Rollback",
+    scenario: "Cố gắng xóa (DELETE) một bản ghi ModelVersionSnapshot đang active",
+    expectation:
+      "Bị từ chối với HTTP 400: Active version cannot be deleted",
+    status: "READY",
+  },
+  {
+    id: "TEST-JOURNAL-22",
+    category: "EDGE",
+    group: "Model Versioning & Rollback",
+    scenario: "Cố gắng rollback về một version_tag không tồn tại trong DB",
+    expectation:
+      "Bị từ chối an toàn với HTTP 404 Not Found kèm thông báo lỗi rõ ràng",
     status: "READY",
   },
 ];
@@ -177,6 +311,7 @@ export function Phase5TRDPage() {
   const [copied, setCopied] = useState(false);
   const [testSearch, setTestSearch] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string>("ALL");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
   const handleCopyMarkdown = async () => {
     try {
@@ -204,13 +339,23 @@ export function Phase5TRDPage() {
     toast.success("Đang tải xuống file phase_5_specification.md");
   };
 
+  const testGroups = [
+    "ALL",
+    "Forecast Ledger & Immutability",
+    "Automated Scoring (Post-Market)",
+    "Recalibration & Anti-Overfit",
+    "Model Versioning & Rollback",
+  ];
+
   const filteredTests = testCases.filter((t) => {
     const matchesSearch =
       t.id.toLowerCase().includes(testSearch.toLowerCase()) ||
       t.scenario.toLowerCase().includes(testSearch.toLowerCase()) ||
       t.expectation.toLowerCase().includes(testSearch.toLowerCase());
     const matchesGroup = selectedGroup === "ALL" || t.group === selectedGroup;
-    return matchesSearch && matchesGroup;
+    const matchesCategory =
+      selectedCategory === "ALL" || t.category === selectedCategory;
+    return matchesSearch && matchesGroup && matchesCategory;
   });
 
   return (
@@ -480,24 +625,79 @@ export function Phase5TRDPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="relative flex-1 min-w-[240px]">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Tìm kiếm kịch bản test hoặc mã test..."
-                    value={testSearch}
-                    onChange={(e) => setTestSearch(e.target.value)}
-                    className="pl-8"
-                  />
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="relative flex-1 min-w-[240px]">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Tìm kiếm kịch bản test hoặc mã test..."
+                      value={testSearch}
+                      onChange={(e) => setTestSearch(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                  {/* Category Filter Tabs */}
+                  <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-lg border">
+                    {(
+                      [
+                        { id: "ALL", label: `Tất cả (${testCases.length})` },
+                        {
+                          id: "MAIN",
+                          label: `Main Cases (${testCases.filter((t) => t.category === "MAIN").length})`,
+                        },
+                        {
+                          id: "SUB",
+                          label: `Sub Cases (${testCases.filter((t) => t.category === "SUB").length})`,
+                        },
+                        {
+                          id: "EDGE",
+                          label: `Edge Cases (${testCases.filter((t) => t.category === "EDGE").length})`,
+                        },
+                      ] as const
+                    ).map((cat) => (
+                      <Button
+                        key={cat.id}
+                        variant={selectedCategory === cat.id ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`h-7 text-xs px-2.5 ${
+                          selectedCategory === cat.id
+                            ? cat.id === "MAIN"
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                              : cat.id === "SUB"
+                              ? "bg-blue-600 hover:bg-blue-700 text-white"
+                              : cat.id === "EDGE"
+                              ? "bg-rose-600 hover:bg-rose-700 text-white"
+                              : ""
+                            : ""
+                        }`}
+                      >
+                        {cat.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={selectedGroup === "ALL" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedGroup("ALL")}
-                  >
-                    Tất cả ({testCases.length})
-                  </Button>
+
+                {/* Group Filter Chips */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">
+                    Nhóm kiểm thử:
+                  </span>
+                  {testGroups.map((grp) => (
+                    <Button
+                      key={grp}
+                      variant={selectedGroup === grp ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setSelectedGroup(grp)}
+                      className={`h-6 text-[11px] px-2 rounded-md ${
+                        selectedGroup === grp
+                          ? "border border-primary/30 font-semibold"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {grp === "ALL" ? "Tất cả nhóm" : grp}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
@@ -506,6 +706,7 @@ export function Phase5TRDPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-36">Mã Test</TableHead>
+                      <TableHead className="w-24">Phân loại</TableHead>
                       <TableHead className="w-56">Phân nhóm</TableHead>
                       <TableHead>Kịch bản thử nghiệm</TableHead>
                       <TableHead>Kết quả kỳ vọng</TableHead>
@@ -513,19 +714,52 @@ export function Phase5TRDPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTests.map((tc) => (
-                      <TableRow key={tc.id}>
-                        <TableCell className="font-mono text-xs font-semibold">{tc.id}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{tc.group}</TableCell>
-                        <TableCell className="text-xs font-medium">{tc.scenario}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{tc.expectation}</TableCell>
-                        <TableCell className="text-right">
-                          <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]">
-                            {tc.status}
-                          </Badge>
+                    {filteredTests.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-6 text-muted-foreground text-xs"
+                        >
+                          Không tìm thấy kịch bản nào khớp với điều kiện tìm kiếm.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      filteredTests.map((tc) => (
+                        <TableRow key={tc.id}>
+                          <TableCell className="font-mono text-xs font-semibold text-primary">
+                            {tc.id}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                tc.category === "MAIN"
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]"
+                                  : tc.category === "SUB"
+                                  ? "bg-blue-500/10 text-blue-600 border-blue-500/30 text-[10px]"
+                                  : "bg-rose-500/10 text-rose-600 border-rose-500/30 text-[10px]"
+                              }
+                            >
+                              {tc.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {tc.group}
+                          </TableCell>
+                          <TableCell className="text-xs font-medium">
+                            {tc.scenario}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {tc.expectation}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]">
+                              {tc.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>

@@ -57,6 +57,7 @@ export const Route = createFileRoute("/_layout/trd/phase-3")({
 
 interface TestCase {
   id: string;
+  category: "MAIN" | "SUB" | "EDGE";
   group:
     | "State Machine (Clock & Sessions)"
     | "Resilience & Circuit Breaker"
@@ -68,32 +69,147 @@ interface TestCase {
 }
 
 const testCases: TestCase[] = [
+  // --- STATE MACHINE (CLOCK & SESSIONS) ---
   {
     id: "TEST-DAEMON-01",
+    category: "MAIN",
     group: "State Machine (Clock & Sessions)",
-    scenario: "Chạy hàm get_current_session_state với mock time là 08:47 sáng thứ Hai",
+    scenario: "Chạy hàm get_current_session_state với mock time là 08:35 sáng thứ Hai",
     expectation:
-      "Trả về chính xác trạng thái SessionState.ATO_AUCTION, kích hoạt nến mở màn phái sinh",
+      "Trả về chính xác SessionState.PRE_ATO_SETUP, đồng bộ giá tham chiếu và FVG mới",
     status: "READY",
   },
   {
     id: "TEST-DAEMON-02",
+    category: "MAIN",
     group: "State Machine (Clock & Sessions)",
-    scenario: "Chạy hàm get_current_session_state với mock time là 14:22 chiều thứ Sáu",
+    scenario: "Chạy hàm get_current_session_state với mock time là 08:47 sáng thứ Hai",
     expectation:
-      "Trả về chính xác trạng thái SessionState.PRE_ATC_SETUP, kích hoạt bộ dự báo đóng cửa ATC",
+      "Trả về chính xác SessionState.ATO_AUCTION, kích hoạt nến mở màn phái sinh VN30F1M",
     status: "READY",
   },
   {
     id: "TEST-DAEMON-03",
+    category: "MAIN",
     group: "State Machine (Clock & Sessions)",
-    scenario: "Mock thời gian lúc 22:00 hoặc ngày Thứ 7, Chủ Nhật",
+    scenario: "Chạy hàm get_current_session_state với mock time là 09:15 sáng",
     expectation:
-      "Trả về chính xác SessionState.OVERNIGHT_SIMULATION, hạ tần suất polling xuống 5-15 phút",
+      "Trả về chính xác SessionState.MORNING_CONTINUOUS, bắt đầu chu kỳ nến 1m và Orderflow",
     status: "READY",
   },
   {
     id: "TEST-DAEMON-04",
+    category: "MAIN",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Chạy hàm get_current_session_state với mock time là 11:45 trưa",
+    expectation:
+      "Trả về chính xác SessionState.MIDDAY_INTERMISSION, giảm tần suất polling xuống 60 giây",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-05",
+    category: "MAIN",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Chạy hàm get_current_session_state với mock time là 13:05 chiều",
+    expectation:
+      "Trả về chính xác SessionState.AFTERNOON_CONTINUOUS, kích hoạt đo lường áp lực T+2",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-06",
+    category: "MAIN",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Chạy hàm get_current_session_state với mock time là 14:22 chiều",
+    expectation:
+      "Trả về chính xác SessionState.PRE_ATC_SETUP, kích hoạt bộ dự báo đóng cửa ATC",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-07",
+    category: "MAIN",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Chạy hàm get_current_session_state với mock time là 14:35 chiều",
+    expectation:
+      "Trả về chính xác SessionState.ATC_AUCTION, theo dõi đợt khớp lệnh định kỳ đóng cửa",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-08",
+    category: "MAIN",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Chạy hàm get_current_session_state với mock time là 14:50 chiều",
+    expectation:
+      "Trả về chính xác SessionState.POST_MARKET_EVAL, đối soát và chấm điểm ForecastJournal",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-09",
+    category: "MAIN",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Mock thời gian lúc 22:00 hoặc ngày Thứ 7, Chủ Nhật",
+    expectation:
+      "Trả về chính xác SessionState.OVERNIGHT_SIMULATION, chạy mô phỏng Monte Carlo 24/7",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-10",
+    category: "SUB",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Ngày nghỉ lễ Quốc khánh hoặc Tết Nguyên Đán (ngày làm việc trong tuần nhưng sàn đóng cửa)",
+    expectation:
+      "Hệ thống nhận biết lịch nghỉ lễ từ Holiday Calendar và giữ trạng thái OVERNIGHT_SIMULATION",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-11",
+    category: "EDGE",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Khởi động Daemon tại thời điểm giữa phiên (ví dụ 10:15:32)",
+    expectation:
+      "Daemon tự động đồng bộ ngay vào MORNING_CONTINUOUS mà không cần chờ chu kỳ mới",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-12",
+    category: "EDGE",
+    group: "State Machine (Clock & Sessions)",
+    scenario: "Hệ thống bị trôi giờ máy chủ hoặc dịch lùi thời gian do đồng bộ NTP",
+    expectation:
+      "Sử dụng monotonic clock tính toán khoảng cách thời gian, không bị lặp hoặc nhảy lùi state",
+    status: "READY",
+  },
+
+  // --- RESILIENCE & CIRCUIT BREAKER ---
+  {
+    id: "TEST-DAEMON-13",
+    category: "MAIN",
+    group: "Resilience & Circuit Breaker",
+    scenario: "Polling trong phiên liên tục (MORNING_CONTINUOUS)",
+    expectation:
+      "Tần suất đo được ổn định trong dải 1.0s ± 200ms, không làm nghẽn Event Loop",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-14",
+    category: "SUB",
+    group: "Resilience & Circuit Breaker",
+    scenario: "Tự động tăng tần suất lấy dữ liệu lên 500ms khi bước vào khung giờ PRE_ATC_SETUP",
+    expectation:
+      "Chu kỳ rút ngắn chính xác xuống 500ms để kịp thời cập nhật lệnh mất cân bằng ATC",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-15",
+    category: "MAIN",
+    group: "Resilience & Circuit Breaker",
+    scenario: "Thực hiện 2 request liên tiếp tới cùng một nguồn cung cấp dữ liệu (VCI)",
+    expectation:
+      "Bộ Rate-Limiter chèn độ trễ tối thiểu 250ms giữa 2 request để chống ban IP",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-16",
+    category: "EDGE",
     group: "Resilience & Circuit Breaker",
     scenario: "Giả lập nguồn cấp dữ liệu ném lỗi HTTP 429 Too Many Requests 5 lần liên tiếp",
     expectation:
@@ -101,7 +217,8 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-DAEMON-05",
+    id: "TEST-DAEMON-17",
+    category: "SUB",
     group: "Resilience & Circuit Breaker",
     scenario: "Sau 60 giây ở trạng thái OPEN, request kế tiếp thành công",
     expectation:
@@ -109,27 +226,70 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-DAEMON-06",
-    group: "Asyncio Loop & Dispatcher",
-    scenario: "Polling trong phiên liên tục (MORNING_CONTINUOUS)",
+    id: "TEST-DAEMON-18",
+    category: "EDGE",
+    group: "Resilience & Circuit Breaker",
+    scenario: "Mất kết nối Internet toàn bộ (DNS failure / No Route to Host)",
     expectation:
-      "Tần suất đo được ổn định trong dải 1.0s ± 200ms, không làm nghẽn Event Loop",
+      "Daemon tiếp tục ghi nhận heartbeat, cảnh báo lỗi mạng và tự phục hồi khi có mạng lại",
+    status: "READY",
+  },
+
+  // --- ASYNCIO LOOP & DISPATCHER ---
+  {
+    id: "TEST-DAEMON-19",
+    category: "MAIN",
+    group: "Asyncio Loop & Dispatcher",
+    scenario: "Dispatcher nhận tick mới từ Quote.intraday()",
+    expectation:
+      "Phân phối dữ liệu song song tới 3 Engine trong thời gian < 50ms",
     status: "READY",
   },
   {
-    id: "TEST-DAEMON-07",
+    id: "TEST-DAEMON-20",
+    category: "SUB",
+    group: "Asyncio Loop & Dispatcher",
+    scenario: "Lượng tick đổ về dồn dập trong đợt ATC (> 500 ticks/giây)",
+    expectation:
+      "Hàng đợi asyncio.Queue đệm dữ liệu an toàn, không gây rò rỉ bộ nhớ (Memory Leak)",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-21",
+    category: "EDGE",
     group: "Asyncio Loop & Dispatcher",
     scenario: "Khi nhận lệnh SIGTERM hoặc SIGINT tắt server Uvicorn",
     expectation:
       "Daemon hoàn tất vòng lặp hiện tại, hủy an toàn các tác vụ con và shutdown sạch sẽ",
     status: "READY",
   },
+
+  // --- AUDIT & HEARTBEAT API ---
   {
-    id: "TEST-DAEMON-08",
+    id: "TEST-DAEMON-22",
+    category: "MAIN",
     group: "Audit & Heartbeat API",
     scenario: "Gọi API GET /api/v1/quant/daemon/status",
     expectation:
       "Trả về HTTP 200 kèm JSON chứa state, uptime_seconds, ticks_processed, circuit_breaker_status",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-23",
+    category: "SUB",
+    group: "Audit & Heartbeat API",
+    scenario: "Admin gọi API POST /api/v1/quant/daemon/pause",
+    expectation:
+      "Daemon tạm dừng thu thập dữ liệu ngầm, heartbeat ghi nhận trạng thái PAUSED",
+    status: "READY",
+  },
+  {
+    id: "TEST-DAEMON-24",
+    category: "EDGE",
+    group: "Audit & Heartbeat API",
+    scenario: "Kích hoạt thủ công 1 chu kỳ POST /api/v1/quant/daemon/trigger-cycle vào ban đêm",
+    expectation:
+      "Thực thi trọn vẹn 1 vòng lặp thử nghiệm và trả về kết quả JSON mà không đổi state hệ thống",
     status: "READY",
   },
 ];
@@ -171,6 +331,7 @@ export function Phase3TRDPage() {
   const [copied, setCopied] = useState(false);
   const [testSearch, setTestSearch] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string>("ALL");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
   const handleCopyMarkdown = async () => {
     try {
@@ -198,13 +359,23 @@ export function Phase3TRDPage() {
     toast.success("Đang tải xuống file phase_3_specification.md");
   };
 
+  const testGroups = [
+    "ALL",
+    "State Machine (Clock & Sessions)",
+    "Resilience & Circuit Breaker",
+    "Asyncio Loop & Dispatcher",
+    "Audit & Heartbeat API",
+  ];
+
   const filteredTests = testCases.filter((t) => {
     const matchesSearch =
       t.id.toLowerCase().includes(testSearch.toLowerCase()) ||
       t.scenario.toLowerCase().includes(testSearch.toLowerCase()) ||
       t.expectation.toLowerCase().includes(testSearch.toLowerCase());
     const matchesGroup = selectedGroup === "ALL" || t.group === selectedGroup;
-    return matchesSearch && matchesGroup;
+    const matchesCategory =
+      selectedCategory === "ALL" || t.category === selectedCategory;
+    return matchesSearch && matchesGroup && matchesCategory;
   });
 
   return (
@@ -579,24 +750,79 @@ export function Phase3TRDPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="relative flex-1 min-w-[240px]">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Tìm kiếm kịch bản test hoặc mã test..."
-                    value={testSearch}
-                    onChange={(e) => setTestSearch(e.target.value)}
-                    className="pl-8"
-                  />
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="relative flex-1 min-w-[240px]">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Tìm kiếm kịch bản test hoặc mã test..."
+                      value={testSearch}
+                      onChange={(e) => setTestSearch(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                  {/* Category Filter Tabs */}
+                  <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-lg border">
+                    {(
+                      [
+                        { id: "ALL", label: `Tất cả (${testCases.length})` },
+                        {
+                          id: "MAIN",
+                          label: `Main Cases (${testCases.filter((t) => t.category === "MAIN").length})`,
+                        },
+                        {
+                          id: "SUB",
+                          label: `Sub Cases (${testCases.filter((t) => t.category === "SUB").length})`,
+                        },
+                        {
+                          id: "EDGE",
+                          label: `Edge Cases (${testCases.filter((t) => t.category === "EDGE").length})`,
+                        },
+                      ] as const
+                    ).map((cat) => (
+                      <Button
+                        key={cat.id}
+                        variant={selectedCategory === cat.id ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`h-7 text-xs px-2.5 ${
+                          selectedCategory === cat.id
+                            ? cat.id === "MAIN"
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                              : cat.id === "SUB"
+                              ? "bg-blue-600 hover:bg-blue-700 text-white"
+                              : cat.id === "EDGE"
+                              ? "bg-rose-600 hover:bg-rose-700 text-white"
+                              : ""
+                            : ""
+                        }`}
+                      >
+                        {cat.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={selectedGroup === "ALL" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedGroup("ALL")}
-                  >
-                    Tất cả ({testCases.length})
-                  </Button>
+
+                {/* Group Filter Chips */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">
+                    Nhóm kiểm thử:
+                  </span>
+                  {testGroups.map((grp) => (
+                    <Button
+                      key={grp}
+                      variant={selectedGroup === grp ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setSelectedGroup(grp)}
+                      className={`h-6 text-[11px] px-2 rounded-md ${
+                        selectedGroup === grp
+                          ? "border border-primary/30 font-semibold"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {grp === "ALL" ? "Tất cả nhóm" : grp}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
@@ -605,6 +831,7 @@ export function Phase3TRDPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-36">Mã Test</TableHead>
+                      <TableHead className="w-24">Phân loại</TableHead>
                       <TableHead className="w-56">Phân nhóm</TableHead>
                       <TableHead>Kịch bản thử nghiệm</TableHead>
                       <TableHead>Kết quả kỳ vọng</TableHead>
@@ -612,19 +839,52 @@ export function Phase3TRDPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTests.map((tc) => (
-                      <TableRow key={tc.id}>
-                        <TableCell className="font-mono text-xs font-semibold">{tc.id}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{tc.group}</TableCell>
-                        <TableCell className="text-xs font-medium">{tc.scenario}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{tc.expectation}</TableCell>
-                        <TableCell className="text-right">
-                          <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]">
-                            {tc.status}
-                          </Badge>
+                    {filteredTests.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-6 text-muted-foreground text-xs"
+                        >
+                          Không tìm thấy kịch bản nào khớp với điều kiện tìm kiếm.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      filteredTests.map((tc) => (
+                        <TableRow key={tc.id}>
+                          <TableCell className="font-mono text-xs font-semibold text-primary">
+                            {tc.id}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                tc.category === "MAIN"
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]"
+                                  : tc.category === "SUB"
+                                  ? "bg-blue-500/10 text-blue-600 border-blue-500/30 text-[10px]"
+                                  : "bg-rose-500/10 text-rose-600 border-rose-500/30 text-[10px]"
+                              }
+                            >
+                              {tc.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {tc.group}
+                          </TableCell>
+                          <TableCell className="text-xs font-medium">
+                            {tc.scenario}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {tc.expectation}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]">
+                              {tc.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>

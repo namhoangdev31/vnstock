@@ -59,6 +59,7 @@ export const Route = createFileRoute("/_layout/trd/phase-2")({
 
 interface TestCase {
   id: string;
+  category: "MAIN" | "SUB" | "EDGE";
   group:
     | "Engine 1 (Technical & Orderflow)"
     | "Engine 2 (Liquidity & T+2)"
@@ -70,8 +71,10 @@ interface TestCase {
 }
 
 const testCases: TestCase[] = [
+  // --- ENGINE 1: TECHNICAL & ORDERFLOW ---
   {
     id: "TEST-E1-01",
+    category: "MAIN",
     group: "Engine 1 (Technical & Orderflow)",
     scenario: "Tính toán RSI 14 & MACD (12, 26, 9) trên chuỗi nến OHLCV chuẩn",
     expectation:
@@ -80,6 +83,16 @@ const testCases: TestCase[] = [
   },
   {
     id: "TEST-E1-02",
+    category: "SUB",
+    group: "Engine 1 (Technical & Orderflow)",
+    scenario: "Tính toán VWAP đa khung thời gian kết hợp nến 1m, 5m, 15m trong phiên",
+    expectation:
+      "Đường VWAP tích lũy khối lượng liên tục từ đầu phiên 09:00, không bị lệch pha giữa các khung",
+    status: "READY",
+  },
+  {
+    id: "TEST-E1-03",
+    category: "EDGE",
     group: "Engine 1 (Technical & Orderflow)",
     scenario: "Tính VWAP trên dữ liệu Intraday có nến thanh khoản = 0",
     expectation:
@@ -87,7 +100,17 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-E1-03",
+    id: "TEST-E1-04",
+    category: "MAIN",
+    group: "Engine 1 (Technical & Orderflow)",
+    scenario: "Tính Orderflow Delta với dòng lệnh khớp mua/bán hỗn hợp từ Quote.intraday()",
+    expectation:
+      "Delta = V_buy - V_sell chuẩn xác từng tick; phản ánh đúng xung lực mua/bán chủ động",
+    status: "READY",
+  },
+  {
+    id: "TEST-E1-05",
+    category: "EDGE",
     group: "Engine 1 (Technical & Orderflow)",
     scenario: "Tính Order Imbalance với dòng lệnh 100% mua chủ động (Vol_Sell = 0)",
     expectation:
@@ -95,7 +118,8 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-E1-04",
+    id: "TEST-E1-06",
+    category: "MAIN",
     group: "Engine 1 (Technical & Orderflow)",
     scenario: "Nhận diện Fair Value Gap (Bullish & Bearish FVG) giữa cụm 3 nến",
     expectation:
@@ -103,7 +127,8 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-E1-05",
+    id: "TEST-E1-07",
+    category: "SUB",
     group: "Engine 1 (Technical & Orderflow)",
     scenario: "Nhận diện Liquidity Sweep (Quét thanh khoản đỉnh/đáy)",
     expectation:
@@ -111,31 +136,28 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
-    id: "TEST-E2-01",
-    group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Tính Institutional Flow Momentum khi thiếu dữ liệu Tự doanh",
+    id: "TEST-E1-08",
+    category: "EDGE",
+    group: "Engine 1 (Technical & Orderflow)",
+    scenario: "Chuỗi nến Doji liên tiếp (High = Low = Close) trong vùng thị trường mất thanh khoản",
     expectation:
-      "Tự động hạ trọng số Tự doanh về 0 và chuẩn hóa theo Khối ngoại; không throw Exception",
+      "Chỉ báo biến động xử lý an toàn phép chia logarithm; độ biến động tiệm cận 0 mà không crash",
+    status: "READY",
+  },
+
+  // --- ENGINE 2: LIQUIDITY & T+2 ---
+  {
+    id: "TEST-E2-01",
+    category: "MAIN",
+    group: "Engine 2 (Liquidity & T+2)",
+    scenario: "Tổng hợp luồng vốn Khối ngoại và Tự doanh trên toàn bộ 30 mã rổ VN30",
+    expectation:
+      "Cộng gộp giá trị mua/bán ròng chính xác; tính ra điểm Institutional Momentum Score",
     status: "READY",
   },
   {
     id: "TEST-E2-02",
-    group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Phân tích độ rộng thị trường khi toàn sàn giảm mạnh (100% decliners)",
-    expectation:
-      "Trả về Breadth Score tiệm cận -1.0; tín hiệu nghiêng hẳn về Bearish",
-    status: "READY",
-  },
-  {
-    id: "TEST-E2-03",
-    group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Tính lịch trình thanh toán T+2 cho lệnh mua vào ngày thứ Sáu",
-    expectation:
-      "Cổ phiếu khả dụng vào phiên chiều thứ Ba tuần sau (loại trừ T7, CN và ngày nghỉ lễ)",
-    status: "READY",
-  },
-  {
-    id: "TEST-E2-04",
+    category: "SUB",
     group: "Engine 2 (Liquidity & T+2)",
     scenario: "Đánh giá áp lực xả hàng T+2 khi phiên T-2 có thanh khoản bắt đáy đột biến x3",
     expectation:
@@ -143,15 +165,64 @@ const testCases: TestCase[] = [
     status: "READY",
   },
   {
+    id: "TEST-E2-03",
+    category: "EDGE",
+    group: "Engine 2 (Liquidity & T+2)",
+    scenario: "Tính Institutional Flow Momentum khi thiếu dữ liệu Tự doanh do công bố trễ",
+    expectation:
+      "Tự động hạ trọng số Tự doanh về 0 và chuẩn hóa theo Khối ngoại; không throw Exception",
+    status: "READY",
+  },
+  {
+    id: "TEST-E2-04",
+    category: "MAIN",
+    group: "Engine 2 (Liquidity & T+2)",
+    scenario: "Phân tích độ rộng thị trường (Advance/Decline Ratio) trên 400 mã sàn HOSE",
+    expectation:
+      "Tính tỷ lệ mã tăng / mã giảm chuẩn xác; nhận diện độ phân kỳ giữa chỉ số và độ rộng",
+    status: "READY",
+  },
+  {
     id: "TEST-E2-05",
+    category: "EDGE",
+    group: "Engine 2 (Liquidity & T+2)",
+    scenario: "Phân tích độ rộng thị trường khi toàn sàn giảm mạnh (100% decliners)",
+    expectation:
+      "Trả về Breadth Score tiệm cận -1.0; tín hiệu nghiêng hẳn về Bearish an toàn",
+    status: "READY",
+  },
+  {
+    id: "TEST-E2-06",
+    category: "SUB",
+    group: "Engine 2 (Liquidity & T+2)",
+    scenario: "Tính lịch trình thanh toán T+2 cho lệnh mua vào ngày thứ Sáu",
+    expectation:
+      "Cổ phiếu khả dụng vào phiên chiều thứ Ba tuần sau (loại trừ T7, CN và ngày nghỉ lễ)",
+    status: "READY",
+  },
+  {
+    id: "TEST-E2-07",
+    category: "EDGE",
+    group: "Engine 2 (Liquidity & T+2)",
+    scenario: "Tuần giao dịch có kỳ nghỉ lễ Quốc Khánh/Tết Nguyên Đán kéo dài giữa tuần",
+    expectation:
+      "Tự động dời lịch thanh toán T+2 sang đúng ngày làm việc tiếp theo của thị trường",
+    status: "READY",
+  },
+  {
+    id: "TEST-E2-08",
+    category: "SUB",
     group: "Engine 2 (Liquidity & T+2)",
     scenario: "Đánh giá tác động tỷ giá USD/VND vượt ngưỡng biến động cảnh báo",
     expectation:
       "Đưa ra điểm trừ thanh khoản ngoại vi tiêu cực đối với rổ chỉ số VN30",
     status: "READY",
   },
+
+  // --- ENGINE 3: BASIS & TRANSITIONS ---
   {
     id: "TEST-E3-01",
+    category: "MAIN",
     group: "Engine 3 (Basis & Transitions)",
     scenario: "Tính toán Basis Spread khi giá VN30F1M cao hơn chỉ số cơ sở VN30",
     expectation:
@@ -160,6 +231,7 @@ const testCases: TestCase[] = [
   },
   {
     id: "TEST-E3-02",
+    category: "SUB",
     group: "Engine 3 (Basis & Transitions)",
     scenario: "Phát hiện phân kỳ Basis cực đại (Z_basis > +2.5)",
     expectation:
@@ -168,14 +240,16 @@ const testCases: TestCase[] = [
   },
   {
     id: "TEST-E3-03",
+    category: "EDGE",
     group: "Engine 3 (Basis & Transitions)",
-    scenario: "Tính Parkinson Volatility với chuỗi nến Doji hẹp (High ≈ Low)",
+    scenario: "Chỉ số VN30 dừng cập nhật tạm thời do nghẽn mạng phía sở giao dịch",
     expectation:
-      "Xử lý an toàn phép chia logarithm; độ biến động tiệm cận 0 mà không crash",
+      "Engine 3 chuyển sang cơ chế fallback tính synthetic index từ 30 cổ phiếu thành phần",
     status: "READY",
   },
   {
     id: "TEST-E3-04",
+    category: "MAIN",
     group: "Engine 3 (Basis & Transitions)",
     scenario: "Dự báo phiên đóng cửa ATC vào lúc 14:20 (Pre-ATC window)",
     expectation:
@@ -184,30 +258,54 @@ const testCases: TestCase[] = [
   },
   {
     id: "TEST-E3-05",
+    category: "SUB",
     group: "Engine 3 (Basis & Transitions)",
-    scenario: "Dự báo phiên tiếp theo (T+1) với mô phỏng Monte Carlo 1,000 runs",
+    scenario: "Phân loại độ lệch ATO Opening Gap lúc 08:45 của hợp đồng VN30F1M",
+    expectation:
+      "Xác định đúng Bullish Gap, Bearish Gap hay Normal Gap dựa trên phân phối 60 ngày",
+    status: "READY",
+  },
+  {
+    id: "TEST-E3-06",
+    category: "MAIN",
+    group: "Engine 3 (Basis & Transitions)",
+    scenario: "Dự báo phiên tiếp theo (T+1) với mô phỏng Monte Carlo 10,000 runs",
     expectation:
       "Dải giá kỳ vọng P_low và P_high tuân thủ nghiêm ngặt biên độ trần/sàn ±7% của VN30F1M",
     status: "READY",
   },
   {
-    id: "TEST-ENS-01",
-    group: "Ensemble & Audit Ledger",
-    scenario: "Chuẩn hóa tổng trọng số khi người dùng truyền tổng weights ≠ 1.0",
+    id: "TEST-E3-07",
+    category: "EDGE",
+    group: "Engine 3 (Basis & Transitions)",
+    scenario: "Các đường đi mô phỏng Monte Carlo vượt quá biên trần/sàn ±7%",
     expectation:
-      "Hệ thống tự động normalize sao cho w1 + w2 + w3 = 1.0 một cách an toàn",
+      "Áp dụng rào chắn phản xạ/hấp thụ tại biên trần sàn, không tạo ra kịch bản phi thực tế",
+    status: "READY",
+  },
+
+  // --- ENSEMBLE & AUDIT LEDGER ---
+  {
+    id: "TEST-ENS-01",
+    category: "MAIN",
+    group: "Ensemble & Audit Ledger",
+    scenario: "Điều phối trọng số động theo từng khung giờ phiên (ATO, Continuous, ATC, Post-market)",
+    expectation:
+      "Tổng trọng số w1 + w2 + w3 luôn chuẩn hóa = 1.0; phản ánh đúng trọng tâm từng phiên",
     status: "READY",
   },
   {
     id: "TEST-ENS-02",
+    category: "EDGE",
     group: "Ensemble & Audit Ledger",
-    scenario: "Xung đột tín hiệu: Engine 1 Bullish nhưng Engine 3 Bearish",
+    scenario: "Xung đột tín hiệu: Engine 1 Bullish (+0.85) nhưng Engine 3 Bearish (-0.80)",
     expectation:
-      "Ensemble cân bằng điểm số, nhận diện trạng thái mâu thuẫn và phát tín hiệu NEUTRAL",
+      "Ensemble cân bằng điểm số, nhận diện trạng thái mâu thuẫn và phát tín hiệu NEUTRAL an toàn",
     status: "READY",
   },
   {
     id: "TEST-ENS-03",
+    category: "MAIN",
     group: "Ensemble & Audit Ledger",
     scenario: "Tự động ghi nhận tín hiệu vào ForecastJournal khi sinh forecast",
     expectation:
@@ -216,6 +314,7 @@ const testCases: TestCase[] = [
   },
   {
     id: "TEST-ENS-04",
+    category: "EDGE",
     group: "Ensemble & Audit Ledger",
     scenario: "Kiểm tra Look-Ahead Bias: cung cấp tập dữ liệu cắt tại thời điểm T",
     expectation:
@@ -224,10 +323,20 @@ const testCases: TestCase[] = [
   },
   {
     id: "TEST-ENS-05",
+    category: "SUB",
     group: "Ensemble & Audit Ledger",
     scenario: "Tính toán Stop Loss và Take Profit động theo hệ số k * ATR 14",
     expectation:
       "Giá SL và TP luôn hợp lý theo chiều lệnh (Long: SL < Entry < TP; Short: TP < Entry < SL)",
+    status: "READY",
+  },
+  {
+    id: "TEST-ENS-06",
+    category: "SUB",
+    group: "Ensemble & Audit Ledger",
+    scenario: "Cập nhật đường bám Trailing Stop khi giá phái sinh lập đỉnh/đáy mới",
+    expectation:
+      "Ngưỡng Stop Loss tịnh tiến theo chiều có lãi, khóa chặt lợi nhuận tích lũy",
     status: "READY",
   },
 ];
@@ -296,6 +405,8 @@ export function Phase2TRDPage() {
   const [testSearch, setTestSearch] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string>("ALL");
 
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+
   const handleCopyMarkdown = async () => {
     try {
       await navigator.clipboard.writeText(phase2Markdown);
@@ -328,7 +439,8 @@ export function Phase2TRDPage() {
       t.scenario.toLowerCase().includes(testSearch.toLowerCase()) ||
       t.expectation.toLowerCase().includes(testSearch.toLowerCase());
     const matchesGroup = selectedGroup === "ALL" || t.group === selectedGroup;
-    return matchesSearch && matchesGroup;
+    const matchesCategory = selectedCategory === "ALL" || t.category === selectedCategory;
+    return matchesSearch && matchesGroup && matchesCategory;
   });
 
   return (
@@ -889,8 +1001,8 @@ export function Phase2TRDPage() {
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="text-base">Ma Trận 20 Kịch Bản Kiểm Thử (Test Matrix)</CardTitle>
-                  <CardDescription>Chi tiết các ca kiểm thử biên và tình huống vận hành của 3 Engine</CardDescription>
+                  <CardTitle className="text-base">Ma Trận 27 Kịch Bản Kiểm Thử (Test Matrix Đa Dạng)</CardTitle>
+                  <CardDescription>Bao gồm đầy đủ Main Cases (luồng chuẩn), Sub Cases (biến thể) và Edge Cases (biên & ngoại lệ)</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="relative w-full sm:w-[240px]">
@@ -905,8 +1017,28 @@ export function Phase2TRDPage() {
                 </div>
               </div>
 
+              {/* Category Filter Buttons */}
+              <div className="flex flex-wrap gap-1.5 pt-3 border-b pb-2.5">
+                {[
+                  { key: "ALL", label: `Tất cả (${testCases.length})` },
+                  { key: "MAIN", label: `Main Cases (${testCases.filter((t) => t.category === "MAIN").length})` },
+                  { key: "SUB", label: `Sub Cases (${testCases.filter((t) => t.category === "SUB").length})` },
+                  { key: "EDGE", label: `Edge Cases (${testCases.filter((t) => t.category === "EDGE").length})` },
+                ].map((cat) => (
+                  <Button
+                    key={cat.key}
+                    variant={selectedCategory === cat.key ? "default" : "secondary"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(cat.key)}
+                    className="text-xs h-7 px-2.5"
+                  >
+                    {cat.label}
+                  </Button>
+                ))}
+              </div>
+
               {/* Group Filter Buttons */}
-              <div className="flex flex-wrap gap-1.5 pt-3">
+              <div className="flex flex-wrap gap-1.5 pt-2">
                 {["ALL", "Engine 1 (Technical & Orderflow)", "Engine 2 (Liquidity & T+2)", "Engine 3 (Basis & Transitions)", "Ensemble & Audit Ledger"].map((grp) => (
                   <Button
                     key={grp}
@@ -915,7 +1047,7 @@ export function Phase2TRDPage() {
                     onClick={() => setSelectedGroup(grp)}
                     className="text-xs h-7 px-2.5"
                   >
-                    {grp === "ALL" ? "Tất cả (20)" : grp}
+                    {grp === "ALL" ? "Tất cả nhóm" : grp}
                   </Button>
                 ))}
               </div>
@@ -926,16 +1058,17 @@ export function Phase2TRDPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[120px]">Test ID</TableHead>
+                      <TableHead className="w-[100px]">Phân loại</TableHead>
                       <TableHead className="w-[180px]">Nhóm</TableHead>
                       <TableHead>Tình huống kiểm thử</TableHead>
                       <TableHead>Hành vi kỳ vọng</TableHead>
-                      <TableHead className="w-[110px] text-right">Trạng thái</TableHead>
+                      <TableHead className="w-[100px] text-right">Trạng thái</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTests.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-6 text-muted-foreground text-xs">
+                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground text-xs">
                           Không tìm thấy kịch bản nào khớp với điều kiện tìm kiếm.
                         </TableCell>
                       </TableRow>
@@ -944,6 +1077,20 @@ export function Phase2TRDPage() {
                         <TableRow key={tc.id}>
                           <TableCell className="font-mono text-xs font-semibold text-primary">
                             {tc.id}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                tc.category === "MAIN"
+                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]"
+                                  : tc.category === "SUB"
+                                  ? "bg-blue-500/10 text-blue-600 border-blue-500/30 text-[10px]"
+                                  : "bg-rose-500/10 text-rose-600 border-rose-500/30 text-[10px]"
+                              }
+                            >
+                              {tc.category === "MAIN" ? "MAIN" : tc.category === "SUB" ? "SUB" : "EDGE"}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-xs">
