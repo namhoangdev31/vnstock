@@ -13,6 +13,6 @@ logger = logging.getLogger(__name__)
 @router.get("", response_model=list[str])
 def get_vnstock() -> list[str]:
     """Lấy danh sách các nguồn dữ liệu đang được cấu hình và hoạt động của vnstock."""
-    sources = vnstock_service.sources
+    sources = vnstock_service.fetch_all_symbols()
     logger.info("Danh sách nguồn dữ liệu vnstock: %s", sources)
     return sources
