@@ -12,7 +12,6 @@ version, then back-filled with the realized outcome and score.
 
 import uuid
 from datetime import date, datetime
-from typing import Any
 
 from sqlalchemy import DateTime, UniqueConstraint
 from sqlmodel import Field, SQLModel
@@ -47,9 +46,9 @@ class ForecastJournal(AwareSQLModel, table=True):
     )
     predicted_value: float | None = None
     predicted_direction: str = Field(default=ForecastDirection.NEUTRAL, max_length=10)
-    engine_weights: dict[str, Any] = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
+    engine_weights: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
     model_version: str = Field(max_length=40)
-    parameter_snapshot: dict[str, Any] = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
+    parameter_snapshot: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
 
     # Back-filled once reality resolves.
     actual_value: float | None = None
@@ -198,9 +197,9 @@ class ForecastJournalPublic(SQLModel):
     predicted_at: datetime
     predicted_value: float | None = None
     predicted_direction: str
-    engine_weights: dict[str, Any]
+    engine_weights: dict
     model_version: str
-    parameter_snapshot: dict[str, Any]
+    parameter_snapshot: dict
     actual_value: float | None = None
     actual_direction: str | None = None
     realized_at: datetime | None = None
@@ -217,9 +216,9 @@ class ForecastCreate(SQLModel):
     predicted_at: datetime
     predicted_value: float | None = None
     predicted_direction: str = Field(default=ForecastDirection.NEUTRAL, max_length=10)
-    engine_weights: dict[str, Any] = Field(default_factory=dict)
+    engine_weights: dict = Field(default_factory=dict)
     model_version: str = Field(max_length=40)
-    parameter_snapshot: dict[str, Any] = Field(default_factory=dict)
+    parameter_snapshot: dict = Field(default_factory=dict)
 
 
 class ForecastResolve(SQLModel):
@@ -253,27 +252,23 @@ class InstitutionalFlowPublic(SQLModel):
     prop_net_value: float | None = None
     source: str
 
-
 class TechnicalEngineResponse(SQLModel):
     """Response payload for Engine 1 (Technical & Price-Action Engine)."""
-
     symbol: str
     as_of: datetime
     score: float  # -1.0 to +1.0
     rsi: float | None = None
-    macd: dict[str, Any] = Field(default_factory=dict)  # {"dif": float, "dea": float, "hist": float}
+    macd: dict = Field(default_factory=dict)  # {"dif": float, "dea": float, "hist": float}
     vwap: float | None = None
     order_imbalance: float = 0.0  # -1.0 to +1.0
     volume_delta: int = 0
-    camarilla_levels: dict[str, Any] = Field(default_factory=dict)  # {"r4": ..., "r3": ..., "s3": ..., "s4": ...}
+    camarilla_levels: dict = Field(default_factory=dict)  # {"r4": ..., "r3": ..., "s3": ..., "s4": ...}
     fvg_detected: bool = False
-    fvg_details: dict[str, Any] = Field(default_factory=dict)
-    liquidity_sweeps: dict[str, Any] = Field(default_factory=dict)
-
+    fvg_details: dict = Field(default_factory=dict)
+    liquidity_sweeps: dict = Field(default_factory=dict)
 
 class FlowLiquidityEngineResponse(SQLModel):
     """Response payload for Engine 2 (Liquidity, Flow & T+2 Cashflow Engine)."""
-
     as_of: datetime
     score: float  # -1.0 to +1.0
     institutional_momentum: float = 0.0
@@ -281,10 +276,8 @@ class FlowLiquidityEngineResponse(SQLModel):
     t2_pressure: float = 0.0  # 0.0 to 1.0
     macro_sentiment: float = 0.0
 
-
 class QuantMLEngineResponse(SQLModel):
     """Response payload for Engine 3 (Quantitative ML & Statistical Engine)."""
-
     symbol: str
     as_of: datetime
     score: float  # -1.0 to +1.0
@@ -293,20 +286,16 @@ class QuantMLEngineResponse(SQLModel):
     historical_vol: float = 0.0
     parkinson_vol: float = 0.0
     session_phase: str = "CONTINUOUS"
-    monte_carlo_targets: dict[str, Any] = Field(default_factory=dict)  # {"p05": ..., "p50": ..., "p95": ...}
-
+    monte_carlo_targets: dict = Field(default_factory=dict)  # {"p05": ..., "p50": ..., "p95": ...}
 
 class EnsembleSignalRequest(SQLModel):
     """Payload to request an ensemble prediction & trigger auto-ledger logging."""
-
     symbol: str = Field(default="VN30F1M", max_length=20)
     horizon: str = Field(default=ForecastHorizon.INTRADAY, max_length=20)
-    custom_weights: dict[str, Any] | None = None  # Optional override {"w1": float, "w2": float, "w3": float}
-
+    custom_weights: dict | None = None  # Optional override {"w1": float, "w2": float, "w3": float}
 
 class EnsembleSignalResponse(SQLModel):
     """Response payload for Ensemble Decision System & Audit Journal confirmation."""
-
     journal_id: uuid.UUID
     symbol: str
     horizon: str
@@ -317,27 +306,22 @@ class EnsembleSignalResponse(SQLModel):
     entry_price: float | None = None
     stop_loss: float | None = None
     take_profit: float | None = None
-    engine_weights: dict[str, Any]  # {"w1": ..., "w2": ..., "w3": ...}
-    engine_scores: dict[str, Any]  # {"engine1": ..., "engine2": ..., "engine3": ...}
+    engine_weights: dict  # {"w1": ..., "w2": ..., "w3": ...}
+    engine_scores: dict  # {"engine1": ..., "engine2": ..., "engine3": ...}
     model_version: str = "v2.0.0"
     disclaimer: str = (
         "CẢNH BÁO RỦI RO (RULE 4): Tín hiệu mô phỏng định lượng mang tính chất tham khảo "
         "và nghiên cứu giáo dục, không phải là lời khuyên đầu tư tài chính hay khuyến nghị đặt lệnh."
     )
-
-
 class EnsembleWeightsResponse(SQLModel):
     """Current dynamic time-of-day weights structure."""
-
     session_phase: str
     current_time_utc: datetime
-    weights: dict[str, Any]  # {"w1": float, "w2": float, "w3": float}
-    schedule: dict[str, Any]
-
+    weights: dict  # {"w1": float, "w2": float, "w3": float}
+    schedule: dict
 
 class EnsembleWeightsUpdate(SQLModel):
     """Payload to update custom ensemble weights."""
-
     w1: float = Field(ge=0.0, le=1.0)
     w2: float = Field(ge=0.0, le=1.0)
     w3: float = Field(ge=0.0, le=1.0)
