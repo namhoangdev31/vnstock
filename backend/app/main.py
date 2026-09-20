@@ -26,48 +26,56 @@ FRONTEND_DIR = Path(__file__).parent / "frontend"
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    try:
-        backend_dir = Path(__file__).parent.parent
-        alembic_ini_path = backend_dir / "alembic.ini"
-        if not alembic_ini_path.is_file():
-            alembic_ini_path = Path(__file__).parent.parent.parent / "alembic.ini"
+def _run_migrations_and_seed() -> None:
+    backend_dir = Path(__file__).parent.parent
+    alembic_ini_path = backend_dir / "alembic.ini"
+    if not alembic_ini_path.is_file():
+        alembic_ini_path = Path(__file__).parent.parent.parent / "alembic.ini"
 
-        logger.info(
-            f"[LIFESPAN] Alembic ini path: {alembic_ini_path}, exists: {alembic_ini_path.is_file()}"
-        )
-        if alembic_ini_path.is_file():
-            try:
-                alembic_cfg = Config(str(alembic_ini_path))
-                script_dir = backend_dir / "app" / "alembic"
-                if not script_dir.is_dir():
-                    script_dir = Path(__file__).parent / "alembic"
-                alembic_cfg.set_main_option(
-                    "script_location", str(script_dir.resolve())
-                )
-                command.upgrade(alembic_cfg, "head")
-                logger.info("[LIFESPAN] Alembic migrations executed successfully.")
-            except Exception as alembic_err:
-                logger.warning(
-                    f"[LIFESPAN] Alembic failed: {alembic_err}, running SQLModel.metadata.create_all..."
-                )
-                from sqlmodel import SQLModel
-
-                import app.models  # noqa: F401
-
-                SQLModel.metadata.create_all(engine)
-        else:
+    logger.info(
+        f"[LIFESPAN] Alembic ini path: {alembic_ini_path}, exists: {alembic_ini_path.is_file()}"
+    )
+    if alembic_ini_path.is_file():
+        try:
+            alembic_cfg = Config(str(alembic_ini_path))
+            script_dir = backend_dir / "app" / "alembic"
+            if not script_dir.is_dir():
+                script_dir = Path(__file__).parent / "alembic"
+            alembic_cfg.set_main_option("script_location", str(script_dir.resolve()))
+            command.upgrade(alembic_cfg, "head")
+            logger.info("[LIFESPAN] Alembic migrations executed successfully.")
+        except Exception as alembic_err:
+            logger.warning(
+                f"[LIFESPAN] Alembic failed: {alembic_err}, running SQLModel.metadata.create_all..."
+            )
             from sqlmodel import SQLModel
 
             import app.models  # noqa: F401
 
             SQLModel.metadata.create_all(engine)
-            logger.info("[LIFESPAN] Created tables via SQLModel.metadata.create_all.")
+    else:
+        from sqlmodel import SQLModel
 
-        with Session(engine) as session:
-            init_db(session)
-            logger.info("[LIFESPAN] Initial DB seed executed successfully.")
+        import app.models  # noqa: F401
+
+        SQLModel.metadata.create_all(engine)
+        logger.info("[LIFESPAN] Created tables via SQLModel.metadata.create_all.")
+
+    with Session(engine) as session:
+        init_db(session)
+        logger.info("[LIFESPAN] Initial DB seed executed successfully.")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    try:
+        await asyncio.wait_for(
+            asyncio.to_thread(_run_migrations_and_seed), timeout=15.0
+        )
+    except TimeoutError:
+        logger.warning(
+            "[LIFESPAN] Migration/seed timed out after 15s. Continuing server startup..."
+        )
     except Exception as e:
         logger.error(f"[LIFESPAN ERROR] Migration/seed error: {e}", exc_info=True)
 
