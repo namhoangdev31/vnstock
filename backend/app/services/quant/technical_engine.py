@@ -6,12 +6,13 @@ Camarilla, khoảng trống giá mất cân bằng (Fair Value Gap - FVG) và b�
 """
 
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
 from sqlmodel import Session, col, select
 
+from app.models import VN_TZ
 from app.models.models_quant import (
     TechnicalEngineResponse,
     TickFlowAggregated,

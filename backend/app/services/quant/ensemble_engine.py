@@ -7,7 +7,7 @@ và bắt buộc tự động ghi nhận vào sổ nhật ký kiểm toán Forec
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from sqlmodel import Session

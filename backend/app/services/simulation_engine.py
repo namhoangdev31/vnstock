@@ -29,7 +29,7 @@ LIMIT/STOP fills, or a trading calendar; settlement_date is weekday-approximate.
 
 import logging
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from sqlmodel import Session, select

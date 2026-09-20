@@ -16,7 +16,7 @@ so it can be unit-tested without network access.
 """
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pandas as pd

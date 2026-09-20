@@ -9,7 +9,7 @@ import math
 import random
 import statistics
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 

@@ -17,7 +17,6 @@ from typing import Any
 
 import pandas as pd
 from sqlalchemy import and_
-from sqlalchemy.dialects.postgresql import Insert as PGInsert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import Session, col, select
 
@@ -274,23 +273,26 @@ class DataSyncManager:
         if not records:
             return 0
 
-        # Khởi tạo câu lệnh PostgreSQL Insert với type hint rõ ràng
-        insert_stmt: PGInsert = pg_insert(model_cls)
+        insert_stmt = pg_insert(model_cls)
 
-        # Xây dựng mệnh đề ON CONFLICT DO UPDATE
-        # Khi update_fields có trường: cập nhật các trường được chỉ định
-        # Khi update_fields rỗng: thực hiện cập nhật idempotent (no-op) trên khóa xung đột
-        # (tương đương DO NOTHING trong PostgreSQL, đồng thời giải quyết triệt để lỗi type stub của IDE)
-        fallback_key = conflict_keys[0] if conflict_keys else "id"
-        update_dict = (
-            {f: getattr(insert_stmt.excluded, f) for f in update_fields}
-            if update_fields
-            else {fallback_key: getattr(insert_stmt.excluded, fallback_key)}
-        )
-        upsert_stmt = insert_stmt.on_conflict_do_update(
-            index_elements=conflict_keys,
-            set_=update_dict,
-        )
+        # Xây dựng mệnh đề ON CONFLICT theo chuẩn dialects/postgresql/dml.py:
+        # - Khi update_fields có trường: gọi on_conflict_do_update với set_=update_dict
+        # - Khi update_fields rỗng: gọi on_conflict_do_nothing (tránh ValueError do set_ rỗng)
+        # Sử dụng getattr để gọi an toàn, giải quyết triệt để lỗi phân tích tĩnh sai của PyCharm
+        # (PyCharm không suy luận được kiểu trả về qua decorator @_generative của SQLAlchemy nên báo giả PyNoneFunctionAssignment)
+        if update_fields:
+            excluded = insert_stmt.excluded
+            update_dict = {f: getattr(excluded, f) for f in update_fields}
+            do_update_fn: Any = insert_stmt.on_conflict_do_update
+            upsert_stmt: Any = do_update_fn(
+                index_elements=conflict_keys,
+                set_=update_dict,
+            )
+        else:
+            do_nothing_fn: Any = insert_stmt.on_conflict_do_nothing
+            upsert_stmt: Any = do_nothing_fn(
+                index_elements=conflict_keys,
+            )
 
         num_cols = len(records[0]) if records else 1
         # Giới hạn an toàn tham số PostgreSQL (tối đa 32,767 tham số trên mỗi câu lệnh)

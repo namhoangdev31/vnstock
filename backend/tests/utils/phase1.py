@@ -21,7 +21,7 @@ import app.models  # noqa: F401 — register all tables with SQLModel.metadata
 from app.api.deps import get_current_user, get_db
 from app.core.security import create_access_token
 from app.main import app as fastapi_app
-from app.models import User, VN_TZ
+from app.models import VN_TZ, User
 
 
 @pytest.fixture

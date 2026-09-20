@@ -6,7 +6,7 @@ cùng áp lực bán xả hàng phiên chiều tại thị trường chứng kho
 """
 
 from collections.abc import Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from sqlmodel import Session, col, select

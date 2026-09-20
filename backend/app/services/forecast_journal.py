@@ -16,7 +16,7 @@ Scoring is deterministic and side-effect free apart from the persisted score.
 
 import logging
 import math
-from datetime import UTC, datetime
+from datetime import datetime
 
 from sqlmodel import Session, col, select
 
