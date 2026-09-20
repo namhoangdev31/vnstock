@@ -57,8 +57,7 @@ class DataSyncManager:
             status="started",
         )
         self.session.add(log)
-        self.session.commit()
-        self.session.refresh(log)
+        self.session.flush()
         return log
 
     def _finish_log(
@@ -75,7 +74,6 @@ class DataSyncManager:
         log.completed_at = datetime.now(UTC)
         self.session.add(log)
         self.session.commit()
-        self.session.refresh(log)
         return log
 
     # ------------------------------------------------------------------
@@ -182,7 +180,7 @@ class DataSyncManager:
 
         try:
             deriv_df = self.svc.fetch_derivatives_list()
-            if deriv_df is not None and not deriv_df.empty:
+            if isinstance(deriv_df, pd.DataFrame) and not deriv_df.empty:
                 for _, row in deriv_df.iterrows():
                     code = str(row.get("ticker", row.get("symbol", ""))).strip().upper()
                     if not code or code in [c[0] for c in contracts]:
@@ -198,6 +196,35 @@ class DataSyncManager:
                     if not exp:
                         exp = m1_exp
 
+                    sym = self.session.get(StockSymbol, code)
+                    if not sym:
+                        sym = StockSymbol(
+                            symbol=code,
+                            organ_name=f"Hợp đồng tương lai {code}",
+                            exchange="DERIV",
+                            industry="Derivatives",
+                            asset_type="derivative",
+                            lot_size=1,
+                            is_active=True,
+                        )
+                        self.session.add(sym)
+                    contract = self.session.get(DerivativeContract, code)
+                    if not contract:
+                        contract = DerivativeContract(
+                            symbol=code,
+                            underlying_symbol="VN30",
+                            multiplier=100_000.0,
+                            expiration_date=exp,
+                            is_active=True,
+                        )
+                        self.session.add(contract)
+                    count += 1
+            elif isinstance(deriv_df, pd.Series) and not deriv_df.empty:
+                for val in deriv_df:
+                    code = str(val).strip().upper()
+                    if not code or code in [c[0] for c in contracts]:
+                        continue
+                    exp = m1_exp
                     sym = self.session.get(StockSymbol, code)
                     if not sym:
                         sym = StockSymbol(
@@ -295,7 +322,7 @@ class DataSyncManager:
             if dialect_name == "postgresql" and records:
                 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-                batch_size = 1000
+                batch_size = 500
                 for i in range(0, len(records), batch_size):
                     batch = records[i : i + batch_size]
                     stmt = pg_insert(StockSymbol).values(batch)
@@ -333,12 +360,16 @@ class DataSyncManager:
                         existing_symbols[sym_code] = sym
                 count = len(records)
 
+            del records
+            import gc
+
+            gc.collect()
+
             # Sync VN30 group & Derivatives
             self._sync_vn30_group()
             deriv_count = self._sync_derivatives()
             count += deriv_count
 
-            self.session.commit()
             logger.info(
                 "Synced %d symbols (including %d derivatives)", count, deriv_count
             )
