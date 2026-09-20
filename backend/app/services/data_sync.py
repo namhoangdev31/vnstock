@@ -19,6 +19,7 @@ import pandas as pd
 from sqlalchemy import and_
 from sqlmodel import Session, col, select
 
+from app.models import VN_TZ
 from app.models.models_stock import (
     BondSpecification,
     CompanyProfile,
@@ -212,7 +213,7 @@ class DataSyncManager:
         log.status = status
         log.rows_synced = rows_synced
         log.error_message = error_message
-        log.completed_at = datetime.now(UTC)
+        log.completed_at = datetime.now(VN_TZ)
         self.session.add(log)
         self.session.commit()
         return log
@@ -309,7 +310,7 @@ class DataSyncManager:
         if auto_create:
             missing = clean_symbols - existing
             if missing:
-                now_utc = datetime.now(UTC)
+                now_utc = datetime.now(VN_TZ)
                 for sym in missing:
                     self.session.add(
                         StockSymbol(
@@ -582,7 +583,7 @@ class DataSyncManager:
                 stmt = (
                     update(StockSymbol)
                     .where(col(StockSymbol.symbol).in_(tickers))
-                    .values(index_group="VN30", updated_at=datetime.now(UTC))
+                    .values(index_group="VN30", updated_at=datetime.now(VN_TZ))
                 )
                 self.session.execute(stmt)
                 return len(tickers)
@@ -637,7 +638,7 @@ class DataSyncManager:
         except Exception as exc:
             logger.warning("Could not fetch extra derivatives list: %s", exc)
 
-        now_utc = datetime.now(UTC)
+        now_utc = datetime.now(VN_TZ)
         sym_records = [
             {
                 "id": uuid.uuid4(),
@@ -692,7 +693,7 @@ class DataSyncManager:
         if not col_sym:
             return 0
 
-        now_utc = datetime.now(UTC)
+        now_utc = datetime.now(VN_TZ)
         today_d = date.today()
 
         sym_records: list[dict[str, Any]] = []
@@ -801,7 +802,7 @@ class DataSyncManager:
         if not col_sym:
             return 0
 
-        now_utc = datetime.now(UTC)
+        now_utc = datetime.now(VN_TZ)
         today_d = date.today()
 
         # Bóc tách danh sách mã tổ chức phát hành tiềm năng
@@ -944,7 +945,7 @@ class DataSyncManager:
             if df.empty:
                 raise VnstockServiceError("Empty response")
 
-            now_utc = datetime.now(UTC)
+            now_utc = datetime.now(VN_TZ)
             records: list[dict[str, Any]] = []
             for _, row in df.iterrows():
                 symbol_str = self._extract_str(row, "ticker", "symbol")
@@ -1190,7 +1191,7 @@ class DataSyncManager:
                 "description": self._extract_str(
                     data, "companyProfile", "description", default=""
                 ),
-                "updated_at": datetime.now(UTC),
+                "updated_at": datetime.now(VN_TZ),
             }
 
             self._bulk_upsert(
@@ -1221,7 +1222,7 @@ class DataSyncManager:
 
             self._ensure_symbol_exists(symbol)
 
-            now_utc = datetime.now(UTC)
+            now_utc = datetime.now(VN_TZ)
             records: list[dict[str, Any]] = []
             for _, row in df.iterrows():
                 year = self._extract_int(row, "year", "yearReport", default=0)
