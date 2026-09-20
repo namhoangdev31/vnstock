@@ -21,7 +21,7 @@ import app.models  # noqa: F401 — register all tables with SQLModel.metadata
 from app.api.deps import get_current_user, get_db
 from app.core.security import create_access_token
 from app.main import app as fastapi_app
-from app.models import User
+from app.models import User, VN_TZ
 
 
 @pytest.fixture
@@ -83,7 +83,7 @@ def auth_headers(user: User) -> dict[str, str]:
 
 
 def utc_now() -> datetime:
-    return datetime.now(UTC)
+    return datetime.now(VN_TZ)
 
 
 def as_utc(value: datetime) -> datetime:

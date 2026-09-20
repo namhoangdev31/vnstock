@@ -12,6 +12,7 @@ from typing import Any
 
 from sqlmodel import Session
 
+from app.models import VN_TZ
 from app.models.enums import (
     ForecastDirection,
     ForecastStatus,
@@ -79,7 +80,7 @@ class EnsembleEngine:
         custom_weights: dict[str, float] | None = None,
     ) -> tuple[str, dict[str, float]]:
         """Lấy bộ trọng số tương ứng theo thời điểm giao dịch thực tế (chuẩn hóa tổng = 1.0)."""
-        now = dt or datetime.now(UTC)
+        now = dt or datetime.now(VN_TZ)
         phase = self.engine3.classify_session_phase(now)
 
         if custom_weights:
@@ -235,7 +236,7 @@ class EnsembleEngine:
         as_of: datetime | None = None,
     ) -> EnsembleSignalResponse:
         """Kích hoạt 3 Engine, phối hợp trọng số động, tính SL/TP và lưu vết vào ForecastJournal."""
-        now = as_of or datetime.now(UTC)
+        now = as_of or datetime.now(VN_TZ)
 
         # 1. Chạy 3 Engine phân tích
         e1_res = self.engine1.analyze(
@@ -339,7 +340,7 @@ class EnsembleEngine:
 
     def get_weights_status(self) -> EnsembleWeightsResponse:
         """Trả về cấu hình trọng số động và trạng thái phiên hiện tại."""
-        now = datetime.now(UTC)
+        now = datetime.now(VN_TZ)
         phase, weights = self.get_dynamic_weights(now)
         return EnsembleWeightsResponse(
             session_phase=phase,

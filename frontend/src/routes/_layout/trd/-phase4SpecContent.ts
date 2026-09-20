@@ -134,7 +134,7 @@ class PaperPortfolio(SQLModel, table=True):
     locked_margin: float = Field(default=0.0)                # Ký quỹ phái sinh đang khóa
     unrealized_pnl: float = Field(default=0.0)               # Lãi/lỗ tạm tính
     realized_pnl: float = Field(default=0.0)                 # Lãi/lỗ đã chốt
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(VN_TZ))
 
 class PaperOrder(SQLModel, table=True):
     __tablename__ = "paper_order"
@@ -151,7 +151,7 @@ class PaperOrder(SQLModel, table=True):
     filled_price: Optional[float] = Field(default=None)
     status: str = Field(default="PENDING", index=True)       # PENDING, FILLED, CANCELLED, REJECTED
     stop_price: Optional[float] = Field(default=None)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(VN_TZ))
     filled_at: Optional[datetime] = Field(default=None)
 
 class PaperPosition(SQLModel, table=True):
@@ -165,7 +165,7 @@ class PaperPosition(SQLModel, table=True):
     average_price: float = Field(default=0.0)                # Giá vốn bình quân
     current_price: float = Field(default=0.0)                # Giá thị trường hiện hành
     unrealized_pnl: float = Field(default=0.0)
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(VN_TZ))
 
 class EquitySettlementLedger(SQLModel, table=True):
     __tablename__ = "equity_settlement_ledger"
@@ -173,7 +173,7 @@ class EquitySettlementLedger(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     portfolio_id: uuid.UUID = Field(foreign_key="paper_portfolio.id", index=True)
     symbol: str = Field(index=True)
-    bought_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    bought_at: datetime = Field(default_factory=lambda: datetime.now(VN_TZ))
     settlement_due: datetime = Field(index=True)             # 13:00 ngày T+2
     volume: int = Field()
     cost_basis: float = Field()
@@ -206,7 +206,7 @@ Kỹ sư backend triển khai theo thứ tự sau:
 
 ### Bước 4: Viết Module \`t_plus_2_manager.py\`
 1. Lập lịch định kỳ vào lúc 13:00 các ngày làm việc (Thứ 2 đến Thứ 6).
-2. Quét bảng \`EquitySettlementLedger\` tìm các row có \`settlement_due <= datetime.now(UTC)\` và \`status = 'PENDING_T2'\`.
+2. Quét bảng \`EquitySettlementLedger\` tìm các row có \`settlement_due <= datetime.now(VN_TZ)\` và \`status = 'PENDING_T2'\`.
 3. Cập nhật trạng thái thành \`SETTLED_AVAILABLE\`, cộng dồn khối lượng vào số lượng cổ phiếu khả dụng để bán.
 
 ### Bước 5: Viết Module \`alpha_screener.py\`

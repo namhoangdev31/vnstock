@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 
 from sqlmodel import Session
 
+from app.models import VN_TZ
 from app.models.enums import SessionPhase
 from app.models.models_quant import QuantMLEngineResponse
 from app.services.quant.indicators import (
@@ -45,7 +46,7 @@ class QuantMLEngine:
         - 14:30 - 14:45: ATC (Đợt khớp lệnh định kỳ đóng cửa)
         - 14:45 - 08:30: POST_MARKET (Sau giờ giao dịch / Chạy mô phỏng qua đêm 24/7)
         """
-        now_utc = dt or datetime.now(UTC)
+        now_utc = dt or datetime.now(VN_TZ)
         vn_time = now_utc.astimezone(_VN_TZ)
         time_minutes = vn_time.hour * 60 + vn_time.minute
 
@@ -209,7 +210,7 @@ class QuantMLEngine:
         as_of: datetime | None = None,
     ) -> QuantMLEngineResponse:
         """Thực thi toàn bộ tính toán định lượng của Engine 3 và trả về QuantMLEngineResponse."""
-        now = as_of or datetime.now(UTC)
+        now = as_of or datetime.now(VN_TZ)
         phase = self.classify_session_phase(now)
 
         basis_val, basis_z = self.compute_basis_zscore(

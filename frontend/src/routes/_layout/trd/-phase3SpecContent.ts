@@ -158,7 +158,7 @@ class DaemonSessionLog(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     trading_date: str = Field(index=True)                  # YYYY-MM-DD
     state: str = Field(index=True)                         # MORNING_CONTINUOUS, ATC_AUCTION,...
-    heartbeat_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    heartbeat_at: datetime = Field(default_factory=lambda: datetime.now(VN_TZ))
     ticks_processed: int = Field(default=0)
     signals_emitted: int = Field(default=0)
     circuit_breaker_status: str = Field(default="CLOSED") # CLOSED, OPEN, HALF_OPEN

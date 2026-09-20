@@ -101,7 +101,7 @@ class ForecastJournal(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(index=True)                          # VN30F1M, VN30,...
     horizon: str = Field(index=True)                         # ATC, T+1, WEEKLY, MONTHLY
-    predicted_at: datetime = Field(default_factory=lambda: datetime.now(UTC), index=True)
+    predicted_at: datetime = Field(default_factory=lambda: datetime.now(VN_TZ), index=True)
     
     # Dự báo ban đầu
     predicted_direction: str = Field()                       # BULLISH, BEARISH, NEUTRAL
@@ -129,7 +129,7 @@ class ModelVersionSnapshot(SQLModel, table=True):
     
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     version_tag: str = Field(unique=True, index=True)       # v1.0.0, v1.1.0
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(VN_TZ))
     parameters_snapshot: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     is_active: bool = Field(default=False, index=True)
     rolling_30d_accuracy: Optional[float] = Field(default=None)
@@ -159,7 +159,7 @@ Kỹ sư backend triển khai theo thứ tự sau:
 1. Được Daemon gọi vào khung giờ \`POST_MARKET_EVAL\` (14:45 - 15:30):
 2. Quét các dòng \`status = 'PENDING'\` có \`horizon = 'ATC'\` của ngày hôm nay.
 3. Lấy giá khớp ATC thực tế từ \`Quote.history()\`.
-4. Cập nhật \`actual_value = price_atc\`, \`realized_at = datetime.now(UTC)\`.
+4. Cập nhật \`actual_value = price_atc\`, \`realized_at = datetime.now(VN_TZ)\`.
 5. Tính \`directional_correct\`, \`brier_score\`, \`absolute_error\` và chuyển \`status = 'SCORED'\`.
 
 ### Bước 4: Viết Bộ Tính Toán Hiệu Chuẩn Trọng Số (\`recalibration_engine.py\`)

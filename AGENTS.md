@@ -211,7 +211,7 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
 - **Authentication**: All `/api/v1/stock/*` and `/api/v1/simulation/*` endpoints MUST be protected with JWT via `CurrentUser` dependency.
 - **SQLModel Patterns**:
   - Always use `session.exec(select(Model))` and wrap order columns in `col()` (e.g., `.order_by(col(StockOHLCVDaily.trading_date))`).
-  - Use `datetime.now(UTC)` for timestamps (never timezone-naive `datetime.now()`).
+  - Use `datetime.now(VN_TZ)` for timestamps (never timezone-naive `datetime.now()`).
 - **Code Quality**:
   - Every backend modification MUST pass `uv run ruff check`, `uv run ruff format --check`, and `uv run ty check` with **0 errors**.
 

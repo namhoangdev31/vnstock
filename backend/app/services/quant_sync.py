@@ -22,6 +22,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 from sqlmodel import Session, select
 
+from app.models import VN_TZ
 from app.models.enums import MacroIndicatorCode
 from app.models.models_quant import MacroIndicator, TickFlowAggregated
 from app.models.models_stock import DataSyncLog
@@ -44,7 +45,7 @@ def _to_utc_aware(value: object) -> datetime | None:
         return None
     if ts.tzinfo is None:
         ts = ts.replace(tzinfo=_VN_TZ)
-    return ts.astimezone(UTC)
+    return ts.astimezone(_VN_TZ)
 
 
 def aggregate_tick_orderflow(
@@ -286,7 +287,7 @@ class QuantSyncManager:
         log.status = status
         log.rows_synced = rows_synced
         log.error_message = error_message
-        log.completed_at = datetime.now(UTC)
+        log.completed_at = datetime.now(VN_TZ)
         self.session.add(log)
         self.session.commit()
         self.session.refresh(log)

@@ -225,7 +225,7 @@ class TechnicalEngine:
         as_of: datetime | None = None,
     ) -> TechnicalEngineResponse:
         """Thực thi phân tích kỹ thuật và trả về kết quả TechnicalEngineResponse."""
-        now = as_of or datetime.now(UTC)
+        now = as_of or datetime.now(VN_TZ)
 
         # Tự động nạp dữ liệu OHLCV từ DB nếu tham số chưa được truyền vào
         if (closes is None or not closes) and self.session is not None:

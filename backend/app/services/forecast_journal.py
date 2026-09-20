@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 
 from sqlmodel import Session, col, select
 
+from app.models import VN_TZ
 from app.models.enums import (
     ForecastDirection,
     ForecastHorizon,
@@ -63,7 +64,7 @@ class ForecastJournalService:
         """
         if predicted_at.tzinfo is None:
             raise ForecastJournalError(
-                "predicted_at must be timezone-aware (UTC) to anchor no-look-ahead"
+                "predicted_at must be timezone-aware (VN_TZ) to anchor no-look-ahead"
             )
 
         entry = ForecastJournal(
@@ -120,9 +121,9 @@ class ForecastJournalService:
 
         entry.actual_value = actual_value
         entry.actual_direction = actual_direction
-        entry.realized_at = realized_at or datetime.now(UTC)
+        entry.realized_at = realized_at or datetime.now(VN_TZ)
         entry.status = ForecastStatus.RESOLVED
-        entry.updated_at = datetime.now(UTC)
+        entry.updated_at = datetime.now(VN_TZ)
         self.session.add(entry)
         self.session.commit()
         self.session.refresh(entry)
@@ -160,7 +161,7 @@ class ForecastJournalService:
         entry.error = error
         entry.score = score
         entry.status = ForecastStatus.SCORED
-        entry.updated_at = datetime.now(UTC)
+        entry.updated_at = datetime.now(VN_TZ)
         self.session.add(entry)
         self.session.commit()
         self.session.refresh(entry)

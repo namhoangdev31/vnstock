@@ -659,7 +659,7 @@ export function Phase1TRDPage() {
                           predicted_at
                         </TableCell>
                         <TableCell className="font-mono">
-                          TIMESTAMP (UTC)
+                          TIMESTAMP (VN_TZ)
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary">Immutable</Badge>
@@ -892,7 +892,7 @@ export function Phase1TRDPage() {
                   <div className="p-2 rounded bg-muted/40 border flex justify-between">
                     <span className="font-mono">executed_at</span>
                     <span className="text-muted-foreground">
-                      Thời điểm khớp lệnh chính xác (UTC)
+                      Thời điểm khớp lệnh chính xác (VN_TZ)
                     </span>
                   </div>
                 </CardContent>

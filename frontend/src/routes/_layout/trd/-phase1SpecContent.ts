@@ -50,7 +50,7 @@ Cần bổ sung các bảng sau vào hệ sinh thái dữ liệu với quy ướ
   - \`cash_balance\`: \`float\` (Tiền mặt khả dụng).
   - \`equity\`: \`float\` (Tổng tài sản ròng theo giá trị thị trường).
   - \`margin_used\`: \`float\` (Ký quỹ đang sử dụng).
-  - \`created_at\`, \`updated_at\`: \`datetime\` (UTC).
+  - \`created_at\`, \`updated_at\`: \`datetime\` (VN_TZ).
 * **Model: \`SimulationOrder\`**:
   - \`id\`: \`uuid.UUID\` (PK).
   - \`portfolio_id\`: \`uuid.UUID\` (FK \`simulation_portfolio.id\`).
@@ -65,7 +65,7 @@ Cần bổ sung các bảng sau vào hệ sinh thái dữ liệu với quy ướ
   - \`fee\`: \`float\` (Phí giao dịch giả lập).
   - \`tax\`: \`float\` (Thuế giả lập).
   - \`status\`: \`str\` (\`PENDING\`, \`FILLED\`, \`CANCELLED\`, \`REJECTED\`).
-  - \`created_at\`, \`updated_at\`: \`datetime\` (UTC).
+  - \`created_at\`, \`updated_at\`: \`datetime\` (VN_TZ).
 * **Model: \`SimulationPosition\`**:
   - \`id\`: \`uuid.UUID\` (PK).
   - \`portfolio_id\`: \`uuid.UUID\` (FK \`simulation_portfolio.id\`).

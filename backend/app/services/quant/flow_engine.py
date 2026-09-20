@@ -11,6 +11,7 @@ from typing import Any
 
 from sqlmodel import Session, col, select
 
+from app.models import VN_TZ
 from app.models.enums import MacroIndicatorCode
 from app.models.models_quant import (
     FlowLiquidityEngineResponse,
@@ -241,7 +242,7 @@ class FlowLiquidityEngine:
         as_of: datetime | None = None,
     ) -> FlowLiquidityEngineResponse:
         """Thực thi phân tích thanh khoản, dòng tiền và trả về FlowLiquidityEngineResponse."""
-        now = as_of or datetime.now(UTC)
+        now = as_of or datetime.now(VN_TZ)
 
         # Nạp dữ liệu từ DB nếu tham số chưa được truyền trực tiếp
         if flows is None and self.session is not None:

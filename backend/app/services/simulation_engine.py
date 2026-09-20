@@ -34,6 +34,7 @@ from uuid import UUID
 
 from sqlmodel import Session, select
 
+from app.models import VN_TZ
 from app.models.entities.simulation import (
     Order,
     Portfolio,
@@ -230,7 +231,7 @@ class SimulationEngine:
                 f"Only PENDING orders can be cancelled (got {order.status})"
             )
         order.status = OrderStatus.CANCELLED
-        order.updated_at = datetime.now(UTC)
+        order.updated_at = datetime.now(VN_TZ)
         self.session.add(order)
         self.session.commit()
         self.session.refresh(order)
@@ -336,7 +337,7 @@ class SimulationEngine:
         order.fee = fee
         order.tax = tax
         order.status = OrderStatus.FILLED
-        order.updated_at = datetime.now(UTC)
+        order.updated_at = datetime.now(VN_TZ)
         self.session.add(order)
 
         trade = Trade(
@@ -353,7 +354,7 @@ class SimulationEngine:
         self.session.add(trade)
 
         self._refresh_equity(portfolio)
-        portfolio.updated_at = datetime.now(UTC)
+        portfolio.updated_at = datetime.now(VN_TZ)
         self.session.add(portfolio)
         self.session.commit()
         self.session.refresh(order)
@@ -420,7 +421,7 @@ class SimulationEngine:
         existing.quantity = new_qty
         existing.margin_required = round_money(existing.margin_required + margin_add)
         self._mark_position(existing, fill_price, mult)
-        existing.updated_at = datetime.now(UTC)
+        existing.updated_at = datetime.now(VN_TZ)
         self.session.add(existing)
 
     def _reduce_position(
@@ -470,7 +471,7 @@ class SimulationEngine:
             position.status = PositionStatus.CLOSED
         else:
             self._mark_position(position, fill_price, mult)
-        position.updated_at = datetime.now(UTC)
+        position.updated_at = datetime.now(VN_TZ)
         self.session.add(position)
         return realized
 
@@ -512,7 +513,7 @@ class SimulationEngine:
         self.session.add(trade)
 
         self._refresh_equity(portfolio)
-        portfolio.updated_at = datetime.now(UTC)
+        portfolio.updated_at = datetime.now(VN_TZ)
         self.session.add(portfolio)
         self.session.commit()
         self.session.refresh(trade)
@@ -536,7 +537,7 @@ class SimulationEngine:
                 self._mark_position(position, prices[position.symbol], mult)
                 self.session.add(position)
         self._refresh_equity(portfolio)
-        portfolio.updated_at = datetime.now(UTC)
+        portfolio.updated_at = datetime.now(VN_TZ)
         self.session.add(portfolio)
         self.session.commit()
         self.session.refresh(portfolio)
