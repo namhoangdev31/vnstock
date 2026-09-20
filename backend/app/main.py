@@ -27,60 +27,61 @@ logger = logging.getLogger(__name__)
 
 
 def _run_migrations_and_seed() -> None:
-    backend_dir = Path(__file__).parent.parent
-    alembic_ini_path = backend_dir / "alembic.ini"
-    if not alembic_ini_path.is_file():
-        alembic_ini_path = Path(__file__).parent.parent.parent / "alembic.ini"
-
-    logger.info(
-        f"[LIFESPAN] Alembic ini path: {alembic_ini_path}, exists: {alembic_ini_path.is_file()}"
-    )
-    if alembic_ini_path.is_file():
-        try:
-            alembic_cfg = Config(str(alembic_ini_path))
-            script_dir = backend_dir / "app" / "alembic"
-            if not script_dir.is_dir():
-                script_dir = Path(__file__).parent / "alembic"
-            alembic_cfg.set_main_option("script_location", str(script_dir.resolve()))
-            command.upgrade(alembic_cfg, "head")
-            logger.info("[LIFESPAN] Alembic migrations executed successfully.")
-        except Exception as alembic_err:
-            logger.warning(
-                f"[LIFESPAN] Alembic migration failed: {alembic_err}. Skipping DB seed to prevent blocking startup."
-            )
-            return
-    else:
-        try:
-            from sqlmodel import SQLModel
-
-            import app.models  # noqa: F401
-
-            SQLModel.metadata.create_all(engine)
-            logger.info("[LIFESPAN] Created tables via SQLModel.metadata.create_all.")
-        except Exception as create_err:
-            logger.warning(
-                f"[LIFESPAN] SQLModel.metadata.create_all failed: {create_err}"
-            )
-            return
-
     try:
-        with Session(engine) as session:
-            init_db(session)
-            logger.info("[LIFESPAN] Initial DB seed executed successfully.")
-    except Exception as seed_err:
-        logger.warning(f"[LIFESPAN] Initial DB seed failed: {seed_err}")
+        backend_dir = Path(__file__).parent.parent
+        alembic_ini_path = backend_dir / "alembic.ini"
+        if not alembic_ini_path.is_file():
+            alembic_ini_path = Path(__file__).parent.parent.parent / "alembic.ini"
+
+        logger.info(
+            f"[LIFESPAN] Alembic ini path: {alembic_ini_path}, exists: {alembic_ini_path.is_file()}"
+        )
+        if alembic_ini_path.is_file():
+            try:
+                alembic_cfg = Config(str(alembic_ini_path))
+                script_dir = backend_dir / "app" / "alembic"
+                if not script_dir.is_dir():
+                    script_dir = Path(__file__).parent / "alembic"
+                alembic_cfg.set_main_option(
+                    "script_location", str(script_dir.resolve())
+                )
+                command.upgrade(alembic_cfg, "head")
+                logger.info("[LIFESPAN] Alembic migrations executed successfully.")
+            except Exception as alembic_err:
+                logger.warning(
+                    f"[LIFESPAN] Alembic migration failed: {alembic_err}. Skipping DB seed."
+                )
+                return
+        else:
+            try:
+                from sqlmodel import SQLModel
+
+                import app.models  # noqa: F401
+
+                SQLModel.metadata.create_all(engine)
+                logger.info(
+                    "[LIFESPAN] Created tables via SQLModel.metadata.create_all."
+                )
+            except Exception as create_err:
+                logger.warning(
+                    f"[LIFESPAN] SQLModel.metadata.create_all failed: {create_err}"
+                )
+                return
+
+        try:
+            with Session(engine) as session:
+                init_db(session)
+                logger.info("[LIFESPAN] Initial DB seed executed successfully.")
+        except Exception as seed_err:
+            logger.warning(f"[LIFESPAN] Initial DB seed failed: {seed_err}")
+    except Exception as e:
+        logger.warning(f"[LIFESPAN] Unexpected error in background migration/seed: {e}")
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    try:
-        await asyncio.wait_for(asyncio.to_thread(_run_migrations_and_seed), timeout=8.0)
-    except TimeoutError:
-        logger.warning(
-            "[LIFESPAN] Migration/seed timed out after 8s. Continuing server startup..."
-        )
-    except Exception as e:
-        logger.error(f"[LIFESPAN ERROR] Migration/seed error: {e}", exc_info=True)
+    # Khởi động migration & seed trong background thread để không chặn startup và readiness probe
+    migration_task = asyncio.create_task(asyncio.to_thread(_run_migrations_and_seed))
 
     from app.cron.scheduler import start_scheduler_task
 
@@ -94,6 +95,8 @@ async def lifespan(_app: FastAPI):
                 await cron_task
             except asyncio.CancelledError:
                 pass
+        if not migration_task.done():
+            migration_task.cancel()
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -131,3 +134,12 @@ app.add_middleware(
 app.include_router(api_router, prefix=settings.API_V1_STR)
 if FRONTEND_DIR.is_dir():
     app.frontend("/", directory=FRONTEND_DIR)
+else:
+
+    @app.get("/", include_in_schema=False)
+    async def root():
+        return {
+            "project": settings.PROJECT_NAME,
+            "status": "online",
+            "docs": f"{settings.API_V1_STR}/docs",
+        }
