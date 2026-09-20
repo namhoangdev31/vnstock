@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     # Spec mandates 0.2–0.5s; 0.3s is a safe default.
     VNSTOCK_REQUEST_MIN_DELAY: float = 0.3
 
+    # Cron & Background Scheduler config
+    CRON_SECRET_KEY: str | None = None
+    ENABLE_INPROCESS_CRON: bool = False
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def _use_psycopg_driver(cls, value: str | PostgresDsn) -> str:

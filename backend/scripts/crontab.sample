@@ -1,0 +1,16 @@
+# ==============================================================================
+# VNSTOCK QUANT TRADING ENGINE - CRONTAB SAMPLE
+# ==============================================================================
+# Lịch đồng bộ danh mục mã cổ phiếu và hợp đồng phái sinh mới từ vnstock v4.
+# Tần suất: 08:00 sáng Thứ Hai và Thứ Năm hàng tuần (Giờ Việt Nam UTC+7).
+#
+# Cài đặt trên máy chủ Linux:
+#   crontab -e
+#   Dán một trong hai cấu hình bên dưới và lưu lại.
+# ==============================================================================
+
+# Cách 1: Chạy runner Python độc lập qua uv (Khuyên dùng khi triển khai máy chủ riêng/VPS)
+0 8 * * 1,4 cd /path/to/vnstock/backend && uv run python -m app.cron.sync_symbols >> /var/log/vnstock_cron_symbols.log 2>&1
+
+# Cách 2: Gọi Webhook API bảo mật tới FastAPI Cloud hoặc Docker container
+# 0 8 * * 1,4 curl -s -X POST "https://your-app.fastapicloud.dev/api/v1/stock/cron/sync-symbols" -H "X-Cron-Secret: YOUR_SECRET_KEY" >> /var/log/vnstock_cron_webhook.log 2>&1

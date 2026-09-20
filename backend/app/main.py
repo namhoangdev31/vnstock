@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import time
@@ -63,7 +64,19 @@ async def lifespan(_app: FastAPI):
             logger.info("[LIFESPAN] Initial DB seed executed successfully.")
     except Exception as e:
         logger.error(f"[LIFESPAN ERROR] Migration/seed error: {e}", exc_info=True)
-    yield
+
+    from app.cron.scheduler import start_scheduler_task
+
+    cron_task = start_scheduler_task()
+    try:
+        yield
+    finally:
+        if cron_task and not cron_task.done():
+            cron_task.cancel()
+            try:
+                await cron_task
+            except asyncio.CancelledError:
+                pass
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:

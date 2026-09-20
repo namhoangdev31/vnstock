@@ -15,6 +15,7 @@ from sqlmodel import Session, col, select
 from app.models.models_stock import (
     CompanyProfile,
     DataSyncLog,
+    DerivativeContract,
     FinancialReport,
     StockOHLCVDaily,
     StockOHLCVIntraday,
@@ -23,6 +24,14 @@ from app.models.models_stock import (
 from app.services.vnstock_service import VnstockService, VnstockServiceError
 
 logger = logging.getLogger(__name__)
+
+
+def get_third_thursday(year: int, month: int) -> date:
+    """Tính ngày Thứ Năm lần thứ 3 trong tháng (ngày đáo hạn hợp đồng phái sinh VN30)."""
+    first_day = date(year, month, 1)
+    days_to_thursday = (3 - first_day.weekday()) % 7
+    first_thursday = first_day.day + days_to_thursday
+    return date(year, month, first_thursday + 14)
 
 
 class DataSyncManager:
@@ -38,10 +47,13 @@ class DataSyncManager:
 
     def _create_log(self, sync_type: str, symbol: str | None = None) -> DataSyncLog:
         """Create a sync log entry with status 'started'."""
+        source_str = (
+            str(self.svc.source) if getattr(self.svc, "source", None) else "VCI"
+        )
         log = DataSyncLog(
             sync_type=sync_type,
             symbol=symbol,
-            source=self.svc.source,
+            source=source_str,
             status="started",
         )
         self.session.add(log)
@@ -70,6 +82,135 @@ class DataSyncManager:
     # Sync: Symbols
     # ------------------------------------------------------------------
 
+    def _sync_vn30_group(self) -> int:
+        """Cập nhật cờ index_group='VN30' cho các cổ phiếu thuộc rổ VN30."""
+        try:
+            vn30_symbols = self.svc.fetch_group_symbols("VN30")
+            if not vn30_symbols:
+                return 0
+            count = 0
+            for symbol_code in vn30_symbols:
+                ticker = str(symbol_code).strip().upper()
+                if ticker:
+                    sym = self.session.get(StockSymbol, ticker)
+                    if sym:
+                        sym.index_group = "VN30"
+                        self.session.add(sym)
+                        count += 1
+            return count
+        except Exception as exc:
+            logger.warning("Could not fetch VN30 group during symbols sync: %s", exc)
+            return 0
+
+    def _sync_derivatives(self) -> int:
+        """Đồng bộ các hợp đồng phái sinh chuẩn vào StockSymbol và DerivativeContract."""
+        today = date.today()
+        this_month_thursday = get_third_thursday(today.year, today.month)
+        if today <= this_month_thursday:
+            m1_year, m1_month = today.year, today.month
+            m1_exp = this_month_thursday
+        else:
+            m1_month = today.month + 1 if today.month < 12 else 1
+            m1_year = today.year if today.month < 12 else today.year + 1
+            m1_exp = get_third_thursday(m1_year, m1_month)
+
+        m2_month = m1_month + 1 if m1_month < 12 else 1
+        m2_year = m1_year if m1_month < 12 else m1_year + 1
+        m2_exp = get_third_thursday(m2_year, m2_month)
+
+        contracts = [
+            ("VN30F1M", m1_exp, "Hợp đồng tương lai VN30 tháng hiện tại"),
+            ("VN30F2M", m2_exp, "Hợp đồng tương lai VN30 tháng kế tiếp"),
+        ]
+
+        count = 0
+        for symbol_code, exp_date, desc in contracts:
+            sym = self.session.get(StockSymbol, symbol_code)
+            if sym:
+                sym.organ_name = desc
+                sym.exchange = "DERIV"
+                sym.asset_type = "derivative"
+                sym.lot_size = 1
+                sym.is_active = True
+                sym.updated_at = datetime.now(UTC)
+                self.session.add(sym)
+            else:
+                sym = StockSymbol(
+                    symbol=symbol_code,
+                    organ_name=desc,
+                    exchange="DERIV",
+                    industry="Derivatives",
+                    asset_type="derivative",
+                    lot_size=1,
+                    is_active=True,
+                )
+                self.session.add(sym)
+
+            contract = self.session.get(DerivativeContract, symbol_code)
+            if contract:
+                contract.expiration_date = exp_date
+                contract.underlying_symbol = "VN30"
+                contract.multiplier = 100_000.0
+                contract.is_active = True
+                contract.updated_at = datetime.now(UTC)
+                self.session.add(contract)
+            else:
+                contract = DerivativeContract(
+                    symbol=symbol_code,
+                    underlying_symbol="VN30",
+                    multiplier=100_000.0,
+                    expiration_date=exp_date,
+                    is_active=True,
+                )
+                self.session.add(contract)
+            count += 1
+
+        try:
+            deriv_df = self.svc.fetch_derivatives_list()
+            if deriv_df is not None and not deriv_df.empty:
+                for _, row in deriv_df.iterrows():
+                    code = str(row.get("ticker", row.get("symbol", ""))).strip().upper()
+                    if not code or code in [c[0] for c in contracts]:
+                        continue
+                    exp = None
+                    if len(code) == 9 and code.startswith("VN30F"):
+                        try:
+                            yy = 2000 + int(code[5:7])
+                            mm = int(code[7:9])
+                            exp = get_third_thursday(yy, mm)
+                        except (ValueError, IndexError):
+                            pass
+                    if not exp:
+                        exp = m1_exp
+
+                    sym = self.session.get(StockSymbol, code)
+                    if not sym:
+                        sym = StockSymbol(
+                            symbol=code,
+                            organ_name=f"Hợp đồng tương lai {code}",
+                            exchange="DERIV",
+                            industry="Derivatives",
+                            asset_type="derivative",
+                            lot_size=1,
+                            is_active=True,
+                        )
+                        self.session.add(sym)
+                    contract = self.session.get(DerivativeContract, code)
+                    if not contract:
+                        contract = DerivativeContract(
+                            symbol=code,
+                            underlying_symbol="VN30",
+                            multiplier=100_000.0,
+                            expiration_date=exp,
+                            is_active=True,
+                        )
+                        self.session.add(contract)
+                    count += 1
+        except Exception as exc:
+            logger.warning("Could not fetch extra derivatives list: %s", exc)
+
+        return count
+
     def sync_symbols(self) -> DataSyncLog:
         """Sync all stock symbols to the database."""
         log = self._create_log("symbols")
@@ -81,34 +222,83 @@ class DataSyncManager:
 
             count = 0
             for _, row in df.iterrows():
-                symbol_str = str(row.get("ticker", row.get("symbol", "")))
+                symbol_str = (
+                    str(row.get("ticker", row.get("symbol", ""))).strip().upper()
+                )
                 if not symbol_str:
                     continue
 
+                organ_name = (
+                    str(row.get("organName", row.get("organ_name", ""))) or None
+                )
+                exchange = (
+                    str(row.get("exchange", row.get("organCode", ""))).upper() or None
+                )
+                icb_code = str(row.get("icbCode", row.get("icb_code", ""))) or None
+                icb_name = str(row.get("icbName", row.get("icb_name", ""))) or None
+                industry = icb_name or str(row.get("industry", "")) or None
+
+                if "VN30F" in symbol_str:
+                    asset_type = "derivative"
+                    lot_size = 1
+                    exchange = exchange or "DERIV"
+                elif (
+                    symbol_str.startswith("E1VFVN30")
+                    or symbol_str.startswith("FUE")
+                    or "ETF" in symbol_str
+                ):
+                    asset_type = "etf"
+                    lot_size = 100
+                elif symbol_str in ("VNINDEX", "VN30", "HNX", "HNX30", "UPCOM"):
+                    asset_type = "index"
+                    lot_size = 1
+                else:
+                    asset_type = str(
+                        row.get("type", row.get("asset_type", "stock"))
+                    ).lower()
+                    lot_size = 100
+
                 existing = self.session.get(StockSymbol, symbol_str)
                 if existing:
-                    existing.organ_name = (
-                        str(row.get("organName", row.get("organ_name", "")))
-                        or existing.organ_name
-                    )
-                    existing.exchange = str(
-                        row.get("exchange", existing.exchange or "")
-                    )
+                    if organ_name:
+                        existing.organ_name = organ_name
+                    if exchange:
+                        existing.exchange = exchange
+                    if icb_code:
+                        existing.icb_code = icb_code
+                    if icb_name:
+                        existing.icb_name = icb_name
+                    if industry:
+                        existing.industry = industry
+                    existing.asset_type = asset_type
+                    existing.lot_size = lot_size
+                    existing.is_active = True
                     existing.updated_at = datetime.now(UTC)
                     self.session.add(existing)
                 else:
                     sym = StockSymbol(
                         symbol=symbol_str,
-                        organ_name=str(row.get("organName", row.get("organ_name", ""))),
-                        exchange=str(row.get("exchange", "")),
-                        industry=str(row.get("industry", row.get("icbName", ""))),
-                        asset_type=str(row.get("type", "stock")),
+                        organ_name=organ_name,
+                        exchange=exchange,
+                        industry=industry,
+                        icb_code=icb_code,
+                        icb_name=icb_name,
+                        asset_type=asset_type,
+                        lot_size=lot_size,
+                        is_active=True,
                     )
                     self.session.add(sym)
                 count += 1
 
+            # Sync VN30 group & Derivatives
+            self._sync_vn30_group()
+            deriv_count = self._sync_derivatives()
+            count += deriv_count
+
             self.session.commit()
-            logger.info("Synced %d symbols", count)
+            logger.info(
+                "Synced %d symbols (including %d derivatives)", count, deriv_count
+            )
             return self._finish_log(log, "success", rows_synced=count)
 
         except VnstockServiceError as exc:

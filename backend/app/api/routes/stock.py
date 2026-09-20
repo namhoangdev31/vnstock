@@ -6,12 +6,13 @@ for missing data ranges.
 """
 
 from datetime import date
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 from sqlmodel import and_, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.config import settings
 from app.models.models_quant import (
     InstitutionalFlow,
     InstitutionalFlowPublic,
@@ -335,6 +336,35 @@ def trigger_sync(
     else:
         raise HTTPException(status_code=400, detail=f"Unknown sync type: {sync_type}")
 
+    return SyncStatusPublic.model_validate(log)
+
+
+# ---------------------------------------------------------------------------
+# POST /stock/cron/sync-symbols — Automated Cron Job Webhook
+# ---------------------------------------------------------------------------
+
+
+@router.post("/cron/sync-symbols", response_model=SyncStatusPublic)
+def cron_sync_symbols(
+    session: SessionDep,
+    x_cron_secret: Annotated[str | None, Header(alias="X-Cron-Secret")] = None,
+    secret_key: str | None = Query(default=None),
+) -> Any:
+    """Kích hoạt đồng bộ danh mục mã qua Cronjob (GitHub Actions hoặc Scheduled Webhook).
+
+    Yêu cầu header 'X-Cron-Secret' hoặc query param 'secret_key' khớp với cấu hình hệ thống.
+    """
+    valid_secret = settings.CRON_SECRET_KEY or settings.SECRET_KEY
+    provided_secret = x_cron_secret or secret_key
+
+    if not provided_secret or provided_secret != valid_secret:
+        raise HTTPException(
+            status_code=403,
+            detail="Mã bảo mật Cron (X-Cron-Secret) không hợp lệ",
+        )
+
+    manager = DataSyncManager(session, vnstock_service)
+    log = manager.sync_symbols()
     return SyncStatusPublic.model_validate(log)
 
 
