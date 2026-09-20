@@ -36,22 +36,35 @@ def _run_migrations_and_seed() -> None:
         logger.info(
             f"[LIFESPAN] Alembic ini path: {alembic_ini_path}, exists: {alembic_ini_path.is_file()}"
         )
+
+        max_retries = 5
+        migration_success = False
+
         if alembic_ini_path.is_file():
-            try:
-                alembic_cfg = Config(str(alembic_ini_path))
-                script_dir = backend_dir / "app" / "alembic"
-                if not script_dir.is_dir():
-                    script_dir = Path(__file__).parent / "alembic"
-                alembic_cfg.set_main_option(
-                    "script_location", str(script_dir.resolve())
-                )
-                command.upgrade(alembic_cfg, "head")
-                logger.info("[LIFESPAN] Alembic migrations executed successfully.")
-            except Exception as alembic_err:
-                logger.warning(
-                    f"[LIFESPAN] Alembic migration failed: {alembic_err}. Skipping DB seed."
-                )
-                return
+            alembic_cfg = Config(str(alembic_ini_path))
+            script_dir = backend_dir / "app" / "alembic"
+            if not script_dir.is_dir():
+                script_dir = Path(__file__).parent / "alembic"
+            alembic_cfg.set_main_option("script_location", str(script_dir.resolve()))
+
+            for attempt in range(1, max_retries + 1):
+                try:
+                    command.upgrade(alembic_cfg, "head")
+                    logger.info("[LIFESPAN] Alembic migrations executed successfully.")
+                    migration_success = True
+                    break
+                except Exception as alembic_err:
+                    if attempt < max_retries:
+                        wait_time = attempt * 2 + 1
+                        logger.info(
+                            f"[LIFESPAN] Database/DNS đang khởi động ({alembic_err}). Thử lại sau {wait_time}s (lần {attempt}/{max_retries})..."
+                        )
+                        time.sleep(wait_time)
+                    else:
+                        logger.warning(
+                            f"[LIFESPAN] Alembic migration chưa thành công sau {max_retries} lần thử: {alembic_err}. Bỏ qua DB seed."
+                        )
+                        return
         else:
             try:
                 from sqlmodel import SQLModel
@@ -62,18 +75,20 @@ def _run_migrations_and_seed() -> None:
                 logger.info(
                     "[LIFESPAN] Created tables via SQLModel.metadata.create_all."
                 )
+                migration_success = True
             except Exception as create_err:
                 logger.warning(
                     f"[LIFESPAN] SQLModel.metadata.create_all failed: {create_err}"
                 )
                 return
 
-        try:
-            with Session(engine) as session:
-                init_db(session)
-                logger.info("[LIFESPAN] Initial DB seed executed successfully.")
-        except Exception as seed_err:
-            logger.warning(f"[LIFESPAN] Initial DB seed failed: {seed_err}")
+        if migration_success:
+            try:
+                with Session(engine) as session:
+                    init_db(session)
+                    logger.info("[LIFESPAN] Initial DB seed executed successfully.")
+            except Exception as seed_err:
+                logger.warning(f"[LIFESPAN] Initial DB seed failed: {seed_err}")
     except Exception as e:
         logger.warning(f"[LIFESPAN] Unexpected error in background migration/seed: {e}")
 
