@@ -29,6 +29,7 @@ from app.models.entities.quant import (
     InstitutionalFlow,
     MacroIndicator,
     MarketBreadth,
+    SignalLog,
     TickFlowAggregated,
 )
 from app.models.enums import (
@@ -61,6 +62,7 @@ __all__ = [
     "MacroLatestResponse",
     "MarketBreadth",
     "QuantMLEngineResponse",
+    "SignalLog",
     "SymbolGroupResponse",
     "TechnicalEngineResponse",
     "TickFlowAggregated",

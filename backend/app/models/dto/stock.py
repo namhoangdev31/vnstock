@@ -1,5 +1,7 @@
 """Các đối tượng truyền tải dữ liệu (DTO) cho dữ liệu chứng khoán và báo cáo tài chính."""
 
+from __future__ import annotations
+
 from datetime import datetime
 
 from sqlmodel import SQLModel

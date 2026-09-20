@@ -4,6 +4,6 @@ Chuyển tiếp tới:
 - DTOs: app.models.dto.vnstock
 """
 
-from app.models.dto.vnstock import VnstockSymbolItem
+from app.models.dto.vnstock import VnstockSymbolResponse
 
-__all__ = ["VnstockSymbolItem"]
+__all__ = ["VnstockSymbolResponse"]

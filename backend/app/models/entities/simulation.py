@@ -26,19 +26,17 @@ from app.models.enums import (
 
 
 class Portfolio(AwareSQLModel, table=True):
-    """Bảng tài khoản danh mục đầu tư mô phỏng (Paper Portfolio)."""
+    """Bảng lưu trữ danh mục đầu tư mô phỏng của người dùng."""
 
     __tablename__ = "simulation_portfolio"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, index=True, ondelete="CASCADE"
-    )
-    name: str = Field(max_length=255)
-    initial_balance: float = DEFAULT_INITIAL_BALANCE
-    cash_balance: float = DEFAULT_INITIAL_BALANCE
-    equity: float = DEFAULT_INITIAL_BALANCE
-    margin_used: float = 0.0
+    user_id: uuid.UUID = Field(foreign_key="user.id", index=True)
+    name: str = Field(default="Default Portfolio", max_length=100)
+    initial_balance: float = Field(default=DEFAULT_INITIAL_BALANCE)
+    cash_balance: float = Field(default=DEFAULT_INITIAL_BALANCE)
+    margin_used: float = Field(default=0.0)
+    equity: float = Field(default=DEFAULT_INITIAL_BALANCE)
     created_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore

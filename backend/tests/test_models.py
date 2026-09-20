@@ -250,7 +250,7 @@ def test_dto_models_instantiation() -> None:
         UsersPublic,
         UserUpdate,
         UserUpdateMe,
-        VnstockSymbolItem,
+        VnstockSymbolResponse,
     )
 
     # Khởi tạo thử nghiệm Request DTO
@@ -316,27 +316,272 @@ def test_dto_models_instantiation() -> None:
     assert NewPassword is not None
     assert Token is not None
     assert TokenPayload is not None
-    assert VnstockSymbolItem is not None
+    assert VnstockSymbolResponse is not None
+
+
+def test_stock_entities_instantiation() -> None:
+    """Kiểm tra tính toàn vẹn và khởi tạo của 12 bảng thực thể chứng khoán vnstock."""
+    from app.models.entities import (
+        CompanyOfficer,
+        CompanyProfile,
+        CompanyShareholder,
+        CorporateEvent,
+        DataSyncLog,
+        FinancialRatio,
+        FinancialReport,
+        IndexConstituent,
+        StockOHLCVDaily,
+        StockOHLCVIntraday,
+        StockSymbol,
+        StockTickIntraday,
+    )
+
+    now = get_datetime_utc()
+    today = date(2026, 9, 20)
+
+    # 1. StockSymbol
+    sym = StockSymbol(
+        symbol="FPT",
+        organ_name="Công ty Cổ phần FPT",
+        exchange="HOSE",
+        industry="Công nghệ",
+        icb_code="9530",
+        icb_name="Phần mềm & Dịch vụ Máy tính",
+        index_group="VN30",
+        asset_type="stock",
+        lot_size=100,
+    )
+    assert sym.symbol == "FPT"
+    assert sym.index_group == "VN30"
+
+    # 2. StockOHLCVDaily
+    ohlcv_d = StockOHLCVDaily(
+        symbol="FPT",
+        trading_date=today,
+        open=130000.0,
+        high=135000.0,
+        low=129500.0,
+        close=134000.0,
+        volume=5_000_000,
+        value=670_000_000_000.0,
+        change=4000.0,
+        change_pct=3.08,
+        buy_volume=3_200_000,
+        sell_volume=1_800_000,
+        foreign_buy_volume=1_000_000,
+        foreign_sell_volume=400_000,
+        foreign_net_volume=600_000,
+        source="VCI",
+    )
+    assert ohlcv_d.close == 134000.0
+    assert ohlcv_d.foreign_net_volume == 600_000
+
+    # 3. StockOHLCVIntraday
+    ohlcv_i = StockOHLCVIntraday(
+        symbol="VN30F1M",
+        timestamp=now,
+        interval="1m",
+        open=1320.0,
+        high=1322.5,
+        low=1319.5,
+        close=1322.0,
+        volume=1200,
+        value=158_640_000_000.0,
+        buy_volume=800,
+        sell_volume=400,
+        volume_delta=400,
+        vwap=1321.2,
+        source="VCI",
+    )
+    assert ohlcv_i.volume_delta == 400
+
+    # 4. StockTickIntraday
+    tick = StockTickIntraday(
+        symbol="VN30F1M",
+        timestamp=now,
+        price=1322.0,
+        volume=50,
+        match_type="BU",
+        accumulated_volume=12000,
+        sequence_number=1,
+        source="VCI",
+    )
+    assert tick.match_type == "BU"
+
+    # 5. CompanyProfile
+    profile = CompanyProfile(
+        symbol="FPT",
+        company_name="Công ty Cổ phần FPT",
+        short_name="FPT",
+        industry_name="Công nghệ thông tin",
+        charter_capital=14_600_000_000_000.0,
+        outstanding_shares=1_460_000_000.0,
+        market_cap=195_640_000_000_000.0,
+        free_float_pct=85.0,
+        foreign_ownership_pct=49.0,
+        max_foreign_ownership_pct=49.0,
+    )
+    assert profile.free_float_pct == 85.0
+
+    # 6. FinancialReport
+    report = FinancialReport(
+        symbol="FPT",
+        report_type="income_statement",
+        period="quarter",
+        year=2026,
+        quarter=2,
+        data={"revenue": 15000000000000, "net_profit": 2500000000000},
+        source="VCI",
+    )
+    assert report.quarter == 2
+
+    # 6b. FinancialReportItem (Relational Normalization)
+    from app.models.entities import FinancialReportItem
+
+    report_item = FinancialReportItem(
+        report_id=report.id,
+        item_code="REVENUE",
+        item_name="Doanh thu bán hàng và cung cấp dịch vụ",
+        value=15_000_000_000_000.0,
+        order_index=1,
+    )
+    assert report_item.item_code == "REVENUE"
+    assert report_item.value == 15_000_000_000_000.0
+
+    # 7. FinancialRatio
+    ratio = FinancialRatio(
+        symbol="FPT",
+        period="quarter",
+        year=2026,
+        quarter=2,
+        pe=19.5,
+        pb=4.2,
+        roe=28.5,
+        roa=12.8,
+        roic=22.0,
+        eps=6500.0,
+        source="VCI",
+    )
+    assert ratio.roe == 28.5
+
+    # 8. CorporateEvent
+    event = CorporateEvent(
+        symbol="FPT",
+        event_type="cash_dividend",
+        event_title="Trả cổ tức đợt 1 năm 2026 bằng tiền mặt",
+        ex_date=today,
+        cash_rate=1500.0,
+        ratio_string="10:1.5",
+        notes="Chi trả từ nguồn lợi nhuận giữ lại",
+        source="VCI",
+    )
+    assert event.cash_rate == 1500.0
+    assert event.ratio_string == "10:1.5"
+
+    # 9. CompanyShareholder
+    holder = CompanyShareholder(
+        symbol="FPT",
+        shareholder_name="Tổng công ty Đầu tư và Kinh doanh vốn Nhà nước (SCIC)",
+        share_count=75_000_000.0,
+        ownership_pct=5.14,
+        is_state=True,
+    )
+    assert holder.is_state is True
+
+    # 10. CompanyOfficer
+    officer = CompanyOfficer(
+        symbol="FPT",
+        officer_name="Trương Gia Bình",
+        position="Chủ tịch Hội đồng Quản trị",
+        ownership_pct=6.5,
+    )
+    assert officer.officer_name == "Trương Gia Bình"
+
+    # 11. IndexConstituent
+    constituent = IndexConstituent(
+        index_code="VN30",
+        symbol="FPT",
+        weight=8.45,
+        effective_date=today,
+    )
+    assert constituent.weight == 8.45
+
+    # 12. DataSyncLog
+    sync_log = DataSyncLog(
+        sync_type="daily_ohlcv",
+        symbol="FPT",
+        source="VCI",
+        status="success",
+        rows_synced=1,
+    )
+    assert sync_log.status == "success"
+
+    # 13. DerivativeContract
+    from app.models.entities import DerivativeContract
+
+    contract = DerivativeContract(
+        symbol="VN30F1M",
+        underlying_symbol="VN30",
+        multiplier=100_000.0,
+        expiration_date=date(2026, 9, 17),
+        settlement_price=1325.5,
+    )
+    assert contract.multiplier == 100_000.0
+    assert contract.underlying_symbol == "VN30"
+
+
+def test_signal_log_instantiation() -> None:
+    """Kiểm tra tính hợp lệ và khả năng khởi tạo của bảng SignalLog."""
+    from app.models.entities import SignalLog
+
+    now = get_datetime_utc()
+    signal = SignalLog(
+        strategy_name="basis_arbitrage",
+        symbol="VN30F1M",
+        signal_type="BUY",
+        action_price=1320.0,
+        stop_loss=1314.0,
+        take_profit=1332.0,
+        timeframe="1m",
+        strength=0.85,
+        metadata_info={"basis": -3.5, "rsi_14": 32.4},
+        created_at=now,
+    )
+    assert signal.strategy_name == "basis_arbitrage"
+    assert signal.signal_type == "BUY"
+    assert signal.strength == 0.85
 
 
 def test_entities_import_completeness() -> None:
-    """Kiểm tra việc import đầy đủ 17 bảng cơ sở dữ liệu từ app.models.entities."""
+    """Kiểm tra việc import đầy đủ 26 bảng cơ sở dữ liệu từ app.models.entities."""
     import app.models.entities as entities
 
     expected_tables = [
         "User",
         "Item",
+        # 14 Bảng Thực Thể Chứng Khoán & Phái Sinh Vnstock
         "StockSymbol",
         "StockOHLCVDaily",
         "StockOHLCVIntraday",
+        "StockTickIntraday",
         "CompanyProfile",
         "FinancialReport",
+        "FinancialReportItem",
+        "FinancialRatio",
+        "CorporateEvent",
+        "CompanyShareholder",
+        "CompanyOfficer",
+        "IndexConstituent",
         "DataSyncLog",
+        "DerivativeContract",
+        # 6 Bảng Định lượng, Tín hiệu & Nghiên cứu Quant
         "ForecastJournal",
+        "SignalLog",
         "MacroIndicator",
         "TickFlowAggregated",
         "InstitutionalFlow",
         "MarketBreadth",
+        # 4 Bảng Giao Dịch Mô Phỏng Simulation
         "Portfolio",
         "Order",
         "Position",
@@ -358,5 +603,7 @@ if __name__ == "__main__":
     test_derivative_pnl_calculation()
     test_round_money()
     test_macro_and_market_breadth_models()
+    test_stock_entities_instantiation()
+    test_signal_log_instantiation()
     test_dto_models_instantiation()
     test_entities_import_completeness()

@@ -1,19 +1,21 @@
 """Router quản lý thông tin danh mục mã và cấu hình dịch vụ vnstock."""
 
+from __future__ import annotations
+
 import logging
 from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Query
 
-from app.models.models_vnstock import VnstockSymbolItem
+from app.models.models_vnstock import VnstockSymbolResponse
 from app.services.vnstock_service import vnstock_service
 
 router = APIRouter(prefix="/vnstock", tags=["vnstock"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("/", response_model=list[VnstockSymbolItem])
+@router.get("/", response_model=list[VnstockSymbolResponse])
 def get_vnstock(
     exchange: str | None = Query(
         default=None,

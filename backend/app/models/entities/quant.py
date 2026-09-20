@@ -1,5 +1,7 @@
 """Mô hình dữ liệu thực thể nghiên cứu định lượng & kịch bản dự phóng (Database Tables)."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import date, datetime
 
@@ -127,3 +129,32 @@ class MarketBreadth(AwareSQLModel, table=True):
     floor_count: int = 0
     total_volume: int = 0
     total_value: float = 0.0
+
+
+class SignalLog(AwareSQLModel, table=True):
+    """Bảng lưu vết tín hiệu giao dịch định lượng sinh ra từ các chiến lược (Động cơ 1, 2, 3)."""
+
+    __tablename__ = "signal_log"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    strategy_name: str = Field(
+        max_length=50, index=True
+    )  # vd: basis_arbitrage, atc_breakout, vwap_pullback
+    symbol: str = Field(max_length=20, index=True)
+    signal_type: str = Field(max_length=10)  # BUY, SELL, CLOSE, HOLD
+    action_price: float  # Mức giá kích hoạt tín hiệu
+    stop_loss: float | None = None  # Ngưỡng dừng lỗ kỹ thuật (Dynamic ATR)
+    take_profit: float | None = None  # Ngưỡng chốt lời kỳ vọng
+    timeframe: str = Field(
+        default="1m", max_length=10
+    )  # Khung thời gian: 1m, 5m, 15m, 1D
+    strength: float = Field(default=1.0)  # Độ mạnh của tín hiệu (0.0 - 1.0)
+    metadata_info: dict = Field(
+        default_factory=dict,
+        sa_type=JSONBVariant,  # type: ignore
+    )  # Snapshot các chỉ báo (RSI, VWAP, Basis...)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        index=True,
+    )

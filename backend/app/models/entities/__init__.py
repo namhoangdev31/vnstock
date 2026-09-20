@@ -8,6 +8,7 @@ from app.models.entities.quant import (
     InstitutionalFlow,
     MacroIndicator,
     MarketBreadth,
+    SignalLog,
     TickFlowAggregated,
 )
 from app.models.entities.simulation import (
@@ -19,12 +20,20 @@ from app.models.entities.simulation import (
     round_money,
 )
 from app.models.entities.stock import (
+    CompanyOfficer,
     CompanyProfile,
+    CompanyShareholder,
+    CorporateEvent,
     DataSyncLog,
+    DerivativeContract,
+    FinancialRatio,
     FinancialReport,
+    FinancialReportItem,
+    IndexConstituent,
     StockOHLCVDaily,
     StockOHLCVIntraday,
     StockSymbol,
+    StockTickIntraday,
 )
 from app.models.entities.user import (
     Item,
@@ -34,10 +43,17 @@ from app.models.entities.user import (
 )
 
 __all__ = [
+    "CompanyOfficer",
     "CompanyProfile",
+    "CompanyShareholder",
+    "CorporateEvent",
     "DataSyncLog",
+    "DerivativeContract",
+    "FinancialRatio",
     "FinancialReport",
+    "FinancialReportItem",
     "ForecastJournal",
+    "IndexConstituent",
     "InstitutionalFlow",
     "Item",
     "ItemBase",
@@ -46,9 +62,11 @@ __all__ = [
     "Order",
     "Portfolio",
     "Position",
+    "SignalLog",
     "StockOHLCVDaily",
     "StockOHLCVIntraday",
     "StockSymbol",
+    "StockTickIntraday",
     "TickFlowAggregated",
     "Trade",
     "User",

@@ -1,5 +1,7 @@
 """Các đối tượng truyền tải dữ liệu (DTO) cho người dùng và vật phẩm."""
 
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 

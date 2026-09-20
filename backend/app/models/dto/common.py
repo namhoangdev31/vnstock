@@ -1,5 +1,7 @@
 """Các đối tượng truyền tải dữ liệu (DTO) dùng chung cho thông báo và xác thực token."""
 
+from __future__ import annotations
+
 from sqlmodel import Field, SQLModel
 
 # =============================================================================

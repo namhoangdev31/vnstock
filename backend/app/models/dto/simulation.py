@@ -5,6 +5,8 @@ Phân định rõ ràng:
 - RESPONSE DTOs: dữ liệu API phản hồi
 """
 
+from __future__ import annotations
+
 import uuid
 from datetime import date, datetime
 

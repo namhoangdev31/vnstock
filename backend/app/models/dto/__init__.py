@@ -62,7 +62,7 @@ from app.models.dto.user import (
     UserUpdateMe,
 )
 from app.models.dto.vnstock import (
-    VnstockSymbolItem,
+    VnstockSymbolResponse,
 )
 
 __all__ = [
@@ -120,5 +120,5 @@ __all__ = [
     "PositionResponse",
     "TradeResponse",
     # vnstock
-    "VnstockSymbolItem",
+    "VnstockSymbolResponse",
 ]
