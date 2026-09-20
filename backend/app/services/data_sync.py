@@ -220,6 +220,11 @@ class DataSyncManager:
             if df is None or df.empty:
                 return self._finish_log(log, "failed", error_message="Empty response")
 
+            # Preload all existing symbols in a single query to avoid 3600+ network round-trips
+            existing_symbols = {
+                s.symbol: s for s in self.session.exec(select(StockSymbol)).all()
+            }
+
             count = 0
             for _, row in df.iterrows():
                 symbol_str = (
@@ -258,7 +263,7 @@ class DataSyncManager:
                     ).lower()
                     lot_size = 100
 
-                existing = self.session.get(StockSymbol, symbol_str)
+                existing = existing_symbols.get(symbol_str)
                 if existing:
                     if organ_name:
                         existing.organ_name = organ_name
@@ -288,6 +293,7 @@ class DataSyncManager:
                         is_active=True,
                     )
                     self.session.add(sym)
+                    existing_symbols[symbol_str] = sym
                 count += 1
 
             # Sync VN30 group & Derivatives
