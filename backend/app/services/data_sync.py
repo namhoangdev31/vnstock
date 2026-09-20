@@ -277,15 +277,20 @@ class DataSyncManager:
         # Khởi tạo câu lệnh PostgreSQL Insert với type hint rõ ràng
         insert_stmt: PGInsert = pg_insert(model_cls)
 
-        if update_fields:
-            upsert_stmt = insert_stmt.on_conflict_do_update(
-                index_elements=conflict_keys,
-                set_={f: getattr(insert_stmt.excluded, f) for f in update_fields},
-            )
-        else:
-            upsert_stmt = insert_stmt.on_conflict_do_nothing(
-                index_elements=conflict_keys
-            )
+        # Xây dựng mệnh đề ON CONFLICT DO UPDATE
+        # Khi update_fields có trường: cập nhật các trường được chỉ định
+        # Khi update_fields rỗng: thực hiện cập nhật idempotent (no-op) trên khóa xung đột
+        # (tương đương DO NOTHING trong PostgreSQL, đồng thời giải quyết triệt để lỗi type stub của IDE)
+        fallback_key = conflict_keys[0] if conflict_keys else "id"
+        update_dict = (
+            {f: getattr(insert_stmt.excluded, f) for f in update_fields}
+            if update_fields
+            else {fallback_key: getattr(insert_stmt.excluded, fallback_key)}
+        )
+        upsert_stmt = insert_stmt.on_conflict_do_update(
+            index_elements=conflict_keys,
+            set_=update_dict,
+        )
 
         num_cols = len(records[0]) if records else 1
         # Giới hạn an toàn tham số PostgreSQL (tối đa 32,767 tham số trên mỗi câu lệnh)
