@@ -29,6 +29,20 @@ from app.services.vnstock_service import VnstockService, VnstockServiceError
 
 logger = logging.getLogger(__name__)
 
+# Bảng tra cứu & thiết lập cấu hình định danh
+STANDARD_INDEXES: frozenset[str] = frozenset(
+    {"VNINDEX", "VN30", "HNX", "HNX30", "UPCOM"}
+)
+
+BOND_TYPE_CONFIG: dict[str, tuple[str, str]] = {
+    "corporate": ("Trái phiếu DN", "corporate_bond"),
+    "government": ("Trái phiếu Chính phủ", "government_bond"),
+}
+
+META_FINANCIAL_KEYS: frozenset[str] = frozenset(
+    {"year", "yearReport", "quarter", "lengthReport", "ticker", "symbol"}
+)
+
 
 def get_third_thursday(year: int, month: int) -> date:
     """Tính ngày Thứ Năm lần thứ 3 trong tháng (ngày đáo hạn hợp đồng phái sinh VN30)."""
@@ -48,6 +62,91 @@ class DataSyncManager:
     ) -> None:
         self.session = session
         self.svc = vnstock_svc or VnstockService()
+
+    @property
+    def is_postgresql(self) -> bool:
+        """Kiểm tra xem kết nối cơ sở dữ liệu hiện tại có phải là PostgreSQL hay không."""
+        bind = self.session.get_bind()
+        return getattr(getattr(bind, "dialect", None), "name", "") == "postgresql"
+
+    @staticmethod
+    def _normalize_to_dataframe(data: Any, symbol_col: str = "symbol") -> pd.DataFrame:
+        """Chuẩn hóa dữ liệu đầu vào (DataFrame, Series, list) thành pd.DataFrame duy nhất."""
+        match data:
+            case pd.DataFrame() if not data.empty:
+                return data
+            case pd.Series() if not data.empty:
+                return pd.DataFrame({symbol_col: data})
+            case list() if data:
+                return pd.DataFrame({symbol_col: data})
+            case _:
+                return pd.DataFrame()
+
+    @staticmethod
+    def _classify_symbol(
+        symbol_str: str,
+        raw_type: str = "stock",
+        exchange: str | None = None,
+    ) -> tuple[str, int, str | None]:
+        """Phân loại nhóm tài sản (asset_type), quy mô lô (lot_size) và sàn giao dịch (exchange)."""
+        match symbol_str:
+            case s if "VN30F" in s:
+                return "derivative", 1, exchange or "DERIV"
+            case s if s.startswith(("E1VFVN30", "FUE")) or "ETF" in s:
+                return "etf", 100, exchange
+            case s if s in STANDARD_INDEXES:
+                return "index", 1, exchange
+            case _:
+                return raw_type.lower(), 100, exchange
+
+    @staticmethod
+    def _extract_warrant_meta(
+        code: str,
+        raw_underlying: Any = None,
+        raw_warrant_type: Any = None,
+    ) -> tuple[str | None, str]:
+        """Trích xuất mã tài sản cơ sở và loại chứng quyền (call/put) bằng pattern matching."""
+        # 1. Xác định mã cơ sở
+        if raw_underlying and pd.notna(raw_underlying):
+            underlying = str(raw_underlying).strip().upper()
+        else:
+            match code:
+                case s if s.startswith(("C", "P")) and len(s) == 8:
+                    underlying = s[1:4]
+                case s if s.startswith(("C", "P")) and len(s) >= 6:
+                    underlying = s[1:-4] if len(s) > 6 else s[1:4]
+                case _:
+                    underlying = None
+
+        # 2. Xác định loại quyền
+        raw_w_str = str(raw_warrant_type or "").lower().strip()
+        match raw_w_str:
+            case "call" | "put":
+                warrant_type = raw_w_str
+            case _:
+                match code:
+                    case s if s.startswith("C"):
+                        warrant_type = "call"
+                    case s if s.startswith("P"):
+                        warrant_type = "put"
+                    case _:
+                        warrant_type = "call"
+
+        return underlying, warrant_type
+
+    @staticmethod
+    def _extract_derivative_expiry(code: str, fallback: date) -> date:
+        """Trích xuất ngày đáo hạn phái sinh từ mã hợp đồng hoặc dùng ngày dự phòng."""
+        match code:
+            case s if len(s) == 9 and s.startswith("VN30F"):
+                try:
+                    yy = 2000 + int(s[5:7])
+                    mm = int(s[7:9])
+                    return get_third_thursday(yy, mm)
+                except (ValueError, IndexError):
+                    return fallback
+            case _:
+                return fallback
 
     def _create_log(self, sync_type: str, symbol: str | None = None) -> DataSyncLog:
         """Create a sync log entry with status 'started'."""
@@ -94,9 +193,7 @@ class DataSyncManager:
             if not tickers:
                 return 0
 
-            bind = self.session.get_bind()
-            dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
-            if dialect_name == "postgresql":
+            if self.is_postgresql:
                 from sqlalchemy import update
 
                 stmt = (
@@ -141,6 +238,7 @@ class DataSyncManager:
         ]
 
         count = 0
+        now_utc = datetime.now(UTC)
         for symbol_code, exp_date, desc in contracts:
             sym = self.session.get(StockSymbol, symbol_code)
             if sym:
@@ -149,19 +247,20 @@ class DataSyncManager:
                 sym.asset_type = "derivative"
                 sym.lot_size = 1
                 sym.is_active = True
-                sym.updated_at = datetime.now(UTC)
+                sym.updated_at = now_utc
                 self.session.add(sym)
             else:
-                sym = StockSymbol(
-                    symbol=symbol_code,
-                    organ_name=desc,
-                    exchange="DERIV",
-                    industry="Derivatives",
-                    asset_type="derivative",
-                    lot_size=1,
-                    is_active=True,
+                self.session.add(
+                    StockSymbol(
+                        symbol=symbol_code,
+                        organ_name=desc,
+                        exchange="DERIV",
+                        industry="Derivatives",
+                        asset_type="derivative",
+                        lot_size=1,
+                        is_active=True,
+                    )
                 )
-                self.session.add(sym)
 
             contract = self.session.get(DerivativeContract, symbol_code)
             if contract:
@@ -169,88 +268,64 @@ class DataSyncManager:
                 contract.underlying_symbol = "VN30"
                 contract.multiplier = 100_000.0
                 contract.is_active = True
-                contract.updated_at = datetime.now(UTC)
+                contract.updated_at = now_utc
                 self.session.add(contract)
             else:
-                contract = DerivativeContract(
-                    symbol=symbol_code,
-                    underlying_symbol="VN30",
-                    multiplier=100_000.0,
-                    expiration_date=exp_date,
-                    is_active=True,
+                self.session.add(
+                    DerivativeContract(
+                        symbol=symbol_code,
+                        underlying_symbol="VN30",
+                        multiplier=100_000.0,
+                        expiration_date=exp_date,
+                        is_active=True,
+                    )
                 )
-                self.session.add(contract)
             count += 1
 
         try:
-            deriv_df = self.svc.fetch_derivatives_list()
-            if isinstance(deriv_df, pd.DataFrame) and not deriv_df.empty:
+            deriv_raw = self.svc.fetch_derivatives_list()
+            deriv_df = self._normalize_to_dataframe(deriv_raw, symbol_col="ticker")
+            if not deriv_df.empty:
+                col_name = (
+                    "ticker"
+                    if "ticker" in deriv_df.columns
+                    else (
+                        "symbol"
+                        if "symbol" in deriv_df.columns
+                        else deriv_df.columns[0]
+                    )
+                )
+                contract_codes = {c[0] for c in contracts}
                 for _, row in deriv_df.iterrows():
-                    code = str(row.get("ticker", row.get("symbol", ""))).strip().upper()
-                    if not code or code in [c[0] for c in contracts]:
+                    code = str(row.get(col_name, "")).strip().upper()
+                    if not code or code in contract_codes:
                         continue
-                    exp = None
-                    if len(code) == 9 and code.startswith("VN30F"):
-                        try:
-                            yy = 2000 + int(code[5:7])
-                            mm = int(code[7:9])
-                            exp = get_third_thursday(yy, mm)
-                        except (ValueError, IndexError):
-                            pass
-                    if not exp:
-                        exp = m1_exp
 
+                    exp = self._extract_derivative_expiry(code, fallback=m1_exp)
                     sym = self.session.get(StockSymbol, code)
                     if not sym:
-                        sym = StockSymbol(
-                            symbol=code,
-                            organ_name=f"Hợp đồng tương lai {code}",
-                            exchange="DERIV",
-                            industry="Derivatives",
-                            asset_type="derivative",
-                            lot_size=1,
-                            is_active=True,
+                        self.session.add(
+                            StockSymbol(
+                                symbol=code,
+                                organ_name=f"Hợp đồng tương lai {code}",
+                                exchange="DERIV",
+                                industry="Derivatives",
+                                asset_type="derivative",
+                                lot_size=1,
+                                is_active=True,
+                            )
                         )
-                        self.session.add(sym)
                     contract = self.session.get(DerivativeContract, code)
                     if not contract:
-                        contract = DerivativeContract(
-                            symbol=code,
-                            underlying_symbol="VN30",
-                            multiplier=100_000.0,
-                            expiration_date=exp,
-                            is_active=True,
+                        self.session.add(
+                            DerivativeContract(
+                                symbol=code,
+                                underlying_symbol="VN30",
+                                multiplier=100_000.0,
+                                expiration_date=exp,
+                                is_active=True,
+                            )
                         )
-                        self.session.add(contract)
-                    count += 1
-            elif isinstance(deriv_df, pd.Series) and not deriv_df.empty:
-                for val in deriv_df:
-                    code = str(val).strip().upper()
-                    if not code or code in [c[0] for c in contracts]:
-                        continue
-                    exp = m1_exp
-                    sym = self.session.get(StockSymbol, code)
-                    if not sym:
-                        sym = StockSymbol(
-                            symbol=code,
-                            organ_name=f"Hợp đồng tương lai {code}",
-                            exchange="DERIV",
-                            industry="Derivatives",
-                            asset_type="derivative",
-                            lot_size=1,
-                            is_active=True,
-                        )
-                        self.session.add(sym)
-                    contract = self.session.get(DerivativeContract, code)
-                    if not contract:
-                        contract = DerivativeContract(
-                            symbol=code,
-                            underlying_symbol="VN30",
-                            multiplier=100_000.0,
-                            expiration_date=exp,
-                            is_active=True,
-                        )
-                        self.session.add(contract)
                     count += 1
         except Exception as exc:
             logger.warning("Could not fetch extra derivatives list: %s", exc)
@@ -275,18 +350,7 @@ class DataSyncManager:
         """Đồng bộ danh mục chứng quyền có bảo đảm (CW) vào StockSymbol và CoveredWarrant sử dụng Bulk UPSERT."""
         try:
             cw_data = self.svc.fetch_covered_warrants_list()
-            if cw_data is None:
-                return 0
-
-            if isinstance(cw_data, pd.Series):
-                df = pd.DataFrame({"symbol": cw_data})
-            elif isinstance(cw_data, list):
-                df = pd.DataFrame({"symbol": cw_data})
-            elif isinstance(cw_data, pd.DataFrame):
-                df = cw_data
-            else:
-                return 0
-
+            df = self._normalize_to_dataframe(cw_data)
             if df.empty:
                 return 0
 
@@ -312,28 +376,14 @@ class DataSyncManager:
                     "underlying_symbol",
                     row.get("underlying", row.get("target_symbol", None)),
                 )
-                underlying = (
-                    str(raw_und).strip().upper()
-                    if raw_und and pd.notna(raw_und)
-                    else None
+                raw_wtype = row.get("warrant_type", row.get("type", None))
+                underlying, warrant_type = self._extract_warrant_meta(
+                    code, raw_underlying=raw_und, raw_warrant_type=raw_wtype
                 )
-
-                if not underlying:
-                    if code.startswith(("C", "P")) and len(code) == 8:
-                        underlying = code[1:4]
-                    elif code.startswith(("C", "P")) and len(code) >= 6:
-                        underlying = code[1:-4] if len(code) > 6 else code[1:4]
-
                 if not underlying:
                     continue
 
                 underlying_codes.add(underlying)
-
-                w_type_raw = str(row.get("warrant_type", row.get("type", ""))).lower()
-                if w_type_raw in ("call", "put"):
-                    warrant_type = w_type_raw
-                else:
-                    warrant_type = "call" if code.startswith("C") else "put"
 
                 issuer_name = (
                     str(row.get("issuer_name", row.get("issuer", ""))).strip() or None
@@ -378,9 +428,7 @@ class DataSyncManager:
                     or "cash"
                 )
 
-                is_active = True
-                if maturity_date and maturity_date < today_d:
-                    is_active = False
+                is_active = not (maturity_date and maturity_date < today_d)
 
                 sym_map[code] = {
                     "id": uuid.uuid4(),
@@ -441,13 +489,11 @@ class DataSyncManager:
                 self.session.flush()
 
             # 2. Bulk UPSERT
-            bind = self.session.get_bind()
-            dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
             batch_size = 500
             sym_records = list(sym_map.values())
             cw_records = list(cw_map.values())
 
-            if dialect_name == "postgresql":
+            if self.is_postgresql:
                 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
                 for i in range(0, len(sym_records), batch_size):
@@ -538,8 +584,9 @@ class DataSyncManager:
     def _sync_bonds(self) -> int:
         """Đồng bộ danh mục trái phiếu doanh nghiệp & chính phủ vào StockSymbol và BondSpecification sử dụng Bulk UPSERT."""
         try:
-            df = self.svc.fetch_bonds_list(bond_type="all")
-            if df is None or df.empty:
+            raw_bonds = self.svc.fetch_bonds_list(bond_type="all")
+            df = self._normalize_to_dataframe(raw_bonds)
+            if df.empty:
                 return 0
 
             col_sym = (
@@ -560,19 +607,22 @@ class DataSyncManager:
                 if not code:
                     continue
 
-                b_type = str(row.get("type", row.get("bond_type", "corporate"))).lower()
-                if b_type not in ("corporate", "government"):
-                    b_type = "corporate"
+                raw_b_type = str(
+                    row.get("type", row.get("bond_type", "corporate"))
+                ).lower()
+                b_type = "government" if raw_b_type == "government" else "corporate"
 
                 if b_type == "corporate":
                     raw_issuer = row.get(
                         "issuer_symbol",
                         row.get("issuerSymbol", row.get("company_code")),
                     )
-                    if raw_issuer and pd.notna(raw_issuer):
-                        candidate_issuers.add(str(raw_issuer).strip().upper())
-                    else:
-                        candidate_issuers.add(code[:3])
+                    cand = (
+                        str(raw_issuer).strip().upper()
+                        if raw_issuer and pd.notna(raw_issuer)
+                        else code[:3]
+                    )
+                    candidate_issuers.add(cand)
 
             existing_issuers: set[str] = set()
             if candidate_issuers:
@@ -589,9 +639,10 @@ class DataSyncManager:
                 if not code:
                     continue
 
-                b_type = str(row.get("type", row.get("bond_type", "corporate"))).lower()
-                if b_type not in ("corporate", "government"):
-                    b_type = "corporate"
+                raw_b_type = str(
+                    row.get("type", row.get("bond_type", "corporate"))
+                ).lower()
+                b_type = "government" if raw_b_type == "government" else "corporate"
 
                 issuer_symbol = None
                 if b_type == "corporate":
@@ -645,18 +696,12 @@ class DataSyncManager:
                     )
                 )
 
-                is_active = True
-                if maturity_date and maturity_date < today_d:
-                    is_active = False
+                is_active = not (maturity_date and maturity_date < today_d)
 
-                organ_label = (
-                    f"Trái phiếu DN {code}"
-                    if b_type == "corporate"
-                    else f"Trái phiếu Chính phủ {code}"
+                label_prefix, asset_label = BOND_TYPE_CONFIG.get(
+                    b_type, ("Trái phiếu", "corporate_bond")
                 )
-                asset_label = (
-                    "corporate_bond" if b_type == "corporate" else "government_bond"
-                )
+                organ_label = f"{label_prefix} {code}"
 
                 sym_map[code] = {
                     "id": uuid.uuid4(),
@@ -689,13 +734,11 @@ class DataSyncManager:
             if not bond_map:
                 return 0
 
-            bind = self.session.get_bind()
-            dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
             batch_size = 500
             sym_records = list(sym_map.values())
             bond_records = list(bond_map.values())
 
-            if dialect_name == "postgresql":
+            if self.is_postgresql:
                 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
                 for i in range(0, len(sym_records), batch_size):
@@ -775,8 +818,9 @@ class DataSyncManager:
         log = self._create_log("symbols")
 
         try:
-            df = self.svc.fetch_all_symbols()
-            if df is None or df.empty:
+            raw_symbols = self.svc.fetch_all_symbols()
+            df = self._normalize_to_dataframe(raw_symbols)
+            if df.empty:
                 return self._finish_log(log, "failed", error_message="Empty response")
 
             now_utc = datetime.now(UTC)
@@ -791,32 +835,17 @@ class DataSyncManager:
                 organ_name = (
                     str(row.get("organName", row.get("organ_name", ""))) or None
                 )
-                exchange = (
+                raw_exchange = (
                     str(row.get("exchange", row.get("organCode", ""))).upper() or None
                 )
                 icb_code = str(row.get("icbCode", row.get("icb_code", ""))) or None
                 icb_name = str(row.get("icbName", row.get("icb_name", ""))) or None
                 industry = icb_name or str(row.get("industry", "")) or None
+                raw_type = str(row.get("type", row.get("asset_type", "stock")))
 
-                if "VN30F" in symbol_str:
-                    asset_type = "derivative"
-                    lot_size = 1
-                    exchange = exchange or "DERIV"
-                elif (
-                    symbol_str.startswith("E1VFVN30")
-                    or symbol_str.startswith("FUE")
-                    or "ETF" in symbol_str
-                ):
-                    asset_type = "etf"
-                    lot_size = 100
-                elif symbol_str in ("VNINDEX", "VN30", "HNX", "HNX30", "UPCOM"):
-                    asset_type = "index"
-                    lot_size = 1
-                else:
-                    asset_type = str(
-                        row.get("type", row.get("asset_type", "stock"))
-                    ).lower()
-                    lot_size = 100
+                asset_type, lot_size, exchange = self._classify_symbol(
+                    symbol_str, raw_type=raw_type, exchange=raw_exchange
+                )
 
                 records.append(
                     {
@@ -834,10 +863,7 @@ class DataSyncManager:
                     }
                 )
 
-            bind = self.session.get_bind()
-            dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
-
-            if dialect_name == "postgresql" and records:
+            if self.is_postgresql and records:
                 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
                 batch_size = 500
@@ -1105,63 +1131,42 @@ class DataSyncManager:
 
             self._ensure_symbol_exists(symbol)
 
+            profile_data = {
+                "company_name": str(
+                    data.get("companyName", data.get("company_name", ""))
+                ),
+                "short_name": str(data.get("shortName", data.get("short_name", ""))),
+                "industry_name": str(
+                    data.get("industryName", data.get("industry_name", ""))
+                ),
+                "established_date": str(
+                    data.get("establishedYear", data.get("established_date", ""))
+                ),
+                "listed_date": str(
+                    data.get("listingDate", data.get("listed_date", ""))
+                ),
+                "charter_capital": data.get(
+                    "charterCapital", data.get("charter_capital")
+                ),
+                "outstanding_shares": data.get(
+                    "outstandingShare", data.get("outstanding_shares")
+                ),
+                "market_cap": data.get("marketCap", data.get("market_cap")),
+                "website": str(data.get("website", "")),
+                "description": str(
+                    data.get("companyProfile", data.get("description", ""))
+                ),
+            }
+
             existing = self.session.get(CompanyProfile, symbol)
             if existing:
-                existing.company_name = (
-                    str(data.get("companyName", data.get("company_name", "")))
-                    or existing.company_name
-                )
-                existing.short_name = (
-                    str(data.get("shortName", data.get("short_name", "")))
-                    or existing.short_name
-                )
-                existing.industry_name = (
-                    str(data.get("industryName", data.get("industry_name", "")))
-                    or existing.industry_name
-                )
-                existing.charter_capital = data.get(
-                    "charterCapital", data.get("charter_capital")
-                )
-                existing.outstanding_shares = data.get(
-                    "outstandingShare", data.get("outstanding_shares")
-                )
-                existing.market_cap = data.get("marketCap", data.get("market_cap"))
-                existing.website = str(data.get("website", "")) or existing.website
-                existing.description = (
-                    str(data.get("companyProfile", data.get("description", "")))
-                    or existing.description
-                )
+                for k, v in profile_data.items():
+                    if v:
+                        setattr(existing, k, v)
                 existing.updated_at = datetime.now(UTC)
                 self.session.add(existing)
             else:
-                profile = CompanyProfile(
-                    symbol=symbol,
-                    company_name=str(
-                        data.get("companyName", data.get("company_name", ""))
-                    ),
-                    short_name=str(data.get("shortName", data.get("short_name", ""))),
-                    industry_name=str(
-                        data.get("industryName", data.get("industry_name", ""))
-                    ),
-                    established_date=str(
-                        data.get("establishedYear", data.get("established_date", ""))
-                    ),
-                    listed_date=str(
-                        data.get("listingDate", data.get("listed_date", ""))
-                    ),
-                    charter_capital=data.get(
-                        "charterCapital", data.get("charter_capital")
-                    ),
-                    outstanding_shares=data.get(
-                        "outstandingShare", data.get("outstanding_shares")
-                    ),
-                    market_cap=data.get("marketCap", data.get("market_cap")),
-                    website=str(data.get("website", "")),
-                    description=str(
-                        data.get("companyProfile", data.get("description", ""))
-                    ),
-                )
-                self.session.add(profile)
+                self.session.add(CompanyProfile(symbol=symbol, **profile_data))
 
             self.session.commit()
             return self._finish_log(log, "success", rows_synced=1)
@@ -1213,17 +1218,11 @@ class DataSyncManager:
                     .where(FinancialReport.quarter == quarter_int)
                 ).first()
 
-                row_data = row.to_dict()
-                # Remove meta fields from the data payload
-                for key in [
-                    "year",
-                    "yearReport",
-                    "quarter",
-                    "lengthReport",
-                    "ticker",
-                    "symbol",
-                ]:
-                    row_data.pop(key, None)
+                row_data = {
+                    k: v
+                    for k, v in row.to_dict().items()
+                    if k not in META_FINANCIAL_KEYS
+                }
 
                 if existing:
                     existing.data = row_data
@@ -1281,41 +1280,53 @@ class DataSyncManager:
 
     @staticmethod
     def _parse_date(value: object) -> date | None:
-        """Parse various date formats to date object."""
-        if isinstance(value, date):
-            return value
-        if isinstance(value, datetime):
-            return value.date()
-        if isinstance(value, pd.Timestamp):
-            return value.date()
-        if isinstance(value, str) and value:
-            try:
-                return datetime.strptime(value[:10], "%Y-%m-%d").date()
-            except ValueError:
+        """Parse various date formats to date object using pattern matching."""
+        match value:
+            case datetime():
+                return value.date()
+            case date():
+                return value
+            case pd.Timestamp():
+                return value.date()
+            case str() if value.strip():
+                try:
+                    return datetime.strptime(value.strip()[:10], "%Y-%m-%d").date()
+                except ValueError:
+                    return None
+            case _:
                 return None
-        return None
 
     @staticmethod
     def _parse_datetime(value: object) -> datetime | None:
-        """Parse various datetime formats."""
-        if isinstance(value, datetime):
-            return value
-        if isinstance(value, pd.Timestamp):
-            return value.to_pydatetime()
-        if isinstance(value, str) and value:
-            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
-                try:
-                    return datetime.strptime(value, fmt)
-                except ValueError:
-                    continue
-        return None
+        """Parse various datetime formats using pattern matching."""
+        match value:
+            case datetime():
+                return value
+            case pd.Timestamp():
+                return value.to_pydatetime()
+            case str() if value.strip():
+                clean_val = value.strip()
+                for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+                    try:
+                        return datetime.strptime(clean_val, fmt)
+                    except ValueError:
+                        continue
+                return None
+            case _:
+                return None
 
     @staticmethod
     def _parse_float(value: object) -> float | None:
-        """Parse various numeric formats safely to float."""
-        if value is None or pd.isna(value):
-            return None
-        try:
-            return float(value)
-        except (ValueError, TypeError):
-            return None
+        """Parse various numeric formats safely to float using pattern matching."""
+        match value:
+            case None:
+                return None
+            case float() | int():
+                return float(value)
+            case _ if pd.isna(value):
+                return None
+            case _:
+                try:
+                    return float(value)  # type: ignore
+                except (ValueError, TypeError):
+                    return None
