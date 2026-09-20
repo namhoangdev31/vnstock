@@ -46,35 +46,38 @@ def _run_migrations_and_seed() -> None:
             logger.info("[LIFESPAN] Alembic migrations executed successfully.")
         except Exception as alembic_err:
             logger.warning(
-                f"[LIFESPAN] Alembic failed: {alembic_err}, running SQLModel.metadata.create_all..."
+                f"[LIFESPAN] Alembic migration failed: {alembic_err}. Skipping DB seed to prevent blocking startup."
             )
+            return
+    else:
+        try:
             from sqlmodel import SQLModel
 
             import app.models  # noqa: F401
 
             SQLModel.metadata.create_all(engine)
-    else:
-        from sqlmodel import SQLModel
+            logger.info("[LIFESPAN] Created tables via SQLModel.metadata.create_all.")
+        except Exception as create_err:
+            logger.warning(
+                f"[LIFESPAN] SQLModel.metadata.create_all failed: {create_err}"
+            )
+            return
 
-        import app.models  # noqa: F401
-
-        SQLModel.metadata.create_all(engine)
-        logger.info("[LIFESPAN] Created tables via SQLModel.metadata.create_all.")
-
-    with Session(engine) as session:
-        init_db(session)
-        logger.info("[LIFESPAN] Initial DB seed executed successfully.")
+    try:
+        with Session(engine) as session:
+            init_db(session)
+            logger.info("[LIFESPAN] Initial DB seed executed successfully.")
+    except Exception as seed_err:
+        logger.warning(f"[LIFESPAN] Initial DB seed failed: {seed_err}")
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     try:
-        await asyncio.wait_for(
-            asyncio.to_thread(_run_migrations_and_seed), timeout=15.0
-        )
+        await asyncio.wait_for(asyncio.to_thread(_run_migrations_and_seed), timeout=8.0)
     except TimeoutError:
         logger.warning(
-            "[LIFESPAN] Migration/seed timed out after 15s. Continuing server startup..."
+            "[LIFESPAN] Migration/seed timed out after 8s. Continuing server startup..."
         )
     except Exception as e:
         logger.error(f"[LIFESPAN ERROR] Migration/seed error: {e}", exc_info=True)

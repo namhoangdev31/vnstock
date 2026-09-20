@@ -4,7 +4,11 @@ from app import crud
 from app.core.config import settings
 from app.models import User, UserCreate
 
-engine = create_engine(str(settings.DATABASE_URL), pool_pre_ping=True)
+engine = create_engine(
+    str(settings.DATABASE_URL),
+    pool_pre_ping=True,
+    connect_args={"connect_timeout": 5},
+)
 
 
 # make sure all SQLModel models are imported (app.models) before initializing DB
