@@ -7,6 +7,7 @@
 """
 
 import logging
+import uuid
 from datetime import UTC, date, datetime
 
 import pandas as pd
@@ -303,6 +304,7 @@ class DataSyncManager:
 
                 records.append(
                     {
+                        "id": uuid.uuid4(),
                         "symbol": symbol_str,
                         "organ_name": organ_name,
                         "exchange": exchange,

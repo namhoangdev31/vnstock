@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 
 from sqlmodel import SQLModel
@@ -14,10 +15,16 @@ from sqlmodel import SQLModel
 class StockSymbolPublic(SQLModel):
     """Thông tin tham chiếu mã chứng khoán trả về cho API."""
 
+    id: uuid.UUID | None = None
     symbol: str
     organ_name: str | None = None
     exchange: str | None = None
+    industry: str | None = None
+    icb_code: str | None = None
+    icb_name: str | None = None
+    index_group: str | None = None
     asset_type: str
+    lot_size: int = 100
     is_active: bool
 
 
@@ -52,6 +59,7 @@ class PriceHistoryResponse(SQLModel):
 class CompanyOverviewPublic(SQLModel):
     """Thông tin tổng quan hồ sơ doanh nghiệp."""
 
+    id: uuid.UUID | None = None
     symbol: str
     company_name: str | None = None
     short_name: str | None = None

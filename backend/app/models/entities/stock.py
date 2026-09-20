@@ -20,6 +20,12 @@ class StockSymbol(AwareSQLModel, table=True):
 
     __tablename__ = "stock_symbol"
 
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        unique=True,
+        index=True,
+        nullable=False,
+    )
     symbol: str = Field(primary_key=True, max_length=20)
     organ_name: str | None = Field(default=None, max_length=255)
     exchange: str | None = Field(default=None, max_length=10)  # HOSE, HNX, UPCOM, DERIV
@@ -119,6 +125,12 @@ class CompanyProfile(AwareSQLModel, table=True):
 
     __tablename__ = "company_profile"
 
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        unique=True,
+        index=True,
+        nullable=False,
+    )
     symbol: str = Field(
         primary_key=True, max_length=20, foreign_key="stock_symbol.symbol"
     )
@@ -345,6 +357,12 @@ class DerivativeContract(AwareSQLModel, table=True):
 
     __tablename__ = "derivative_contract"
 
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        unique=True,
+        index=True,
+        nullable=False,
+    )
     symbol: str = Field(primary_key=True, max_length=20)  # Mã HĐ: VN30F1M, VN30F2609
     underlying_symbol: str = Field(default="VN30", max_length=20)  # Tài sản cơ sở VN30
     multiplier: float = Field(default=100_000.0)  # Hệ số nhân: 100,000 VND / điểm

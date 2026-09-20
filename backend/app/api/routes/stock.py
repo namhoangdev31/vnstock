@@ -5,6 +5,7 @@ Data is primarily served from PostgreSQL, with on-demand vnstock fetching
 for missing data ranges.
 """
 
+import uuid
 from datetime import date
 from typing import Annotated, Any
 
@@ -83,6 +84,27 @@ def list_symbols(
         data=[StockSymbolPublic.model_validate(s) for s in symbols],
         count=count,
     )
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/symbol/by-id/{symbol_id} — Get stock symbol by internal UUID
+# ---------------------------------------------------------------------------
+
+
+@router.get("/symbol/by-id/{symbol_id}", response_model=StockSymbolPublic)
+def get_symbol_by_id(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol_id: uuid.UUID,
+) -> Any:
+    """Tra cứu thông tin mã chứng khoán theo UUID định danh nội bộ."""
+    sym = session.exec(select(StockSymbol).where(StockSymbol.id == symbol_id)).first()
+    if not sym:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Stock symbol not found for ID: {symbol_id}",
+        )
+    return StockSymbolPublic.model_validate(sym)
 
 
 # ---------------------------------------------------------------------------
