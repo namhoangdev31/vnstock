@@ -88,15 +88,30 @@ class DataSyncManager:
             vn30_symbols = self.svc.fetch_group_symbols("VN30")
             if not vn30_symbols:
                 return 0
+            tickers = [str(s).strip().upper() for s in vn30_symbols if str(s).strip()]
+            if not tickers:
+                return 0
+
+            bind = self.session.get_bind()
+            dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
+            if dialect_name == "postgresql":
+                from sqlalchemy import update
+
+                stmt = (
+                    update(StockSymbol)
+                    .where(col(StockSymbol.symbol).in_(tickers))
+                    .values(index_group="VN30", updated_at=datetime.now(UTC))
+                )
+                self.session.execute(stmt)
+                return len(tickers)
+
             count = 0
-            for symbol_code in vn30_symbols:
-                ticker = str(symbol_code).strip().upper()
-                if ticker:
-                    sym = self.session.get(StockSymbol, ticker)
-                    if sym:
-                        sym.index_group = "VN30"
-                        self.session.add(sym)
-                        count += 1
+            for ticker in tickers:
+                sym = self.session.get(StockSymbol, ticker)
+                if sym:
+                    sym.index_group = "VN30"
+                    self.session.add(sym)
+                    count += 1
             return count
         except Exception as exc:
             logger.warning("Could not fetch VN30 group during symbols sync: %s", exc)
@@ -220,12 +235,8 @@ class DataSyncManager:
             if df is None or df.empty:
                 return self._finish_log(log, "failed", error_message="Empty response")
 
-            # Preload all existing symbols in a single query to avoid 3600+ network round-trips
-            existing_symbols = {
-                s.symbol: s for s in self.session.exec(select(StockSymbol)).all()
-            }
-
-            count = 0
+            now_utc = datetime.now(UTC)
+            records = []
             for _, row in df.iterrows():
                 symbol_str = (
                     str(row.get("ticker", row.get("symbol", ""))).strip().upper()
@@ -263,38 +274,64 @@ class DataSyncManager:
                     ).lower()
                     lot_size = 100
 
-                existing = existing_symbols.get(symbol_str)
-                if existing:
-                    if organ_name:
-                        existing.organ_name = organ_name
-                    if exchange:
-                        existing.exchange = exchange
-                    if icb_code:
-                        existing.icb_code = icb_code
-                    if icb_name:
-                        existing.icb_name = icb_name
-                    if industry:
-                        existing.industry = industry
-                    existing.asset_type = asset_type
-                    existing.lot_size = lot_size
-                    existing.is_active = True
-                    existing.updated_at = datetime.now(UTC)
-                    self.session.add(existing)
-                else:
-                    sym = StockSymbol(
-                        symbol=symbol_str,
-                        organ_name=organ_name,
-                        exchange=exchange,
-                        industry=industry,
-                        icb_code=icb_code,
-                        icb_name=icb_name,
-                        asset_type=asset_type,
-                        lot_size=lot_size,
-                        is_active=True,
+                records.append(
+                    {
+                        "symbol": symbol_str,
+                        "organ_name": organ_name,
+                        "exchange": exchange,
+                        "industry": industry,
+                        "icb_code": icb_code,
+                        "icb_name": icb_name,
+                        "asset_type": asset_type,
+                        "lot_size": lot_size,
+                        "is_active": True,
+                        "updated_at": now_utc,
+                    }
+                )
+
+            bind = self.session.get_bind()
+            dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
+
+            if dialect_name == "postgresql" and records:
+                from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+                batch_size = 1000
+                for i in range(0, len(records), batch_size):
+                    batch = records[i : i + batch_size]
+                    stmt = pg_insert(StockSymbol).values(batch)
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=["symbol"],
+                        set_={
+                            "organ_name": stmt.excluded.organ_name,
+                            "exchange": stmt.excluded.exchange,
+                            "industry": stmt.excluded.industry,
+                            "icb_code": stmt.excluded.icb_code,
+                            "icb_name": stmt.excluded.icb_name,
+                            "asset_type": stmt.excluded.asset_type,
+                            "lot_size": stmt.excluded.lot_size,
+                            "is_active": stmt.excluded.is_active,
+                            "updated_at": stmt.excluded.updated_at,
+                        },
                     )
-                    self.session.add(sym)
-                    existing_symbols[symbol_str] = sym
-                count += 1
+                    self.session.execute(stmt)
+                count = len(records)
+            else:
+                existing_symbols = {
+                    s.symbol: s for s in self.session.exec(select(StockSymbol)).all()
+                }
+                for rec in records:
+                    sym_code = rec["symbol"]
+                    existing = existing_symbols.get(sym_code)
+                    if existing:
+                        for k, v in rec.items():
+                            if v is not None:
+                                setattr(existing, k, v)
+                        self.session.add(existing)
+                    else:
+                        sym = StockSymbol(**rec)
+                        self.session.add(sym)
+                        existing_symbols[sym_code] = sym
+                count = len(records)
 
             # Sync VN30 group & Derivatives
             self._sync_vn30_group()
