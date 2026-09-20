@@ -320,6 +320,90 @@ class VnstockService:
 
         return pd.DataFrame()
 
+    def fetch_covered_warrants_list(self) -> pd.DataFrame | pd.Series:
+        """Lấy danh sách các chứng quyền có bảo đảm (Covered Warrants - CW) đang niêm yết trên HOSE.
+
+        Trả về:
+            pd.DataFrame hoặc pd.Series chứa danh sách mã chứng quyền.
+        """
+        valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
+        for src in valid_sources:
+            try:
+                self._throttle()
+                lst = Listing(source=src, show_log=False)
+                if hasattr(lst, "all_covered_warrant"):
+                    res = lst.all_covered_warrant()
+                    if res is not None and not res.empty:
+                        logger.info("Đã tải %d chứng quyền qua %s", len(res), src)
+                        return res
+            except Exception:
+                continue
+
+        # Thử qua Reference layer
+        try:
+            self._throttle()
+            ref = Reference()
+            res = ref.warrant().list()
+            if res is not None and not res.empty:
+                return res
+        except Exception:
+            pass
+
+        return pd.DataFrame()
+
+    def fetch_bonds_list(self, bond_type: str = "all") -> pd.DataFrame:
+        """Lấy danh sách trái phiếu doanh nghiệp và trái phiếu chính phủ niêm yết trên HNX.
+
+        Tham số:
+            bond_type: 'all' (toàn bộ), 'corporate' (doanh nghiệp), 'government' (chính phủ).
+
+        Trả về:
+            pd.DataFrame chứa mã trái phiếu và phân loại (symbol, type).
+        """
+        try:
+            self._throttle()
+            ref = Reference()
+            df = ref.bond.list(bond_type=bond_type)
+            if df is not None and not df.empty:
+                logger.info("Đã tải %d mã trái phiếu qua Reference.bond", len(df))
+                return df
+        except Exception:
+            logger.warning(
+                "Lỗi tải danh mục trái phiếu qua Reference.bond", exc_info=True
+            )
+
+        # Fallback thử qua VCI listing nếu Reference lỗi
+        try:
+            self._throttle()
+            lst = Listing(source="vci", show_log=False)
+            bonds_corp = (
+                lst.all_bonds()
+                if bond_type in ("all", "corporate")
+                else pd.Series(dtype="object")
+            )
+            bonds_gov = (
+                lst.all_government_bonds()
+                if bond_type in ("all", "government")
+                else pd.Series(dtype="object")
+            )
+            df_corp = (
+                pd.DataFrame({"symbol": bonds_corp, "type": "corporate"})
+                if not bonds_corp.empty
+                else pd.DataFrame(columns=["symbol", "type"])
+            )
+            df_gov = (
+                pd.DataFrame({"symbol": bonds_gov, "type": "government"})
+                if not bonds_gov.empty
+                else pd.DataFrame(columns=["symbol", "type"])
+            )
+            combined = pd.concat([df_corp, df_gov], ignore_index=True)
+            if not combined.empty:
+                return combined
+        except Exception:
+            pass
+
+        return pd.DataFrame()
+
     def search_symbols(self, query: str, limit: int = 10) -> pd.DataFrame:
         """Tìm kiếm mã chứng khoán hoặc thông tin liên quan theo từ khóa.
 

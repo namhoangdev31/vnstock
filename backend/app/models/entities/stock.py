@@ -1,16 +1,16 @@
+# ruff: noqa: UP045
 """Mô hình dữ liệu thực thể chứng khoán, hồ sơ doanh nghiệp & báo cáo tài chính (Database Tables).
 
 Hệ thống bảng dữ liệu chuyên sâu cho hệ sinh thái vnstock v4, phục vụ 3 Động cơ Định lượng (Tri-Engine),
 dự báo phiên ATC, hợp đồng tương lai phái sinh VN30F1M và danh mục cổ phiếu Alpha đa khung thời gian.
 """
 
-from __future__ import annotations
-
 import uuid
 from datetime import date, datetime
+from typing import Optional
 
 from sqlalchemy import DateTime, UniqueConstraint
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from app.models.base import AwareSQLModel, JSONBVariant, get_datetime_utc
 
@@ -37,12 +37,42 @@ class StockSymbol(AwareSQLModel, table=True):
     index_group: str | None = Field(
         default=None, max_length=50
     )  # Rổ chỉ số: VN30, VN100, VNFINLEAD
-    asset_type: str = Field(max_length=20)  # stock, etf, derivative, index
+    asset_type: str = Field(
+        max_length=20
+    )  # stock, etf, derivative, index, covered_warrant, corporate_bond, government_bond
     lot_size: int = Field(default=100)  # Quy mô lô chuẩn (100 cp cơ sở, 1 HĐ phái sinh)
     is_active: bool = Field(default=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    # Relationships hai chiều phục vụ truy xuất thông tin chéo
+    profile: Optional["CompanyProfile"] = Relationship(
+        back_populates="symbol_rel",
+        sa_relationship_kwargs={"uselist": False},
+    )
+    financial_reports: list["FinancialReport"] = Relationship(
+        back_populates="symbol_rel"
+    )
+    financial_ratios: list["FinancialRatio"] = Relationship(back_populates="symbol_rel")
+    corporate_events: list["CorporateEvent"] = Relationship(back_populates="symbol_rel")
+    shareholders: list["CompanyShareholder"] = Relationship(back_populates="symbol_rel")
+    officers: list["CompanyOfficer"] = Relationship(back_populates="symbol_rel")
+    # Chứng quyền có tài sản cơ sở là mã này (e.g. FPT -> [CFPT2501, CFPT2502])
+    covered_warrants: list["CoveredWarrant"] = Relationship(
+        back_populates="underlying_rel",
+        sa_relationship_kwargs={"foreign_keys": "CoveredWarrant.underlying_symbol"},
+    )
+    # Trái phiếu do công ty này phát hành (e.g. MSN -> [MSN123009])
+    issued_bonds: list["BondSpecification"] = Relationship(
+        back_populates="issuer_rel",
+        sa_relationship_kwargs={"foreign_keys": "BondSpecification.issuer_symbol"},
+    )
+    # Hợp đồng phái sinh dựa trên chỉ số này (e.g. VN30 -> [VN30F1M, VN30F2M])
+    derivative_contracts: list["DerivativeContract"] = Relationship(
+        back_populates="underlying_rel",
+        sa_relationship_kwargs={"foreign_keys": "DerivativeContract.underlying_symbol"},
     )
 
 
@@ -156,6 +186,8 @@ class CompanyProfile(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="profile")
+
 
 class FinancialReport(AwareSQLModel, table=True):
     """Bảng cha lưu thông tin chung của kỳ báo cáo tài chính (CĐKT, KQKD, LCTT)."""
@@ -183,6 +215,9 @@ class FinancialReport(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="financial_reports")
+    items: list["FinancialReportItem"] = Relationship(back_populates="report")
+
 
 class FinancialReportItem(AwareSQLModel, table=True):
     """Bảng con lưu từng dòng chỉ tiêu tài chính chi tiết dạng quan hệ chuẩn hóa (Relational Normalization)."""
@@ -198,6 +233,8 @@ class FinancialReportItem(AwareSQLModel, table=True):
     item_name: str = Field(max_length=255)  # Tên chỉ tiêu tiếng Việt
     value: float | None = None  # Giá trị số học (VND)
     order_index: int = Field(default=0)  # Thứ tự sắp xếp trên báo cáo tài chính
+
+    report: Optional["FinancialReport"] = Relationship(back_populates="items")
 
 
 class FinancialRatio(AwareSQLModel, table=True):
@@ -230,6 +267,8 @@ class FinancialRatio(AwareSQLModel, table=True):
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="financial_ratios")
 
 
 class CorporateEvent(AwareSQLModel, table=True):
@@ -267,6 +306,8 @@ class CorporateEvent(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="corporate_events")
+
 
 class CompanyShareholder(AwareSQLModel, table=True):
     """Bảng lưu trữ cơ cấu cổ đông lớn và cổ đông nội bộ (Company.shareholders())."""
@@ -287,6 +328,8 @@ class CompanyShareholder(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="shareholders")
+
 
 class CompanyOfficer(AwareSQLModel, table=True):
     """Bảng lưu trữ danh sách ban lãnh đạo & hội đồng quản trị doanh nghiệp (Company.officers())."""
@@ -306,6 +349,8 @@ class CompanyOfficer(AwareSQLModel, table=True):
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="officers")
 
 
 class IndexConstituent(AwareSQLModel, table=True):
@@ -363,8 +408,12 @@ class DerivativeContract(AwareSQLModel, table=True):
         index=True,
         nullable=False,
     )
-    symbol: str = Field(primary_key=True, max_length=20)  # Mã HĐ: VN30F1M, VN30F2609
-    underlying_symbol: str = Field(default="VN30", max_length=20)  # Tài sản cơ sở VN30
+    symbol: str = Field(
+        primary_key=True, max_length=20, foreign_key="stock_symbol.symbol"
+    )  # Mã HĐ: VN30F1M, VN30F2609
+    underlying_symbol: str = Field(
+        default="VN30", max_length=20, foreign_key="stock_symbol.symbol", index=True
+    )  # Tài sản cơ sở VN30
     multiplier: float = Field(default=100_000.0)  # Hệ số nhân: 100,000 VND / điểm
     first_trading_date: date | None = None  # Ngày niêm yết chào sàn
     last_trading_date: date | None = None  # Ngày giao dịch cuối cùng
@@ -374,4 +423,109 @@ class DerivativeContract(AwareSQLModel, table=True):
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    underlying_rel: Optional[StockSymbol] = Relationship(
+        back_populates="derivative_contracts",
+        sa_relationship_kwargs={"foreign_keys": "DerivativeContract.underlying_symbol"},
+    )
+
+
+class CoveredWarrant(AwareSQLModel, table=True):
+    """Bảng lưu trữ đặc tả chứng quyền có bảo đảm (Covered Warrant - CW) niêm yết trên HOSE."""
+
+    __tablename__ = "covered_warrant"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+    )
+    symbol: str = Field(
+        max_length=20,
+        unique=True,
+        index=True,
+        foreign_key="stock_symbol.symbol",
+    )  # Mã chứng quyền ví dụ CACB2511, CFPT2501
+    underlying_symbol: str = Field(
+        max_length=20,
+        foreign_key="stock_symbol.symbol",
+        index=True,
+    )  # Mã cổ phiếu cơ sở ví dụ ACB, FPT, HPG
+    issuer_name: str | None = Field(
+        default=None, max_length=255
+    )  # Tên tổ chức phát hành (CTCK: SSI, VND, HSC...)
+    warrant_type: str = Field(default="call", max_length=10)  # call / put
+    exercise_price: float | None = None  # Giá thực hiện (VND)
+    conversion_ratio: str | None = Field(
+        default=None, max_length=20
+    )  # Tỷ lệ chuyển đổi ví dụ "4:1", "2:1"
+    exercise_ratio: float | None = None  # Tỷ lệ thực hiện dạng số thập phân (e.g. 0.25)
+    issue_date: date | None = None  # Ngày phát hành
+    maturity_date: date | None = Field(
+        default=None, index=True
+    )  # Ngày đáo hạn chứng quyền
+    last_trading_date: date | None = None  # Ngày giao dịch cuối cùng
+    settlement_type: str | None = Field(
+        default="cash", max_length=20
+    )  # Hình thức thanh toán: cash (tiền mặt)
+    is_active: bool = Field(default=True)
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    underlying_rel: Optional[StockSymbol] = Relationship(
+        back_populates="covered_warrants",
+        sa_relationship_kwargs={"foreign_keys": "CoveredWarrant.underlying_symbol"},
+    )
+
+
+class BondSpecification(AwareSQLModel, table=True):
+    """Bảng lưu trữ đặc tả trái phiếu doanh nghiệp & trái phiếu chính phủ niêm yết trên HNX."""
+
+    __tablename__ = "bond_specification"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+    )
+    symbol: str = Field(
+        max_length=20,
+        unique=True,
+        index=True,
+        foreign_key="stock_symbol.symbol",
+    )  # Mã trái phiếu ví dụ BAB123032, 41B5GC000
+    bond_type: str = Field(
+        max_length=20,
+        index=True,
+    )  # corporate (doanh nghiệp) / government (chính phủ)
+    issuer_symbol: str | None = Field(
+        default=None,
+        max_length=20,
+        foreign_key="stock_symbol.symbol",
+        index=True,
+        nullable=True,
+    )  # Mã doanh nghiệp phát hành nếu niêm yết (ví dụ BAB, MSN, VIC)
+    issuer_name: str | None = Field(
+        default=None, max_length=255
+    )  # Tên tổ chức phát hành
+    par_value: float = Field(default=100_000.0)  # Mệnh giá chuẩn (VND)
+    coupon_rate: float | None = None  # Lãi suất danh nghĩa (%/năm)
+    coupon_type: str | None = Field(
+        default="fixed", max_length=20
+    )  # fixed (cố định) / floating (thả nổi)
+    tenor_years: float | None = None  # Kỳ hạn trái phiếu (năm)
+    issue_date: date | None = None  # Ngày phát hành
+    maturity_date: date | None = Field(
+        default=None, index=True
+    )  # Ngày đáo hạn trái phiếu
+    is_active: bool = Field(default=True)
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    issuer_rel: Optional[StockSymbol] = Relationship(
+        back_populates="issued_bonds",
+        sa_relationship_kwargs={"foreign_keys": "BondSpecification.issuer_symbol"},
     )

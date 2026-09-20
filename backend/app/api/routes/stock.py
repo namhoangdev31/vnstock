@@ -23,14 +23,21 @@ from app.models.models_quant import (
     SymbolGroupResponse,
 )
 from app.models.models_stock import (
+    BondSpecification,
+    BondSpecificationPublic,
     CompanyOverviewPublic,
     CompanyProfile,
+    CoveredWarrant,
+    CoveredWarrantPublic,
     DataSyncLog,
+    DerivativeContract,
+    DerivativeContractPublic,
     FinancialReport,
     FinancialReportPublic,
     FinancialReportsResponse,
     OHLCVRecord,
     PriceHistoryResponse,
+    RelatedAssetsResponse,
     StockOHLCVDaily,
     StockSymbol,
     StockSymbolPublic,
@@ -517,3 +524,165 @@ def get_institutional_flow(
         query.order_by(col(InstitutionalFlow.trading_date).desc()).limit(limit)
     ).all()
     return [InstitutionalFlowPublic.model_validate(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/{symbol}/related-assets — Cross-asset relational network
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{symbol}/related-assets", response_model=RelatedAssetsResponse)
+def get_related_assets(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol: str,
+) -> Any:
+    """Truy xuất mạng lưới tài sản liên kết chéo của một mã chứng khoán (CP, CW, Trái phiếu, Phái sinh, Index)."""
+    sym_code = symbol.strip().upper()
+    sym = session.exec(
+        select(StockSymbol).where(StockSymbol.symbol == sym_code)
+    ).first()
+    if not sym:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Không tìm thấy mã chứng khoán: {symbol}",
+        )
+
+    # 1. Profile (nếu có)
+    profile_dto = None
+    if sym.profile:
+        profile_dto = CompanyOverviewPublic.model_validate(sym.profile)
+    else:
+        db_prof = session.get(CompanyProfile, sym_code)
+        if db_prof:
+            profile_dto = CompanyOverviewPublic.model_validate(db_prof)
+
+    # 2. Covered Warrants có cơ sở là mã này
+    cw_rows = session.exec(
+        select(CoveredWarrant).where(CoveredWarrant.underlying_symbol == sym_code)
+    ).all()
+    cws_dto = [CoveredWarrantPublic.model_validate(w) for w in cw_rows]
+
+    # 3. Trái phiếu do mã này phát hành
+    bond_rows = session.exec(
+        select(BondSpecification).where(BondSpecification.issuer_symbol == sym_code)
+    ).all()
+    bonds_dto = [BondSpecificationPublic.model_validate(b) for b in bond_rows]
+
+    # 4. Hợp đồng phái sinh dựa trên chỉ số này (e.g. VN30)
+    deriv_rows = session.exec(
+        select(DerivativeContract).where(
+            DerivativeContract.underlying_symbol == sym_code
+        )
+    ).all()
+    derivs_dto = [DerivativeContractPublic.model_validate(d) for d in deriv_rows]
+
+    # 5. Nếu bản thân mã là Chứng quyền -> truy xuất ngược về cổ phiếu cơ sở
+    underlying_asset_dto = None
+    if sym.asset_type == "covered_warrant":
+        cw_spec = session.exec(
+            select(CoveredWarrant).where(CoveredWarrant.symbol == sym_code)
+        ).first()
+        if cw_spec and cw_spec.underlying_symbol:
+            underlying_sym = session.exec(
+                select(StockSymbol).where(
+                    StockSymbol.symbol == cw_spec.underlying_symbol
+                )
+            ).first()
+            if underlying_sym:
+                underlying_asset_dto = StockSymbolPublic.model_validate(underlying_sym)
+
+    # 6. Nếu bản thân mã là Phái sinh -> truy xuất ngược về chỉ số cơ sở (VN30)
+    elif sym.asset_type == "derivative":
+        deriv_spec = session.exec(
+            select(DerivativeContract).where(DerivativeContract.symbol == sym_code)
+        ).first()
+        if deriv_spec and deriv_spec.underlying_symbol:
+            underlying_sym = session.exec(
+                select(StockSymbol).where(
+                    StockSymbol.symbol == deriv_spec.underlying_symbol
+                )
+            ).first()
+            if underlying_sym:
+                underlying_asset_dto = StockSymbolPublic.model_validate(underlying_sym)
+
+    # 7. Nếu bản thân mã là Trái phiếu -> truy xuất ngược về tổ chức phát hành
+    issuer_asset_dto = None
+    if sym.asset_type in ("corporate_bond", "government_bond"):
+        bond_spec = session.exec(
+            select(BondSpecification).where(BondSpecification.symbol == sym_code)
+        ).first()
+        if bond_spec and bond_spec.issuer_symbol:
+            issuer_sym = session.exec(
+                select(StockSymbol).where(StockSymbol.symbol == bond_spec.issuer_symbol)
+            ).first()
+            if issuer_sym:
+                issuer_asset_dto = StockSymbolPublic.model_validate(issuer_sym)
+
+    return RelatedAssetsResponse(
+        symbol=sym.symbol,
+        asset_type=sym.asset_type,
+        organ_name=sym.organ_name,
+        exchange=sym.exchange,
+        profile=profile_dto,
+        covered_warrants=cws_dto,
+        issued_bonds=bonds_dto,
+        derivative_contracts=derivs_dto,
+        underlying_asset=underlying_asset_dto,
+        issuer_asset=issuer_asset_dto,
+    )
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/warrants — List covered warrants
+# ---------------------------------------------------------------------------
+
+
+@router.get("/warrants", response_model=list[CoveredWarrantPublic])
+def list_covered_warrants(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    underlying_symbol: str | None = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """Danh sách các chứng quyền có bảo đảm kèm bộ lọc theo mã cổ phiếu cơ sở."""
+    query = select(CoveredWarrant).where(CoveredWarrant.is_active == True)  # noqa: E712
+    if underlying_symbol:
+        query = query.where(
+            CoveredWarrant.underlying_symbol == underlying_symbol.strip().upper()
+        )
+
+    warrants = session.exec(
+        query.order_by(CoveredWarrant.symbol).offset(skip).limit(limit)
+    ).all()
+    return [CoveredWarrantPublic.model_validate(w) for w in warrants]
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/bonds — List bonds (corporate & government)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/bonds", response_model=list[BondSpecificationPublic])
+def list_bonds(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    bond_type: str | None = None,
+    issuer_symbol: str | None = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """Danh sách trái phiếu doanh nghiệp & trái phiếu chính phủ kèm bộ lọc."""
+    query = select(BondSpecification).where(BondSpecification.is_active == True)  # noqa: E712
+    if bond_type:
+        query = query.where(BondSpecification.bond_type == bond_type.lower())
+    if issuer_symbol:
+        query = query.where(
+            BondSpecification.issuer_symbol == issuer_symbol.strip().upper()
+        )
+
+    bonds = session.exec(
+        query.order_by(BondSpecification.symbol).offset(skip).limit(limit)
+    ).all()
+    return [BondSpecificationPublic.model_validate(b) for b in bonds]

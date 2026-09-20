@@ -529,6 +529,36 @@ def test_stock_entities_instantiation() -> None:
     assert contract.multiplier == 100_000.0
     assert contract.underlying_symbol == "VN30"
 
+    # 14. CoveredWarrant
+    from app.models.entities import CoveredWarrant
+
+    warrant = CoveredWarrant(
+        symbol="CFPT2501",
+        underlying_symbol="FPT",
+        issuer_name="CTCP Chứng khoán SSI",
+        warrant_type="call",
+        exercise_price=140_000.0,
+        conversion_ratio="4:1",
+    )
+    assert warrant.symbol == "CFPT2501"
+    assert warrant.underlying_symbol == "FPT"
+    assert warrant.warrant_type == "call"
+
+    # 15. BondSpecification
+    from app.models.entities import BondSpecification
+
+    bond = BondSpecification(
+        symbol="MSN123009",
+        bond_type="corporate",
+        issuer_symbol="MSN",
+        issuer_name="Tập đoàn Masan",
+        par_value=100_000.0,
+        coupon_rate=9.5,
+    )
+    assert bond.symbol == "MSN123009"
+    assert bond.issuer_symbol == "MSN"
+    assert bond.coupon_rate == 9.5
+
 
 def test_signal_log_instantiation() -> None:
     """Kiểm tra tính hợp lệ và khả năng khởi tạo của bảng SignalLog."""
@@ -553,13 +583,13 @@ def test_signal_log_instantiation() -> None:
 
 
 def test_entities_import_completeness() -> None:
-    """Kiểm tra việc import đầy đủ 26 bảng cơ sở dữ liệu từ app.models.entities."""
+    """Kiểm tra việc import đầy đủ 28 bảng cơ sở dữ liệu từ app.models.entities."""
     import app.models.entities as entities
 
     expected_tables = [
         "User",
         "Item",
-        # 14 Bảng Thực Thể Chứng Khoán & Phái Sinh Vnstock
+        # 16 Bảng Thực Thể Chứng Khoán & Phái Sinh Vnstock
         "StockSymbol",
         "StockOHLCVDaily",
         "StockOHLCVIntraday",
@@ -574,6 +604,8 @@ def test_entities_import_completeness() -> None:
         "IndexConstituent",
         "DataSyncLog",
         "DerivativeContract",
+        "CoveredWarrant",
+        "BondSpecification",
         # 6 Bảng Định lượng, Tín hiệu & Nghiên cứu Quant
         "ForecastJournal",
         "SignalLog",
@@ -595,6 +627,155 @@ def test_entities_import_completeness() -> None:
         )
 
 
+def test_cross_asset_sync_upsert_and_relationships() -> None:
+    """Kiểm tra cơ chế Bulk UPSERT không làm trùng lặp, bảo toàn UUID và quan hệ 2 chiều."""
+    from unittest.mock import MagicMock
+
+    import pandas as pd
+    from sqlmodel import Session, SQLModel, create_engine, select
+
+    from app.models.models_stock import (
+        BondSpecification,
+        CoveredWarrant,
+        StockSymbol,
+    )
+    from app.services.data_sync import DataSyncManager
+
+    sqlite_engine = create_engine("sqlite:///:memory:")
+    SQLModel.metadata.create_all(sqlite_engine)
+
+    with Session(sqlite_engine) as session:
+        mock_svc = MagicMock()
+        manager = DataSyncManager(session, mock_svc)
+
+        # 1. Lần sync chứng quyền đầu tiên
+        mock_svc.fetch_covered_warrants_list.return_value = pd.DataFrame(
+            [
+                {
+                    "symbol": "CFPT2501",
+                    "underlying_symbol": "FPT",
+                    "issuer_name": "CTCP Chứng khoán SSI",
+                    "warrant_type": "call",
+                    "exercise_price": 130000.0,
+                    "conversion_ratio": "4:1",
+                    "maturity_date": "2026-12-31",
+                }
+            ]
+        )
+
+        count1 = manager._sync_covered_warrants()
+        assert count1 == 1
+
+        cw1 = session.exec(
+            select(CoveredWarrant).where(CoveredWarrant.symbol == "CFPT2501")
+        ).first()
+        assert cw1 is not None
+        initial_id = cw1.id
+        assert cw1.is_active is True
+        assert cw1.exercise_price == 130000.0
+
+        # Kiểm tra quan hệ 2 chiều từ StockSymbol FPT
+        fpt = session.get(StockSymbol, "FPT")
+        assert fpt is not None
+        assert len(fpt.covered_warrants) == 1
+        assert fpt.covered_warrants[0].symbol == "CFPT2501"
+        assert cw1.underlying_rel is not None
+        assert cw1.underlying_rel.symbol == "FPT"
+
+        # 2. Lần sync thứ 2 cập nhật (đáo hạn trong quá khứ -> is_active False, UUID giữ nguyên)
+        mock_svc.fetch_covered_warrants_list.return_value = pd.DataFrame(
+            [
+                {
+                    "symbol": "CFPT2501",
+                    "underlying_symbol": "FPT",
+                    "issuer_name": "CTCP Chứng khoán SSI",
+                    "warrant_type": "call",
+                    "exercise_price": 135000.0,
+                    "conversion_ratio": "4:1",
+                    "maturity_date": "2020-01-01",  # Đã đáo hạn trong quá khứ
+                }
+            ]
+        )
+
+        count2 = manager._sync_covered_warrants()
+        assert count2 == 1
+
+        cw2 = session.exec(
+            select(CoveredWarrant).where(CoveredWarrant.symbol == "CFPT2501")
+        ).first()
+        assert cw2 is not None
+        assert cw2.id == initial_id  # UUID PHẢI ĐƯỢC BẢO TOÀN
+        assert cw2.is_active is False
+        assert cw2.exercise_price == 135000.0
+
+        # Đảm bảo không bị trùng lặp bản ghi
+        total_cw = len(session.exec(select(CoveredWarrant)).all())
+        assert total_cw == 1
+
+        # 3. Lần sync trái phiếu đầu tiên
+        manager._ensure_symbol_exists("MSN", organ_name="Tập đoàn Masan")
+        mock_svc.fetch_bonds_list.return_value = pd.DataFrame(
+            [
+                {
+                    "symbol": "MSN123009",
+                    "type": "corporate",
+                    "issuer_symbol": "MSN",
+                    "issuer_name": "Tập đoàn Masan",
+                    "par_value": 100000.0,
+                    "coupon_rate": 9.5,
+                    "maturity_date": "2028-10-15",
+                }
+            ]
+        )
+
+        bond_count1 = manager._sync_bonds()
+        assert bond_count1 == 1
+
+        bond1 = session.exec(
+            select(BondSpecification).where(BondSpecification.symbol == "MSN123009")
+        ).first()
+        assert bond1 is not None
+        initial_bond_id = bond1.id
+        assert bond1.coupon_rate == 9.5
+        assert bond1.is_active is True
+
+        # Kiểm tra quan hệ từ MSN
+        msn = session.get(StockSymbol, "MSN")
+        assert msn is not None
+        assert len(msn.issued_bonds) == 1
+        assert msn.issued_bonds[0].symbol == "MSN123009"
+        assert bond1.issuer_rel is not None
+        assert bond1.issuer_rel.symbol == "MSN"
+
+        # 4. Lần sync thứ 2 cập nhật trái phiếu (UUID giữ nguyên, cập nhật coupon_rate)
+        mock_svc.fetch_bonds_list.return_value = pd.DataFrame(
+            [
+                {
+                    "symbol": "MSN123009",
+                    "type": "corporate",
+                    "issuer_symbol": "MSN",
+                    "issuer_name": "Tập đoàn Masan",
+                    "par_value": 100000.0,
+                    "coupon_rate": 10.2,
+                    "maturity_date": "2028-10-15",
+                }
+            ]
+        )
+
+        bond_count2 = manager._sync_bonds()
+        assert bond_count2 == 1
+
+        bond2 = session.exec(
+            select(BondSpecification).where(BondSpecification.symbol == "MSN123009")
+        ).first()
+        assert bond2 is not None
+        assert bond2.id == initial_bond_id  # UUID BẢO TOÀN
+        assert bond2.coupon_rate == 10.2
+
+        total_bonds = len(session.exec(select(BondSpecification)).all())
+        assert total_bonds == 1
+
+
 if __name__ == "__main__":
     test_aware_sqlmodel_rejects_naive_datetime()
     test_aware_sqlmodel_accepts_utc_datetime()
@@ -607,3 +788,4 @@ if __name__ == "__main__":
     test_signal_log_instantiation()
     test_dto_models_instantiation()
     test_entities_import_completeness()
+    test_cross_asset_sync_upsert_and_relationships()

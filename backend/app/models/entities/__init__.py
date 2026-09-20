@@ -20,10 +20,12 @@ from app.models.entities.simulation import (
     round_money,
 )
 from app.models.entities.stock import (
+    BondSpecification,
     CompanyOfficer,
     CompanyProfile,
     CompanyShareholder,
     CorporateEvent,
+    CoveredWarrant,
     DataSyncLog,
     DerivativeContract,
     FinancialRatio,
@@ -43,10 +45,12 @@ from app.models.entities.user import (
 )
 
 __all__ = [
+    "BondSpecification",
     "CompanyOfficer",
     "CompanyProfile",
     "CompanyShareholder",
     "CorporateEvent",
+    "CoveredWarrant",
     "DataSyncLog",
     "DerivativeContract",
     "FinancialRatio",

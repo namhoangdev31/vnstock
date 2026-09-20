@@ -9,12 +9,15 @@
 import logging
 import uuid
 from datetime import UTC, date, datetime
+from typing import Any
 
 import pandas as pd
 from sqlmodel import Session, col, select
 
 from app.models.models_stock import (
+    BondSpecification,
     CompanyProfile,
+    CoveredWarrant,
     DataSyncLog,
     DerivativeContract,
     FinancialReport,
@@ -254,6 +257,519 @@ class DataSyncManager:
 
         return count
 
+    # ------------------------------------------------------------------
+    # Sync: Covered Warrants (CW)
+    # ------------------------------------------------------------------
+
+    def sync_covered_warrants(self) -> DataSyncLog:
+        """Đồng bộ riêng danh mục chứng quyền có bảo đảm (Covered Warrants)."""
+        log = self._create_log("covered_warrants")
+        try:
+            count = self._sync_covered_warrants()
+            return self._finish_log(log, "success", rows_synced=count)
+        except Exception as exc:
+            self.session.rollback()
+            return self._finish_log(log, "failed", error_message=str(exc))
+
+    def _sync_covered_warrants(self) -> int:
+        """Đồng bộ danh mục chứng quyền có bảo đảm (CW) vào StockSymbol và CoveredWarrant sử dụng Bulk UPSERT."""
+        try:
+            cw_data = self.svc.fetch_covered_warrants_list()
+            if cw_data is None:
+                return 0
+
+            if isinstance(cw_data, pd.Series):
+                df = pd.DataFrame({"symbol": cw_data})
+            elif isinstance(cw_data, list):
+                df = pd.DataFrame({"symbol": cw_data})
+            elif isinstance(cw_data, pd.DataFrame):
+                df = cw_data
+            else:
+                return 0
+
+            if df.empty:
+                return 0
+
+            col_sym = (
+                "symbol"
+                if "symbol" in df.columns
+                else ("ticker" if "ticker" in df.columns else df.columns[0])
+            )
+
+            now_utc = datetime.now(UTC)
+            today_d = date.today()
+
+            sym_map: dict[str, dict[str, Any]] = {}
+            cw_map: dict[str, dict[str, Any]] = {}
+            underlying_codes: set[str] = set()
+
+            for _, row in df.iterrows():
+                code = str(row.get(col_sym, "")).strip().upper()
+                if not code or len(code) < 6:
+                    continue
+
+                raw_und = row.get(
+                    "underlying_symbol",
+                    row.get("underlying", row.get("target_symbol", None)),
+                )
+                underlying = (
+                    str(raw_und).strip().upper()
+                    if raw_und and pd.notna(raw_und)
+                    else None
+                )
+
+                if not underlying:
+                    if code.startswith(("C", "P")) and len(code) == 8:
+                        underlying = code[1:4]
+                    elif code.startswith(("C", "P")) and len(code) >= 6:
+                        underlying = code[1:-4] if len(code) > 6 else code[1:4]
+
+                if not underlying:
+                    continue
+
+                underlying_codes.add(underlying)
+
+                w_type_raw = str(row.get("warrant_type", row.get("type", ""))).lower()
+                if w_type_raw in ("call", "put"):
+                    warrant_type = w_type_raw
+                else:
+                    warrant_type = "call" if code.startswith("C") else "put"
+
+                issuer_name = (
+                    str(row.get("issuer_name", row.get("issuer", ""))).strip() or None
+                )
+                exercise_price = self._parse_float(
+                    row.get("exercise_price", row.get("exercisePrice"))
+                )
+                conversion_ratio = (
+                    str(
+                        row.get(
+                            "conversion_ratio",
+                            row.get("conversionRatio", ""),
+                        )
+                    ).strip()
+                    or None
+                )
+                exercise_ratio = self._parse_float(
+                    row.get(
+                        "exercise_ratio",
+                        row.get("exerciseRatio", row.get("ratio")),
+                    )
+                )
+                issue_date = self._parse_date(
+                    row.get("issue_date", row.get("issueDate"))
+                )
+                maturity_date = self._parse_date(
+                    row.get(
+                        "maturity_date",
+                        row.get("maturityDate", row.get("expiration_date")),
+                    )
+                )
+                last_trading_date = self._parse_date(
+                    row.get("last_trading_date", row.get("lastTradingDate"))
+                )
+                settlement_type = (
+                    str(
+                        row.get(
+                            "settlement_type",
+                            row.get("settlementType", "cash"),
+                        )
+                    ).strip()
+                    or "cash"
+                )
+
+                is_active = True
+                if maturity_date and maturity_date < today_d:
+                    is_active = False
+
+                sym_map[code] = {
+                    "id": uuid.uuid4(),
+                    "symbol": code,
+                    "organ_name": f"Chứng quyền {code} (Cơ sở {underlying})",
+                    "exchange": "HOSE",
+                    "industry": "Covered Warrants",
+                    "asset_type": "covered_warrant",
+                    "lot_size": 10,
+                    "is_active": is_active,
+                    "updated_at": now_utc,
+                }
+
+                cw_map[code] = {
+                    "id": uuid.uuid4(),
+                    "symbol": code,
+                    "underlying_symbol": underlying,
+                    "issuer_name": issuer_name,
+                    "warrant_type": warrant_type,
+                    "exercise_price": exercise_price,
+                    "conversion_ratio": conversion_ratio,
+                    "exercise_ratio": exercise_ratio,
+                    "issue_date": issue_date,
+                    "maturity_date": maturity_date,
+                    "last_trading_date": last_trading_date,
+                    "settlement_type": settlement_type,
+                    "is_active": is_active,
+                    "updated_at": now_utc,
+                }
+
+            if not cw_map:
+                return 0
+
+            # 1. Đảm bảo tất cả mã cơ sở (underlying_symbol) đã tồn tại trong stock_symbol trước khi insert CW
+            existing_und = set(
+                self.session.exec(
+                    select(StockSymbol.symbol).where(
+                        col(StockSymbol.symbol).in_(list(underlying_codes))
+                    )
+                ).all()
+            )
+            missing_und = underlying_codes - existing_und
+            if missing_und:
+                for und in missing_und:
+                    self.session.add(
+                        StockSymbol(
+                            id=uuid.uuid4(),
+                            symbol=und,
+                            organ_name=f"Cổ phiếu cơ sở {und}",
+                            exchange="HOSE",
+                            industry="Equities",
+                            asset_type="stock",
+                            lot_size=100,
+                            is_active=True,
+                            updated_at=now_utc,
+                        )
+                    )
+                self.session.flush()
+
+            # 2. Bulk UPSERT
+            bind = self.session.get_bind()
+            dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
+            batch_size = 500
+            sym_records = list(sym_map.values())
+            cw_records = list(cw_map.values())
+
+            if dialect_name == "postgresql":
+                from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+                for i in range(0, len(sym_records), batch_size):
+                    batch_sym = sym_records[i : i + batch_size]
+                    stmt_sym = pg_insert(StockSymbol).values(batch_sym)
+                    stmt_sym = stmt_sym.on_conflict_do_update(
+                        index_elements=["symbol"],
+                        set_={
+                            "organ_name": stmt_sym.excluded.organ_name,
+                            "exchange": stmt_sym.excluded.exchange,
+                            "industry": stmt_sym.excluded.industry,
+                            "asset_type": stmt_sym.excluded.asset_type,
+                            "lot_size": stmt_sym.excluded.lot_size,
+                            "is_active": stmt_sym.excluded.is_active,
+                            "updated_at": stmt_sym.excluded.updated_at,
+                        },
+                    )
+                    self.session.execute(stmt_sym)
+
+                for i in range(0, len(cw_records), batch_size):
+                    batch_cw = cw_records[i : i + batch_size]
+                    stmt_cw = pg_insert(CoveredWarrant).values(batch_cw)
+                    stmt_cw = stmt_cw.on_conflict_do_update(
+                        index_elements=["symbol"],
+                        set_={
+                            "underlying_symbol": stmt_cw.excluded.underlying_symbol,
+                            "issuer_name": stmt_cw.excluded.issuer_name,
+                            "warrant_type": stmt_cw.excluded.warrant_type,
+                            "exercise_price": stmt_cw.excluded.exercise_price,
+                            "conversion_ratio": stmt_cw.excluded.conversion_ratio,
+                            "exercise_ratio": stmt_cw.excluded.exercise_ratio,
+                            "issue_date": stmt_cw.excluded.issue_date,
+                            "maturity_date": stmt_cw.excluded.maturity_date,
+                            "last_trading_date": stmt_cw.excluded.last_trading_date,
+                            "settlement_type": stmt_cw.excluded.settlement_type,
+                            "is_active": stmt_cw.excluded.is_active,
+                            "updated_at": stmt_cw.excluded.updated_at,
+                        },
+                    )
+                    self.session.execute(stmt_cw)
+            else:
+                for rec_sym in sym_records:
+                    s_code = rec_sym["symbol"]
+                    existing_s = self.session.get(StockSymbol, s_code)
+                    if existing_s:
+                        for k, v in rec_sym.items():
+                            if k != "id" and v is not None:
+                                setattr(existing_s, k, v)
+                        self.session.add(existing_s)
+                    else:
+                        self.session.add(StockSymbol(**rec_sym))
+
+                self.session.flush()
+
+                for rec_cw in cw_records:
+                    cw_code = rec_cw["symbol"]
+                    existing_cw = self.session.exec(
+                        select(CoveredWarrant).where(CoveredWarrant.symbol == cw_code)
+                    ).first()
+                    if existing_cw:
+                        for k, v in rec_cw.items():
+                            if k != "id" and v is not None:
+                                setattr(existing_cw, k, v)
+                        self.session.add(existing_cw)
+                    else:
+                        self.session.add(CoveredWarrant(**rec_cw))
+
+            self.session.commit()
+            return len(cw_records)
+        except Exception as exc:
+            logger.warning("Lỗi đồng bộ danh mục chứng quyền: %s", exc)
+            return 0
+
+    # ------------------------------------------------------------------
+    # Sync: Bonds (Corporate & Government)
+    # ------------------------------------------------------------------
+
+    def sync_bonds(self) -> DataSyncLog:
+        """Đồng bộ riêng danh mục trái phiếu doanh nghiệp & chính phủ."""
+        log = self._create_log("bonds")
+        try:
+            count = self._sync_bonds()
+            return self._finish_log(log, "success", rows_synced=count)
+        except Exception as exc:
+            self.session.rollback()
+            return self._finish_log(log, "failed", error_message=str(exc))
+
+    def _sync_bonds(self) -> int:
+        """Đồng bộ danh mục trái phiếu doanh nghiệp & chính phủ vào StockSymbol và BondSpecification sử dụng Bulk UPSERT."""
+        try:
+            df = self.svc.fetch_bonds_list(bond_type="all")
+            if df is None or df.empty:
+                return 0
+
+            col_sym = (
+                "symbol"
+                if "symbol" in df.columns
+                else ("ticker" if "ticker" in df.columns else df.columns[0])
+            )
+
+            now_utc = datetime.now(UTC)
+            today_d = date.today()
+
+            sym_map: dict[str, dict[str, Any]] = {}
+            bond_map: dict[str, dict[str, Any]] = {}
+            candidate_issuers: set[str] = set()
+
+            for _, row in df.iterrows():
+                code = str(row.get(col_sym, "")).strip().upper()
+                if not code:
+                    continue
+
+                b_type = str(row.get("type", row.get("bond_type", "corporate"))).lower()
+                if b_type not in ("corporate", "government"):
+                    b_type = "corporate"
+
+                if b_type == "corporate":
+                    raw_issuer = row.get(
+                        "issuer_symbol",
+                        row.get("issuerSymbol", row.get("company_code")),
+                    )
+                    if raw_issuer and pd.notna(raw_issuer):
+                        candidate_issuers.add(str(raw_issuer).strip().upper())
+                    else:
+                        candidate_issuers.add(code[:3])
+
+            existing_issuers: set[str] = set()
+            if candidate_issuers:
+                existing_issuers = set(
+                    self.session.exec(
+                        select(StockSymbol.symbol).where(
+                            col(StockSymbol.symbol).in_(list(candidate_issuers))
+                        )
+                    ).all()
+                )
+
+            for _, row in df.iterrows():
+                code = str(row.get(col_sym, "")).strip().upper()
+                if not code:
+                    continue
+
+                b_type = str(row.get("type", row.get("bond_type", "corporate"))).lower()
+                if b_type not in ("corporate", "government"):
+                    b_type = "corporate"
+
+                issuer_symbol = None
+                if b_type == "corporate":
+                    raw_issuer = row.get(
+                        "issuer_symbol",
+                        row.get("issuerSymbol", row.get("company_code")),
+                    )
+                    cand = (
+                        str(raw_issuer).strip().upper()
+                        if raw_issuer and pd.notna(raw_issuer)
+                        else code[:3]
+                    )
+                    if cand in existing_issuers:
+                        issuer_symbol = cand
+
+                issuer_name = (
+                    str(row.get("issuer_name", row.get("issuer", ""))).strip() or None
+                )
+                par_value = (
+                    self._parse_float(row.get("par_value", row.get("parValue")))
+                    or 100_000.0
+                )
+                coupon_rate = self._parse_float(
+                    row.get(
+                        "coupon_rate",
+                        row.get("couponRate", row.get("coupon")),
+                    )
+                )
+                coupon_type = (
+                    str(
+                        row.get(
+                            "coupon_type",
+                            row.get("couponType", "fixed"),
+                        )
+                    ).strip()
+                    or "fixed"
+                )
+                tenor_years = self._parse_float(
+                    row.get(
+                        "tenor_years",
+                        row.get("tenorYears", row.get("term")),
+                    )
+                )
+                issue_date = self._parse_date(
+                    row.get("issue_date", row.get("issueDate"))
+                )
+                maturity_date = self._parse_date(
+                    row.get(
+                        "maturity_date",
+                        row.get("maturityDate", row.get("expiration_date")),
+                    )
+                )
+
+                is_active = True
+                if maturity_date and maturity_date < today_d:
+                    is_active = False
+
+                organ_label = (
+                    f"Trái phiếu DN {code}"
+                    if b_type == "corporate"
+                    else f"Trái phiếu Chính phủ {code}"
+                )
+                asset_label = (
+                    "corporate_bond" if b_type == "corporate" else "government_bond"
+                )
+
+                sym_map[code] = {
+                    "id": uuid.uuid4(),
+                    "symbol": code,
+                    "organ_name": organ_label,
+                    "exchange": "HNX",
+                    "industry": "Bonds",
+                    "asset_type": asset_label,
+                    "lot_size": 1,
+                    "is_active": is_active,
+                    "updated_at": now_utc,
+                }
+
+                bond_map[code] = {
+                    "id": uuid.uuid4(),
+                    "symbol": code,
+                    "bond_type": b_type,
+                    "issuer_symbol": issuer_symbol,
+                    "issuer_name": issuer_name,
+                    "par_value": par_value,
+                    "coupon_rate": coupon_rate,
+                    "coupon_type": coupon_type,
+                    "tenor_years": tenor_years,
+                    "issue_date": issue_date,
+                    "maturity_date": maturity_date,
+                    "is_active": is_active,
+                    "updated_at": now_utc,
+                }
+
+            if not bond_map:
+                return 0
+
+            bind = self.session.get_bind()
+            dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
+            batch_size = 500
+            sym_records = list(sym_map.values())
+            bond_records = list(bond_map.values())
+
+            if dialect_name == "postgresql":
+                from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+                for i in range(0, len(sym_records), batch_size):
+                    batch_sym = sym_records[i : i + batch_size]
+                    stmt_sym = pg_insert(StockSymbol).values(batch_sym)
+                    stmt_sym = stmt_sym.on_conflict_do_update(
+                        index_elements=["symbol"],
+                        set_={
+                            "organ_name": stmt_sym.excluded.organ_name,
+                            "exchange": stmt_sym.excluded.exchange,
+                            "industry": stmt_sym.excluded.industry,
+                            "asset_type": stmt_sym.excluded.asset_type,
+                            "lot_size": stmt_sym.excluded.lot_size,
+                            "is_active": stmt_sym.excluded.is_active,
+                            "updated_at": stmt_sym.excluded.updated_at,
+                        },
+                    )
+                    self.session.execute(stmt_sym)
+
+                for i in range(0, len(bond_records), batch_size):
+                    batch_bond = bond_records[i : i + batch_size]
+                    stmt_bond = pg_insert(BondSpecification).values(batch_bond)
+                    stmt_bond = stmt_bond.on_conflict_do_update(
+                        index_elements=["symbol"],
+                        set_={
+                            "bond_type": stmt_bond.excluded.bond_type,
+                            "issuer_symbol": stmt_bond.excluded.issuer_symbol,
+                            "issuer_name": stmt_bond.excluded.issuer_name,
+                            "par_value": stmt_bond.excluded.par_value,
+                            "coupon_rate": stmt_bond.excluded.coupon_rate,
+                            "coupon_type": stmt_bond.excluded.coupon_type,
+                            "tenor_years": stmt_bond.excluded.tenor_years,
+                            "issue_date": stmt_bond.excluded.issue_date,
+                            "maturity_date": stmt_bond.excluded.maturity_date,
+                            "is_active": stmt_bond.excluded.is_active,
+                            "updated_at": stmt_bond.excluded.updated_at,
+                        },
+                    )
+                    self.session.execute(stmt_bond)
+            else:
+                for rec_sym in sym_records:
+                    s_code = rec_sym["symbol"]
+                    existing_s = self.session.get(StockSymbol, s_code)
+                    if existing_s:
+                        for k, v in rec_sym.items():
+                            if k != "id" and v is not None:
+                                setattr(existing_s, k, v)
+                        self.session.add(existing_s)
+                    else:
+                        self.session.add(StockSymbol(**rec_sym))
+
+                self.session.flush()
+
+                for rec_bond in bond_records:
+                    b_code = rec_bond["symbol"]
+                    existing_b = self.session.exec(
+                        select(BondSpecification).where(
+                            BondSpecification.symbol == b_code
+                        )
+                    ).first()
+                    if existing_b:
+                        for k, v in rec_bond.items():
+                            if k != "id" and v is not None:
+                                setattr(existing_b, k, v)
+                        self.session.add(existing_b)
+                    else:
+                        self.session.add(BondSpecification(**rec_bond))
+
+            self.session.commit()
+            return len(bond_records)
+        except Exception as exc:
+            logger.warning("Lỗi đồng bộ danh mục trái phiếu: %s", exc)
+            return 0
+
     def sync_symbols(self) -> DataSyncLog:
         """Sync all stock symbols to the database."""
         log = self._create_log("symbols")
@@ -367,13 +883,19 @@ class DataSyncManager:
 
             gc.collect()
 
-            # Sync VN30 group & Derivatives
+            # Sync VN30 group, Derivatives, Covered Warrants & Bonds
             self._sync_vn30_group()
             deriv_count = self._sync_derivatives()
-            count += deriv_count
+            cw_count = self._sync_covered_warrants()
+            bond_count = self._sync_bonds()
+            count += deriv_count + cw_count + bond_count
 
             logger.info(
-                "Synced %d symbols (including %d derivatives)", count, deriv_count
+                "Synced %d symbols (including %d derivatives, %d warrants, %d bonds)",
+                count,
+                deriv_count,
+                cw_count,
+                bond_count,
             )
             return self._finish_log(log, "success", rows_synced=count)
 
@@ -735,13 +1257,24 @@ class DataSyncManager:
     # Helpers
     # ------------------------------------------------------------------
 
-    def _ensure_symbol_exists(self, symbol: str) -> None:
-        """Ensure a symbol record exists in stock_symbol table."""
+    def _ensure_symbol_exists(
+        self,
+        symbol: str,
+        organ_name: str | None = None,
+        asset_type: str = "stock",
+        exchange: str | None = None,
+        lot_size: int = 100,
+    ) -> None:
+        """Ensure a symbol exists in stock_symbol before adding related records."""
         existing = self.session.get(StockSymbol, symbol)
         if not existing:
             sym = StockSymbol(
                 symbol=symbol,
-                asset_type="stock",  # default, will be updated on next symbols sync
+                organ_name=organ_name,
+                exchange=exchange,
+                asset_type=asset_type,
+                lot_size=lot_size,
+                is_active=True,
             )
             self.session.add(sym)
             self.session.commit()
@@ -776,3 +1309,13 @@ class DataSyncManager:
                 except ValueError:
                     continue
         return None
+
+    @staticmethod
+    def _parse_float(value: object) -> float | None:
+        """Parse various numeric formats safely to float."""
+        if value is None or pd.isna(value):
+            return None
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return None

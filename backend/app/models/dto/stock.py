@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlmodel import SQLModel
 
@@ -102,3 +102,67 @@ class SyncStatusPublic(SQLModel):
     error_message: str | None = None
     started_at: datetime
     completed_at: datetime | None = None
+
+
+class CoveredWarrantPublic(SQLModel):
+    """Đặc tả chứng quyền có bảo đảm (Covered Warrant) trả về cho API."""
+
+    id: uuid.UUID
+    symbol: str
+    underlying_symbol: str
+    issuer_name: str | None = None
+    warrant_type: str = "call"
+    exercise_price: float | None = None
+    conversion_ratio: str | None = None
+    exercise_ratio: float | None = None
+    issue_date: date | None = None
+    maturity_date: date | None = None
+    last_trading_date: date | None = None
+    settlement_type: str | None = None
+    is_active: bool = True
+
+
+class BondSpecificationPublic(SQLModel):
+    """Đặc tả trái phiếu doanh nghiệp & trái phiếu chính phủ trả về cho API."""
+
+    id: uuid.UUID
+    symbol: str
+    bond_type: str  # corporate / government
+    issuer_symbol: str | None = None
+    issuer_name: str | None = None
+    par_value: float = 100_000.0
+    coupon_rate: float | None = None
+    coupon_type: str | None = None
+    tenor_years: float | None = None
+    issue_date: date | None = None
+    maturity_date: date | None = None
+    is_active: bool = True
+
+
+class DerivativeContractPublic(SQLModel):
+    """Đặc tả hợp đồng tương lai phái sinh trả về cho API."""
+
+    id: uuid.UUID
+    symbol: str
+    underlying_symbol: str
+    multiplier: float = 100_000.0
+    first_trading_date: date | None = None
+    last_trading_date: date | None = None
+    expiration_date: date
+    settlement_price: float | None = None
+    is_active: bool = True
+
+
+class RelatedAssetsResponse(SQLModel):
+    """Mạng lưới tài sản liên kết đa tầng của một mã chứng khoán bất kỳ."""
+
+    symbol: str
+    asset_type: str
+    organ_name: str | None = None
+    exchange: str | None = None
+    profile: CompanyOverviewPublic | None = None
+    covered_warrants: list[CoveredWarrantPublic] = []
+    issued_bonds: list[BondSpecificationPublic] = []
+    derivative_contracts: list[DerivativeContractPublic] = []
+    underlying_asset: StockSymbolPublic | None = None
+    issuer_asset: StockSymbolPublic | None = None

@@ -7,20 +7,26 @@ Chuyển tiếp tới:
 
 from app.models.base import get_datetime_utc
 from app.models.dto.stock import (
+    BondSpecificationPublic,
     CompanyOverviewPublic,
+    CoveredWarrantPublic,
+    DerivativeContractPublic,
     FinancialReportPublic,
     FinancialReportsResponse,
     OHLCVRecord,
     PriceHistoryResponse,
+    RelatedAssetsResponse,
     StockSymbolPublic,
     StockSymbolsPublic,
     SyncStatusPublic,
 )
 from app.models.entities.stock import (
+    BondSpecification,
     CompanyOfficer,
     CompanyProfile,
     CompanyShareholder,
     CorporateEvent,
+    CoveredWarrant,
     DataSyncLog,
     DerivativeContract,
     FinancialRatio,
@@ -34,13 +40,18 @@ from app.models.entities.stock import (
 )
 
 __all__ = [
+    "BondSpecification",
+    "BondSpecificationPublic",
     "CompanyOfficer",
     "CompanyOverviewPublic",
     "CompanyProfile",
     "CompanyShareholder",
     "CorporateEvent",
+    "CoveredWarrant",
+    "CoveredWarrantPublic",
     "DataSyncLog",
     "DerivativeContract",
+    "DerivativeContractPublic",
     "FinancialRatio",
     "FinancialReport",
     "FinancialReportItem",
@@ -49,6 +60,7 @@ __all__ = [
     "IndexConstituent",
     "OHLCVRecord",
     "PriceHistoryResponse",
+    "RelatedAssetsResponse",
     "StockOHLCVDaily",
     "StockOHLCVIntraday",
     "StockSymbol",
