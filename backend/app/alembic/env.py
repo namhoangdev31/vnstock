@@ -5,9 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.models import SQLModel
-from app.models.models_quant import *  # noqa: F401, F403 — register quant tables with metadata
-from app.models.models_simulation import *  # noqa: F401, F403 — register simulation tables
-from app.models.models_stock import *  # noqa: F401, F403 — register stock tables with metadata
+from app.models.entities import *  # noqa: F401, F403 — đăng ký toàn bộ Database Tables với SQLAlchemy metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

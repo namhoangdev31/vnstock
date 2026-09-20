@@ -19,6 +19,7 @@ RUN bun run build
 FROM python:3.14
 
 ENV PYTHONUNBUFFERED=1
+ENV TZ=Asia/Ho_Chi_Minh
 
 # Install uv
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv

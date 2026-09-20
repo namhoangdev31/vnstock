@@ -16,6 +16,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
+from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.models.models_quant import (
@@ -68,7 +69,6 @@ def list_forecasts(
     limit: int = Query(default=50, ge=1, le=500),
 ) -> Any:
     """List forecasts with optional filters."""
-    from sqlmodel import col, select
 
     query = select(ForecastJournal)
     if symbol is not None:

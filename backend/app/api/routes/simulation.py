@@ -22,19 +22,21 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import Session, col, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models.models_simulation import (
-    SimulationMarkToMarket,
-    SimulationOrder,
-    SimulationOrderCreate,
-    SimulationOrderPublic,
-    SimulationPortfolio,
-    SimulationPortfolioCreate,
-    SimulationPortfolioPublic,
-    SimulationPortfoliosPublic,
-    SimulationPosition,
-    SimulationPositionClose,
-    SimulationPositionPublic,
-    SimulationTradePublic,
+from app.models.dto.simulation import (
+    MarkToMarketRequest,
+    OrderCreateRequest,
+    OrderResponse,
+    PortfolioCreateRequest,
+    PortfolioResponse,
+    PortfoliosResponse,
+    PositionCloseRequest,
+    PositionResponse,
+    TradeResponse,
+)
+from app.models.entities.simulation import (
+    Order,
+    Portfolio,
+    Position,
 )
 from app.services.simulation_engine import SimulationEngine, SimulationError
 
@@ -47,7 +49,7 @@ def _engine(session: Session) -> SimulationEngine:
 
 def _owned_portfolio(
     engine: SimulationEngine, portfolio_id: UUID, user_id: UUID
-) -> SimulationPortfolio:
+) -> Portfolio:
     try:
         return engine.get_portfolio(portfolio_id, user_id=user_id)
     except SimulationError as exc:
@@ -59,11 +61,11 @@ def _owned_portfolio(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/portfolios", response_model=SimulationPortfolioPublic)
+@router.post("/portfolios", response_model=PortfolioResponse)
 def create_portfolio(
     session: SessionDep,
     current_user: CurrentUser,
-    payload: SimulationPortfolioCreate,
+    payload: PortfolioCreateRequest,
 ) -> Any:
     """Create an isolated paper-trading portfolio for the current user."""
     engine = _engine(session)
@@ -72,21 +74,21 @@ def create_portfolio(
         name=payload.name,
         initial_balance=payload.initial_balance,
     )
-    return SimulationPortfolioPublic.model_validate(portfolio)
+    return PortfolioResponse.model_validate(portfolio)
 
 
-@router.get("/portfolios", response_model=SimulationPortfoliosPublic)
+@router.get("/portfolios", response_model=PortfoliosResponse)
 def list_portfolios(session: SessionDep, current_user: CurrentUser) -> Any:
     """List the current user's portfolios."""
     engine = _engine(session)
     rows = engine.list_portfolios(user_id=current_user.id)
-    return SimulationPortfoliosPublic(
-        data=[SimulationPortfolioPublic.model_validate(r) for r in rows],
+    return PortfoliosResponse(
+        data=[PortfolioResponse.model_validate(r) for r in rows],
         count=len(rows),
     )
 
 
-@router.get("/portfolios/{portfolio_id}", response_model=SimulationPortfolioPublic)
+@router.get("/portfolios/{portfolio_id}", response_model=PortfolioResponse)
 def get_portfolio(
     session: SessionDep,
     current_user: CurrentUser,
@@ -95,12 +97,12 @@ def get_portfolio(
     """Fetch one portfolio (ownership-checked)."""
     engine = _engine(session)
     portfolio = _owned_portfolio(engine, portfolio_id, current_user.id)
-    return SimulationPortfolioPublic.model_validate(portfolio)
+    return PortfolioResponse.model_validate(portfolio)
 
 
 @router.get(
     "/portfolios/{portfolio_id}/positions",
-    response_model=list[SimulationPositionPublic],
+    response_model=list[PositionResponse],
 )
 def list_positions(
     session: SessionDep,
@@ -111,17 +113,15 @@ def list_positions(
     engine = _engine(session)
     _owned_portfolio(engine, portfolio_id, current_user.id)
     rows = engine.open_positions(portfolio_id)
-    return [SimulationPositionPublic.model_validate(r) for r in rows]
+    return [PositionResponse.model_validate(r) for r in rows]
 
 
-@router.post(
-    "/portfolios/{portfolio_id}/mark", response_model=SimulationPortfolioPublic
-)
+@router.post("/portfolios/{portfolio_id}/mark", response_model=PortfolioResponse)
 def mark_to_market(
     session: SessionDep,
     current_user: CurrentUser,
     portfolio_id: UUID,
-    payload: SimulationMarkToMarket,
+    payload: MarkToMarketRequest,
 ) -> Any:
     """Mark a portfolio to market from a symbol→price map.
 
@@ -131,7 +131,7 @@ def mark_to_market(
     engine = _engine(session)
     portfolio = _owned_portfolio(engine, portfolio_id, current_user.id)
     updated = engine.mark_to_market(portfolio, payload.prices)
-    return SimulationPortfolioPublic.model_validate(updated)
+    return PortfolioResponse.model_validate(updated)
 
 
 # ---------------------------------------------------------------------------
@@ -139,12 +139,12 @@ def mark_to_market(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/portfolios/{portfolio_id}/orders", response_model=SimulationOrderPublic)
+@router.post("/portfolios/{portfolio_id}/orders", response_model=OrderResponse)
 def place_order(
     session: SessionDep,
     current_user: CurrentUser,
     portfolio_id: UUID,
-    payload: SimulationOrderCreate,
+    payload: OrderCreateRequest,
 ) -> Any:
     """Place a paper order. Insufficient buying power → REJECTED (TEST-ISO-02)."""
     engine = _engine(session)
@@ -161,10 +161,10 @@ def place_order(
         )
     except SimulationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    return SimulationOrderPublic.model_validate(order)
+    return OrderResponse.model_validate(order)
 
 
-@router.post("/orders/{order_id}/cancel", response_model=SimulationOrderPublic)
+@router.post("/orders/{order_id}/cancel", response_model=OrderResponse)
 def cancel_order(
     session: SessionDep,
     current_user: CurrentUser,
@@ -172,7 +172,7 @@ def cancel_order(
 ) -> Any:
     """Cancel a PENDING paper order."""
     engine = _engine(session)
-    order = session.get(SimulationOrder, order_id)
+    order = session.get(Order, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
     # Ownership: the order's portfolio must belong to the user.
@@ -181,7 +181,7 @@ def cancel_order(
         cancelled = engine.cancel_order(order_id)
     except SimulationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    return SimulationOrderPublic.model_validate(cancelled)
+    return OrderResponse.model_validate(cancelled)
 
 
 # ---------------------------------------------------------------------------
@@ -189,16 +189,16 @@ def cancel_order(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/positions/{position_id}/close", response_model=SimulationTradePublic)
+@router.post("/positions/{position_id}/close", response_model=TradeResponse)
 def close_position(
     session: SessionDep,
     current_user: CurrentUser,
     position_id: UUID,
-    payload: SimulationPositionClose,
+    payload: PositionCloseRequest,
 ) -> Any:
     """Close (part of) an open position, realizing PnL (TEST-ISO-03)."""
     engine = _engine(session)
-    position = session.get(SimulationPosition, position_id)
+    position = session.get(Position, position_id)
     if position is None:
         raise HTTPException(status_code=404, detail="Position not found")
     portfolio = _owned_portfolio(engine, position.portfolio_id, current_user.id)
@@ -211,10 +211,10 @@ def close_position(
         )
     except SimulationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    return SimulationTradePublic.model_validate(trade)
+    return TradeResponse.model_validate(trade)
 
 
-@router.get("/orders", response_model=list[SimulationOrderPublic])
+@router.get("/orders", response_model=list[OrderResponse])
 def list_orders(
     session: SessionDep,
     current_user: CurrentUser,
@@ -223,17 +223,15 @@ def list_orders(
 ) -> Any:
     """List the user's paper orders, optionally scoped to one portfolio."""
     engine = _engine(session)
-    query = select(SimulationOrder)
+    query = select(Order)
     if portfolio_id is not None:
         _owned_portfolio(engine, portfolio_id, current_user.id)
-        query = query.where(SimulationOrder.portfolio_id == portfolio_id)
+        query = query.where(Order.portfolio_id == portfolio_id)
     else:
         owned = engine.list_portfolios(user_id=current_user.id)
         ids = [p.id for p in owned]
         if not ids:
             return []
-        query = query.where(col(SimulationOrder.portfolio_id).in_(ids))
-    rows = session.exec(
-        query.order_by(col(SimulationOrder.created_at).desc()).limit(limit)
-    ).all()
-    return [SimulationOrderPublic.model_validate(r) for r in rows]
+        query = query.where(col(Order.portfolio_id).in_(ids))
+    rows = session.exec(query.order_by(col(Order.created_at).desc()).limit(limit)).all()
+    return [OrderResponse.model_validate(r) for r in rows]

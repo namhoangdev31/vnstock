@@ -34,6 +34,14 @@ from uuid import UUID
 
 from sqlmodel import Session, select
 
+from app.models.entities.simulation import (
+    Order,
+    Portfolio,
+    Position,
+    Trade,
+    derivative_pnl,
+    round_money,
+)
 from app.models.enums import (
     DERIVATIVE_MULTIPLIER,
     EQUITY_SETTLEMENT_DAYS,
@@ -42,14 +50,6 @@ from app.models.enums import (
     OrderType,
     PositionSide,
     PositionStatus,
-)
-from app.models.models_simulation import (
-    SimulationOrder,
-    SimulationPortfolio,
-    SimulationPosition,
-    SimulationTrade,
-    derivative_pnl,
-    round_money,
 )
 
 logger = logging.getLogger(__name__)
@@ -117,9 +117,9 @@ class SimulationEngine:
         user_id: UUID,
         name: str,
         initial_balance: float = 100_000_000.0,
-    ) -> SimulationPortfolio:
+    ) -> Portfolio:
         balance = round_money(initial_balance)
-        portfolio = SimulationPortfolio(
+        portfolio = Portfolio(
             user_id=user_id,
             name=name,
             initial_balance=balance,
@@ -135,23 +135,19 @@ class SimulationEngine:
         )
         return portfolio
 
-    def get_portfolio(
-        self, portfolio_id: UUID, *, user_id: UUID
-    ) -> SimulationPortfolio:
+    def get_portfolio(self, portfolio_id: UUID, *, user_id: UUID) -> Portfolio:
         """Fetch a portfolio with an ownership check (RULE 2 isolation)."""
-        portfolio = self.session.get(SimulationPortfolio, portfolio_id)
+        portfolio = self.session.get(Portfolio, portfolio_id)
         if portfolio is None:
             raise SimulationError(f"Portfolio {portfolio_id} not found")
         if portfolio.user_id != user_id:
             raise SimulationError("Portfolio does not belong to this user")
         return portfolio
 
-    def list_portfolios(self, *, user_id: UUID) -> list[SimulationPortfolio]:
+    def list_portfolios(self, *, user_id: UUID) -> list[Portfolio]:
         return list(
             self.session.exec(
-                select(SimulationPortfolio).where(
-                    SimulationPortfolio.user_id == user_id
-                )
+                select(Portfolio).where(Portfolio.user_id == user_id)
             ).all()
         )
 
@@ -162,14 +158,14 @@ class SimulationEngine:
     def place_order(
         self,
         *,
-        portfolio: SimulationPortfolio,
+        portfolio: Portfolio,
         symbol: str,
         side: str,
         quantity: int,
         price: float,
         order_type: str = OrderType.MARKET,
         stop_price: float | None = None,
-    ) -> SimulationOrder:
+    ) -> Order:
         """Validate and (for MARKET orders) fill a paper order immediately.
 
         Rejection conditions leave balances untouched:
@@ -195,7 +191,7 @@ class SimulationEngine:
 
         intent = self._classify(portfolio.id, symbol, side_norm)
 
-        order = SimulationOrder(
+        order = Order(
             portfolio_id=portfolio.id,
             symbol=symbol,
             side=side_norm,
@@ -225,8 +221,8 @@ class SimulationEngine:
             self._fill(order, portfolio, fill_price=price, deriv=deriv, intent=intent)
         return order
 
-    def cancel_order(self, order_id: UUID) -> SimulationOrder:
-        order = self.session.get(SimulationOrder, order_id)
+    def cancel_order(self, order_id: UUID) -> Order:
+        order = self.session.get(Order, order_id)
         if order is None:
             raise SimulationError(f"Order {order_id} not found")
         if order.status != OrderStatus.PENDING:
@@ -246,7 +242,7 @@ class SimulationEngine:
 
     def _classify(
         self, portfolio_id: UUID, symbol: str, side: str
-    ) -> tuple[str, SimulationPosition | None]:
+    ) -> tuple[str, Position | None]:
         """Decide whether ``side`` reduces an opposite position or opens one.
 
         Returns ``("reduce", opposite_position)`` or ``("open", same_direction_position_or_None)``.
@@ -265,11 +261,11 @@ class SimulationEngine:
 
     def _precheck(
         self,
-        portfolio: SimulationPortfolio,
-        order: SimulationOrder,
+        portfolio: Portfolio,
+        order: Order,
         *,
         deriv: bool,
-        intent: tuple[str, SimulationPosition | None],
+        intent: tuple[str, Position | None],
     ) -> str | None:
         """Return a rejection reason, or None if the MARKET order may proceed."""
         kind, position = intent
@@ -310,12 +306,12 @@ class SimulationEngine:
 
     def _fill(
         self,
-        order: SimulationOrder,
-        portfolio: SimulationPortfolio,
+        order: Order,
+        portfolio: Portfolio,
         *,
         fill_price: float,
         deriv: bool,
-        intent: tuple[str, SimulationPosition | None],
+        intent: tuple[str, Position | None],
     ) -> None:
         kind, position = intent
         mult = DERIVATIVE_MULTIPLIER if deriv else 1
@@ -343,7 +339,7 @@ class SimulationEngine:
         order.updated_at = datetime.now(UTC)
         self.session.add(order)
 
-        trade = SimulationTrade(
+        trade = Trade(
             portfolio_id=portfolio.id,
             order_id=order.id,
             symbol=order.symbol,
@@ -365,9 +361,9 @@ class SimulationEngine:
 
     def _apply_open_fill(
         self,
-        portfolio: SimulationPortfolio,
-        existing: SimulationPosition | None,
-        order: SimulationOrder,
+        portfolio: Portfolio,
+        existing: Position | None,
+        order: Order,
         fill_price: float,
         mult: int,
         fee: float,
@@ -398,7 +394,7 @@ class SimulationEngine:
                 if deriv
                 else _business_days_after(date.today(), EQUITY_SETTLEMENT_DAYS)
             )
-            position = SimulationPosition(
+            position = Position(
                 portfolio_id=portfolio.id,
                 symbol=order.symbol,
                 side=target_side,
@@ -429,8 +425,8 @@ class SimulationEngine:
 
     def _reduce_position(
         self,
-        portfolio: SimulationPortfolio,
-        position: SimulationPosition,
+        portfolio: Portfolio,
+        position: Position,
         quantity: int,
         fill_price: float,
         mult: int,
@@ -481,11 +477,11 @@ class SimulationEngine:
     def close_position(
         self,
         *,
-        portfolio: SimulationPortfolio,
-        position: SimulationPosition,
+        portfolio: Portfolio,
+        position: Position,
         quantity: int,
         price: float,
-    ) -> SimulationTrade:
+    ) -> Trade:
         """Explicitly close (part of) an open position, realizing PnL."""
         if quantity <= 0 or quantity > position.quantity:
             raise SimulationError(
@@ -500,7 +496,7 @@ class SimulationEngine:
             portfolio, position, quantity, price, mult, fee, tax, deriv
         )
 
-        trade = SimulationTrade(
+        trade = Trade(
             portfolio_id=portfolio.id,
             order_id=None,
             symbol=position.symbol,
@@ -527,8 +523,8 @@ class SimulationEngine:
     # ------------------------------------------------------------------
 
     def mark_to_market(
-        self, portfolio: SimulationPortfolio, prices: dict[str, float]
-    ) -> SimulationPortfolio:
+        self, portfolio: Portfolio, prices: dict[str, float]
+    ) -> Portfolio:
         """Update prices, unrealized PnL and equity from a symbol→price map.
 
         Symbols absent from the map keep their last current_price (RULE 3: never
@@ -546,16 +542,14 @@ class SimulationEngine:
         self.session.refresh(portfolio)
         return portfolio
 
-    def _mark_position(
-        self, position: SimulationPosition, price: float, mult: int
-    ) -> None:
+    def _mark_position(self, position: Position, price: float, mult: int) -> None:
         sign = 1 if position.side == PositionSide.LONG else -1
         position.current_price = price
         position.unrealized_pnl = round_money(
             (price - position.entry_price) * position.quantity * mult * sign
         )
 
-    def _refresh_equity(self, portfolio: SimulationPortfolio) -> None:
+    def _refresh_equity(self, portfolio: Portfolio) -> None:
         unrealized = sum(p.unrealized_pnl for p in self.open_positions(portfolio.id))
         portfolio.equity = round_money(
             portfolio.cash_balance + portfolio.margin_used + unrealized
@@ -565,24 +559,24 @@ class SimulationEngine:
     # Queries & helpers
     # ------------------------------------------------------------------
 
-    def open_positions(self, portfolio_id: UUID) -> list[SimulationPosition]:
+    def open_positions(self, portfolio_id: UUID) -> list[Position]:
         return list(
             self.session.exec(
-                select(SimulationPosition)
-                .where(SimulationPosition.portfolio_id == portfolio_id)
-                .where(SimulationPosition.status == PositionStatus.OPEN)
+                select(Position)
+                .where(Position.portfolio_id == portfolio_id)
+                .where(Position.status == PositionStatus.OPEN)
             ).all()
         )
 
     def _open_position(
         self, portfolio_id: UUID, symbol: str, side: str
-    ) -> SimulationPosition | None:
+    ) -> Position | None:
         return self.session.exec(
-            select(SimulationPosition)
-            .where(SimulationPosition.portfolio_id == portfolio_id)
-            .where(SimulationPosition.symbol == symbol)
-            .where(SimulationPosition.side == side)
-            .where(SimulationPosition.status == PositionStatus.OPEN)
+            select(Position)
+            .where(Position.portfolio_id == portfolio_id)
+            .where(Position.symbol == symbol)
+            .where(Position.side == side)
+            .where(Position.status == PositionStatus.OPEN)
         ).first()
 
     def _fee(self, notional: float, deriv: bool) -> float:

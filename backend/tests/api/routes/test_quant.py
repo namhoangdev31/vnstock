@@ -23,8 +23,8 @@ import app.models.models_simulation  # noqa: F401
 import app.models.models_stock  # noqa: F401
 from app.api.deps import get_current_user, get_db
 from app.core.config import settings
-from app.main import app
-from app.models.models_user import User
+from app.main import app as fastapi_app
+from app.models.entities.user import User
 
 
 @pytest.fixture(name="api_client")
@@ -43,6 +43,7 @@ def api_client_fixture():
     fake_user = User(
         id=uuid.uuid4(),
         email="test_quant@example.com",
+        hashed_password="fakehashedpassword",
         is_active=True,
         is_superuser=True,
         full_name="Người Dùng Kiểm Thử Quant",
@@ -51,13 +52,13 @@ def api_client_fixture():
     def override_get_current_user():
         return fake_user
 
-    app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_current_user] = override_get_current_user
+    fastapi_app.dependency_overrides[get_db] = override_get_db
+    fastapi_app.dependency_overrides[get_current_user] = override_get_current_user
 
-    with TestClient(app) as client:
+    with TestClient(fastapi_app) as client:
         yield client
 
-    app.dependency_overrides.clear()
+    fastapi_app.dependency_overrides.clear()
 
 
 def test_api_engine1_technical(api_client: TestClient):

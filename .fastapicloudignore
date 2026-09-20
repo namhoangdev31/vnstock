@@ -1,15 +1,44 @@
+# Dependencies & environments
 node_modules/
+**/node_modules/
 .venv/
+**/.venv/
 backend/.venv/
-frontend/node_modules/
-frontend/.tanstack/
+
+# Frontend source (compiled bundle is served from backend/app/frontend/)
+frontend/
+
+# Git & IDEs
 .git/
-.env
-.agents/
+**/.git/
+.idea/
+.vscode/
 .claude/
+.agents/
 .gemini/
+
+# Environment files & secrets
+.env
+*.env
+
+# Caches & build artifacts
 __pycache__/
+**/__pycache__/
 .pytest_cache/
+**/.pytest_cache/
 .ruff_cache/
+**/.ruff_cache/
 .mypy_cache/
+**/.mypy_cache/
+backend/htmlcov/
+backend/coverage/
+backend/.coverage
+*.pyc
+
+# Docs & media
+img/
+
+# Ensure compiled frontend static assets inside backend are included
 !backend/app/frontend/
+!backend/app/frontend/**
+

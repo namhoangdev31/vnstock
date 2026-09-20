@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+"""Module tương thích ngược cho dữ liệu thị trường vnstock.
 
+Chuyển tiếp tới:
+- DTOs: app.models.dto.vnstock
+"""
 
-class VnstockSymbolItem(BaseModel):
-    """Thông tin mã cổ phiếu, tên tổ chức và sàn niêm yết từ vnstock."""
+from app.models.dto.vnstock import VnstockSymbolItem
 
-    symbol: str
-    organ_name: str | None = None
-    exchange: str | None = None
+__all__ = ["VnstockSymbolItem"]

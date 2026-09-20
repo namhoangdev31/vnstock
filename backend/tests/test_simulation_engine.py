@@ -9,14 +9,14 @@ import uuid
 import pytest
 from sqlmodel import select
 
-from app.models.enums import OrderSide, OrderStatus, PositionSide, PositionStatus
-from app.models.models_simulation import (
-    SimulationOrder,
-    SimulationPortfolio,
-    SimulationPosition,
-    SimulationTrade,
+from app.models.entities.simulation import (
+    Order,
+    Portfolio,
+    Position,
+    Trade,
     derivative_pnl,
 )
+from app.models.enums import OrderSide, OrderStatus, PositionSide, PositionStatus
 from app.services.simulation_engine import SimulationEngine, SimulationError
 from tests.utils.phase1 import session, sqlite_engine  # noqa: F401
 
@@ -35,10 +35,10 @@ _FORBIDDEN_COLUMN_TOKENS = (
     "session_key",
 )
 _SIM_TABLES = (
-    SimulationPortfolio,
-    SimulationOrder,
-    SimulationPosition,
-    SimulationTrade,
+    Portfolio,
+    Order,
+    Position,
+    Trade,
 )
 
 
@@ -54,7 +54,7 @@ def test_iso_01_no_brokerage_secrets_in_schema() -> None:
                 )
 
 
-def _new_portfolio(s, balance=100_000_000.0) -> SimulationPortfolio:
+def _new_portfolio(s, balance=100_000_000.0) -> Portfolio:
     engine = SimulationEngine(s)
     return engine.create_portfolio(
         user_id=uuid.uuid4(), name="VN30F1M Intraday", initial_balance=balance
@@ -189,7 +189,7 @@ def test_equity_short_not_allowed_for_equity(session) -> None:  # noqa: F811
 
 
 def test_trade_history_persisted(session) -> None:  # noqa: F811
-    """Every fill writes a SimulationTrade ledger row."""
+    """Every fill writes a Trade ledger row."""
     engine = SimulationEngine(session)
     portfolio = _new_portfolio(session, balance=200_000_000.0)
     engine.place_order(
@@ -201,8 +201,6 @@ def test_trade_history_persisted(session) -> None:  # noqa: F811
     )
     pos = engine.open_positions(portfolio.id)[0]
     engine.close_position(portfolio=portfolio, position=pos, quantity=5, price=1008.0)
-    trades = session.exec(
-        select(SimulationTrade).where(SimulationTrade.portfolio_id == portfolio.id)
-    ).all()
+    trades = session.exec(select(Trade).where(Trade.portfolio_id == portfolio.id)).all()
     # One open fill + one close fill.
     assert len(trades) >= 2

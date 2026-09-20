@@ -1,0 +1,129 @@
+"""Mô hình dữ liệu thực thể nghiên cứu định lượng & kịch bản dự phóng (Database Tables)."""
+
+import uuid
+from datetime import date, datetime
+
+from sqlalchemy import DateTime, UniqueConstraint
+from sqlmodel import Field
+
+from app.models.base import AwareSQLModel, JSONBVariant, get_datetime_utc
+from app.models.enums import (
+    ForecastDirection,
+    ForecastHorizon,
+    ForecastStatus,
+)
+
+
+class ForecastJournal(AwareSQLModel, table=True):
+    """Bảng sổ cái dự phóng bắt buộc (RULE 3): Lưu vết mọi tín hiệu và kết quả tự học."""
+
+    __tablename__ = "forecast_journal"
+    __table_args__ = (UniqueConstraint("symbol", "horizon", "predicted_at"),)
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    symbol: str = Field(max_length=20, index=True)
+    horizon: str = Field(default=ForecastHorizon.T_PLUS_1, max_length=20)
+    # Mốc thời gian neo dự phóng (đảm bảo cam kết không rò rỉ dữ liệu tương lai No-Look-Ahead)
+    predicted_at: datetime = Field(
+        sa_type=DateTime(timezone=True),  # type: ignore
+        index=True,
+    )
+    predicted_value: float | None = None
+    predicted_direction: str = Field(default=ForecastDirection.NEUTRAL, max_length=10)
+    engine_weights: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
+    model_version: str = Field(max_length=40)
+    parameter_snapshot: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
+
+    # Kết quả thực tế được ghi ngược lại khi phiên giao dịch kết thúc
+    actual_value: float | None = None
+    actual_direction: str | None = Field(default=None, max_length=10)
+    realized_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    error: float | None = None
+    score: float | None = None
+    status: str = Field(default=ForecastStatus.PENDING, max_length=10, index=True)
+
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class MacroIndicator(AwareSQLModel, table=True):
+    """Bảng lưu trữ các chỉ số vĩ mô: Giá vàng SJC/thế giới và tỷ giá USD/VND (Bối cảnh Động cơ 2)."""
+
+    __tablename__ = "macro_indicator"
+    __table_args__ = (UniqueConstraint("indicator_code", "recorded_date", "source"),)
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    recorded_date: date = Field(index=True)
+    indicator_code: str = Field(max_length=30, index=True)
+    value: float
+    change_pct: float | None = None
+    source: str = Field(max_length=20)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
+class TickFlowAggregated(AwareSQLModel, table=True):
+    """Bảng tổng hợp luồng lệnh mua/bán chủ động khung 1 phút (Động cơ 1: Kỹ thuật & Orderflow)."""
+
+    __tablename__ = "tick_flow_aggregated"
+    __table_args__ = (UniqueConstraint("symbol", "timestamp"),)
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    symbol: str = Field(max_length=20, index=True)
+    timestamp: datetime = Field(
+        sa_type=DateTime(timezone=True),  # type: ignore
+        index=True,
+    )
+    aggressive_buy_volume: int = 0
+    aggressive_sell_volume: int = 0
+    volume_delta: int = 0
+    trade_count: int = 0
+    vwap: float | None = None
+    source: str = Field(max_length=20)
+
+
+class InstitutionalFlow(AwareSQLModel, table=True):
+    """Bảng theo dõi dòng tiền tổ chức: Khối ngoại & Tự doanh (Động cơ 2: Thanh khoản)."""
+
+    __tablename__ = "institutional_flow"
+    __table_args__ = (UniqueConstraint("trading_date", "symbol", "source"),)
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    trading_date: date = Field(index=True)
+    symbol: str = Field(max_length=20, index=True)
+    foreign_buy_value: float | None = None
+    foreign_sell_value: float | None = None
+    foreign_net_value: float | None = None
+    prop_buy_value: float | None = None
+    prop_sell_value: float | None = None
+    prop_net_value: float | None = None
+    source: str = Field(max_length=20)
+
+
+class MarketBreadth(AwareSQLModel, table=True):
+    """Bảng đo lường độ rộng thị trường: Số mã tăng, giảm, trần, sàn theo sàn giao dịch."""
+
+    __tablename__ = "market_breadth"
+    __table_args__ = (UniqueConstraint("trading_date", "exchange"),)
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    trading_date: date = Field(index=True)
+    exchange: str = Field(max_length=10)
+    advancers: int = 0
+    decliners: int = 0
+    unchanged: int = 0
+    ceiling_count: int = 0
+    floor_count: int = 0
+    total_volume: int = 0
+    total_value: float = 0.0

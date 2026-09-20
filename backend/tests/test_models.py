@@ -9,6 +9,14 @@ from datetime import UTC, date, datetime
 
 import pytest
 
+from app.models.entities.simulation import (
+    Order,
+    Portfolio,
+    Position,
+    Trade,
+    derivative_pnl,
+    round_money,
+)
 from app.models.enums import (
     DEFAULT_INITIAL_BALANCE,
     Exchange,
@@ -29,14 +37,6 @@ from app.models.models_quant import (
     MacroIndicator,
     MarketBreadth,
     TickFlowAggregated,
-)
-from app.models.models_simulation import (
-    SimulationOrder,
-    SimulationPortfolio,
-    SimulationPosition,
-    SimulationTrade,
-    derivative_pnl,
-    round_money,
 )
 
 
@@ -80,7 +80,7 @@ def test_forecast_journal_instantiation() -> None:
 def test_simulation_models_instantiation() -> None:
     """Simulation models must initialize with clean domain fields."""
     user_id = uuid.uuid4()
-    portfolio = SimulationPortfolio(
+    portfolio = Portfolio(
         user_id=user_id,
         name="Test Portfolio",
     )
@@ -89,7 +89,7 @@ def test_simulation_models_instantiation() -> None:
     assert portfolio.equity == DEFAULT_INITIAL_BALANCE
     assert portfolio.margin_used == 0.0
 
-    order = SimulationOrder(
+    order = Order(
         portfolio_id=portfolio.id,
         symbol="VN30F1M",
         side=OrderSide.LONG,
@@ -100,7 +100,7 @@ def test_simulation_models_instantiation() -> None:
     assert order.status == OrderStatus.PENDING
     assert order.filled_quantity == 0
 
-    position = SimulationPosition(
+    position = Position(
         portfolio_id=portfolio.id,
         symbol="VN30F1M",
         side=PositionSide.LONG,
@@ -187,7 +187,7 @@ def test_macro_and_market_breadth_models() -> None:
     )
     assert tick.volume_delta == 60
 
-    trade = SimulationTrade(
+    trade = Trade(
         portfolio_id=uuid.uuid4(),
         symbol="VN30F1M",
         side=OrderSide.BUY,
@@ -200,6 +200,156 @@ def test_macro_and_market_breadth_models() -> None:
     assert trade.quantity == 2
 
 
+def test_dto_models_instantiation() -> None:
+    """Kiểm tra tính hợp lệ và khả năng khởi tạo của các DTOs (Data Transfer Objects)."""
+    from app.models.dto import (
+        CompanyOverviewPublic,
+        EnsembleSignalRequest,
+        EnsembleSignalResponse,
+        EnsembleWeightsResponse,
+        EnsembleWeightsUpdate,
+        FinancialReportPublic,
+        FinancialReportsResponse,
+        FlowLiquidityEngineResponse,
+        ForecastAggregateResponse,
+        ForecastCreate,
+        ForecastJournalPublic,
+        ForecastResolve,
+        ForecastScoredPublic,
+        InstitutionalFlowPublic,
+        ItemCreate,
+        ItemPublic,
+        ItemsPublic,
+        ItemUpdate,
+        MacroIndicatorPublic,
+        MacroLatestResponse,
+        MarkToMarketRequest,
+        Message,
+        NewPassword,
+        OHLCVRecord,
+        OrderCreateRequest,
+        OrderResponse,
+        PortfolioCreateRequest,
+        PortfolioResponse,
+        PortfoliosResponse,
+        PositionCloseRequest,
+        PositionResponse,
+        PriceHistoryResponse,
+        QuantMLEngineResponse,
+        StockSymbolPublic,
+        StockSymbolsPublic,
+        SyncStatusPublic,
+        TechnicalEngineResponse,
+        Token,
+        TokenPayload,
+        TradeResponse,
+        UpdatePassword,
+        UserCreate,
+        UserPublic,
+        UserRegister,
+        UsersPublic,
+        UserUpdate,
+        UserUpdateMe,
+        VnstockSymbolItem,
+    )
+
+    # Khởi tạo thử nghiệm Request DTO
+    order_req = OrderCreateRequest(
+        symbol="VN30F1M",
+        side="BUY",
+        quantity=2,
+        price=1320.0,
+    )
+    assert order_req.quantity == 2
+
+    # Khởi tạo thử nghiệm Response DTO
+    msg_resp = Message(message="Success")
+    assert msg_resp.message == "Success"
+
+    # Kiểm tra tồn tại và hợp lệ của các class DTO chính
+    assert ForecastCreate is not None
+    assert ForecastResolve is not None
+    assert ForecastJournalPublic is not None
+    assert ForecastScoredPublic is not None
+    assert ForecastAggregateResponse is not None
+    assert MacroIndicatorPublic is not None
+    assert MacroLatestResponse is not None
+    assert InstitutionalFlowPublic is not None
+    assert TechnicalEngineResponse is not None
+    assert FlowLiquidityEngineResponse is not None
+    assert QuantMLEngineResponse is not None
+    assert EnsembleSignalRequest is not None
+    assert EnsembleSignalResponse is not None
+    assert EnsembleWeightsUpdate is not None
+    assert EnsembleWeightsResponse is not None
+
+    assert PortfolioCreateRequest is not None
+    assert PortfolioResponse is not None
+    assert PortfoliosResponse is not None
+    assert PositionCloseRequest is not None
+    assert PositionResponse is not None
+    assert TradeResponse is not None
+    assert MarkToMarketRequest is not None
+    assert OrderCreateRequest is not None
+    assert OrderResponse is not None
+
+    assert StockSymbolPublic is not None
+    assert StockSymbolsPublic is not None
+    assert OHLCVRecord is not None
+    assert PriceHistoryResponse is not None
+    assert CompanyOverviewPublic is not None
+    assert FinancialReportPublic is not None
+    assert FinancialReportsResponse is not None
+    assert SyncStatusPublic is not None
+
+    assert UserCreate is not None
+    assert UserPublic is not None
+    assert UsersPublic is not None
+    assert UserRegister is not None
+    assert UserUpdate is not None
+    assert UserUpdateMe is not None
+    assert ItemCreate is not None
+    assert ItemUpdate is not None
+    assert ItemPublic is not None
+    assert ItemsPublic is not None
+    assert UpdatePassword is not None
+    assert NewPassword is not None
+    assert Token is not None
+    assert TokenPayload is not None
+    assert VnstockSymbolItem is not None
+
+
+def test_entities_import_completeness() -> None:
+    """Kiểm tra việc import đầy đủ 17 bảng cơ sở dữ liệu từ app.models.entities."""
+    import app.models.entities as entities
+
+    expected_tables = [
+        "User",
+        "Item",
+        "StockSymbol",
+        "StockOHLCVDaily",
+        "StockOHLCVIntraday",
+        "CompanyProfile",
+        "FinancialReport",
+        "DataSyncLog",
+        "ForecastJournal",
+        "MacroIndicator",
+        "TickFlowAggregated",
+        "InstitutionalFlow",
+        "MarketBreadth",
+        "Portfolio",
+        "Order",
+        "Position",
+        "Trade",
+    ]
+    for table_name in expected_tables:
+        assert hasattr(entities, table_name), f"Thiếu entity bảng: {table_name}"
+        model_cls = getattr(entities, table_name)
+        assert hasattr(model_cls, "__tablename__"), (
+            f"{table_name} không phải là bảng ORM"
+        )
+
+
 if __name__ == "__main__":
     test_aware_sqlmodel_rejects_naive_datetime()
     test_aware_sqlmodel_accepts_utc_datetime()
@@ -208,3 +358,5 @@ if __name__ == "__main__":
     test_derivative_pnl_calculation()
     test_round_money()
     test_macro_and_market_breadth_models()
+    test_dto_models_instantiation()
+    test_entities_import_completeness()

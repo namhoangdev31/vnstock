@@ -1,6 +1,13 @@
 import logging
+import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# Enforce Vietnam Timezone (UTC+7) across the application runtime
+os.environ["TZ"] = "Asia/Ho_Chi_Minh"
+if hasattr(time, "tzset"):
+    time.tzset()
 
 import sentry_sdk
 from alembic import command
