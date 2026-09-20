@@ -181,3 +181,131 @@ def test_bulk_upsert_preserves_uuid(sqlite_session: Session) -> None:
     assert vic2 is not None
     assert vic2.id == orig_uuid  # UUID KHÔNG ĐƯỢC ĐỔI
     assert vic2.organ_name == "Tập đoàn Vingroup - CTCP"
+
+
+def test_safe_extractors() -> None:
+    """Kiểm tra các helper trích xuất an toàn từ DataFrame row hoặc dictionary."""
+    from datetime import date, datetime
+
+    row = {
+        "ticker": "HPG",
+        "symbol": "",
+        "parValue": "100000",
+        "coupon_rate": 8.75,
+        "tenor": 3,
+        "issueDate": "2026-05-15",
+        "timestamp": "2026-09-20 14:30:00",
+        "empty_str": "   ",
+        "none_val": None,
+    }
+
+    # _extract_str
+    assert DataSyncManager._extract_str(row, "empty_str", "ticker") == "HPG"
+    assert DataSyncManager._extract_str(row, "non_existent", default="DEF") == "DEF"
+
+    # _extract_float
+    assert DataSyncManager._extract_float(row, "parValue") == 100_000.0
+    assert DataSyncManager._extract_float(row, "coupon_rate") == 8.75
+    assert DataSyncManager._extract_float(row, "missing", default=1.5) == 1.5
+
+    # _extract_int
+    assert DataSyncManager._extract_int(row, "tenor") == 3
+    assert DataSyncManager._extract_int(row, "parValue") == 100_000
+    assert DataSyncManager._extract_int(row, "missing", default=10) == 10
+
+    # _extract_date
+    assert DataSyncManager._extract_date(row, "issueDate") == date(2026, 5, 15)
+    assert DataSyncManager._extract_date(row, "non_date") is None
+
+    # _extract_datetime
+    assert DataSyncManager._extract_datetime(row, "timestamp") == datetime(
+        2026, 9, 20, 14, 30, 0
+    )
+
+
+def test_bulk_upsert_composite_conflict_keys(sqlite_session: Session) -> None:
+    """Kiểm tra _bulk_upsert với tổ hợp nhiều trường conflict keys (Intraday bars)."""
+    from datetime import UTC, datetime
+
+    from app.models.models_stock import StockOHLCVIntraday
+    from app.services.data_sync import INTRADAY_OHLCV_UPDATE_FIELDS
+
+    manager = DataSyncManager(sqlite_session, MagicMock())
+    ts = datetime(2026, 9, 20, 14, 0, 0, tzinfo=UTC)
+
+    # Đảm bảo mã VN30F1M tồn tại
+    manager._ensure_symbol_exists(
+        "VN30F1M", organ_name="HĐTL VN30", asset_type="derivative"
+    )
+
+    # 1. Insert ban đầu
+    records_1 = [
+        {
+            "symbol": "VN30F1M",
+            "timestamp": ts,
+            "interval": "1m",
+            "open": 1320.0,
+            "high": 1325.0,
+            "low": 1318.0,
+            "close": 1322.0,
+            "volume": 500,
+            "source": "VCI",
+        }
+    ]
+    manager._bulk_upsert(
+        StockOHLCVIntraday,
+        records_1,
+        conflict_keys=["symbol", "timestamp", "interval"],
+        update_fields=INTRADAY_OHLCV_UPDATE_FIELDS,
+    )
+    sqlite_session.commit()
+
+    bar1 = sqlite_session.exec(
+        select(StockOHLCVIntraday).where(
+            StockOHLCVIntraday.symbol == "VN30F1M",
+            StockOHLCVIntraday.timestamp == ts,
+            StockOHLCVIntraday.interval == "1m",
+        )
+    ).first()
+    assert bar1 is not None
+    orig_bar_id = bar1.id
+    assert bar1.close == 1322.0
+    assert bar1.volume == 500
+
+    # 2. Update cùng nến đó với volume và close mới
+    records_2 = [
+        {
+            "symbol": "VN30F1M",
+            "timestamp": ts,
+            "interval": "1m",
+            "open": 1320.0,
+            "high": 1328.0,
+            "low": 1318.0,
+            "close": 1327.5,
+            "volume": 850,
+            "source": "VCI",
+        }
+    ]
+    manager._bulk_upsert(
+        StockOHLCVIntraday,
+        records_2,
+        conflict_keys=["symbol", "timestamp", "interval"],
+        update_fields=INTRADAY_OHLCV_UPDATE_FIELDS,
+    )
+    sqlite_session.commit()
+
+    bar2 = sqlite_session.exec(
+        select(StockOHLCVIntraday).where(
+            StockOHLCVIntraday.symbol == "VN30F1M",
+            StockOHLCVIntraday.timestamp == ts,
+            StockOHLCVIntraday.interval == "1m",
+        )
+    ).first()
+    assert bar2 is not None
+    assert bar2.id == orig_bar_id  # UUID giữ nguyên
+    assert bar2.close == 1327.5
+    assert bar2.volume == 850
+
+    # Không sinh bản ghi trùng lặp
+    all_bars = sqlite_session.exec(select(StockOHLCVIntraday)).all()
+    assert len(all_bars) == 1

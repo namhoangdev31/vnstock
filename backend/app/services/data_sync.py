@@ -48,6 +48,7 @@ META_FINANCIAL_KEYS: frozenset[str] = frozenset(
     {"year", "yearReport", "quarter", "lengthReport", "ticker", "symbol"}
 )
 
+# Cấu hình danh sách trường cập nhật (Conflict Update Fields) cho từng Entity
 STOCK_SYMBOL_UPDATE_FIELDS: list[str] = [
     "organ_name",
     "exchange",
@@ -66,6 +67,24 @@ CW_STOCK_SYMBOL_UPDATE_FIELDS: list[str] = [
     "industry",
     "asset_type",
     "lot_size",
+    "is_active",
+    "updated_at",
+]
+
+DERIV_STOCK_SYMBOL_UPDATE_FIELDS: list[str] = [
+    "organ_name",
+    "exchange",
+    "industry",
+    "asset_type",
+    "lot_size",
+    "is_active",
+    "updated_at",
+]
+
+DERIVATIVE_CONTRACT_UPDATE_FIELDS: list[str] = [
+    "underlying_symbol",
+    "multiplier",
+    "expiration_date",
     "is_active",
     "updated_at",
 ]
@@ -96,6 +115,45 @@ BOND_SPECIFICATION_UPDATE_FIELDS: list[str] = [
     "issue_date",
     "maturity_date",
     "is_active",
+    "updated_at",
+]
+
+DAILY_OHLCV_UPDATE_FIELDS: list[str] = [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "value",
+    "source",
+]
+
+INTRADAY_OHLCV_UPDATE_FIELDS: list[str] = [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "source",
+]
+
+COMPANY_PROFILE_UPDATE_FIELDS: list[str] = [
+    "company_name",
+    "short_name",
+    "industry_name",
+    "established_date",
+    "listed_date",
+    "charter_capital",
+    "outstanding_shares",
+    "market_cap",
+    "website",
+    "description",
+    "updated_at",
+]
+
+FINANCIAL_REPORT_UPDATE_FIELDS: list[str] = [
+    "data",
+    "source",
     "updated_at",
 ]
 
@@ -165,7 +223,7 @@ class DataSyncManager:
         task_func: Callable[[], int],
         symbol: str | None = None,
     ) -> DataSyncLog:
-        """Quản lý vòng đời của một tác vụ đồng bộ: khởi tạo log -> thực thi -> bắt lỗi & rollback -> cập nhật log."""
+        """Quản lý vòng đời tác vụ đồng bộ: khởi tạo log -> thực thi -> bắt lỗi & rollback -> cập nhật log."""
         log = self._create_log(sync_type, symbol=symbol)
         try:
             rows_synced = task_func()
@@ -292,7 +350,76 @@ class DataSyncManager:
         self.session.commit()
 
     # ------------------------------------------------------------------
-    # Data Normalization & Extraction Helpers
+    # Safe Extraction Helpers (Loại bỏ triệt để code smell row.get nested)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _extract_val(row: Any, *keys: str, default: Any = None) -> Any:
+        """Trích xuất giá trị đầu tiên tồn tại và không rỗng từ danh sách keys trong row."""
+        match row:
+            case dict():
+                getter = row.get
+            case _:
+                getter = getattr(row, "get", lambda k, d=None: getattr(row, k, d))
+
+        for k in keys:
+            v = getter(k, None)
+            if v is not None and pd.notna(v):
+                if isinstance(v, str) and not v.strip():
+                    continue
+                return v
+        return default
+
+    @classmethod
+    def _extract_str(
+        cls, row: Any, *keys: str, default: str | None = None
+    ) -> str | None:
+        """Trích xuất giá trị dạng chuỗi an toàn."""
+        val = cls._extract_val(row, *keys)
+        return str(val).strip() if val is not None else default
+
+    @classmethod
+    def _extract_float(
+        cls, row: Any, *keys: str, default: float | None = None
+    ) -> float | None:
+        """Trích xuất giá trị số thực an toàn."""
+        val = cls._extract_val(row, *keys)
+        parsed = cls._parse_float(val)
+        return parsed if parsed is not None else default
+
+    @classmethod
+    def _extract_int(cls, row: Any, *keys: str, default: int | None = 0) -> int | None:
+        """Trích xuất giá trị số nguyên an toàn."""
+        val = cls._extract_val(row, *keys)
+        match val:
+            case None:
+                return default
+            case int():
+                return val
+            case float():
+                return int(val)
+            case str() if val.strip().isdigit():
+                return int(val.strip())
+            case _:
+                try:
+                    return int(float(val))
+                except (ValueError, TypeError):
+                    return default
+
+    @classmethod
+    def _extract_date(cls, row: Any, *keys: str) -> date | None:
+        """Trích xuất ngày (date) an toàn."""
+        val = cls._extract_val(row, *keys)
+        return cls._parse_date(val)
+
+    @classmethod
+    def _extract_datetime(cls, row: Any, *keys: str) -> datetime | None:
+        """Trích xuất ngày giờ (datetime) an toàn."""
+        val = cls._extract_val(row, *keys)
+        return cls._parse_datetime(val)
+
+    # ------------------------------------------------------------------
+    # Data Normalization & Parsing Primitives
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -473,7 +600,7 @@ class DataSyncManager:
             return 0
 
     def _sync_derivatives(self) -> int:
-        """Đồng bộ các hợp đồng phái sinh chuẩn vào StockSymbol và DerivativeContract."""
+        """Đồng bộ các hợp đồng phái sinh chuẩn vào StockSymbol và DerivativeContract bằng Bulk UPSERT."""
         today = date.today()
         this_month_thursday = get_third_thursday(today.year, today.month)
         if today <= this_month_thursday:
@@ -488,59 +615,11 @@ class DataSyncManager:
         m2_year = m1_year if m1_month < 12 else m1_year + 1
         m2_exp = get_third_thursday(m2_year, m2_month)
 
-        contracts = [
+        contract_defs: list[tuple[str, date, str]] = [
             ("VN30F1M", m1_exp, "Hợp đồng tương lai VN30 tháng hiện tại"),
             ("VN30F2M", m2_exp, "Hợp đồng tương lai VN30 tháng kế tiếp"),
         ]
-
-        count = 0
-        now_utc = datetime.now(UTC)
-        for symbol_code, exp_date, desc in contracts:
-            sym = self.session.get(StockSymbol, symbol_code)
-            if sym:
-                sym.organ_name = desc
-                sym.exchange = "DERIV"
-                sym.asset_type = "derivative"
-                sym.lot_size = 1
-                sym.is_active = True
-                sym.updated_at = now_utc
-                self.session.add(sym)
-            else:
-                self.session.add(
-                    StockSymbol(
-                        id=uuid.uuid4(),
-                        symbol=symbol_code,
-                        organ_name=desc,
-                        exchange="DERIV",
-                        industry="Derivatives",
-                        asset_type="derivative",
-                        lot_size=1,
-                        is_active=True,
-                        updated_at=now_utc,
-                    )
-                )
-
-            contract = self.session.get(DerivativeContract, symbol_code)
-            if contract:
-                contract.expiration_date = exp_date
-                contract.underlying_symbol = "VN30"
-                contract.multiplier = 100_000.0
-                contract.is_active = True
-                contract.updated_at = now_utc
-                self.session.add(contract)
-            else:
-                self.session.add(
-                    DerivativeContract(
-                        id=uuid.uuid4(),
-                        symbol=symbol_code,
-                        underlying_symbol="VN30",
-                        multiplier=100_000.0,
-                        expiration_date=exp_date,
-                        is_active=True,
-                        updated_at=now_utc,
-                    )
-                )
-            count += 1
+        seen_codes: set[str] = {c[0] for c in contract_defs}
 
         try:
             deriv_raw = self.svc.fetch_derivatives_list()
@@ -548,46 +627,59 @@ class DataSyncManager:
             if not deriv_df.empty:
                 col_name = self._resolve_symbol_column(deriv_df)
                 if col_name:
-                    contract_codes = {c[0] for c in contracts}
                     for _, row in deriv_df.iterrows():
-                        code = str(row.get(col_name, "")).strip().upper()
-                        if not code or code in contract_codes:
+                        code = self._extract_str(row, col_name)
+                        if not code or code in seen_codes:
                             continue
-
                         exp = self._extract_derivative_expiry(code, fallback=m1_exp)
-                        sym = self.session.get(StockSymbol, code)
-                        if not sym:
-                            self.session.add(
-                                StockSymbol(
-                                    id=uuid.uuid4(),
-                                    symbol=code,
-                                    organ_name=f"Hợp đồng tương lai {code}",
-                                    exchange="DERIV",
-                                    industry="Derivatives",
-                                    asset_type="derivative",
-                                    lot_size=1,
-                                    is_active=True,
-                                    updated_at=now_utc,
-                                )
-                            )
-                        contract = self.session.get(DerivativeContract, code)
-                        if not contract:
-                            self.session.add(
-                                DerivativeContract(
-                                    id=uuid.uuid4(),
-                                    symbol=code,
-                                    underlying_symbol="VN30",
-                                    multiplier=100_000.0,
-                                    expiration_date=exp,
-                                    is_active=True,
-                                    updated_at=now_utc,
-                                )
-                            )
-                        count += 1
+                        contract_defs.append((code, exp, f"Hợp đồng tương lai {code}"))
+                        seen_codes.add(code)
         except Exception as exc:
             logger.warning("Could not fetch extra derivatives list: %s", exc)
 
-        return count
+        now_utc = datetime.now(UTC)
+        sym_records = [
+            {
+                "id": uuid.uuid4(),
+                "symbol": code,
+                "organ_name": desc,
+                "exchange": "DERIV",
+                "industry": "Derivatives",
+                "asset_type": "derivative",
+                "lot_size": 1,
+                "is_active": True,
+                "updated_at": now_utc,
+            }
+            for code, _, desc in contract_defs
+        ]
+
+        deriv_records = [
+            {
+                "id": uuid.uuid4(),
+                "symbol": code,
+                "underlying_symbol": "VN30",
+                "multiplier": 100_000.0,
+                "expiration_date": exp_date,
+                "is_active": True,
+                "updated_at": now_utc,
+            }
+            for code, exp_date, _ in contract_defs
+        ]
+
+        self._bulk_upsert(
+            StockSymbol,
+            sym_records,
+            ["symbol"],
+            DERIV_STOCK_SYMBOL_UPDATE_FIELDS,
+        )
+        self._bulk_upsert(
+            DerivativeContract,
+            deriv_records,
+            ["symbol"],
+            DERIVATIVE_CONTRACT_UPDATE_FIELDS,
+        )
+        self.session.commit()
+        return len(contract_defs)
 
     def _sync_covered_warrants(self) -> int:
         """Đồng bộ danh mục chứng quyền có bảo đảm (CW) vào StockSymbol và CoveredWarrant sử dụng Bulk UPSERT."""
@@ -603,20 +695,19 @@ class DataSyncManager:
         now_utc = datetime.now(UTC)
         today_d = date.today()
 
-        sym_map: dict[str, dict[str, Any]] = {}
-        cw_map: dict[str, dict[str, Any]] = {}
+        sym_records: list[dict[str, Any]] = []
+        cw_records: list[dict[str, Any]] = []
         underlying_codes: set[str] = set()
 
         for _, row in df.iterrows():
-            code = str(row.get(col_sym, "")).strip().upper()
+            code = self._extract_str(row, col_sym)
             if not code or len(code) < 6:
                 continue
 
-            raw_und = row.get(
-                "underlying_symbol",
-                row.get("underlying", row.get("target_symbol", None)),
+            raw_und = self._extract_str(
+                row, "underlying_symbol", "underlying", "target_symbol"
             )
-            raw_wtype = row.get("warrant_type", row.get("type", None))
+            raw_wtype = self._extract_str(row, "warrant_type", "type")
             underlying, warrant_type = self._extract_warrant_meta(
                 code, raw_underlying=raw_und, raw_warrant_type=raw_wtype
             )
@@ -624,80 +715,55 @@ class DataSyncManager:
                 continue
 
             underlying_codes.add(underlying)
-
-            issuer_name = (
-                str(row.get("issuer_name", row.get("issuer", ""))).strip() or None
+            maturity_date = self._extract_date(
+                row, "maturity_date", "maturityDate", "expiration_date"
             )
-            exercise_price = self._parse_float(
-                row.get("exercise_price", row.get("exercisePrice"))
-            )
-            conversion_ratio = (
-                str(
-                    row.get(
-                        "conversion_ratio",
-                        row.get("conversionRatio", ""),
-                    )
-                ).strip()
-                or None
-            )
-            exercise_ratio = self._parse_float(
-                row.get(
-                    "exercise_ratio",
-                    row.get("exerciseRatio", row.get("ratio")),
-                )
-            )
-            issue_date = self._parse_date(row.get("issue_date", row.get("issueDate")))
-            maturity_date = self._parse_date(
-                row.get(
-                    "maturity_date",
-                    row.get("maturityDate", row.get("expiration_date")),
-                )
-            )
-            last_trading_date = self._parse_date(
-                row.get("last_trading_date", row.get("lastTradingDate"))
-            )
-            settlement_type = (
-                str(
-                    row.get(
-                        "settlement_type",
-                        row.get("settlementType", "cash"),
-                    )
-                ).strip()
-                or "cash"
-            )
-
             is_active = not (maturity_date and maturity_date < today_d)
 
-            sym_map[code] = {
-                "id": uuid.uuid4(),
-                "symbol": code,
-                "organ_name": f"Chứng quyền {code} (Cơ sở {underlying})",
-                "exchange": "HOSE",
-                "industry": "Covered Warrants",
-                "asset_type": "covered_warrant",
-                "lot_size": 10,
-                "is_active": is_active,
-                "updated_at": now_utc,
-            }
+            sym_records.append(
+                {
+                    "id": uuid.uuid4(),
+                    "symbol": code,
+                    "organ_name": f"Chứng quyền {code} (Cơ sở {underlying})",
+                    "exchange": "HOSE",
+                    "industry": "Covered Warrants",
+                    "asset_type": "covered_warrant",
+                    "lot_size": 10,
+                    "is_active": is_active,
+                    "updated_at": now_utc,
+                }
+            )
 
-            cw_map[code] = {
-                "id": uuid.uuid4(),
-                "symbol": code,
-                "underlying_symbol": underlying,
-                "issuer_name": issuer_name,
-                "warrant_type": warrant_type,
-                "exercise_price": exercise_price,
-                "conversion_ratio": conversion_ratio,
-                "exercise_ratio": exercise_ratio,
-                "issue_date": issue_date,
-                "maturity_date": maturity_date,
-                "last_trading_date": last_trading_date,
-                "settlement_type": settlement_type,
-                "is_active": is_active,
-                "updated_at": now_utc,
-            }
+            cw_records.append(
+                {
+                    "id": uuid.uuid4(),
+                    "symbol": code,
+                    "underlying_symbol": underlying,
+                    "issuer_name": self._extract_str(row, "issuer_name", "issuer"),
+                    "warrant_type": warrant_type,
+                    "exercise_price": self._extract_float(
+                        row, "exercise_price", "exercisePrice"
+                    ),
+                    "conversion_ratio": self._extract_str(
+                        row, "conversion_ratio", "conversionRatio"
+                    ),
+                    "exercise_ratio": self._extract_float(
+                        row, "exercise_ratio", "exerciseRatio", "ratio"
+                    ),
+                    "issue_date": self._extract_date(row, "issue_date", "issueDate"),
+                    "maturity_date": maturity_date,
+                    "last_trading_date": self._extract_date(
+                        row, "last_trading_date", "lastTradingDate"
+                    ),
+                    "settlement_type": self._extract_str(
+                        row, "settlement_type", "settlementType", default="cash"
+                    ),
+                    "is_active": is_active,
+                    "updated_at": now_utc,
+                }
+            )
 
-        if not cw_map:
+        if not cw_records:
             return 0
 
         # Đảm bảo tất cả mã cơ sở (underlying_symbol) đã tồn tại trong StockSymbol
@@ -710,19 +776,19 @@ class DataSyncManager:
         # Bulk UPSERT cả 2 bảng StockSymbol và CoveredWarrant
         self._bulk_upsert(
             StockSymbol,
-            list(sym_map.values()),
+            sym_records,
             ["symbol"],
             CW_STOCK_SYMBOL_UPDATE_FIELDS,
         )
         self._bulk_upsert(
             CoveredWarrant,
-            list(cw_map.values()),
+            cw_records,
             ["symbol"],
             COVERED_WARRANT_UPDATE_FIELDS,
         )
 
         self.session.commit()
-        return len(cw_map)
+        return len(cw_records)
 
     def _sync_bonds(self) -> int:
         """Đồng bộ danh mục trái phiếu doanh nghiệp & chính phủ vào StockSymbol và BondSpecification sử dụng Bulk UPSERT."""
@@ -738,147 +804,124 @@ class DataSyncManager:
         now_utc = datetime.now(UTC)
         today_d = date.today()
 
-        sym_map: dict[str, dict[str, Any]] = {}
-        bond_map: dict[str, dict[str, Any]] = {}
+        # Bóc tách danh sách mã tổ chức phát hành tiềm năng
         candidate_issuers: set[str] = set()
-
         for _, row in df.iterrows():
-            code = str(row.get(col_sym, "")).strip().upper()
+            code = self._extract_str(row, col_sym)
             if not code:
                 continue
 
-            raw_b_type = str(row.get("type", row.get("bond_type", "corporate"))).lower()
+            raw_b_type = self._extract_str(
+                row, "type", "bond_type", default="corporate"
+            ).lower()
             b_type = "government" if raw_b_type == "government" else "corporate"
-
             if b_type == "corporate":
-                raw_issuer = row.get(
+                cand = self._extract_str(
+                    row,
                     "issuer_symbol",
-                    row.get("issuerSymbol", row.get("company_code")),
+                    "issuerSymbol",
+                    "company_code",
+                    default=code[:3],
                 )
-                cand = (
-                    str(raw_issuer).strip().upper()
-                    if raw_issuer and pd.notna(raw_issuer)
-                    else code[:3]
-                )
-                candidate_issuers.add(cand)
+                if cand:
+                    candidate_issuers.add(cand)
 
-        # Tra cứu các mã doanh nghiệp phát hành đã tồn tại
         existing_issuers = self._find_or_create_symbols(
             candidate_issuers, auto_create=False
         )
 
+        sym_records: list[dict[str, Any]] = []
+        bond_records: list[dict[str, Any]] = []
+
         for _, row in df.iterrows():
-            code = str(row.get(col_sym, "")).strip().upper()
+            code = self._extract_str(row, col_sym)
             if not code:
                 continue
 
-            raw_b_type = str(row.get("type", row.get("bond_type", "corporate"))).lower()
+            raw_b_type = self._extract_str(
+                row, "type", "bond_type", default="corporate"
+            ).lower()
             b_type = "government" if raw_b_type == "government" else "corporate"
 
             issuer_symbol = None
             if b_type == "corporate":
-                raw_issuer = row.get(
+                cand = self._extract_str(
+                    row,
                     "issuer_symbol",
-                    row.get("issuerSymbol", row.get("company_code")),
-                )
-                cand = (
-                    str(raw_issuer).strip().upper()
-                    if raw_issuer and pd.notna(raw_issuer)
-                    else code[:3]
+                    "issuerSymbol",
+                    "company_code",
+                    default=code[:3],
                 )
                 if cand in existing_issuers:
                     issuer_symbol = cand
 
-            issuer_name = (
-                str(row.get("issuer_name", row.get("issuer", ""))).strip() or None
+            maturity_date = self._extract_date(
+                row, "maturity_date", "maturityDate", "expiration_date"
             )
-            par_value = (
-                self._parse_float(row.get("par_value", row.get("parValue")))
-                or 100_000.0
-            )
-            coupon_rate = self._parse_float(
-                row.get(
-                    "coupon_rate",
-                    row.get("couponRate", row.get("coupon")),
-                )
-            )
-            coupon_type = (
-                str(
-                    row.get(
-                        "coupon_type",
-                        row.get("couponType", "fixed"),
-                    )
-                ).strip()
-                or "fixed"
-            )
-            tenor_years = self._parse_float(
-                row.get(
-                    "tenor_years",
-                    row.get("tenorYears", row.get("term")),
-                )
-            )
-            issue_date = self._parse_date(row.get("issue_date", row.get("issueDate")))
-            maturity_date = self._parse_date(
-                row.get(
-                    "maturity_date",
-                    row.get("maturityDate", row.get("expiration_date")),
-                )
-            )
-
             is_active = not (maturity_date and maturity_date < today_d)
 
             label_prefix, asset_label = BOND_TYPE_CONFIG.get(
                 b_type, ("Trái phiếu", "corporate_bond")
             )
-            organ_label = f"{label_prefix} {code}"
 
-            sym_map[code] = {
-                "id": uuid.uuid4(),
-                "symbol": code,
-                "organ_name": organ_label,
-                "exchange": "HNX",
-                "industry": "Bonds",
-                "asset_type": asset_label,
-                "lot_size": 1,
-                "is_active": is_active,
-                "updated_at": now_utc,
-            }
+            sym_records.append(
+                {
+                    "id": uuid.uuid4(),
+                    "symbol": code,
+                    "organ_name": f"{label_prefix} {code}",
+                    "exchange": "HNX",
+                    "industry": "Bonds",
+                    "asset_type": asset_label,
+                    "lot_size": 1,
+                    "is_active": is_active,
+                    "updated_at": now_utc,
+                }
+            )
 
-            bond_map[code] = {
-                "id": uuid.uuid4(),
-                "symbol": code,
-                "bond_type": b_type,
-                "issuer_symbol": issuer_symbol,
-                "issuer_name": issuer_name,
-                "par_value": par_value,
-                "coupon_rate": coupon_rate,
-                "coupon_type": coupon_type,
-                "tenor_years": tenor_years,
-                "issue_date": issue_date,
-                "maturity_date": maturity_date,
-                "is_active": is_active,
-                "updated_at": now_utc,
-            }
+            bond_records.append(
+                {
+                    "id": uuid.uuid4(),
+                    "symbol": code,
+                    "bond_type": b_type,
+                    "issuer_symbol": issuer_symbol,
+                    "issuer_name": self._extract_str(row, "issuer_name", "issuer"),
+                    "par_value": self._extract_float(
+                        row, "par_value", "parValue", default=100_000.0
+                    ),
+                    "coupon_rate": self._extract_float(
+                        row, "coupon_rate", "couponRate", "coupon"
+                    ),
+                    "coupon_type": self._extract_str(
+                        row, "coupon_type", "couponType", default="fixed"
+                    ),
+                    "tenor_years": self._extract_float(
+                        row, "tenor_years", "tenorYears", "term"
+                    ),
+                    "issue_date": self._extract_date(row, "issue_date", "issueDate"),
+                    "maturity_date": maturity_date,
+                    "is_active": is_active,
+                    "updated_at": now_utc,
+                }
+            )
 
-        if not bond_map:
+        if not bond_records:
             return 0
 
-        # Bulk UPSERT cả 2 bảng StockSymbol và BondSpecification
         self._bulk_upsert(
             StockSymbol,
-            list(sym_map.values()),
+            sym_records,
             ["symbol"],
             CW_STOCK_SYMBOL_UPDATE_FIELDS,
         )
         self._bulk_upsert(
             BondSpecification,
-            list(bond_map.values()),
+            bond_records,
             ["symbol"],
             BOND_SPECIFICATION_UPDATE_FIELDS,
         )
 
         self.session.commit()
-        return len(bond_map)
+        return len(bond_records)
 
     # ------------------------------------------------------------------
     # Public Sync APIs
@@ -902,24 +945,22 @@ class DataSyncManager:
                 raise VnstockServiceError("Empty response")
 
             now_utc = datetime.now(UTC)
-            records = []
+            records: list[dict[str, Any]] = []
             for _, row in df.iterrows():
-                symbol_str = (
-                    str(row.get("ticker", row.get("symbol", ""))).strip().upper()
-                )
+                symbol_str = self._extract_str(row, "ticker", "symbol")
                 if not symbol_str:
                     continue
 
-                organ_name = (
-                    str(row.get("organName", row.get("organ_name", ""))) or None
-                )
+                symbol_str = symbol_str.upper()
+                organ_name = self._extract_str(row, "organName", "organ_name")
                 raw_exchange = (
-                    str(row.get("exchange", row.get("organCode", ""))).upper() or None
+                    self._extract_str(row, "exchange", "organCode", default="").upper()
+                    or None
                 )
-                icb_code = str(row.get("icbCode", row.get("icb_code", ""))) or None
-                icb_name = str(row.get("icbName", row.get("icb_name", ""))) or None
-                industry = icb_name or str(row.get("industry", "")) or None
-                raw_type = str(row.get("type", row.get("asset_type", "stock")))
+                icb_code = self._extract_str(row, "icbCode", "icb_code")
+                icb_name = self._extract_str(row, "icbName", "icb_name")
+                industry = icb_name or self._extract_str(row, "industry")
+                raw_type = self._extract_str(row, "type", "asset_type", default="stock")
 
                 asset_type, lot_size, exchange = self._classify_symbol(
                     symbol_str, raw_type=raw_type, exchange=raw_exchange
@@ -979,48 +1020,44 @@ class DataSyncManager:
     ) -> DataSyncLog:
         """Backfill historical daily OHLCV data for a symbol.
 
-        Smart fill: checks existing data in DB and only fetches missing ranges.
+        Sử dụng Bulk UPSERT giúp tự động cập nhật và chèn mới nhanh chóng, không bị trùng lặp.
         """
         target_end = end or date.today()
 
         def _task() -> int:
-            existing = self.session.exec(
-                select(col(StockOHLCVDaily.trading_date))
-                .where(StockOHLCVDaily.symbol == symbol)
-                .where(StockOHLCVDaily.trading_date >= start)
-                .where(StockOHLCVDaily.trading_date <= target_end)
-                .order_by(col(StockOHLCVDaily.trading_date))
-            ).all()
-            existing_dates = set(existing)
-
             df = self.svc.fetch_price_history(symbol, start, target_end, interval="1D")
             if df is None or df.empty:
                 return 0
 
             self._ensure_symbol_exists(symbol)
 
-            count = 0
+            records: list[dict[str, Any]] = []
             for _, row in df.iterrows():
-                trading_date = self._parse_date(row.get("time", row.get("date", "")))
-                if trading_date is None or trading_date in existing_dates:
+                trading_date = self._extract_date(row, "time", "date")
+                if trading_date is None:
                     continue
 
-                ohlcv = StockOHLCVDaily(
-                    symbol=symbol,
-                    trading_date=trading_date,
-                    open=float(row.get("open", 0)),
-                    high=float(row.get("high", 0)),
-                    low=float(row.get("low", 0)),
-                    close=float(row.get("close", 0)),
-                    volume=int(row.get("volume", 0)),
-                    value=float(row["value"])
-                    if "value" in row and pd.notna(row["value"])
-                    else None,
-                    source=self.svc.source,
+                records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "symbol": symbol,
+                        "trading_date": trading_date,
+                        "open": self._extract_float(row, "open", default=0.0),
+                        "high": self._extract_float(row, "high", default=0.0),
+                        "low": self._extract_float(row, "low", default=0.0),
+                        "close": self._extract_float(row, "close", default=0.0),
+                        "volume": self._extract_int(row, "volume", default=0),
+                        "value": self._extract_float(row, "value"),
+                        "source": self.svc.source,
+                    }
                 )
-                self.session.add(ohlcv)
-                count += 1
 
+            count = self._bulk_upsert(
+                StockOHLCVDaily,
+                records,
+                ["symbol", "trading_date"],
+                DAILY_OHLCV_UPDATE_FIELDS,
+            )
             self.session.commit()
             logger.info("Backfilled %d daily bars for %s", count, symbol)
             return count
@@ -1074,7 +1111,7 @@ class DataSyncManager:
         interval: str = "1m",
         count_back: int = 300,
     ) -> DataSyncLog:
-        """Collect intraday bars for a symbol."""
+        """Collect intraday bars for a symbol bằng Bulk UPSERT, loại bỏ hoàn toàn N+1 queries."""
 
         def _task() -> int:
             df = self.svc.fetch_intraday(
@@ -1085,41 +1122,33 @@ class DataSyncManager:
 
             self._ensure_symbol_exists(symbol)
 
-            count = 0
+            records: list[dict[str, Any]] = []
             for _, row in df.iterrows():
-                ts = self._parse_datetime(row.get("time", row.get("date", "")))
+                ts = self._extract_datetime(row, "time", "date")
                 if ts is None:
                     continue
 
-                existing = self.session.exec(
-                    select(StockOHLCVIntraday)
-                    .where(StockOHLCVIntraday.symbol == symbol)
-                    .where(StockOHLCVIntraday.timestamp == ts)
-                    .where(StockOHLCVIntraday.interval == interval)
-                ).first()
+                records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "symbol": symbol,
+                        "timestamp": ts,
+                        "interval": interval,
+                        "open": self._extract_float(row, "open", default=0.0),
+                        "high": self._extract_float(row, "high", default=0.0),
+                        "low": self._extract_float(row, "low", default=0.0),
+                        "close": self._extract_float(row, "close", default=0.0),
+                        "volume": self._extract_int(row, "volume", default=0),
+                        "source": self.svc.source,
+                    }
+                )
 
-                if existing:
-                    existing.open = float(row.get("open", 0))
-                    existing.high = float(row.get("high", 0))
-                    existing.low = float(row.get("low", 0))
-                    existing.close = float(row.get("close", 0))
-                    existing.volume = int(row.get("volume", 0))
-                    self.session.add(existing)
-                else:
-                    bar = StockOHLCVIntraday(
-                        symbol=symbol,
-                        timestamp=ts,
-                        interval=interval,
-                        open=float(row.get("open", 0)),
-                        high=float(row.get("high", 0)),
-                        low=float(row.get("low", 0)),
-                        close=float(row.get("close", 0)),
-                        volume=int(row.get("volume", 0)),
-                        source=self.svc.source,
-                    )
-                    self.session.add(bar)
-                count += 1
-
+            count = self._bulk_upsert(
+                StockOHLCVIntraday,
+                records,
+                ["symbol", "timestamp", "interval"],
+                INTRADAY_OHLCV_UPDATE_FIELDS,
+            )
             self.session.commit()
             logger.info(
                 "Collected %d intraday bars for %s (%s)", count, symbol, interval
@@ -1129,7 +1158,7 @@ class DataSyncManager:
         return self._run_sync_task("intraday", _task, symbol=symbol)
 
     def sync_company_profile(self, symbol: str) -> DataSyncLog:
-        """Sync company profile/overview data."""
+        """Sync company profile/overview data bằng Bulk UPSERT."""
 
         def _task() -> int:
             data = self.svc.fetch_company_overview(symbol)
@@ -1138,43 +1167,38 @@ class DataSyncManager:
 
             self._ensure_symbol_exists(symbol)
 
-            profile_data = {
-                "company_name": str(
-                    data.get("companyName", data.get("company_name", ""))
+            profile_record = {
+                "id": uuid.uuid4(),
+                "symbol": symbol,
+                "company_name": self._extract_str(data, "companyName", "company_name"),
+                "short_name": self._extract_str(data, "shortName", "short_name"),
+                "industry_name": self._extract_str(
+                    data, "industryName", "industry_name"
                 ),
-                "short_name": str(data.get("shortName", data.get("short_name", ""))),
-                "industry_name": str(
-                    data.get("industryName", data.get("industry_name", ""))
+                "established_date": self._extract_str(
+                    data, "establishedYear", "established_date"
                 ),
-                "established_date": str(
-                    data.get("establishedYear", data.get("established_date", ""))
+                "listed_date": self._extract_str(data, "listingDate", "listed_date"),
+                "charter_capital": self._extract_float(
+                    data, "charterCapital", "charter_capital"
                 ),
-                "listed_date": str(
-                    data.get("listingDate", data.get("listed_date", ""))
+                "outstanding_shares": self._extract_float(
+                    data, "outstandingShare", "outstanding_shares"
                 ),
-                "charter_capital": data.get(
-                    "charterCapital", data.get("charter_capital")
+                "market_cap": self._extract_float(data, "marketCap", "market_cap"),
+                "website": self._extract_str(data, "website", default=""),
+                "description": self._extract_str(
+                    data, "companyProfile", "description", default=""
                 ),
-                "outstanding_shares": data.get(
-                    "outstandingShare", data.get("outstanding_shares")
-                ),
-                "market_cap": data.get("marketCap", data.get("market_cap")),
-                "website": str(data.get("website", "")),
-                "description": str(
-                    data.get("companyProfile", data.get("description", ""))
-                ),
+                "updated_at": datetime.now(UTC),
             }
 
-            existing = self.session.get(CompanyProfile, symbol)
-            if existing:
-                for k, v in profile_data.items():
-                    if v:
-                        setattr(existing, k, v)
-                existing.updated_at = datetime.now(UTC)
-                self.session.add(existing)
-            else:
-                self.session.add(CompanyProfile(symbol=symbol, **profile_data))
-
+            self._bulk_upsert(
+                CompanyProfile,
+                [profile_record],
+                ["symbol"],
+                COMPANY_PROFILE_UPDATE_FIELDS,
+            )
             self.session.commit()
             return 1
 
@@ -1186,7 +1210,7 @@ class DataSyncManager:
         report_type: str = "income_statement",
         period: str = "quarterly",
     ) -> DataSyncLog:
-        """Sync financial reports for a symbol."""
+        """Sync financial reports for a symbol bằng Bulk UPSERT, loại bỏ hoàn toàn N+1 queries."""
 
         def _task() -> int:
             df = self.svc.fetch_financials(
@@ -1197,46 +1221,38 @@ class DataSyncManager:
 
             self._ensure_symbol_exists(symbol)
 
-            count = 0
+            now_utc = datetime.now(UTC)
+            records: list[dict[str, Any]] = []
             for _, row in df.iterrows():
-                year = int(row.get("year", row.get("yearReport", 0)))
-                quarter = row.get("quarter", row.get("lengthReport"))
-                quarter_int = (
-                    int(quarter) if quarter is not None and pd.notna(quarter) else None
+                year = self._extract_int(row, "year", "yearReport", default=0)
+                quarter = self._extract_int(
+                    row, "quarter", "lengthReport", default=None
                 )
-
-                existing = self.session.exec(
-                    select(FinancialReport)
-                    .where(FinancialReport.symbol == symbol)
-                    .where(FinancialReport.report_type == report_type)
-                    .where(FinancialReport.period == period)
-                    .where(FinancialReport.year == year)
-                    .where(FinancialReport.quarter == quarter_int)
-                ).first()
-
+                row_dict = row.to_dict() if hasattr(row, "to_dict") else dict(row)
                 row_data = {
-                    k: v
-                    for k, v in row.to_dict().items()
-                    if k not in META_FINANCIAL_KEYS
+                    k: v for k, v in row_dict.items() if k not in META_FINANCIAL_KEYS
                 }
 
-                if existing:
-                    existing.data = row_data
-                    existing.updated_at = datetime.now(UTC)
-                    self.session.add(existing)
-                else:
-                    report = FinancialReport(
-                        symbol=symbol,
-                        report_type=report_type,
-                        period=period,
-                        year=year,
-                        quarter=quarter_int,
-                        data=row_data,
-                        source=self.svc.source,
-                    )
-                    self.session.add(report)
-                count += 1
+                records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "symbol": symbol,
+                        "report_type": report_type,
+                        "period": period,
+                        "year": year,
+                        "quarter": quarter,
+                        "data": row_data,
+                        "source": self.svc.source,
+                        "updated_at": now_utc,
+                    }
+                )
 
+            count = self._bulk_upsert(
+                FinancialReport,
+                records,
+                ["symbol", "report_type", "period", "year", "quarter"],
+                FINANCIAL_REPORT_UPDATE_FIELDS,
+            )
             self.session.commit()
             logger.info("Synced %d financial records for %s", count, symbol)
             return count
