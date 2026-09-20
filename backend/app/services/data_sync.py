@@ -17,6 +17,7 @@ from typing import Any
 
 import pandas as pd
 from sqlalchemy import and_
+from sqlalchemy.dialects.postgresql import Insert as PGInsert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import Session, col, select
 
@@ -273,6 +274,19 @@ class DataSyncManager:
         if not records:
             return 0
 
+        # Khởi tạo câu lệnh PostgreSQL Insert với type hint rõ ràng
+        insert_stmt: PGInsert = pg_insert(model_cls)
+
+        if update_fields:
+            upsert_stmt = insert_stmt.on_conflict_do_update(
+                index_elements=conflict_keys,
+                set_={f: getattr(insert_stmt.excluded, f) for f in update_fields},
+            )
+        else:
+            upsert_stmt = insert_stmt.on_conflict_do_nothing(
+                index_elements=conflict_keys
+            )
+
         num_cols = len(records[0]) if records else 1
         # Giới hạn an toàn tham số PostgreSQL (tối đa 32,767 tham số trên mỗi câu lệnh)
         safe_batch_size = max(1, 32767 // max(num_cols, 1))
@@ -280,14 +294,7 @@ class DataSyncManager:
 
         for i in range(0, len(records), step):
             batch = records[i : i + step]
-            stmt = pg_insert(model_cls).values(batch)
-            if update_fields:
-                stmt = stmt.on_conflict_do_update(
-                    index_elements=conflict_keys,
-                    set_={f: stmt.excluded[f] for f in update_fields},
-                )
-            else:
-                stmt = stmt.on_conflict_do_nothing(index_elements=conflict_keys)
+            stmt = upsert_stmt.values(batch)
             self.session.execute(stmt)
 
         self.session.flush()
