@@ -12,11 +12,12 @@ import gc
 import logging
 import uuid
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from typing import Any
 
 import pandas as pd
 from sqlalchemy import and_
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import Session, col, select
 
 from app.models import VN_TZ
@@ -236,6 +237,89 @@ class DataSyncManager:
             logger.exception("Lỗi đồng bộ %s (symbol=%s)", sync_type, symbol)
             return self._finish_log(log, "failed", error_message=str(exc))
 
+    @staticmethod
+    def _deduplicate_records(
+        records: list[dict[str, Any]],
+        conflict_keys: list[str],
+    ) -> list[dict[str, Any]]:
+        """Khử trùng lặp bản ghi theo conflict_keys, giữ bản ghi xuất hiện sau cùng."""
+        if not records or not conflict_keys:
+            return records
+        dedup_map: dict[tuple[Any, ...], dict[str, Any]] = {}
+        for rec in records:
+            key = tuple(rec.get(k) for k in conflict_keys)
+            dedup_map[key] = rec
+        return list(dedup_map.values())
+
+    @staticmethod
+    def _standardize_record_keys(
+        records: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Đồng nhất tập khóa (keys) cho toàn bộ danh sách records để tránh lỗi schema mismatch."""
+        if not records:
+            return records
+        all_keys: set[str] = set().union(*(rec.keys() for rec in records))
+        return [{k: rec.get(k, None) for k in all_keys} for rec in records]
+
+    def _upsert_postgresql(
+        self,
+        model_cls: type[Any],
+        records: list[dict[str, Any]],
+        conflict_keys: list[str],
+        update_fields: list[str],
+        batch_size: int = 500,
+    ) -> int:
+        """Thực thi Bulk UPSERT chuyên biệt cho PostgreSQL với hỗ trợ ON CONFLICT an toàn."""
+        if not records:
+            return 0
+
+        num_cols = len(records[0]) if records else 1
+        # Giới hạn an toàn tham số PostgreSQL (tối đa 32,767 tham số trên mỗi câu lệnh)
+        safe_batch_size = max(1, 32767 // max(num_cols, 1))
+        step = min(batch_size, safe_batch_size)
+
+        for i in range(0, len(records), step):
+            batch = records[i : i + step]
+            stmt = pg_insert(model_cls).values(batch)
+            if update_fields:
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=conflict_keys,
+                    set_={f: stmt.excluded[f] for f in update_fields},
+                )
+            else:
+                stmt = stmt.on_conflict_do_nothing(index_elements=conflict_keys)
+            self.session.execute(stmt)
+
+        self.session.flush()
+        return len(records)
+
+    def _upsert_sqlite(
+        self,
+        model_cls: type[Any],
+        records: list[dict[str, Any]],
+        conflict_keys: list[str],
+        update_fields: list[str],
+    ) -> int:
+        """Thực thi Bulk UPSERT fallback cho SQLite ORM session."""
+        for rec in records:
+            conditions = [
+                getattr(model_cls, k) == rec[k] for k in conflict_keys if k in rec
+            ]
+            existing = (
+                self.session.exec(select(model_cls).where(and_(*conditions))).first()
+                if conditions
+                else None
+            )
+            if existing:
+                for f in update_fields:
+                    if f in rec and rec[f] is not None:
+                        setattr(existing, f, rec[f])
+                self.session.add(existing)
+            else:
+                self.session.add(model_cls(**rec))
+        self.session.flush()
+        return len(records)
+
     def _bulk_upsert(
         self,
         model_cls: type[Any],
@@ -246,44 +330,32 @@ class DataSyncManager:
     ) -> int:
         """Thực hiện bulk upsert dữ liệu vào DB theo batch, tương thích PostgreSQL & SQLite.
 
-        Bảo toàn trường khóa chính `id` (UUID), không ghi đè UUID cũ khi cập nhật.
+        Quy trình xử lý an toàn:
+        1. Khử trùng lặp nội bộ theo conflict_keys (ngăn chặn lỗi PostgreSQL CardinalityViolation).
+        2. Đồng nhất tập keys giữa các bản ghi để câu lệnh multi-row VALUES luôn chuẩn xác.
+        3. Phân nhánh thực thi: PostgreSQL tối ưu qua ON CONFLICT hoặc SQLite fallback.
+        4. Bảo toàn khóa chính `id` (UUID), không ghi đè UUID cũ khi cập nhật.
         """
         if not records:
             return 0
 
+        # 1. Khử trùng lặp nội bộ
+        deduped = self._deduplicate_records(records, conflict_keys)
+        # 2. Đồng nhất keys cho batch
+        standardized = self._standardize_record_keys(deduped)
+
+        # 3. Thực thi theo dialect
         if self.is_postgresql:
-            from sqlalchemy.dialects.postgresql import insert as pg_insert
-
-            for i in range(0, len(records), batch_size):
-                batch = records[i : i + batch_size]
-                stmt = pg_insert(model_cls).values(batch)
-                stmt = stmt.on_conflict_do_update(
-                    index_elements=conflict_keys,
-                    set_={f: getattr(stmt.excluded, f) for f in update_fields},
-                )
-                self.session.execute(stmt)
-        else:
-            for rec in records:
-                conditions = [
-                    getattr(model_cls, k) == rec[k] for k in conflict_keys if k in rec
-                ]
-                existing = (
-                    self.session.exec(
-                        select(model_cls).where(and_(*conditions))
-                    ).first()
-                    if conditions
-                    else None
-                )
-                if existing:
-                    for f in update_fields:
-                        if f in rec and rec[f] is not None:
-                            setattr(existing, f, rec[f])
-                    self.session.add(existing)
-                else:
-                    self.session.add(model_cls(**rec))
-            self.session.flush()
-
-        return len(records)
+            return self._upsert_postgresql(
+                model_cls,
+                standardized,
+                conflict_keys,
+                update_fields,
+                batch_size=batch_size,
+            )
+        return self._upsert_sqlite(
+            model_cls, standardized, conflict_keys, update_fields
+        )
 
     def _find_or_create_symbols(
         self,

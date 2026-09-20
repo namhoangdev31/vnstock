@@ -309,3 +309,67 @@ def test_bulk_upsert_composite_conflict_keys(sqlite_session: Session) -> None:
     # Không sinh bản ghi trùng lặp
     all_bars = sqlite_session.exec(select(StockOHLCVIntraday)).all()
     assert len(all_bars) == 1
+
+
+def test_deduplicate_records() -> None:
+    """Kiểm tra khử trùng lặp bản ghi theo conflict_keys, giữ bản ghi xuất hiện sau cùng."""
+    records = [
+        {"symbol": "VNM", "name": "VNM Old", "val": 1},
+        {"symbol": "VIC", "name": "VIC 1", "val": 2},
+        {"symbol": "VNM", "name": "VNM New", "val": 3},  # Trùng VNM
+    ]
+    deduped = DataSyncManager._deduplicate_records(records, ["symbol"])
+    assert len(deduped) == 2
+    vnm = next(r for r in deduped if r["symbol"] == "VNM")
+    assert vnm["name"] == "VNM New"
+    assert vnm["val"] == 3
+
+
+def test_standardize_record_keys() -> None:
+    """Kiểm tra đồng nhất tập keys giữa các dictionary trong danh sách."""
+    records = [
+        {"a": 1, "b": 2},
+        {"b": 20, "c": 30},
+    ]
+    standardized = DataSyncManager._standardize_record_keys(records)
+    assert len(standardized) == 2
+    assert set(standardized[0].keys()) == {"a", "b", "c"}
+    assert set(standardized[1].keys()) == {"a", "b", "c"}
+    assert standardized[0]["c"] is None
+    assert standardized[1]["a"] is None
+
+
+def test_upsert_postgresql_execution() -> None:
+    """Kiểm tra _upsert_postgresql tạo câu lệnh INSERT ... ON CONFLICT chính xác cho PostgreSQL."""
+    mock_session = MagicMock()
+    manager = DataSyncManager(mock_session, MagicMock())
+
+    records = [
+        {"symbol": "FPT", "organ_name": "FPT Corp", "is_active": True},
+        {"symbol": "VNM", "organ_name": "Vinamilk", "is_active": True},
+    ]
+
+    # 1. Có update_fields -> on_conflict_do_update
+    count = manager._upsert_postgresql(
+        StockSymbol,
+        records,
+        conflict_keys=["symbol"],
+        update_fields=["organ_name", "is_active"],
+        batch_size=500,
+    )
+    assert count == 2
+    assert mock_session.execute.called
+    assert mock_session.flush.called
+
+    # 2. Không có update_fields -> on_conflict_do_nothing
+    mock_session.reset_mock()
+    count_nothing = manager._upsert_postgresql(
+        StockSymbol,
+        records,
+        conflict_keys=["symbol"],
+        update_fields=[],
+        batch_size=500,
+    )
+    assert count_nothing == 2
+    assert mock_session.execute.called
+    assert mock_session.flush.called
