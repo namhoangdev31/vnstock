@@ -38,7 +38,8 @@ class StockSymbol(AwareSQLModel, table=True):
         default=None, max_length=50
     )  # Rổ chỉ số: VN30, VN100, VNFINLEAD
     asset_type: str = Field(
-        max_length=20
+        default="stock",
+        max_length=20,
     )  # stock, etf, derivative, index, covered_warrant, corporate_bond, government_bond
     lot_size: int = Field(default=100)  # Quy mô lô chuẩn (100 cp cơ sở, 1 HĐ phái sinh)
     is_active: bool = Field(default=True)
@@ -73,6 +74,14 @@ class StockSymbol(AwareSQLModel, table=True):
     derivative_contracts: list["DerivativeContract"] = Relationship(
         back_populates="underlying_rel",
         sa_relationship_kwargs={"foreign_keys": "DerivativeContract.underlying_symbol"},
+    )
+    # Danh sách công ty con & liên kết (Company.subsidiaries())
+    subsidiaries: list["CompanySubsidiary"] = Relationship(back_populates="symbol_rel")
+    # Nhật ký giao dịch nội bộ (Company.insider_trading())
+    insider_tradings: list["InsiderTrading"] = Relationship(back_populates="symbol_rel")
+    # Lịch sử tăng vốn điều lệ (Company.capital_history())
+    capital_histories: list["CapitalHistory"] = Relationship(
+        back_populates="symbol_rel"
     )
 
 
@@ -180,6 +189,8 @@ class CompanyProfile(AwareSQLModel, table=True):
     employee_count: int | None = None  # Số lượng nhân viên
     website: str | None = Field(default=None, max_length=500)
     address: str | None = Field(default=None, max_length=500)
+    ceo_name: str | None = Field(default=None, max_length=255)
+    auditor: str | None = Field(default=None, max_length=255)
     description: str | None = None
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -262,6 +273,10 @@ class FinancialRatio(AwareSQLModel, table=True):
     quick_ratio: float | None = None  # Hệ số thanh toán nhanh
     current_ratio: float | None = None  # Hệ số thanh toán hiện hành
     dividend_yield: float | None = None  # Tỷ suất cổ tức (%)
+    data: dict = Field(
+        default_factory=dict,
+        sa_type=JSONBVariant,  # type: ignore
+    )  # Lưu trữ trọn vẹn toàn bộ 58 chỉ số tài chính gốc từ vnstock
     source: str = Field(max_length=10)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -529,3 +544,75 @@ class BondSpecification(AwareSQLModel, table=True):
         back_populates="issued_bonds",
         sa_relationship_kwargs={"foreign_keys": "BondSpecification.issuer_symbol"},
     )
+
+
+class CompanySubsidiary(AwareSQLModel, table=True):
+    """Bảng lưu trữ danh sách công ty con và công ty liên kết (Company.subsidiaries())."""
+
+    __tablename__ = "company_subsidiary"
+    __table_args__ = (UniqueConstraint("symbol", "sub_organ_code"),)
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
+    sub_organ_code: str = Field(
+        max_length=50, index=True
+    )  # Mã định danh công ty con / mã CK nếu có
+    organ_name: str = Field(max_length=500)  # Tên công ty con/liên kết
+    ownership_percent: float = Field(default=0.0)  # Tỷ lệ sở hữu (0.0 đến 1.0 hoặc %)
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="subsidiaries")
+
+
+class InsiderTrading(AwareSQLModel, table=True):
+    """Bảng lưu trữ nhật ký giao dịch người nội bộ và người có liên quan (Company.insider_trading())."""
+
+    __tablename__ = "insider_trading"
+    __table_args__ = (
+        UniqueConstraint("symbol", "officer_name", "deal_action", "deal_announce_date"),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
+    officer_name: str = Field(
+        max_length=255, index=True
+    )  # Tên cá nhân / tổ chức thực hiện giao dịch
+    officer_position: str | None = Field(default=None, max_length=255)  # Chức vụ
+    deal_action: str = Field(max_length=50)  # Mua / Bán / Đăng ký mua / Đăng ký bán
+    deal_quantity: float | None = None  # Số lượng cổ phiếu giao dịch
+    deal_price: float | None = None  # Giá giao dịch
+    deal_ratio: float | None = None  # Tỷ lệ sau giao dịch
+    deal_announce_date: date | None = Field(
+        default=None, index=True
+    )  # Ngày công bố thông tin
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="insider_tradings")
+
+
+class CapitalHistory(AwareSQLModel, table=True):
+    """Bảng lưu trữ lịch sử tăng vốn điều lệ và phát hành cổ phiếu (Company.capital_history())."""
+
+    __tablename__ = "capital_history"
+    __table_args__ = (UniqueConstraint("symbol", "issue_date", "charter_capital"),)
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
+    issue_date: date | None = Field(
+        default=None, index=True
+    )  # Ngày thực hiện tăng vốn / niêm yết bổ sung
+    charter_capital: float | None = None  # Vốn điều lệ sau phát hành (VND)
+    shares_issued: float | None = None  # Số lượng cổ phiếu phát hành thêm
+    description: str | None = Field(default=None, max_length=500)  # Hình thức tăng vốn
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    symbol_rel: Optional[StockSymbol] = Relationship(back_populates="capital_histories")

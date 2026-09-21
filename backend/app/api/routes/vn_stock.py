@@ -25,8 +25,9 @@ def get_vnstock(
     """Lấy danh sách tất cả các mã cổ phiếu kèm thông tin sàn niêm yết (HOSE, HNX, UPCOM) từ vnstock."""
     df = vnstock_service.fetch_symbols_by_exchange(exchange=exchange)
     cols = [c for c in ["symbol", "organ_name", "exchange"] if c in df.columns]
-    records: list[dict[str, Any]] = (
-        df[cols].where(pd.notnull(df[cols]), None).to_dict(orient="records")
+    sub_df: Any = df[cols]
+    records: list[dict[str, Any]] = sub_df.where(pd.notnull(sub_df), None).to_dict(
+        orient="records"
     )
     logger.info(
         "Đã tải %d mã cổ phiếu (sàn: %s) từ vnstock",

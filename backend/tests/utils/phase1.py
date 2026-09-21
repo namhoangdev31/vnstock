@@ -89,7 +89,9 @@ def utc_now() -> datetime:
 def as_utc(value: datetime) -> datetime:
     """Normalize a datetime to UTC for comparison.
 
-    SQLite drops tzinfo on round-trip (naive values are already UTC); Postgres
+    SQLite drops tzinfo on round-trip (naive values are stored in VN_TZ); Postgres
     TIMESTAMPTZ preserves it. This makes equality assertions dialect-agnostic.
     """
-    return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+    if value.tzinfo is None:
+        return value.replace(tzinfo=VN_TZ).astimezone(UTC)
+    return value.astimezone(UTC)

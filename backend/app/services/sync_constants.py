@@ -119,7 +119,14 @@ COMPANY_PROFILE_UPDATE_FIELDS: list[str] = [
     "charter_capital",
     "outstanding_shares",
     "market_cap",
+    "free_float_pct",
+    "foreign_ownership_pct",
+    "max_foreign_ownership_pct",
+    "employee_count",
     "website",
+    "address",
+    "ceo_name",
+    "auditor",
     "description",
     "updated_at",
 ]
@@ -145,6 +152,7 @@ FINANCIAL_RATIO_UPDATE_FIELDS: list[str] = [
     "quick_ratio",
     "current_ratio",
     "dividend_yield",
+    "data",
     "source",
     "updated_at",
 ]
@@ -182,6 +190,26 @@ INDEX_CONSTITUENT_UPDATE_FIELDS: list[str] = [
     "updated_at",
 ]
 
+COMPANY_SUBSIDIARY_UPDATE_FIELDS: list[str] = [
+    "organ_name",
+    "ownership_percent",
+    "updated_at",
+]
+
+INSIDER_TRADING_UPDATE_FIELDS: list[str] = [
+    "officer_position",
+    "deal_quantity",
+    "deal_price",
+    "deal_ratio",
+    "updated_at",
+]
+
+CAPITAL_HISTORY_UPDATE_FIELDS: list[str] = [
+    "shares_issued",
+    "description",
+    "updated_at",
+]
+
 
 def get_third_thursday(year: int, month: int) -> date:
     """Tính ngày Thứ Năm lần thứ 3 trong tháng (ngày đáo hạn hợp đồng phái sinh VN30)."""
@@ -194,9 +222,11 @@ def get_third_thursday(year: int, month: int) -> date:
 __all__ = [
     "BOND_SPECIFICATION_UPDATE_FIELDS",
     "BOND_TYPE_CONFIG",
+    "CAPITAL_HISTORY_UPDATE_FIELDS",
     "COMPANY_OFFICER_UPDATE_FIELDS",
     "COMPANY_PROFILE_UPDATE_FIELDS",
     "COMPANY_SHAREHOLDER_UPDATE_FIELDS",
+    "COMPANY_SUBSIDIARY_UPDATE_FIELDS",
     "CORPORATE_EVENT_UPDATE_FIELDS",
     "COVERED_WARRANT_UPDATE_FIELDS",
     "CW_STOCK_SYMBOL_UPDATE_FIELDS",
@@ -206,6 +236,7 @@ __all__ = [
     "FINANCIAL_RATIO_UPDATE_FIELDS",
     "FINANCIAL_REPORT_UPDATE_FIELDS",
     "INDEX_CONSTITUENT_UPDATE_FIELDS",
+    "INSIDER_TRADING_UPDATE_FIELDS",
     "INTRADAY_OHLCV_UPDATE_FIELDS",
     "META_FINANCIAL_KEYS",
     "STANDARD_INDEXES",

@@ -21,9 +21,11 @@ from app.models.entities.simulation import (
 )
 from app.models.entities.stock import (
     BondSpecification,
+    CapitalHistory,
     CompanyOfficer,
     CompanyProfile,
     CompanyShareholder,
+    CompanySubsidiary,
     CorporateEvent,
     CoveredWarrant,
     DataSyncLog,
@@ -32,6 +34,7 @@ from app.models.entities.stock import (
     FinancialReport,
     FinancialReportItem,
     IndexConstituent,
+    InsiderTrading,
     StockOHLCVDaily,
     StockOHLCVIntraday,
     StockSymbol,
@@ -46,9 +49,11 @@ from app.models.entities.user import (
 
 __all__ = [
     "BondSpecification",
+    "CapitalHistory",
     "CompanyOfficer",
     "CompanyProfile",
     "CompanyShareholder",
+    "CompanySubsidiary",
     "CorporateEvent",
     "CoveredWarrant",
     "DataSyncLog",
@@ -58,6 +63,7 @@ __all__ = [
     "FinancialReportItem",
     "ForecastJournal",
     "IndexConstituent",
+    "InsiderTrading",
     "InstitutionalFlow",
     "Item",
     "ItemBase",

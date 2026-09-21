@@ -15,6 +15,7 @@ from sqlmodel import and_, col, func, select
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.cron.sync_daily_market import run_sync_daily_market_job
+from app.cron.sync_quarterly_financials import run_sync_quarterly_financials_job
 from app.models.models_quant import (
     InstitutionalFlow,
     InstitutionalFlowPublic,
@@ -26,6 +27,9 @@ from app.models.models_quant import (
 from app.models.models_stock import (
     BondSpecification,
     BondSpecificationPublic,
+    CapitalHistory,
+    CapitalHistoryPublic,
+    CapitalHistoryResponse,
     CompanyOfficer,
     CompanyOfficerPublic,
     CompanyOfficersResponse,
@@ -34,6 +38,9 @@ from app.models.models_stock import (
     CompanyShareholder,
     CompanyShareholderPublic,
     CompanyShareholdersResponse,
+    CompanySubsidiariesResponse,
+    CompanySubsidiary,
+    CompanySubsidiaryPublic,
     CorporateEvent,
     CorporateEventPublic,
     CorporateEventsResponse,
@@ -51,6 +58,9 @@ from app.models.models_stock import (
     IndexConstituent,
     IndexConstituentPublic,
     IndexConstituentsResponse,
+    InsiderTrading,
+    InsiderTradingPublic,
+    InsiderTradingResponse,
     OHLCVRecord,
     PriceHistoryResponse,
     RelatedAssetsResponse,
@@ -479,6 +489,119 @@ def get_corporate_events(
 
 
 # ---------------------------------------------------------------------------
+# GET /stock/{symbol}/subsidiaries — Company subsidiaries & affiliates
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{symbol}/subsidiaries", response_model=CompanySubsidiariesResponse)
+def get_company_subsidiaries(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol: str,
+) -> Any:
+    """Tra cứu danh sách công ty con và công ty liên kết từ PostgreSQL."""
+    sym_code = symbol.strip().upper()
+    subsidiaries = session.exec(
+        select(CompanySubsidiary)
+        .where(CompanySubsidiary.symbol == sym_code)
+        .order_by(col(CompanySubsidiary.ownership_percent).desc().nullslast())
+    ).all()
+
+    if not subsidiaries:
+        try:
+            manager = DataSyncManager(session, vnstock_service)
+            log = manager.sync_company_subsidiaries(sym_code)
+            if log.status == "success":
+                subsidiaries = session.exec(
+                    select(CompanySubsidiary)
+                    .where(CompanySubsidiary.symbol == sym_code)
+                    .order_by(
+                        col(CompanySubsidiary.ownership_percent).desc().nullslast()
+                    )
+                ).all()
+        except VnstockServiceError:
+            pass
+
+    data = [CompanySubsidiaryPublic.model_validate(s) for s in subsidiaries]
+    return CompanySubsidiariesResponse(symbol=sym_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/{symbol}/insider-trading — Insider trading and major deals
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{symbol}/insider-trading", response_model=InsiderTradingResponse)
+def get_insider_trading(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol: str,
+    limit: int = Query(default=50, ge=1, le=200),
+) -> Any:
+    """Tra cứu lịch sử giao dịch nội bộ và cổ đông lớn từ PostgreSQL."""
+    sym_code = symbol.strip().upper()
+    deals = session.exec(
+        select(InsiderTrading)
+        .where(InsiderTrading.symbol == sym_code)
+        .order_by(col(InsiderTrading.deal_announce_date).desc().nullslast())
+        .limit(limit)
+    ).all()
+
+    if not deals:
+        try:
+            manager = DataSyncManager(session, vnstock_service)
+            log = manager.sync_insider_trading(sym_code)
+            if log.status == "success":
+                deals = session.exec(
+                    select(InsiderTrading)
+                    .where(InsiderTrading.symbol == sym_code)
+                    .order_by(col(InsiderTrading.deal_announce_date).desc().nullslast())
+                    .limit(limit)
+                ).all()
+        except VnstockServiceError:
+            pass
+
+    data = [InsiderTradingPublic.model_validate(d) for d in deals]
+    return InsiderTradingResponse(symbol=sym_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/{symbol}/capital-history — Capital change history
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{symbol}/capital-history", response_model=CapitalHistoryResponse)
+def get_capital_history(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol: str,
+) -> Any:
+    """Tra cứu lịch sử tăng vốn điều lệ và phát hành cổ phiếu từ PostgreSQL."""
+    sym_code = symbol.strip().upper()
+    history = session.exec(
+        select(CapitalHistory)
+        .where(CapitalHistory.symbol == sym_code)
+        .order_by(col(CapitalHistory.issue_date).desc().nullslast())
+    ).all()
+
+    if not history:
+        try:
+            manager = DataSyncManager(session, vnstock_service)
+            log = manager.sync_capital_history(sym_code)
+            if log.status == "success":
+                history = session.exec(
+                    select(CapitalHistory)
+                    .where(CapitalHistory.symbol == sym_code)
+                    .order_by(col(CapitalHistory.issue_date).desc().nullslast())
+                ).all()
+        except VnstockServiceError:
+            pass
+
+    data = [CapitalHistoryPublic.model_validate(h) for h in history]
+    return CapitalHistoryResponse(symbol=sym_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
 # GET /stock/index-constituents/{group} — Index basket constituents DB-First
 # ---------------------------------------------------------------------------
 
@@ -589,6 +712,24 @@ def trigger_sync(
                 status_code=400, detail="symbol is required for events sync"
             )
         log = manager.sync_corporate_events(symbol)
+    elif sync_type == "subsidiaries":
+        if not symbol:
+            raise HTTPException(
+                status_code=400, detail="symbol is required for subsidiaries sync"
+            )
+        log = manager.sync_company_subsidiaries(symbol)
+    elif sync_type == "insider_trading":
+        if not symbol:
+            raise HTTPException(
+                status_code=400, detail="symbol is required for insider_trading sync"
+            )
+        log = manager.sync_insider_trading(symbol)
+    elif sync_type == "capital_history":
+        if not symbol:
+            raise HTTPException(
+                status_code=400, detail="symbol is required for capital_history sync"
+            )
+        log = manager.sync_capital_history(symbol)
     elif sync_type == "constituents":
         target_group = symbol or "VN30"
         log = manager.sync_index_constituents(group=target_group)
@@ -596,6 +737,42 @@ def trigger_sync(
         raise HTTPException(status_code=400, detail=f"Unknown sync type: {sync_type}")
 
     return SyncStatusPublic.model_validate(log)
+
+
+# ---------------------------------------------------------------------------
+# POST /stock/sync/batch — Trigger batch sync across multiple symbols (SuperUser only)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/sync/batch", response_model=dict[str, Any])
+def trigger_batch_sync(
+    session: SessionDep,
+    current_user: CurrentUser,
+    symbols: list[str] = Query(..., description="Danh sách mã cổ phiếu cần đồng bộ"),
+    sync_types: list[str] = Query(
+        default=[
+            "profile",
+            "financials",
+            "ratios",
+            "events",
+            "subsidiaries",
+            "insider_trading",
+            "capital_history",
+        ],
+        description="Các loại dữ liệu cần đồng bộ",
+    ),
+    delay_sec: float = Query(
+        default=0.3, ge=0.1, le=5.0, description="Độ trễ giữa các mã (giây)"
+    ),
+) -> Any:
+    """Trigger bulk synchronization for multiple symbols (SuperUser only)."""
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Not enough privileges")
+
+    manager = DataSyncManager(session, vnstock_service)
+    return manager.sync_batch_symbols_data(
+        symbols=symbols, sync_types=sync_types, delay_sec=delay_sec
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -652,6 +829,37 @@ def cron_sync_daily_market(
         )
 
     logs = run_sync_daily_market_job(session=session)
+    return [SyncStatusPublic.model_validate(log) for log in logs]
+
+
+# ---------------------------------------------------------------------------
+# POST /stock/cron/sync-quarterly-financials — Quarterly Financials Sync Webhook
+# ---------------------------------------------------------------------------
+
+
+@router.post("/cron/sync-quarterly-financials", response_model=list[SyncStatusPublic])
+def cron_sync_quarterly_financials(
+    session: SessionDep,
+    x_cron_secret: Annotated[str | None, Header(alias="X-Cron-Secret")] = None,
+    secret_key: str | None = Query(default=None),
+    group: str = Query(
+        default="VN30", description="Nhóm chỉ số cần đồng bộ (VN30, VN100,...)"
+    ),
+) -> Any:
+    """Kích hoạt đồng bộ báo cáo tài chính & chỉ số quý cho rổ chỉ số (VN30 mặc định).
+
+    Yêu cầu header 'X-Cron-Secret' hoặc query param 'secret_key' khớp với cấu hình hệ thống.
+    """
+    valid_secret = settings.CRON_SECRET_KEY or settings.SECRET_KEY
+    provided_secret = x_cron_secret or secret_key
+
+    if not provided_secret or provided_secret != valid_secret:
+        raise HTTPException(
+            status_code=403,
+            detail="Mã bảo mật Cron (X-Cron-Secret) không hợp lệ",
+        )
+
+    logs = run_sync_quarterly_financials_job(session=session, group=group)
     return [SyncStatusPublic.model_validate(log) for log in logs]
 
 

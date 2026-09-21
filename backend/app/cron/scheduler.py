@@ -3,6 +3,7 @@
 Tự động tính toán độ trễ và kích hoạt các tác vụ định kỳ:
 1. Đồng bộ danh mục mã: Thứ Hai & Thứ Năm lúc 08:00 sáng (Giờ Việt Nam UTC+7).
 2. Đồng bộ nến ngày sau phiên ATC: Thứ Hai đến Thứ Sáu lúc 15:15 chiều (Giờ Việt Nam UTC+7).
+3. Đồng bộ BCTC & dữ liệu DN quý: Chủ Nhật lúc 09:00 sáng (Giờ Việt Nam UTC+7).
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from zoneinfo import ZoneInfo
 
 from app.core.config import settings
 from app.cron.sync_daily_market import run_sync_daily_market_job
+from app.cron.sync_quarterly_financials import run_sync_quarterly_financials_job
 from app.cron.sync_symbols import run_sync_symbols_job
 
 logger = logging.getLogger(__name__)
@@ -105,12 +107,37 @@ async def run_daily_market_scheduler_loop() -> None:
             await asyncio.sleep(60)
 
 
+async def run_quarterly_financials_scheduler_loop() -> None:
+    """Vòng lặp định kỳ đồng bộ BCTC & dữ liệu DN quý (Chủ Nhật lúc 09:00 sáng VN)."""
+    logger.info("Khởi động vòng lặp đồng bộ BCTC & dữ liệu DN (Chủ Nhật 09:00 sáng)...")
+    while True:
+        try:
+            delay = get_next_schedule_delay(
+                target_days=(6,), target_hour=9, target_minute=0
+            )
+            logger.info(
+                "Scheduler [Financials]: Chờ %.1f giây đến lần chạy tiếp.", delay
+            )
+            await asyncio.sleep(delay)
+            logger.info("Scheduler [Financials]: Đang thực thi đồng bộ BCTC & DN...")
+            await asyncio.to_thread(run_sync_quarterly_financials_job)
+            logger.info("Scheduler [Financials]: Đồng bộ hoàn tất!")
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            logger.info("Scheduler [Financials] đã nhận lệnh dừng (shutdown).")
+            break
+        except Exception as exc:
+            logger.exception("Lỗi trong vòng lặp Scheduler [Financials]: %s", exc)
+            await asyncio.sleep(60)
+
+
 async def run_inprocess_scheduler() -> None:
     """Chạy đồng thời các vòng lặp tác vụ định kỳ của hệ thống."""
     logger.info("Khởi động toàn diện bộ lập lịch in-process scheduler đa tác vụ...")
     await asyncio.gather(
         run_symbols_scheduler_loop(),
         run_daily_market_scheduler_loop(),
+        run_quarterly_financials_scheduler_loop(),
     )
 
 

@@ -1,0 +1,42 @@
+name: Scheduled Quarterly Financials Sync Cron
+
+on:
+  schedule:
+    # 09:00 sáng Chủ Nhật hàng tuần (Giờ Việt Nam UTC+7 = 02:00 UTC)
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      group:
+        description: 'Nhóm chỉ số cần đồng bộ (mặc định: VN30)'
+        required: false
+        default: 'VN30'
+
+jobs:
+  sync-quarterly-financials:
+    name: Sync VNStock Quarterly Financials & Company Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Trigger Quarterly Financials Sync via API
+        env:
+          APP_URL: ${{ secrets.FASTAPI_CLOUD_APP_URL || 'https://vnstock.fastapicloud.dev' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET_KEY || secrets.SECRET_KEY }}
+          TARGET_GROUP: ${{ github.event.inputs.group || 'VN30' }}
+        run: |
+          echo "Bắt đầu gọi webhook đồng bộ BCTC và dữ liệu doanh nghiệp (Nhóm: $TARGET_GROUP) tới $APP_URL..."
+          HTTP_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$APP_URL/api/v1/stock/cron/sync-quarterly-financials?group=$TARGET_GROUP" \
+            -H "X-Cron-Secret: $CRON_SECRET" \
+            -H "Content-Type: application/json")
+
+          HTTP_STATUS=$(echo "$HTTP_RESPONSE" | grep "HTTP_STATUS" | cut -d':' -f2)
+          RESPONSE_BODY=$(echo "$HTTP_RESPONSE" | sed '/HTTP_STATUS/d')
+
+          echo "Response Body: $RESPONSE_BODY"
+          echo "HTTP Status Code: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Lỗi: Đồng bộ BCTC và doanh nghiệp thất bại với mã lỗi HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+          echo "Đồng bộ báo cáo tài chính và dữ liệu doanh nghiệp hoàn tất thành công!"

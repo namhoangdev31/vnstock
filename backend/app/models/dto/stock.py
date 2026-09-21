@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
+from typing import Any
 
 from sqlmodel import SQLModel
 
@@ -69,7 +70,14 @@ class CompanyOverviewPublic(SQLModel):
     charter_capital: float | None = None
     outstanding_shares: float | None = None
     market_cap: float | None = None
+    free_float_pct: float | None = None
+    foreign_ownership_pct: float | None = None
+    max_foreign_ownership_pct: float | None = None
+    employee_count: int | None = None
     website: str | None = None
+    address: str | None = None
+    ceo_name: str | None = None
+    auditor: str | None = None
     description: str | None = None
 
 
@@ -190,6 +198,7 @@ class FinancialRatioPublic(SQLModel):
     quick_ratio: float | None = None
     current_ratio: float | None = None
     dividend_yield: float | None = None
+    data: dict[str, Any] | None = None
 
 
 class FinancialRatiosResponse(SQLModel):
@@ -281,3 +290,62 @@ class IndexConstituentsResponse(SQLModel):
     index_code: str
     count: int
     data: list[IndexConstituentPublic]
+
+
+class CompanySubsidiaryPublic(SQLModel):
+    """Thông tin công ty con / công ty liên kết."""
+
+    id: uuid.UUID | None = None
+    symbol: str
+    sub_organ_code: str
+    organ_name: str
+    ownership_percent: float = 0.0
+
+
+class CompanySubsidiariesResponse(SQLModel):
+    """Danh sách công ty con & liên kết của một doanh nghiệp."""
+
+    symbol: str
+    count: int
+    data: list[CompanySubsidiaryPublic]
+
+
+class InsiderTradingPublic(SQLModel):
+    """Nhật ký giao dịch nội bộ của lãnh đạo và cổ đông lớn."""
+
+    id: uuid.UUID | None = None
+    symbol: str
+    officer_name: str
+    officer_position: str | None = None
+    deal_action: str
+    deal_quantity: float | None = None
+    deal_price: float | None = None
+    deal_ratio: float | None = None
+    deal_announce_date: date | None = None
+
+
+class InsiderTradingResponse(SQLModel):
+    """Danh sách giao dịch nội bộ của doanh nghiệp."""
+
+    symbol: str
+    count: int
+    data: list[InsiderTradingPublic]
+
+
+class CapitalHistoryPublic(SQLModel):
+    """Lịch sử tăng vốn điều lệ và phát hành cổ phiếu."""
+
+    id: uuid.UUID | None = None
+    symbol: str
+    issue_date: date | None = None
+    charter_capital: float | None = None
+    shares_issued: float | None = None
+    description: str | None = None
+
+
+class CapitalHistoryResponse(SQLModel):
+    """Danh sách các đợt tăng vốn điều lệ của doanh nghiệp."""
+
+    symbol: str
+    count: int
+    data: list[CapitalHistoryPublic]

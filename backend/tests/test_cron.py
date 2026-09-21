@@ -55,6 +55,14 @@ def test_get_next_schedule_delay() -> None:
     delay_next_mon = get_next_schedule_delay(now=thursday_after)
     assert delay_next_mon == 95 * 3600.0
 
+    # Giả lập Chủ Nhật 09:00 sáng (target_days=(6,), target_hour=9, target_minute=0)
+    # 2026-09-20 là Chủ Nhật lúc 08:00 -> còn 3600 giây đến 09:00
+    sunday_morning = datetime(2026, 9, 20, 8, 0, 0, tzinfo=VN_TZ)
+    delay_sun = get_next_schedule_delay(
+        now=sunday_morning, target_days=(6,), target_hour=9, target_minute=0
+    )
+    assert delay_sun == 3600.0
+
 
 def test_run_sync_symbols_job_with_mock_data(session: Session) -> None:  # noqa: F811
     """Kiểm tra runner đồng bộ dữ liệu vào StockSymbol và DerivativeContract."""
@@ -259,3 +267,70 @@ def test_cron_sync_daily_market_api_endpoint(api_client, monkeypatch) -> None:  
         assert isinstance(data, list)
         assert len(data) == 1
         assert data[0]["symbol"] == "VNINDEX"
+
+
+def test_run_sync_quarterly_financials_job(session: Session) -> None:  # noqa: F811
+    """Kiểm tra runner đồng bộ báo cáo tài chính & dữ liệu doanh nghiệp định kỳ."""
+    from app.cron.sync_quarterly_financials import run_sync_quarterly_financials_job
+
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_group_symbols.return_value = ["FPT"]
+    mock_log = DataSyncLog(
+        sync_type="profile",
+        symbol="FPT",
+        source="VCI",
+        status="success",
+        rows_synced=1,
+    )
+    with (
+        patch("app.cron.sync_quarterly_financials.vnstock_service", mock_svc),
+        patch.object(DataSyncManager, "sync_company_profile", return_value=mock_log),
+        patch.object(
+            DataSyncManager, "sync_company_shareholders", return_value=mock_log
+        ),
+        patch.object(DataSyncManager, "sync_company_officers", return_value=mock_log),
+        patch.object(DataSyncManager, "sync_corporate_events", return_value=mock_log),
+        patch.object(
+            DataSyncManager, "sync_company_subsidiaries", return_value=mock_log
+        ),
+        patch.object(DataSyncManager, "sync_insider_trading", return_value=mock_log),
+        patch.object(DataSyncManager, "sync_capital_history", return_value=mock_log),
+        patch.object(DataSyncManager, "sync_financials", return_value=mock_log),
+        patch.object(DataSyncManager, "sync_financial_ratios", return_value=mock_log),
+    ):
+        logs = run_sync_quarterly_financials_job(session=session, delay_sec=0)
+        assert len(logs) >= 1
+        assert logs[0].status == "success"
+
+
+def test_cron_sync_quarterly_financials_api_endpoint(api_client, monkeypatch) -> None:  # noqa: F811
+    """Kiểm tra bảo mật và endpoint POST /api/v1/stock/cron/sync-quarterly-financials."""
+    monkeypatch.setattr(settings, "CRON_SECRET_KEY", "test-cron-quarterly-secret-123")
+
+    # 1. Gọi không kèm secret -> 403
+    resp_no_secret = api_client.post("/api/v1/stock/cron/sync-quarterly-financials")
+    assert resp_no_secret.status_code == 403
+
+    # 2. Gọi kèm secret đúng qua Header
+    mock_log = DataSyncLog(
+        sync_type="financials",
+        symbol="FPT",
+        source="VCI",
+        status="success",
+        rows_synced=4,
+    )
+    with patch(
+        "app.api.routes.stock.run_sync_quarterly_financials_job",
+        return_value=[mock_log],
+    ):
+        resp_ok = api_client.post(
+            "/api/v1/stock/cron/sync-quarterly-financials?group=VN30",
+            headers={"X-Cron-Secret": "test-cron-quarterly-secret-123"},
+        )
+        assert resp_ok.status_code == 200
+        data = resp_ok.json()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["symbol"] == "FPT"
+        assert data[0]["status"] == "success"

@@ -48,8 +48,11 @@ def run_sync_daily_market_job(
 
         for sym in target_symbols:
             try:
-                log = mgr.sync_daily_incremental(sym)
-                logs.append(log)
+                sub_logs = mgr.sync_daily_incremental([sym])
+                if isinstance(sub_logs, list):
+                    logs.extend(sub_logs)
+                else:
+                    logs.append(sub_logs)
                 time.sleep(delay_sec)
             except Exception as exc:
                 logger.warning("Lỗi đồng bộ nến ngày cho %s: %s", sym, exc)

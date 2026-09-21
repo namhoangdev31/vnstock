@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from collections.abc import Generator
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.models.models_stock import (
+    CapitalHistory,
     CompanyOfficer,
     CompanyShareholder,
+    CompanySubsidiary,
     CorporateEvent,
     FinancialRatio,
     IndexConstituent,
+    InsiderTrading,
     StockSymbol,
 )
 from app.services.data_sync import (
@@ -24,7 +28,7 @@ from app.services.vnstock_service import VnstockServiceError
 
 
 @pytest.fixture
-def sqlite_session() -> Session:
+def sqlite_session() -> Generator[Session, None, None]:
     """Fixture cung cấp in-memory SQLite session cho unit test."""
     engine = create_engine("sqlite:///:memory:")
     SQLModel.metadata.create_all(engine)
@@ -92,7 +96,9 @@ def test_run_sync_task_success_and_failures(sqlite_session: Session) -> None:
 
     # 3. Exception bất ngờ và rollback
     def unexpected_error_task() -> int:
-        sqlite_session.add(StockSymbol(symbol="TEMP_SYM", organ_name="Tạm thời"))
+        sqlite_session.add(
+            StockSymbol(symbol="TEMP_SYM", organ_name="Tạm thời", asset_type="stock")
+        )
         raise RuntimeError("Cúp điện đột xuất")
 
     log3 = manager._run_sync_task("test_sync", unexpected_error_task)
@@ -363,7 +369,7 @@ def test_upsert_postgresql_execution() -> None:
         batch_size=500,
     )
     assert count == 2
-    assert mock_session.execute.called
+    assert mock_session.exec.called or mock_session.execute.called
     assert mock_session.flush.called
 
     # 2. Không có update_fields -> on_conflict_do_nothing
@@ -376,7 +382,7 @@ def test_upsert_postgresql_execution() -> None:
         batch_size=500,
     )
     assert count_nothing == 2
-    assert mock_session.execute.called
+    assert mock_session.exec.called or mock_session.execute.called
     assert mock_session.flush.called
 
 
@@ -545,6 +551,105 @@ def test_sync_consolidated_and_batch(sqlite_session: Session) -> None:
     assert "ratios" in fin_res
 
     batch_res = manager.sync_batch_symbols_data(
-        ["FPT"], sync_types=["profile"], delay_sec=0
+        ["FPT"], sync_types=["profile", "unknown_type"], delay_sec=0
     )
     assert "FPT" in batch_res
+    assert batch_res["FPT"]["unknown_type"] == "unknown_sync_type"
+
+    # Giả lập khi sync_company_profile ném ngoại lệ bất ngờ
+    with patch.object(
+        manager, "sync_company_profile", side_effect=RuntimeError("API Network Error")
+    ):
+        batch_err_res = manager.sync_batch_symbols_data(
+            ["FPT"], sync_types=["profile"], delay_sec=0
+        )
+        assert batch_err_res["FPT"]["profile"] == "failed"
+
+
+def test_sync_company_subsidiaries(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ danh sách công ty con và liên kết."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_company_subsidiaries.return_value = pd.DataFrame(
+        [
+            {
+                "sub_organ_code": "FPT-IS",
+                "organ_name": "Công ty TNHH Hệ thống Thông tin FPT",
+                "ownership_percent": 100.0,
+            },
+            {
+                "sub_organ_code": "FPT-TEL",
+                "organ_name": "CTCP Viễn thông FPT",
+                "ownership_percent": 45.65,
+            },
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_company_subsidiaries("FPT")
+    assert log.status == "success"
+    assert log.rows_synced == 2
+
+    rows = sqlite_session.exec(
+        select(CompanySubsidiary).where(CompanySubsidiary.symbol == "FPT")
+    ).all()
+    assert len(rows) == 2
+    assert any(
+        r.sub_organ_code == "FPT-IS" and r.ownership_percent == 100.0 for r in rows
+    )
+
+
+def test_sync_insider_trading(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ nhật ký giao dịch nội bộ."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_company_insider_trading.return_value = pd.DataFrame(
+        [
+            {
+                "officer_name": "Trương Gia Bình",
+                "officer_position": "Chủ tịch HĐQT",
+                "deal_action": "Bán",
+                "deal_quantity": 500000.0,
+                "deal_price": 130000.0,
+                "deal_ratio": 7.5,
+                "deal_announce_date": "2026-03-15",
+            }
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_insider_trading("FPT")
+    assert log.status == "success"
+    assert log.rows_synced == 1
+
+    rows = sqlite_session.exec(
+        select(InsiderTrading).where(InsiderTrading.symbol == "FPT")
+    ).all()
+    assert len(rows) == 1
+    assert rows[0].officer_name == "Trương Gia Bình"
+    assert rows[0].deal_action == "Bán"
+
+
+def test_sync_capital_history(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ lịch sử tăng vốn điều lệ."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_company_capital_history.return_value = pd.DataFrame(
+        [
+            {
+                "issue_date": "2025-06-20",
+                "charter_capital": 14500000000000.0,
+                "shares_issued": 150000000.0,
+                "description": "Chi trả cổ tức bằng cổ phiếu tỷ lệ 15%",
+            }
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_capital_history("FPT")
+    assert log.status == "success"
+    assert log.rows_synced == 1
+
+    rows = sqlite_session.exec(
+        select(CapitalHistory).where(CapitalHistory.symbol == "FPT")
+    ).all()
+    assert len(rows) == 1
+    assert rows[0].shares_issued == 150000000.0
+    assert rows[0].charter_capital == 14500000000000.0
