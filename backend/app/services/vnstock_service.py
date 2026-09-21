@@ -9,6 +9,7 @@ Cung cấp giao diện nhất quán và hoàn chỉnh cho toàn bộ hệ sinh t
 """
 
 import logging
+from collections.abc import Callable
 from datetime import date
 from typing import Any
 
@@ -142,6 +143,37 @@ class VnstockService:
                 self._limiter.record_failure(provider=src, session=self.db_session)
             except Exception:
                 pass
+
+    def _execute_api_call(
+        self,
+        call_fn: Callable[[], Any],
+        provider: str | None = None,
+        err_msg: str = "Lỗi khi gọi API",
+    ) -> pd.DataFrame:
+        """Thực thi an toàn một hàm gọi vnstock với đầy đủ rate limiting và circuit breaker tracking."""
+        src = (
+            provider
+            or getattr(self, "_current_source", None)
+            or getattr(self, "source", "vci")
+        )
+        try:
+            self._throttle(src)
+            res = call_fn()
+            if isinstance(res, pd.DataFrame):
+                if not res.empty:
+                    self.record_success(src)
+                return res
+            elif res is not None:
+                self.record_success(src)
+                if isinstance(res, (list, tuple, pd.Series, dict)):
+                    return pd.DataFrame(res)
+                return pd.DataFrame()
+        except CircuitBreakerOpenError:
+            logger.warning("Circuit breaker is OPEN for %s, skipping call", src)
+        except Exception:
+            self.record_failure(src)
+            logger.warning(err_msg, exc_info=True)
+        return pd.DataFrame()
 
     # =========================================================================
     # PHÂN HỆ 1: THAM CHIẾU & DANH MỤC THỊ TRƯỜNG (REFERENCE DATA)
@@ -352,79 +384,54 @@ class VnstockService:
 
     def fetch_reference_equity_list(self) -> pd.DataFrame:
         """Liệt kê toàn bộ mã cổ phiếu niêm yết qua Reference.equity().list()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "equity")
-            res = sub.list() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải danh sách cổ phiếu qua Reference.equity.list", exc_info=True
-            )
+            return sub.list() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call, err_msg="Lỗi tải danh sách cổ phiếu qua Reference.equity.list"
+        )
 
     def fetch_reference_equity_by_industry(self) -> pd.DataFrame:
         """Liệt kê cổ phiếu theo ngành (chuẩn ICB) qua Reference.equity().list_by_industry()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "equity")
-            res = sub.list_by_industry() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải phân ngành cổ phiếu qua Reference.equity.list_by_industry",
-                exc_info=True,
-            )
+            return sub.list_by_industry() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg="Lỗi tải phân ngành cổ phiếu qua Reference.equity.list_by_industry",
+        )
 
     def fetch_reference_equity_by_exchange(self) -> pd.DataFrame:
         """Liệt kê cổ phiếu theo sàn (HOSE, HNX, UPCOM) qua Reference.equity().list_by_exchange()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "equity")
-            res = sub.list_by_exchange() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải cổ phiếu theo sàn qua Reference.equity.list_by_exchange",
-                exc_info=True,
-            )
+            return sub.list_by_exchange() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg="Lỗi tải cổ phiếu theo sàn qua Reference.equity.list_by_exchange",
+        )
 
     def fetch_reference_equity_by_group(self, group: str = "VN30") -> pd.DataFrame:
         """Liệt kê cổ phiếu theo nhóm chỉ số/sàn (ví dụ: 'VN30') qua Reference.equity().list_by_group()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "equity")
-            res = sub.list_by_group(group=group.upper()) if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải cổ phiếu nhóm %s qua Reference.equity.list_by_group",
-                group,
-                exc_info=True,
-            )
+            return sub.list_by_group(group=group.upper()) if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải cổ phiếu nhóm {group} qua Reference.equity.list_by_group",
+        )
 
     # -------------------------------------------------------------------------
     # Nhóm Reference UI: Chỉ số (Reference.index)
@@ -432,21 +439,15 @@ class VnstockService:
 
     def fetch_reference_index_list(self) -> pd.DataFrame:
         """Danh sách tất cả các chỉ số thị trường (VNINDEX, VN30,...) qua Reference.index().list()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "index")
-            res = sub.list() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải danh sách chỉ số qua Reference.index.list", exc_info=True
-            )
+            return sub.list() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call, err_msg="Lỗi tải danh sách chỉ số qua Reference.index.list"
+        )
 
     def fetch_index_list(self) -> pd.DataFrame:
         """Lấy danh sách toàn bộ các chỉ số thị trường chứng khoán Việt Nam (VNINDEX, VN30, HNX,...).
@@ -458,41 +459,28 @@ class VnstockService:
 
     def fetch_reference_index_groups(self) -> pd.DataFrame:
         """Danh sách các nhóm chỉ số hỗ trợ qua Reference.index().groups()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "index")
-            res = sub.groups() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nhóm chỉ số qua Reference.index.groups", exc_info=True
-            )
+            return sub.groups() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call, err_msg="Lỗi tải nhóm chỉ số qua Reference.index.groups"
+        )
 
     def fetch_reference_index_members(self, symbol: str = "VN30") -> pd.DataFrame:
         """Danh sách các mã thành phần trong rổ chỉ số qua Reference.index().members()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "index")
-            res = sub.members(symbol=symbol.upper()) if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif isinstance(res, (list, tuple, pd.Series)):
-                return pd.DataFrame({"symbol": list(res)})
-        except Exception:
-            logger.warning(
-                "Lỗi tải thành phần chỉ số %s qua Reference.index.members",
-                symbol,
-                exc_info=True,
-            )
+            return sub.members(symbol=symbol.upper()) if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải thành phần chỉ số {symbol} qua Reference.index.members",
+        )
 
     # -------------------------------------------------------------------------
     # Nhóm Reference UI: Các nhóm tài sản khác (ETF, Futures, Warrant, Bond, Fund)
@@ -500,37 +488,27 @@ class VnstockService:
 
     def fetch_reference_etf_list(self) -> pd.DataFrame:
         """Danh sách các chứng chỉ quỹ ETF qua Reference.etf().list()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "etf")
-            res = sub.list() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif isinstance(res, (list, tuple, pd.Series)):
-                return pd.DataFrame({"symbol": list(res)})
-        except Exception:
-            logger.warning("Lỗi tải danh mục ETF qua Reference.etf.list", exc_info=True)
+            return sub.list() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call, err_msg="Lỗi tải danh mục ETF qua Reference.etf.list"
+        )
 
     def fetch_reference_futures_list(self) -> pd.DataFrame:
         """Danh sách hợp đồng tương lai phái sinh qua Reference.futures().list()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "futures")
-            res = sub.list() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif isinstance(res, (list, tuple, pd.Series)):
-                return pd.DataFrame({"symbol": list(res)})
-        except Exception:
-            logger.warning(
-                "Lỗi tải danh mục phái sinh qua Reference.futures.list", exc_info=True
-            )
+            return sub.list() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call, err_msg="Lỗi tải danh mục phái sinh qua Reference.futures.list"
+        )
 
     def fetch_derivatives_list(self) -> pd.DataFrame:
         """Lấy danh sách các hợp đồng tương lai phái sinh đang giao dịch (VN30F1M, VN30F2M,...).
@@ -561,24 +539,19 @@ class VnstockService:
 
     def fetch_reference_warrant_list(self) -> pd.DataFrame:
         """Danh sách chứng quyền có bảo đảm qua Reference.warrant().list()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "warrant")
             res = sub.list() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                self.record_success()
-                return res
-            elif isinstance(res, (list, tuple, pd.Series)):
-                self.record_success()
+            if isinstance(res, (list, tuple, pd.Series)):
                 return pd.DataFrame({"symbol": list(res)})
-        except Exception:
-            self.record_failure()
-            logger.warning(
-                "Lỗi tải danh mục chứng quyền qua Reference.warrant.list", exc_info=True
-            )
+            return res
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg="Lỗi tải danh mục chứng quyền qua Reference.warrant.list",
+        )
 
     def fetch_covered_warrants_list(self) -> pd.DataFrame | pd.Series:
         """Lấy danh sách các chứng quyền có bảo đảm (Covered Warrants - CW) đang niêm yết trên HOSE.
@@ -609,22 +582,15 @@ class VnstockService:
 
     def fetch_reference_fund_list(self) -> pd.DataFrame:
         """Danh sách các quỹ mở FMarket qua Reference.fund().list()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "fund")
-            res = sub.list() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                logger.info("Đã tải danh mục quỹ (%d quỹ) qua Reference.fund", len(res))
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải danh mục quỹ qua Reference.fund.list", exc_info=True
-            )
+            return sub.list() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call, err_msg="Lỗi tải danh mục quỹ qua Reference.fund.list"
+        )
 
     def fetch_funds_list(self) -> pd.DataFrame:
         """Lấy danh sách các chứng chỉ quỹ mở FMarket và chứng chỉ quỹ ETF."""
@@ -632,22 +598,15 @@ class VnstockService:
 
     def fetch_reference_bond_list(self, bond_type: str = "all") -> pd.DataFrame:
         """Danh sách trái phiếu doanh nghiệp & chính phủ qua Reference.bond().list()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "bond")
-            res = sub.list(bond_type=bond_type) if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                logger.info("Đã tải %d mã trái phiếu qua Reference.bond", len(res))
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải danh mục trái phiếu qua Reference.bond.list", exc_info=True
-            )
+            return sub.list(bond_type=bond_type) if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call, err_msg="Lỗi tải danh mục trái phiếu qua Reference.bond.list"
+        )
 
     def fetch_bonds_list(self, bond_type: str = "all") -> pd.DataFrame:
         """Lấy danh sách trái phiếu doanh nghiệp và trái phiếu chính phủ niêm yết trên HNX.
@@ -664,7 +623,7 @@ class VnstockService:
 
         # Fallback thử qua VCI listing nếu Reference lỗi
         try:
-            self._throttle()
+            self._throttle("vci")
             lst = Listing(source="vci", show_log=False)
             bonds_corp = (
                 lst.all_bonds()
@@ -688,9 +647,10 @@ class VnstockService:
             )
             combined = pd.concat([df_corp, df_gov], ignore_index=True)
             if not combined.empty:
+                self.record_success("vci")
                 return combined
         except Exception:
-            pass
+            self.record_failure("vci")
 
         return pd.DataFrame()
 
@@ -700,22 +660,16 @@ class VnstockService:
 
     def search_reference_symbol(self, query: str, limit: int = 10) -> pd.DataFrame:
         """Tìm kiếm mã chứng khoán theo từ khóa qua Reference.search.symbol()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "search")
-            res = sub.symbol(query=query, limit=limit) if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                logger.info("Tìm kiếm mã '%s' trả về %d kết quả", query, len(res))
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tìm kiếm mã chứng khoán cho từ khóa '%s'", query, exc_info=True
-            )
+            return sub.symbol(query=query, limit=limit) if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tìm kiếm mã chứng khoán cho từ khóa '{query}'",
+        )
 
     def search_symbols(self, query: str, limit: int = 10) -> pd.DataFrame:
         """Tìm kiếm mã chứng khoán hoặc thông tin liên quan theo từ khóa."""
@@ -723,24 +677,16 @@ class VnstockService:
 
     def search_reference_info(self, query: str, limit: int = 10) -> pd.DataFrame:
         """Tìm kiếm thông tin chi tiết tài sản qua Reference.search.info()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "search")
-            res = sub.info(query=query, limit=limit) if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                logger.info(
-                    "Tìm kiếm thông tin tài sản '%s' trả về %d kết quả", query, len(res)
-                )
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tìm kiếm thông tin tài sản cho từ khóa '%s'", query, exc_info=True
-            )
+            return sub.info(query=query, limit=limit) if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tìm kiếm thông tin tài sản cho từ khóa '{query}'",
+        )
 
     @staticmethod
     def _series_to_symbols(result: object) -> list[str]:
@@ -1001,181 +947,120 @@ class VnstockService:
 
     def fetch_reference_company_info(self, symbol: str) -> pd.DataFrame:
         """Lấy tổng quan về doanh nghiệp (ngành, vốn hóa...) qua Reference.company().info()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.info() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải thông tin doanh nghiệp %s qua Reference.company.info",
-                symbol,
-                exc_info=True,
-            )
+            return sub.info() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải thông tin doanh nghiệp {symbol} qua Reference.company.info",
+        )
 
     def fetch_reference_company_shareholders(self, symbol: str) -> pd.DataFrame:
         """Lấy danh sách cổ đông lớn qua Reference.company().shareholders()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.shareholders() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải cổ đông %s qua Reference.company.shareholders",
-                symbol,
-                exc_info=True,
-            )
+            return sub.shareholders() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải cổ đông {symbol} qua Reference.company.shareholders",
+        )
 
     def fetch_reference_company_officers(self, symbol: str) -> pd.DataFrame:
         """Lấy danh sách ban lãnh đạo công ty qua Reference.company().officers()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.officers() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải ban lãnh đạo %s qua Reference.company.officers",
-                symbol,
-                exc_info=True,
-            )
+            return sub.officers() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải ban lãnh đạo {symbol} qua Reference.company.officers",
+        )
 
     def fetch_reference_company_subsidiaries(self, symbol: str) -> pd.DataFrame:
         """Lấy danh sách công ty con, công ty liên kết qua Reference.company().subsidiaries()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.subsidiaries() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải công ty con %s qua Reference.company.subsidiaries",
-                symbol,
-                exc_info=True,
-            )
+            return sub.subsidiaries() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải công ty con {symbol} qua Reference.company.subsidiaries",
+        )
 
     def fetch_reference_company_ownership(self, symbol: str) -> pd.DataFrame:
         """Lấy cơ cấu sở hữu doanh nghiệp qua Reference.company().ownership()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.ownership() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải cơ cấu sở hữu %s qua Reference.company.ownership",
-                symbol,
-                exc_info=True,
-            )
+            return sub.ownership() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải cơ cấu sở hữu {symbol} qua Reference.company.ownership",
+        )
 
     def fetch_reference_company_insider_trading(self, symbol: str) -> pd.DataFrame:
         """Lấy lịch sử giao dịch nội bộ qua Reference.company().insider_trading()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.insider_trading() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải giao dịch nội bộ %s qua Reference.company.insider_trading",
-                symbol,
-                exc_info=True,
-            )
+            return sub.insider_trading() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải giao dịch nội bộ {symbol} qua Reference.company.insider_trading",
+        )
 
     def fetch_reference_company_capital_history(self, symbol: str) -> pd.DataFrame:
         """Lấy lịch sử thay đổi vốn điều lệ qua Reference.company().capital_history()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.capital_history() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải lịch sử tăng vốn %s qua Reference.company.capital_history",
-                symbol,
-                exc_info=True,
-            )
+            return sub.capital_history() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải lịch sử tăng vốn {symbol} qua Reference.company.capital_history",
+        )
 
     def fetch_reference_company_news(self, symbol: str) -> pd.DataFrame:
         """Lấy tin tức liên quan đến doanh nghiệp qua Reference.company().news()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.news() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải tin tức %s qua Reference.company.news", symbol, exc_info=True
-            )
+            return sub.news() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải tin tức {symbol} qua Reference.company.news",
+        )
 
     def fetch_reference_company_events(self, symbol: str) -> pd.DataFrame:
         """Lấy các sự kiện doanh nghiệp (cổ tức, ĐHCĐ...) qua Reference.company().events()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "company", symbol)
-            res = sub.events() if sub is not None else None
-            if isinstance(res, pd.DataFrame) and not res.empty:
-                return res
-            elif res is not None and not isinstance(res, pd.DataFrame):
-                return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải sự kiện doanh nghiệp %s qua Reference.company.events",
-                symbol,
-                exc_info=True,
-            )
+            return sub.events() if sub is not None else None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg=f"Lỗi tải sự kiện doanh nghiệp {symbol} qua Reference.company.events",
+        )
 
     def fetch_reference_events_calendar(
         self,
@@ -1187,12 +1072,12 @@ class VnstockService:
         source: str = "kbs",
     ) -> pd.DataFrame:
         """Lịch sự kiện thị trường (cổ tức, ĐHCĐ, phát hành) qua Reference.events.calendar()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "events")
             if sub is not None and hasattr(sub, "calendar"):
-                res = sub.calendar(
+                return sub.calendar(
                     start=start,
                     end=end,
                     event_type=event_type,
@@ -1200,56 +1085,44 @@ class VnstockService:
                     limit=limit,
                     source=source,
                 )
-                if isinstance(res, pd.DataFrame) and not res.empty:
-                    return res
-                elif res is not None and not isinstance(res, pd.DataFrame):
-                    return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải lịch sự kiện thị trường qua Reference.events.calendar",
-                exc_info=True,
-            )
+            return None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            provider=source,
+            err_msg="Lỗi tải lịch sự kiện thị trường qua Reference.events.calendar",
+        )
 
     def fetch_reference_industry_list(self, source: str | None = None) -> pd.DataFrame:
         """Danh mục phân loại ngành qua Reference.industry.list()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "industry")
             if sub is not None and hasattr(sub, "list"):
-                res = sub.list(source=source) if source else sub.list()
-                if isinstance(res, pd.DataFrame) and not res.empty:
-                    return res
-                elif res is not None and not isinstance(res, pd.DataFrame):
-                    return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải danh mục ngành qua Reference.industry.list", exc_info=True
-            )
+                return sub.list(source=source) if source else sub.list()
+            return None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            provider=source,
+            err_msg="Lỗi tải danh mục ngành qua Reference.industry.list",
+        )
 
     def fetch_reference_market_status(self) -> pd.DataFrame:
         """Trạng thái phiên giao dịch hiện tại qua Reference.market.status()."""
-        try:
-            self._throttle()
+
+        def _call() -> Any:
             ref = Reference()
             sub = self._resolve_sub_obj(ref, "market")
             if sub is not None and hasattr(sub, "status"):
-                res = sub.status()
-                if isinstance(res, pd.DataFrame) and not res.empty:
-                    return res
-                elif res is not None and not isinstance(res, pd.DataFrame):
-                    return pd.DataFrame(res)
-        except Exception:
-            logger.warning(
-                "Lỗi tải trạng thái thị trường qua Reference.market.status",
-                exc_info=True,
-            )
+                return sub.status()
+            return None
 
-        return pd.DataFrame()
+        return self._execute_api_call(
+            _call,
+            err_msg="Lỗi tải trạng thái thị trường qua Reference.market.status",
+        )
 
     @staticmethod
     def show_api(node: Any = None) -> None:
@@ -1455,19 +1328,10 @@ class VnstockService:
         Trả về:
             pd.DataFrame bảng giá chi tiết 29-30 cột.
         """
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.quote(symbols)
-            if df is not None and not df.empty:
-                logger.info(
-                    "Đã tải bảng giá snapshot cho %s (%d dòng)", symbols, len(df)
-                )
-                return df
-        except Exception:
-            logger.warning("Lỗi tải bảng giá snapshot qua Market.quote", exc_info=True)
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().quote(symbols),
+            err_msg=f"Lỗi tải bảng giá snapshot qua Market.quote cho {symbols}",
+        )
 
     def fetch_index_ohlcv(
         self,
@@ -1489,31 +1353,22 @@ class VnstockService:
         Trả về:
             pd.DataFrame nến điểm số chỉ số.
         """
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
-            if count is not None:
-                kwargs["count"] = count
+        kwargs: dict[str, Any] = {"interval": interval}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
+        if count is not None:
+            kwargs["count"] = count
 
-            df = mkt.index(symbol).ohlcv(**kwargs)
-            if df is not None and not df.empty:
-                logger.info(
-                    "Đã tải %d nến chỉ số cho %s qua Market.index", len(df), symbol
-                )
-                return df
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến chỉ số %s qua Market.index, thử qua Quote...",
-                symbol,
-                exc_info=True,
-            )
+        df = self._execute_api_call(
+            lambda: Market().index(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến chỉ số {symbol} qua Market.index, thử qua Quote...",
+        )
+        if not df.empty:
+            return df
 
         # Fallback qua Quote thông thường
         parsed_start = start if isinstance(start, date) or start is None else None
@@ -1547,66 +1402,32 @@ class VnstockService:
             interval: Khung thời gian ('1m', '5m', '15m', '30m', '1h', '1D', '1W').
             count: Số lượng nến cần lấy nếu không chỉ định start.
         """
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval, "count": count}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
+        kwargs: dict[str, Any] = {"interval": interval, "count": count}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
 
-            df = mkt.equity(symbol).ohlcv(**kwargs)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến cổ phiếu %s qua Market.equity.ohlcv", symbol, exc_info=True
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().equity(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến cổ phiếu {symbol} qua Market.equity.ohlcv",
+        )
 
     def fetch_market_equity_trades(self, symbol: str) -> pd.DataFrame:
         """Lấy dữ liệu khớp lệnh chi tiết trong ngày (Tick-by-tick) qua Market.equity.trades."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.equity(symbol).trades()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải khớp lệnh cổ phiếu %s qua Market.equity.trades",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().equity(symbol).trades(),
+            err_msg=f"Lỗi tải khớp lệnh cổ phiếu {symbol} qua Market.equity.trades",
+        )
 
     def fetch_market_equity_quote(self, symbol: str) -> pd.DataFrame:
         """Lấy thông tin giá hiện tại (Bảng giá) của cổ phiếu qua Market.equity.quote."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.equity(symbol).quote()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải bảng giá cổ phiếu %s qua Market.equity.quote",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().equity(symbol).quote(),
+            err_msg=f"Lỗi tải bảng giá cổ phiếu {symbol} qua Market.equity.quote",
+        )
 
     # -------------------------------------------------------------------------
     # Nhóm B: Lớp futures (Hợp đồng tương lai / Phái sinh)
@@ -1621,69 +1442,32 @@ class VnstockService:
         count: int = 100,
     ) -> pd.DataFrame:
         """Lấy nến OHLCV hợp đồng phái sinh qua Market.futures.ohlcv."""
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval, "count": count}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
+        kwargs: dict[str, Any] = {"interval": interval, "count": count}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
 
-            df = mkt.futures(symbol).ohlcv(**kwargs)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến phái sinh %s qua Market.futures.ohlcv",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().futures(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến phái sinh {symbol} qua Market.futures.ohlcv",
+        )
 
     def fetch_market_futures_trades(self, symbol: str = "VN30F1M") -> pd.DataFrame:
         """Lấy dữ liệu khớp lệnh chi tiết phái sinh trong ngày qua Market.futures.trades."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.futures(symbol).trades()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải khớp lệnh phái sinh %s qua Market.futures.trades",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().futures(symbol).trades(),
+            err_msg=f"Lỗi tải khớp lệnh phái sinh {symbol} qua Market.futures.trades",
+        )
 
     def fetch_market_futures_quote(self, symbol: str = "VN30F1M") -> pd.DataFrame:
         """Lấy bảng giá phái sinh, giá khớp, bước giá và khối lượng mở (OI) qua Market.futures.quote."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.futures(symbol).quote()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                logger.info("Đã tải bảng giá phái sinh cho %s", symbol)
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải bảng giá phái sinh %s qua Market.futures",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().futures(symbol).quote(),
+            err_msg=f"Lỗi tải bảng giá phái sinh {symbol} qua Market.futures",
+        )
 
     def fetch_futures_quote(self, symbol: str = "VN30F1M") -> pd.DataFrame:
         """Alias tương thích ngược cho fetch_market_futures_quote."""
@@ -1702,68 +1486,32 @@ class VnstockService:
         count: int = 100,
     ) -> pd.DataFrame:
         """Lấy nến OHLCV chứng quyền qua Market.warrant.ohlcv."""
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval, "count": count}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
+        kwargs: dict[str, Any] = {"interval": interval, "count": count}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
 
-            df = mkt.warrant(symbol).ohlcv(**kwargs)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến chứng quyền %s qua Market.warrant.ohlcv",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().warrant(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến chứng quyền {symbol} qua Market.warrant.ohlcv",
+        )
 
     def fetch_market_warrant_trades(self, symbol: str) -> pd.DataFrame:
         """Lấy dữ liệu khớp lệnh chi tiết chứng quyền trong ngày qua Market.warrant.trades."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.warrant(symbol).trades()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải khớp lệnh chứng quyền %s qua Market.warrant.trades",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().warrant(symbol).trades(),
+            err_msg=f"Lỗi tải khớp lệnh chứng quyền {symbol} qua Market.warrant.trades",
+        )
 
     def fetch_market_warrant_quote(self, symbol: str) -> pd.DataFrame:
         """Lấy bảng giá chứng quyền qua Market.warrant.quote."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.warrant(symbol).quote()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải bảng giá chứng quyền %s qua Market.warrant.quote",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().warrant(symbol).quote(),
+            err_msg=f"Lỗi tải bảng giá chứng quyền {symbol} qua Market.warrant.quote",
+        )
 
     # -------------------------------------------------------------------------
     # Nhóm D: Lớp etf (Chứng chỉ quỹ ETF)
@@ -1778,62 +1526,32 @@ class VnstockService:
         count: int = 100,
     ) -> pd.DataFrame:
         """Lấy nến OHLCV chứng chỉ quỹ ETF qua Market.etf.ohlcv."""
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval, "count": count}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
+        kwargs: dict[str, Any] = {"interval": interval, "count": count}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
 
-            df = mkt.etf(symbol).ohlcv(**kwargs)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến ETF %s qua Market.etf.ohlcv", symbol, exc_info=True
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().etf(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến ETF {symbol} qua Market.etf.ohlcv",
+        )
 
     def fetch_market_etf_trades(self, symbol: str) -> pd.DataFrame:
         """Lấy dữ liệu khớp lệnh chi tiết chứng chỉ quỹ ETF qua Market.etf.trades."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.etf(symbol).trades()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải khớp lệnh ETF %s qua Market.etf.trades", symbol, exc_info=True
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().etf(symbol).trades(),
+            err_msg=f"Lỗi tải khớp lệnh ETF {symbol} qua Market.etf.trades",
+        )
 
     def fetch_market_etf_quote(self, symbol: str) -> pd.DataFrame:
         """Lấy bảng giá chứng chỉ quỹ ETF qua Market.etf.quote."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.etf(symbol).quote()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải bảng giá ETF %s qua Market.etf.quote", symbol, exc_info=True
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().etf(symbol).quote(),
+            err_msg=f"Lỗi tải bảng giá ETF {symbol} qua Market.etf.quote",
+        )
 
     # -------------------------------------------------------------------------
     # Nhóm E: Lớp fund (Quỹ mở FMarket)
@@ -1841,96 +1559,38 @@ class VnstockService:
 
     def fetch_market_fund_nav(self, symbol: str) -> pd.DataFrame:
         """Lấy giá trị tài sản ròng NAV của quỹ mở qua Market.fund.nav."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.fund(symbol).nav()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải NAV quỹ mở %s qua Market.fund.nav", symbol, exc_info=True
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().fund(symbol).nav(),
+            err_msg=f"Lỗi tải NAV quỹ mở {symbol} qua Market.fund.nav",
+        )
 
     def fetch_market_fund_history(self, symbol: str) -> pd.DataFrame:
         """Lấy lịch sử giá trị NAV của quỹ mở qua Market.fund.history."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.fund(symbol).history()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải lịch sử NAV quỹ %s qua Market.fund.history",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().fund(symbol).history(),
+            err_msg=f"Lỗi tải lịch sử NAV quỹ {symbol} qua Market.fund.history",
+        )
 
     def fetch_market_fund_top_holding(self, symbol: str) -> pd.DataFrame:
         """Lấy danh mục top cổ phiếu nắm giữ của quỹ mở qua Market.fund.top_holding."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.fund(symbol).top_holding()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải top holding quỹ %s qua Market.fund.top_holding",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().fund(symbol).top_holding(),
+            err_msg=f"Lỗi tải top holding quỹ {symbol} qua Market.fund.top_holding",
+        )
 
     def fetch_market_fund_asset_holding(self, symbol: str) -> pd.DataFrame:
         """Lấy cơ cấu phân bổ tài sản của quỹ mở qua Market.fund.asset_holding."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.fund(symbol).asset_holding()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải phân bổ tài sản quỹ %s qua Market.fund.asset_holding",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().fund(symbol).asset_holding(),
+            err_msg=f"Lỗi tải phân bổ tài sản quỹ {symbol} qua Market.fund.asset_holding",
+        )
 
     def fetch_market_fund_industry_holding(self, symbol: str) -> pd.DataFrame:
         """Lấy cơ cấu phân bổ ngành của quỹ mở qua Market.fund.industry_holding."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.fund(symbol).industry_holding()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải phân bổ ngành quỹ %s qua Market.fund.industry_holding",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().fund(symbol).industry_holding(),
+            err_msg=f"Lỗi tải phân bổ ngành quỹ {symbol} qua Market.fund.industry_holding",
+        )
 
     # -------------------------------------------------------------------------
     # Nhóm F: Tài sản Quốc tế & Vĩ mô (forex, crypto, commodity)
@@ -1945,28 +1605,18 @@ class VnstockService:
         count: int = 100,
     ) -> pd.DataFrame:
         """Lấy nến tỷ giá ngoại tệ nến OHLCV qua Market.forex.ohlcv."""
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval, "count": count}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
+        kwargs: dict[str, Any] = {"interval": interval, "count": count}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
 
-            df = mkt.forex(symbol).ohlcv(**kwargs)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến forex %s qua Market.forex.ohlcv", symbol, exc_info=True
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().forex(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến forex {symbol} qua Market.forex.ohlcv",
+        )
 
     def fetch_market_crypto_ohlcv(
         self,
@@ -1977,28 +1627,18 @@ class VnstockService:
         count: int = 100,
     ) -> pd.DataFrame:
         """Lấy nến giá tiền mã hóa nến OHLCV qua Market.crypto.ohlcv."""
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval, "count": count}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
+        kwargs: dict[str, Any] = {"interval": interval, "count": count}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
 
-            df = mkt.crypto(symbol).ohlcv(**kwargs)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến crypto %s qua Market.crypto.ohlcv", symbol, exc_info=True
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().crypto(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến crypto {symbol} qua Market.crypto.ohlcv",
+        )
 
     def fetch_market_commodity_ohlcv(
         self,
@@ -2009,30 +1649,18 @@ class VnstockService:
         count: int = 100,
     ) -> pd.DataFrame:
         """Lấy nến giá hàng hóa quốc tế nến OHLCV qua Market.commodity.ohlcv."""
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval, "count": count}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
+        kwargs: dict[str, Any] = {"interval": interval, "count": count}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
 
-            df = mkt.commodity(symbol).ohlcv(**kwargs)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến hàng hóa %s qua Market.commodity.ohlcv",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().commodity(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến hàng hóa {symbol} qua Market.commodity.ohlcv",
+        )
 
     # -------------------------------------------------------------------------
     # Nhóm G: Lớp bond (Trái phiếu)
@@ -2047,66 +1675,32 @@ class VnstockService:
         count: int = 100,
     ) -> pd.DataFrame:
         """Lấy nến giá giao dịch trái phiếu qua Market.bond.ohlcv."""
-        try:
-            self._throttle()
-            mkt = Market()
-            kwargs: dict[str, Any] = {"interval": interval, "count": count}
-            s_str = self._format_date_param(start)
-            e_str = self._format_date_param(end)
-            if s_str:
-                kwargs["start"] = s_str
-            if e_str:
-                kwargs["end"] = e_str
+        kwargs: dict[str, Any] = {"interval": interval, "count": count}
+        s_str = self._format_date_param(start)
+        e_str = self._format_date_param(end)
+        if s_str:
+            kwargs["start"] = s_str
+        if e_str:
+            kwargs["end"] = e_str
 
-            df = mkt.bond(symbol).ohlcv(**kwargs)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải nến trái phiếu %s qua Market.bond.ohlcv", symbol, exc_info=True
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().bond(symbol).ohlcv(**kwargs),
+            err_msg=f"Lỗi tải nến trái phiếu {symbol} qua Market.bond.ohlcv",
+        )
 
     def fetch_market_bond_quote(self, symbol: str) -> pd.DataFrame:
         """Lấy bảng giá trái phiếu qua Market.bond.quote."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.bond(symbol).quote()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải bảng giá trái phiếu %s qua Market.bond.quote",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().bond(symbol).quote(),
+            err_msg=f"Lỗi tải bảng giá trái phiếu {symbol} qua Market.bond.quote",
+        )
 
     def fetch_market_bond_trades(self, symbol: str) -> pd.DataFrame:
         """Lấy dữ liệu khớp lệnh chi tiết trái phiếu trong ngày qua Market.bond.trades."""
-        try:
-            self._throttle()
-            mkt = Market()
-            df = mkt.bond(symbol).trades()
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning(
-                "Lỗi tải khớp lệnh trái phiếu %s qua Market.bond.trades",
-                symbol,
-                exc_info=True,
-            )
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Market().bond(symbol).trades(),
+            err_msg=f"Lỗi tải khớp lệnh trái phiếu {symbol} qua Market.bond.trades",
+        )
 
     # =========================================================================
     # PHÂN HỆ 4: BÁO CÁO TÀI CHÍNH & ĐỊNH GIÁ CƠ BẢN (FUNDAMENTAL DATA)
@@ -2135,7 +1729,7 @@ class VnstockService:
 
         # Thử qua lớp Fundamental hiện đại trước (hỗ trợ tham số orient)
         try:
-            self._throttle()
+            self._throttle("vci")
             fnd = Fundamental()
             eq = self._resolve_sub_obj(fnd, "equity", symbol)
             if eq is not None:
@@ -2148,7 +1742,7 @@ class VnstockService:
                 if fetch_fn is not None:
                     df = fetch_fn(period=period_clean, orient=orient)
                     if isinstance(df, pd.DataFrame) and not df.empty:
-                        self.record_success()
+                        self.record_success("vci")
                         logger.info(
                             "Đã tải %d dòng BCTC %s cho %s (%s, %s) qua Fundamental",
                             len(df),
@@ -2159,10 +1753,10 @@ class VnstockService:
                         )
                         return df
                     elif df is not None and not isinstance(df, pd.DataFrame):
-                        self.record_success()
+                        self.record_success("vci")
                         return pd.DataFrame(df)
         except Exception:
-            self.record_failure()
+            self.record_failure("vci")
             logger.warning(
                 "Lỗi tải BCTC %s cho %s qua Fundamental, thử fallback qua Finance...",
                 report_type,
@@ -2289,13 +1883,13 @@ class VnstockService:
         """
         # Thử qua lớp Fundamental hiện đại
         try:
-            self._throttle()
+            self._throttle("vci")
             fnd = Fundamental()
             eq = self._resolve_sub_obj(fnd, "equity", symbol)
             if eq is not None and hasattr(eq, "ratio"):
                 df = eq.ratio(orient=orient)
                 if isinstance(df, pd.DataFrame) and not df.empty:
-                    self.record_success()
+                    self.record_success("vci")
                     logger.info(
                         "Đã tải %d chỉ số tài chính cho %s qua Fundamental.equity.ratio",
                         len(df),
@@ -2303,10 +1897,10 @@ class VnstockService:
                     )
                     return df
                 elif df is not None and not isinstance(df, pd.DataFrame):
-                    self.record_success()
+                    self.record_success("vci")
                     return pd.DataFrame(df)
         except Exception:
-            self.record_failure()
+            self.record_failure("vci")
             logger.warning(
                 "Lỗi tải chỉ số tài chính qua Fundamental cho %s, thử Finance...",
                 symbol,
@@ -2360,25 +1954,13 @@ class VnstockService:
             actual_date = None
 
         date_str = self._format_date_param(actual_date)
+        provider = actual_source.lower()
 
-        try:
-            self._throttle()
-            retail = Retail()
-            df = retail.gold(source=actual_source.lower(), date=date_str)
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                logger.info(
-                    "Đã tải %d dòng giá vàng (%s, ngày: %s)",
-                    len(df),
-                    actual_source,
-                    date_str or "mới nhất",
-                )
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning("Lỗi tải giá vàng nguồn %s", actual_source, exc_info=True)
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Retail().gold(source=provider, date=date_str),
+            provider=provider,
+            err_msg=f"Lỗi tải giá vàng nguồn {actual_source}",
+        )
 
     def fetch_gold_prices(
         self,
@@ -2402,23 +1984,11 @@ class VnstockService:
         """
         date_str = self._format_date_param(date) if date else ""
 
-        try:
-            self._throttle()
-            retail = Retail()
-            df = retail.exchange_rate(date=date_str or "")
-            if isinstance(df, pd.DataFrame) and not df.empty:
-                logger.info(
-                    "Đã tải %d dòng tỷ giá ngoại tệ (ngày: %s)",
-                    len(df),
-                    date_str or "hiện tại",
-                )
-                return df
-            elif df is not None and not isinstance(df, pd.DataFrame):
-                return pd.DataFrame(df)
-        except Exception:
-            logger.warning("Lỗi tải tỷ giá ngoại tệ", exc_info=True)
-
-        return pd.DataFrame()
+        return self._execute_api_call(
+            lambda: Retail().exchange_rate(date=date_str or ""),
+            provider="vcb",
+            err_msg="Lỗi tải tỷ giá ngoại tệ",
+        )
 
     def fetch_exchange_rate(self, date_str: date | str = "") -> pd.DataFrame:
         """Tải tỷ giá ngoại tệ Vietcombank (alias tương thích ngược cho fetch_retail_exchange_rate)."""

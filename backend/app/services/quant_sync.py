@@ -16,10 +16,15 @@ so it can be unit-tested without network access.
 """
 
 import logging
+import uuid
+import zlib
 from datetime import datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlmodel import Session, select
 
 from app.models import VN_TZ
@@ -33,6 +38,19 @@ logger = logging.getLogger(__name__)
 
 # vnstock returns intraday timestamps in Vietnam local time (naive).
 _VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+
+
+def _compute_tick_sequence(
+    symbol: str,
+    ts: datetime,
+    price: float,
+    volume: int,
+    match_type: str,
+    acc_vol: int | None,
+) -> int:
+    """Tạo sequence_number tự nhiên, ổn định, bất biến qua các lần poll chồng lặp."""
+    token = f"{symbol}:{ts.isoformat()}:{price}:{volume}:{match_type}:{acc_vol or 0}"
+    return zlib.crc32(token.encode("utf-8")) & 0x7FFFFFFF
 
 
 def _to_utc_aware(value: object) -> datetime | None:
@@ -257,8 +275,7 @@ class QuantSyncManager:
             if "symbol" not in df.columns:
                 df = df.assign(symbol=symbol)
 
-            clean_ticks: list[StockTickIntraday] = []
-            seq_map: dict[tuple[str, datetime], int] = {}
+            tick_records: list[dict[str, Any]] = []
             for _, row in df.iterrows():
                 raw_time = row.get("time")
                 ts = _to_utc_aware(raw_time) if raw_time is not None else None
@@ -275,42 +292,60 @@ class QuantSyncManager:
                 m_type = str(row.get("match_type") or "UNKNOWN").upper()
                 acc_vol_raw = row.get("accumulated_volume") or row.get("a_vol")
                 acc_val_raw = row.get("accumulated_value") or row.get("a_val")
-
-                key = (symbol, ts)
-                seq_idx = seq_map.get(key, 0)
-                seq_map[key] = seq_idx + 1
-
-                clean_ticks.append(
-                    StockTickIntraday(
-                        symbol=symbol,
-                        timestamp=ts,
-                        price=p_val,
-                        volume=v_val,
-                        match_type=m_type[:10],
-                        accumulated_volume=(
-                            int(acc_vol_raw)
-                            if acc_vol_raw is not None and pd.notna(acc_vol_raw)
-                            else None
-                        ),
-                        accumulated_value=(
-                            float(acc_val_raw)
-                            if acc_val_raw is not None and pd.notna(acc_val_raw)
-                            else None
-                        ),
-                        sequence_number=seq_idx,
-                        source=self.svc.source[:10],
-                    )
+                acc_vol = (
+                    int(acc_vol_raw)
+                    if acc_vol_raw is not None and pd.notna(acc_vol_raw)
+                    else None
+                )
+                acc_val = (
+                    float(acc_val_raw)
+                    if acc_val_raw is not None and pd.notna(acc_val_raw)
+                    else None
                 )
 
-            for tick in clean_ticks:
-                existing_tick = self.session.exec(
-                    select(StockTickIntraday)
-                    .where(StockTickIntraday.symbol == tick.symbol)
-                    .where(StockTickIntraday.timestamp == tick.timestamp)
-                    .where(StockTickIntraday.sequence_number == tick.sequence_number)
-                ).first()
-                if not existing_tick:
-                    self.session.add(tick)
+                seq_num = _compute_tick_sequence(
+                    symbol, ts, p_val, v_val, m_type[:10], acc_vol
+                )
+
+                tick_records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "symbol": symbol,
+                        "timestamp": ts,
+                        "price": p_val,
+                        "volume": v_val,
+                        "match_type": m_type[:10],
+                        "accumulated_volume": acc_vol,
+                        "accumulated_value": acc_val,
+                        "sequence_number": seq_num,
+                        "source": self.svc.source[:10],
+                    }
+                )
+
+            if tick_records:
+                # Deduplicate trong batch hiện tại trước khi bulk insert
+                dedup_map: dict[tuple[str, datetime, int], dict[str, Any]] = {}
+                for rec in tick_records:
+                    k = (rec["symbol"], rec["timestamp"], rec["sequence_number"])
+                    dedup_map[k] = rec
+                unique_records = list(dedup_map.values())
+
+                bind = self.session.get_bind()
+                dialect_name = getattr(getattr(bind, "dialect", None), "name", "")
+                if dialect_name == "postgresql":
+                    stmt_pg = pg_insert(StockTickIntraday).values(unique_records)
+                    stmt_pg = stmt_pg.on_conflict_do_nothing(
+                        index_elements=["symbol", "timestamp", "sequence_number"]
+                    )
+                    self.session.exec(stmt_pg)
+                else:
+                    stmt_sqlite = sqlite_insert(StockTickIntraday).values(
+                        unique_records
+                    )
+                    stmt_sqlite = stmt_sqlite.on_conflict_do_nothing(
+                        index_elements=["symbol", "timestamp", "sequence_number"]
+                    )
+                    self.session.exec(stmt_sqlite)
 
             bars = aggregate_tick_orderflow(df, source=self.svc.source)
             count = 0

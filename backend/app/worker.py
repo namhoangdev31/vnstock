@@ -14,7 +14,7 @@ import logging
 import signal
 import sys
 import time
-from datetime import datetime
+from datetime import date, datetime
 from datetime import time as dtime
 from enum import StrEnum
 from types import FrameType
@@ -179,6 +179,7 @@ class MarketWorkerDaemon:
         self._lock_conn: Connection | None = None
         self.total_cycles = 0
         self.start_time: float | None = None
+        self._last_screener_snapshot_date: date | None = None
 
     def _signal_handler(self, sig: int, _frame: FrameType | None) -> None:
         sig_name = signal.Signals(sig).name
@@ -215,17 +216,23 @@ class MarketWorkerDaemon:
             # Khớp ATC thực tế
             pass
         elif state == MarketSessionState.POST_MARKET_EVAL:
-            with Session(self.db_engine) as session:
-                try:
-                    snaps_count = ScreenerService.generate_daily_snapshot(session)
-                    logger.info(
-                        "Generated %d screener snapshots in POST_MARKET_EVAL",
-                        snaps_count,
-                    )
-                except Exception:
-                    logger.exception(
-                        "Error generating daily screener snapshot in POST_MARKET_EVAL"
-                    )
+            today_date = datetime.now(VN_TZ).date()
+            if self._last_screener_snapshot_date != today_date:
+                with Session(self.db_engine) as session:
+                    try:
+                        snaps_count = ScreenerService.generate_daily_snapshot(
+                            session, target_date=today_date
+                        )
+                        self._last_screener_snapshot_date = today_date
+                        logger.info(
+                            "Generated %d screener snapshots in POST_MARKET_EVAL for date %s",
+                            snaps_count,
+                            today_date,
+                        )
+                    except Exception:
+                        logger.exception(
+                            "Error generating daily screener snapshot in POST_MARKET_EVAL"
+                        )
         elif state == MarketSessionState.OVERNIGHT_SIMULATION:
             # Tối ưu hóa mô phỏng Monte Carlo qua đêm
             pass

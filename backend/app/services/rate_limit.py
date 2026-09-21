@@ -216,37 +216,51 @@ class RateLimiter:
             self._circuit_open_until.pop(provider_key, None)
 
     def record_failure(self, provider: str, session: Session | None = None) -> None:
-        """Ghi nhận yêu cầu thất bại, tăng bộ đếm lỗi và kích hoạt ngắt mạch nếu vượt ngưỡng."""
+        """Ghi nhận yêu cầu thất bại, tăng bộ đếm lỗi nguyên tử và kích hoạt ngắt mạch nếu vượt ngưỡng."""
         provider_key = provider.upper()
-
-        with self._lock:
-            curr_fails = self._failures.get(provider_key, 0) + 1
-            self._failures[provider_key] = curr_fails
-
-            if curr_fails >= self.max_failures:
-                # Tính toán exponential backoff kèm jitter
-                exponent = curr_fails - self.max_failures
-                backoff = min(self.base_cooldown * (2**exponent), self.max_cooldown)
-                jitter = random.uniform(0.0, 5.0)
-                total_cooldown = backoff + jitter
-
-                now = self._clock()
-                self._circuit_states[provider_key] = CircuitState.OPEN
-                self._circuit_open_until[provider_key] = now + total_cooldown
 
         if session is not None:
             try:
                 now_utc = datetime.now(VN_TZ)
-                # Tính cooldown cho DB
-                exponent = max(0, curr_fails - self.max_failures)
-                backoff = min(self.base_cooldown * (2**exponent), self.max_cooldown)
-                jitter = random.uniform(0.0, 5.0)
-                open_until_utc = now_utc + timedelta(seconds=backoff + jitter)
-                new_state = (
-                    CircuitState.OPEN.value
-                    if curr_fails >= self.max_failures
-                    else CircuitState.CLOSED.value
+                # Đảm bảo row tồn tại trước khi lock/update
+                session.exec(
+                    text(
+                        """
+                        INSERT INTO provider_rate_limit_state (provider, last_request_at, consecutive_failures, circuit_state, updated_at)
+                        VALUES (:p, :now, 0, 'closed', :now)
+                        ON CONFLICT (provider) DO NOTHING;
+                        """
+                    ),
+                    params={"p": provider_key, "now": now_utc},
+                )  # type: ignore
+
+                bind = session.get_bind()
+                is_pg = (
+                    getattr(getattr(bind, "dialect", None), "name", "") == "postgresql"
                 )
+                lock_suffix = " FOR UPDATE" if is_pg else ""
+
+                row = session.exec(
+                    text(
+                        f"SELECT consecutive_failures FROM provider_rate_limit_state WHERE provider = :p{lock_suffix}"
+                    ),
+                    params={"p": provider_key},
+                ).first()  # type: ignore
+
+                prev_fails = row[0] if row and row[0] is not None else 0
+                curr_fails = prev_fails + 1
+
+                if curr_fails >= self.max_failures:
+                    exponent = curr_fails - self.max_failures
+                    backoff = min(self.base_cooldown * (2**exponent), self.max_cooldown)
+                    jitter = random.uniform(0.0, 5.0)
+                    open_until_utc = now_utc + timedelta(seconds=backoff + jitter)
+                    new_state = CircuitState.OPEN.value
+                    cooldown_total = backoff + jitter
+                else:
+                    open_until_utc = None
+                    new_state = CircuitState.CLOSED.value
+                    cooldown_total = 0.0
 
                 session.exec(
                     text(
@@ -262,13 +276,39 @@ class RateLimiter:
                     params={
                         "f": curr_fails,
                         "s": new_state,
-                        "u": open_until_utc
-                        if curr_fails >= self.max_failures
-                        else None,
+                        "u": open_until_utc,
                         "now": now_utc,
                         "p": provider_key,
                     },
                 )  # type: ignore
                 session.commit()
+
+                # Đồng bộ trạng thái vào in-memory RAM của tiến trình từ kết quả DB
+                with self._lock:
+                    self._failures[provider_key] = curr_fails
+                    if curr_fails >= self.max_failures:
+                        self._circuit_states[provider_key] = CircuitState.OPEN
+                        self._circuit_open_until[provider_key] = (
+                            self._clock() + cooldown_total
+                        )
+                    else:
+                        self._circuit_states[provider_key] = CircuitState.CLOSED
+                        self._circuit_open_until.pop(provider_key, None)
+                return
             except Exception:
                 pass
+
+        with self._lock:
+            curr_fails = self._failures.get(provider_key, 0) + 1
+            self._failures[provider_key] = curr_fails
+
+            if curr_fails >= self.max_failures:
+                # Tính toán exponential backoff kèm jitter
+                exponent = curr_fails - self.max_failures
+                backoff = min(self.base_cooldown * (2**exponent), self.max_cooldown)
+                jitter = random.uniform(0.0, 5.0)
+                total_cooldown = backoff + jitter
+
+                now = self._clock()
+                self._circuit_states[provider_key] = CircuitState.OPEN
+                self._circuit_open_until[provider_key] = now + total_cooldown

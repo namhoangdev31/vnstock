@@ -22,7 +22,8 @@ from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import Session, col, select
 
-from app.models import VN_TZ, InstrumentAlias
+from app.models import VN_TZ
+from app.models.entities.asset_master import Instrument, InstrumentAlias
 from app.models.models_quant import InstitutionalFlow
 from app.models.models_stock import (
     BondSpecification,
@@ -431,6 +432,132 @@ class DataSyncManager:
             model_cls, standardized, conflict_keys, update_fields
         )
 
+    def _sync_asset_master(
+        self,
+        symbols_info: list[dict[str, Any]],
+    ) -> None:
+        """Đồng bộ kép (dual-write) danh mục mã vào Asset Master (Instrument & InstrumentAlias)."""
+        if not symbols_info:
+            return
+
+        now_utc = datetime.now(VN_TZ)
+        type_mapping = {
+            "stock": "EQUITY",
+            "equity": "EQUITY",
+            "etf": "EQUITY",
+            "derivative": "FUTURES",
+            "futures": "FUTURES",
+            "covered_warrant": "COVERED_WARRANT",
+            "corporate_bond": "CORPORATE_BOND",
+            "government_bond": "GOVERNMENT_BOND",
+            "bond": "CORPORATE_BOND",
+            "index": "INDEX",
+        }
+
+        # Deduplicate symbols_info by symbol
+        items_by_sym: dict[str, dict[str, Any]] = {}
+        for item in symbols_info:
+            sym = str(item.get("symbol") or "").strip().upper()
+            if sym:
+                items_by_sym[sym] = item
+
+        if not items_by_sym:
+            return
+
+        canonical_codes: list[str] = []
+        for sym, item in items_by_sym.items():
+            raw_type = str(item.get("asset_type") or "stock").lower()
+            inst_type = type_mapping.get(raw_type, "EQUITY")
+            prefix = "EQUITY" if inst_type == "EQUITY" else inst_type
+            if raw_type == "derivative":
+                prefix = "FUTURES"
+            elif raw_type == "covered_warrant":
+                prefix = "CW"
+            elif "bond" in raw_type:
+                prefix = "BOND"
+            canonical_codes.append(f"{prefix}:{sym}")
+
+        # Batch query existing instruments
+        existing_instruments: dict[str, Instrument] = {}
+        batch_size = 500
+        for i in range(0, len(canonical_codes), batch_size):
+            chunk = canonical_codes[i : i + batch_size]
+            for inst in self.session.exec(
+                select(Instrument).where(col(Instrument.canonical_code).in_(chunk))
+            ).all():
+                existing_instruments[inst.canonical_code] = inst
+
+        all_instruments_by_sym: dict[str, Instrument] = {}
+        for sym, item in items_by_sym.items():
+            raw_type = str(item.get("asset_type") or "stock").lower()
+            inst_type = type_mapping.get(raw_type, "EQUITY")
+            prefix = "EQUITY" if inst_type == "EQUITY" else inst_type
+            if raw_type == "derivative":
+                prefix = "FUTURES"
+            elif raw_type == "covered_warrant":
+                prefix = "CW"
+            elif "bond" in raw_type:
+                prefix = "BOND"
+            canonical_code = f"{prefix}:{sym}"
+            ex = str(item.get("exchange") or "HOSE").upper()
+
+            inst = existing_instruments.get(canonical_code)
+            if inst is None:
+                inst = Instrument(
+                    id=uuid.uuid4(),
+                    instrument_type=inst_type,
+                    canonical_code=canonical_code,
+                    exchange=ex,
+                    currency="VND",
+                    is_active=True,
+                    created_at=now_utc,
+                    updated_at=now_utc,
+                )
+                self.session.add(inst)
+                existing_instruments[canonical_code] = inst
+            else:
+                inst.is_active = True
+                inst.exchange = ex
+                inst.updated_at = now_utc
+                self.session.add(inst)
+
+            all_instruments_by_sym[sym] = inst
+
+        self.session.flush()
+
+        # Batch query existing active InstrumentAlias
+        symbols_list = list(items_by_sym.keys())
+        existing_aliases: dict[str, InstrumentAlias] = {}
+        for i in range(0, len(symbols_list), batch_size):
+            chunk = symbols_list[i : i + batch_size]
+            for alias in self.session.exec(
+                select(InstrumentAlias).where(
+                    col(InstrumentAlias.alias).in_(chunk),
+                    col(InstrumentAlias.valid_to).is_(None),
+                )
+            ).all():
+                existing_aliases[alias.alias] = alias
+
+        for sym, inst in all_instruments_by_sym.items():
+            alias = existing_aliases.get(sym)
+            if alias is None:
+                new_alias = InstrumentAlias(
+                    id=uuid.uuid4(),
+                    instrument_id=inst.id,
+                    alias=sym,
+                    alias_type="TICKER",
+                    valid_from=date(2000, 1, 1),
+                    valid_to=None,
+                    created_at=now_utc,
+                )
+                self.session.add(new_alias)
+                existing_aliases[sym] = new_alias
+            elif alias.instrument_id != inst.id:
+                alias.instrument_id = inst.id
+                self.session.add(alias)
+
+        self.session.flush()
+
     def _find_or_create_symbols(
         self,
         symbols: set[str] | list[str],
@@ -457,6 +584,7 @@ class DataSyncManager:
             missing = clean_symbols - existing
             if missing:
                 now_utc = datetime.now(VN_TZ)
+                missing_records: list[dict[str, Any]] = []
                 for sym in missing:
                     self.session.add(
                         StockSymbol(
@@ -471,7 +599,15 @@ class DataSyncManager:
                             updated_at=now_utc,
                         )
                     )
+                    missing_records.append(
+                        {
+                            "symbol": sym,
+                            "exchange": exchange,
+                            "asset_type": asset_type,
+                        }
+                    )
                 self.session.flush()
+                self._sync_asset_master(missing_records)
                 existing.update(missing)
         return existing
 
@@ -829,6 +965,7 @@ class DataSyncManager:
             ["symbol"],
             DERIV_STOCK_SYMBOL_UPDATE_FIELDS,
         )
+        self._sync_asset_master(sym_records)
         self._bulk_upsert(
             DerivativeContract,
             deriv_records,
@@ -937,6 +1074,7 @@ class DataSyncManager:
             ["symbol"],
             CW_STOCK_SYMBOL_UPDATE_FIELDS,
         )
+        self._sync_asset_master(sym_records)
         self._bulk_upsert(
             CoveredWarrant,
             cw_records,
@@ -1072,6 +1210,7 @@ class DataSyncManager:
             ["symbol"],
             CW_STOCK_SYMBOL_UPDATE_FIELDS,
         )
+        self._sync_asset_master(sym_records)
         self._bulk_upsert(
             BondSpecification,
             bond_records,
@@ -1145,6 +1284,7 @@ class DataSyncManager:
                 ["symbol"],
                 STOCK_SYMBOL_UPDATE_FIELDS,
             )
+            self._sync_asset_master(records)
             self.session.commit()
             count = len(records)
 

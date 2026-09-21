@@ -161,15 +161,27 @@ class ScreenerService:
         cls,
         session: Session,
         snapshot_date: date | None = None,
+        target_date: date | None = None,
+        force: bool = False,
     ) -> int:
-        """Tạo snapshot định lượng hàng ngày và lưu trữ lịch sử Point-in-Time."""
-        target_date = snapshot_date or date.today()
+        """Tạo snapshot định lượng hàng ngày và lưu trữ lịch sử Point-in-Time một cách idempotent."""
+        final_date = target_date or snapshot_date or date.today()
         # Lấy danh sách Instrument đang hoạt động
         instruments = session.exec(
             select(Instrument).where(col(Instrument.is_active).is_(True))
         ).all()
         if not instruments:
             return 0
+
+        # Lấy trước các historical snapshot đã có cho ngày final_date để đảm bảo tính idempotent
+        existing_hist_map = {
+            h.instrument_id: h
+            for h in session.exec(
+                select(ScreenerSnapshotHistorical).where(
+                    col(ScreenerSnapshotHistorical.snapshot_date) == final_date
+                )
+            ).all()
+        }
 
         # Lấy bản đồ profile công ty
         profiles = {p.symbol: p for p in session.exec(select(CompanyProfile)).all()}
@@ -190,7 +202,7 @@ class ScreenerService:
                         col(StockOHLCVDaily.symbol) == sym,
                     )
                 )
-                .where(col(StockOHLCVDaily.trading_date) <= target_date)
+                .where(col(StockOHLCVDaily.trading_date) <= final_date)
                 .order_by(col(StockOHLCVDaily.trading_date).desc())
             ).first()
 
@@ -226,7 +238,7 @@ class ScreenerService:
 
             snap_data = {
                 "instrument_id": inst.id,
-                "snapshot_date": target_date,
+                "snapshot_date": final_date,
                 "symbol": sym,
                 "exchange": inst.exchange or "HOSE",
                 "industry": prof.industry_name if prof else None,
@@ -301,12 +313,23 @@ class ScreenerService:
                     setattr(snap, k, v)
                 session.add(snap)
 
-            # Lưu bản ghi lịch sử vintage (ScreenerSnapshotHistorical)
-            hist_snap = ScreenerSnapshotHistorical(
-                **snap_data,
-                as_of=now_utc,
-            )
-            session.add(hist_snap)
+            # Idempotent lưu bản ghi lịch sử vintage (ScreenerSnapshotHistorical)
+            hist_snap = existing_hist_map.get(inst.id)
+            if hist_snap is None:
+                hist_snap = ScreenerSnapshotHistorical(
+                    **snap_data,
+                    as_of=now_utc,
+                )
+                session.add(hist_snap)
+                existing_hist_map[inst.id] = hist_snap
+            else:
+                # Nếu đã có bản ghi của ngày này, cập nhật các chỉ số mới nhất thay vì nhân bản duplicate
+                for k, v in snap_data.items():
+                    if k not in ("instrument_id", "snapshot_date"):
+                        setattr(hist_snap, k, v)
+                hist_snap.as_of = now_utc
+                session.add(hist_snap)
+
             created_count += 1
 
         session.commit()
