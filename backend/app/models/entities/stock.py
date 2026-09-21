@@ -19,6 +19,10 @@ class StockSymbol(AwareSQLModel, table=True):
     """Bảng lưu trữ thông tin tham chiếu mã chứng khoán (HOSE, HNX, UPCOM, Phái sinh, Index, ETF)."""
 
     __tablename__ = "stock_symbol"
+    __table_args__ = (
+        Index("ix_stock_symbol_active_exchange", "is_active", "exchange", "asset_type"),
+        Index("ix_stock_symbol_active_group", "index_group", "is_active"),
+    )
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
@@ -89,7 +93,11 @@ class StockOHLCVDaily(AwareSQLModel, table=True):
     """Bảng lưu trữ nến lịch sử giao dịch hàng ngày (OHLCV Daily) kèm phân rã dòng tiền & biên độ."""
 
     __tablename__ = "stock_ohlcv_daily"
-    __table_args__ = (UniqueConstraint("symbol", "trading_date"),)
+    __table_args__ = (
+        UniqueConstraint("symbol", "trading_date"),
+        Index("ix_stock_ohlcv_daily_sym_date", "symbol", "trading_date"),
+        Index("ix_stock_ohlcv_daily_date_val", "trading_date", "value"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
@@ -122,7 +130,15 @@ class StockOHLCVIntraday(AwareSQLModel, table=True):
     """Bảng lưu trữ nến giao dịch trong ngày đa khung (1m, 5m, 15m) tích hợp Volume Delta & VWAP."""
 
     __tablename__ = "stock_ohlcv_intraday"
-    __table_args__ = (UniqueConstraint("symbol", "timestamp", "interval"),)
+    __table_args__ = (
+        UniqueConstraint("symbol", "timestamp", "interval"),
+        Index(
+            "ix_stock_ohlcv_intraday_sym_int_time",
+            "symbol",
+            "interval",
+            "timestamp",
+        ),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
@@ -145,7 +161,10 @@ class StockTickIntraday(AwareSQLModel, table=True):
     """Bảng lưu trữ từng tick khớp lệnh thời gian thực Quote.intraday() (Chiến lược lưu trữ 30 ngày)."""
 
     __tablename__ = "stock_tick_intraday"
-    __table_args__ = (UniqueConstraint("symbol", "timestamp", "sequence_number"),)
+    __table_args__ = (
+        UniqueConstraint("symbol", "timestamp", "sequence_number"),
+        Index("ix_stock_tick_intraday_sym_time", "symbol", "timestamp"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
@@ -367,7 +386,10 @@ class CorporateEvent(AwareSQLModel, table=True):
     """Bảng lưu trữ sự kiện doanh nghiệp & lịch chi trả cổ tức (Listing.events() & Company.events())."""
 
     __tablename__ = "corporate_event"
-    __table_args__ = (UniqueConstraint("symbol", "event_type", "ex_date"),)
+    __table_args__ = (
+        UniqueConstraint("symbol", "event_type", "ex_date"),
+        Index("ix_corporate_event_sym_exdate", "symbol", "ex_date"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
@@ -449,7 +471,10 @@ class IndexConstituent(AwareSQLModel, table=True):
     """Bảng lưu trữ thành phần & tỷ trọng rổ chỉ số (VN30, VN100, VNFINLEAD) phục vụ tính toán Basis & ATC."""
 
     __tablename__ = "index_constituent"
-    __table_args__ = (UniqueConstraint("index_code", "symbol", "effective_date"),)
+    __table_args__ = (
+        UniqueConstraint("index_code", "symbol", "effective_date"),
+        Index("ix_index_constituent_code_eff", "index_code", "effective_date"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     index_code: str = Field(
@@ -469,6 +494,10 @@ class DataSyncLog(AwareSQLModel, table=True):
     """Bảng nhật ký kiểm toán và theo dõi tiến trình đồng bộ dữ liệu thị trường."""
 
     __tablename__ = "data_sync_log"
+    __table_args__ = (
+        Index("ix_data_sync_log_type_date", "sync_type", "started_at"),
+        Index("ix_data_sync_log_symbol_date", "symbol", "started_at"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     sync_type: str = Field(
@@ -527,6 +556,13 @@ class CoveredWarrant(AwareSQLModel, table=True):
     """Bảng lưu trữ đặc tả chứng quyền có bảo đảm (Covered Warrant - CW) niêm yết trên HOSE."""
 
     __tablename__ = "covered_warrant"
+    __table_args__ = (
+        Index(
+            "ix_covered_warrant_underlying_active",
+            "underlying_symbol",
+            "is_active",
+        ),
+    )
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
@@ -576,6 +612,10 @@ class BondSpecification(AwareSQLModel, table=True):
     """Bảng lưu trữ đặc tả trái phiếu doanh nghiệp & trái phiếu chính phủ niêm yết trên HNX."""
 
     __tablename__ = "bond_specification"
+    __table_args__ = (
+        Index("ix_bond_spec_issuer_active", "issuer_symbol", "is_active"),
+        Index("ix_bond_spec_type_active", "bond_type", "is_active"),
+    )
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,

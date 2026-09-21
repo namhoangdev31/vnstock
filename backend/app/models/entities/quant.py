@@ -20,7 +20,10 @@ class ForecastJournal(AwareSQLModel, table=True):
     """Bảng sổ cái dự phóng bắt buộc (RULE 3): Lưu vết mọi tín hiệu và kết quả tự học."""
 
     __tablename__ = "forecast_journal"
-    __table_args__ = (UniqueConstraint("symbol", "horizon", "predicted_at"),)
+    __table_args__ = (
+        UniqueConstraint("symbol", "horizon", "predicted_at"),
+        Index("ix_forecast_journal_status_pred", "status", "predicted_at"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, index=True)
