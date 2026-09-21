@@ -1,7 +1,8 @@
 """Bộ lập lịch in-process background scheduler cho FastAPI.
 
-Tự động tính toán độ trễ và kích hoạt tác vụ đồng bộ danh mục mã
-vào đúng 08:00 sáng Thứ Hai và Thứ Năm hàng tuần (Giờ Việt Nam UTC+7).
+Tự động tính toán độ trễ và kích hoạt các tác vụ định kỳ:
+1. Đồng bộ danh mục mã: Thứ Hai & Thứ Năm lúc 08:00 sáng (Giờ Việt Nam UTC+7).
+2. Đồng bộ nến ngày sau phiên ATC: Thứ Hai đến Thứ Sáu lúc 15:15 chiều (Giờ Việt Nam UTC+7).
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from app.core.config import settings
+from app.cron.sync_daily_market import run_sync_daily_market_job
 from app.cron.sync_symbols import run_sync_symbols_job
 
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ def get_next_schedule_delay(
     target_hour: int = 8,
     target_minute: int = 0,
 ) -> float:
-    """Tính số giây từ thời điểm hiện tại đến 08:00 Thứ 2 hoặc Thứ 5 tiếp theo (giờ VN UTC+7)."""
+    """Tính số giây từ thời điểm hiện tại đến mốc thời gian mục tiêu tiếp theo (giờ VN UTC+7)."""
     if now is None:
         now = datetime.now(VN_TZ)
     elif now.tzinfo is None:
@@ -57,30 +59,59 @@ def get_next_schedule_delay(
     return max(delay, 1.0)
 
 
-async def run_inprocess_scheduler() -> None:
-    """Vòng lặp chạy ngầm trong tiến trình FastAPI để thực thi cronjob định kỳ."""
-    logger.info(
-        "Khởi động bộ lập lịch in-process scheduler (Thứ 2 & Thứ 5 lúc 08:00 sáng VN)..."
-    )
+async def run_symbols_scheduler_loop() -> None:
+    """Vòng lặp định kỳ đồng bộ danh mục mã (Thứ 2 & Thứ 5 lúc 08:00 sáng VN)."""
+    logger.info("Khởi động vòng lặp đồng bộ danh mục mã (T2, T5 08:00 sáng)...")
     while True:
         try:
-            delay = get_next_schedule_delay()
-            logger.info(
-                "In-process scheduler: Chờ %.1f giây đến lần chạy tiếp theo.", delay
+            delay = get_next_schedule_delay(
+                target_days=(0, 3), target_hour=8, target_minute=0
             )
+            logger.info("Scheduler [Symbols]: Chờ %.1f giây đến lần chạy tiếp.", delay)
             await asyncio.sleep(delay)
-            logger.info("In-process scheduler: Đang thực thi đồng bộ danh mục mã...")
-            # Chạy sync trong worker thread để không chặn event loop async
+            logger.info("Scheduler [Symbols]: Đang thực thi đồng bộ danh mục mã...")
             await asyncio.to_thread(run_sync_symbols_job)
-            logger.info("In-process scheduler: Đồng bộ hoàn tất!")
-            # Tránh re-trigger lặp lại trong cùng một phút
+            logger.info("Scheduler [Symbols]: Đồng bộ hoàn tất!")
             await asyncio.sleep(60)
         except asyncio.CancelledError:
-            logger.info("In-process scheduler đã nhận lệnh dừng (shutdown).")
+            logger.info("Scheduler [Symbols] đã nhận lệnh dừng (shutdown).")
             break
         except Exception as exc:
-            logger.exception("Lỗi trong vòng lặp in-process scheduler: %s", exc)
+            logger.exception("Lỗi trong vòng lặp Scheduler [Symbols]: %s", exc)
             await asyncio.sleep(60)
+
+
+async def run_daily_market_scheduler_loop() -> None:
+    """Vòng lặp định kỳ đồng bộ nến ngày sau phiên ATC (Thứ 2 - Thứ 6 lúc 15:15 chiều VN)."""
+    logger.info("Khởi động vòng lặp đồng bộ nến ngày (T2-T6 lúc 15:15 chiều)...")
+    while True:
+        try:
+            delay = get_next_schedule_delay(
+                target_days=(0, 1, 2, 3, 4), target_hour=15, target_minute=15
+            )
+            logger.info(
+                "Scheduler [Daily Market]: Chờ %.1f giây đến lần chạy tiếp.", delay
+            )
+            await asyncio.sleep(delay)
+            logger.info("Scheduler [Daily Market]: Đang thực thi đồng bộ nến ngày...")
+            await asyncio.to_thread(run_sync_daily_market_job)
+            logger.info("Scheduler [Daily Market]: Đồng bộ hoàn tất!")
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            logger.info("Scheduler [Daily Market] đã nhận lệnh dừng (shutdown).")
+            break
+        except Exception as exc:
+            logger.exception("Lỗi trong vòng lặp Scheduler [Daily Market]: %s", exc)
+            await asyncio.sleep(60)
+
+
+async def run_inprocess_scheduler() -> None:
+    """Chạy đồng thời các vòng lặp tác vụ định kỳ của hệ thống."""
+    logger.info("Khởi động toàn diện bộ lập lịch in-process scheduler đa tác vụ...")
+    await asyncio.gather(
+        run_symbols_scheduler_loop(),
+        run_daily_market_scheduler_loop(),
+    )
 
 
 def start_scheduler_task() -> asyncio.Task[None] | None:

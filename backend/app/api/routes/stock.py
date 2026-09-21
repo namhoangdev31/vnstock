@@ -25,16 +25,31 @@ from app.models.models_quant import (
 from app.models.models_stock import (
     BondSpecification,
     BondSpecificationPublic,
+    CompanyOfficer,
+    CompanyOfficerPublic,
+    CompanyOfficersResponse,
     CompanyOverviewPublic,
     CompanyProfile,
+    CompanyShareholder,
+    CompanyShareholderPublic,
+    CompanyShareholdersResponse,
+    CorporateEvent,
+    CorporateEventPublic,
+    CorporateEventsResponse,
     CoveredWarrant,
     CoveredWarrantPublic,
     DataSyncLog,
     DerivativeContract,
     DerivativeContractPublic,
+    FinancialRatio,
+    FinancialRatioPublic,
+    FinancialRatiosResponse,
     FinancialReport,
     FinancialReportPublic,
     FinancialReportsResponse,
+    IndexConstituent,
+    IndexConstituentPublic,
+    IndexConstituentsResponse,
     OHLCVRecord,
     PriceHistoryResponse,
     RelatedAssetsResponse,
@@ -313,6 +328,192 @@ def get_financials(
 
 
 # ---------------------------------------------------------------------------
+# GET /stock/{symbol}/ratios — Financial valuation & performance ratios
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{symbol}/ratios", response_model=FinancialRatiosResponse)
+def get_financial_ratios(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol: str,
+    period: str = Query(default="quarter", description="quarter or year"),
+) -> Any:
+    """Tra cứu chỉ số tài chính (P/E, P/B, ROE, ROA, EPS, BVPS...) từ PostgreSQL."""
+    sym_code = symbol.strip().upper()
+    ratios = session.exec(
+        select(FinancialRatio)
+        .where(FinancialRatio.symbol == sym_code)
+        .where(FinancialRatio.period == period)
+        .order_by(col(FinancialRatio.year).desc(), col(FinancialRatio.quarter).desc())
+    ).all()
+
+    if not ratios:
+        try:
+            manager = DataSyncManager(session, vnstock_service)
+            log = manager.sync_financial_ratios(sym_code, period=period)
+            if log.status == "success":
+                ratios = session.exec(
+                    select(FinancialRatio)
+                    .where(FinancialRatio.symbol == sym_code)
+                    .where(FinancialRatio.period == period)
+                    .order_by(
+                        col(FinancialRatio.year).desc(),
+                        col(FinancialRatio.quarter).desc(),
+                    )
+                ).all()
+        except VnstockServiceError:
+            pass
+
+    data = [FinancialRatioPublic.model_validate(r) for r in ratios]
+    return FinancialRatiosResponse(symbol=sym_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/{symbol}/shareholders — Major shareholders & ownership structure
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{symbol}/shareholders", response_model=CompanyShareholdersResponse)
+def get_shareholders(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol: str,
+) -> Any:
+    """Tra cứu cơ cấu cổ đông lớn và nội bộ từ PostgreSQL."""
+    sym_code = symbol.strip().upper()
+    shareholders = session.exec(
+        select(CompanyShareholder)
+        .where(CompanyShareholder.symbol == sym_code)
+        .order_by(col(CompanyShareholder.ownership_pct).desc())
+    ).all()
+
+    if not shareholders:
+        try:
+            manager = DataSyncManager(session, vnstock_service)
+            log = manager.sync_company_shareholders(sym_code)
+            if log.status == "success":
+                shareholders = session.exec(
+                    select(CompanyShareholder)
+                    .where(CompanyShareholder.symbol == sym_code)
+                    .order_by(col(CompanyShareholder.ownership_pct).desc())
+                ).all()
+        except VnstockServiceError:
+            pass
+
+    data = [CompanyShareholderPublic.model_validate(s) for s in shareholders]
+    return CompanyShareholdersResponse(symbol=sym_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/{symbol}/officers — Corporate governance & officers
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{symbol}/officers", response_model=CompanyOfficersResponse)
+def get_officers(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol: str,
+) -> Any:
+    """Tra cứu danh sách ban điều hành và Hội đồng quản trị từ PostgreSQL."""
+    sym_code = symbol.strip().upper()
+    officers = session.exec(
+        select(CompanyOfficer)
+        .where(CompanyOfficer.symbol == sym_code)
+        .order_by(col(CompanyOfficer.officer_name).asc())
+    ).all()
+
+    if not officers:
+        try:
+            manager = DataSyncManager(session, vnstock_service)
+            log = manager.sync_company_officers(sym_code)
+            if log.status == "success":
+                officers = session.exec(
+                    select(CompanyOfficer)
+                    .where(CompanyOfficer.symbol == sym_code)
+                    .order_by(col(CompanyOfficer.officer_name).asc())
+                ).all()
+        except VnstockServiceError:
+            pass
+
+    data = [CompanyOfficerPublic.model_validate(o) for o in officers]
+    return CompanyOfficersResponse(symbol=sym_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/{symbol}/events — Corporate events & dividends
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{symbol}/events", response_model=CorporateEventsResponse)
+def get_corporate_events(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    symbol: str,
+) -> Any:
+    """Tra cứu lịch sự kiện doanh nghiệp và chi trả cổ tức từ PostgreSQL."""
+    sym_code = symbol.strip().upper()
+    events = session.exec(
+        select(CorporateEvent)
+        .where(CorporateEvent.symbol == sym_code)
+        .order_by(col(CorporateEvent.ex_date).desc().nullslast())
+    ).all()
+
+    if not events:
+        try:
+            manager = DataSyncManager(session, vnstock_service)
+            log = manager.sync_corporate_events(sym_code)
+            if log.status == "success":
+                events = session.exec(
+                    select(CorporateEvent)
+                    .where(CorporateEvent.symbol == sym_code)
+                    .order_by(col(CorporateEvent.ex_date).desc().nullslast())
+                ).all()
+        except VnstockServiceError:
+            pass
+
+    data = [CorporateEventPublic.model_validate(e) for e in events]
+    return CorporateEventsResponse(symbol=sym_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/index-constituents/{group} — Index basket constituents DB-First
+# ---------------------------------------------------------------------------
+
+
+@router.get("/index-constituents/{group}", response_model=IndexConstituentsResponse)
+def get_index_constituents(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    group: str,
+) -> Any:
+    """Tra cứu thành phần và tỷ trọng rổ chỉ số (VN30, VN100, VNFINLEAD) từ PostgreSQL."""
+    grp_code = group.strip().upper()
+    rows = session.exec(
+        select(IndexConstituent)
+        .where(IndexConstituent.index_code == grp_code)
+        .order_by(col(IndexConstituent.symbol).asc())
+    ).all()
+
+    if not rows:
+        try:
+            manager = DataSyncManager(session, vnstock_service)
+            log = manager.sync_index_constituents(group=grp_code)
+            if log.status == "success":
+                rows = session.exec(
+                    select(IndexConstituent)
+                    .where(IndexConstituent.index_code == grp_code)
+                    .order_by(col(IndexConstituent.symbol).asc())
+                ).all()
+        except VnstockServiceError:
+            pass
+
+    data = [IndexConstituentPublic.model_validate(r) for r in rows]
+    return IndexConstituentsResponse(index_code=grp_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
 # POST /stock/sync/{sync_type} — Trigger manual sync (SuperUser only)
 # ---------------------------------------------------------------------------
 
@@ -362,6 +563,34 @@ def trigger_sync(
                 status_code=400, detail="symbol is required for financials sync"
             )
         log = manager.sync_financials(symbol, report_type=report_type, period=period)
+    elif sync_type == "ratios":
+        if not symbol:
+            raise HTTPException(
+                status_code=400, detail="symbol is required for ratios sync"
+            )
+        clean_period = "quarter" if "quarter" in period else "year"
+        log = manager.sync_financial_ratios(symbol, period=clean_period)
+    elif sync_type == "shareholders":
+        if not symbol:
+            raise HTTPException(
+                status_code=400, detail="symbol is required for shareholders sync"
+            )
+        log = manager.sync_company_shareholders(symbol)
+    elif sync_type == "officers":
+        if not symbol:
+            raise HTTPException(
+                status_code=400, detail="symbol is required for officers sync"
+            )
+        log = manager.sync_company_officers(symbol)
+    elif sync_type == "events":
+        if not symbol:
+            raise HTTPException(
+                status_code=400, detail="symbol is required for events sync"
+            )
+        log = manager.sync_corporate_events(symbol)
+    elif sync_type == "constituents":
+        target_group = symbol or "VN30"
+        log = manager.sync_index_constituents(group=target_group)
     else:
         raise HTTPException(status_code=400, detail=f"Unknown sync type: {sync_type}")
 

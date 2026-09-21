@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import gc
 import logging
+import time
 import uuid
 from collections.abc import Callable
 from datetime import date, datetime
@@ -23,11 +24,16 @@ from sqlmodel import Session, col, select
 from app.models import VN_TZ
 from app.models.models_stock import (
     BondSpecification,
+    CompanyOfficer,
     CompanyProfile,
+    CompanyShareholder,
+    CorporateEvent,
     CoveredWarrant,
     DataSyncLog,
     DerivativeContract,
+    FinancialRatio,
     FinancialReport,
+    IndexConstituent,
     StockOHLCVDaily,
     StockOHLCVIntraday,
     StockSymbol,
@@ -156,6 +162,58 @@ COMPANY_PROFILE_UPDATE_FIELDS: list[str] = [
 FINANCIAL_REPORT_UPDATE_FIELDS: list[str] = [
     "data",
     "source",
+    "updated_at",
+]
+
+FINANCIAL_RATIO_UPDATE_FIELDS: list[str] = [
+    "pe",
+    "pb",
+    "ps",
+    "roe",
+    "roa",
+    "roic",
+    "eps",
+    "bvps",
+    "gross_margin",
+    "net_margin",
+    "debt_to_equity",
+    "quick_ratio",
+    "current_ratio",
+    "dividend_yield",
+    "source",
+    "updated_at",
+]
+
+COMPANY_SHAREHOLDER_UPDATE_FIELDS: list[str] = [
+    "share_count",
+    "ownership_pct",
+    "is_institutional",
+    "is_foreign",
+    "is_state",
+    "updated_at",
+]
+
+COMPANY_OFFICER_UPDATE_FIELDS: list[str] = [
+    "share_count",
+    "ownership_pct",
+    "updated_at",
+]
+
+CORPORATE_EVENT_UPDATE_FIELDS: list[str] = [
+    "event_title",
+    "record_date",
+    "effective_date",
+    "cash_rate",
+    "stock_rate",
+    "ratio_string",
+    "notes",
+    "details",
+    "source",
+]
+
+INDEX_CONSTITUENT_UPDATE_FIELDS: list[str] = [
+    "weight",
+    "free_float_shares",
     "updated_at",
 ]
 
@@ -1345,3 +1403,481 @@ class DataSyncManager:
             return count
 
         return self._run_sync_task("financials", _task, symbol=symbol)
+
+    def sync_financial_ratios(
+        self,
+        symbol: str,
+        period: str = "quarter",
+    ) -> DataSyncLog:
+        """Đồng bộ bộ chỉ số tài chính định lượng & định giá (P/E, P/B, ROE, ROA, EPS...) bằng Bulk UPSERT."""
+
+        def _task() -> int:
+            df = self.svc.fetch_financial_ratios(symbol)
+            if df is None or df.empty:
+                return 0
+
+            self._ensure_symbol_exists(symbol)
+            now_utc = datetime.now(VN_TZ)
+            records: list[dict[str, Any]] = []
+
+            # Phân loại 2 dạng cấu trúc trả về từ vnstock:
+            # Dạng 1: Dạng ma trận ngang (columns chứa các kỳ YYYY-Qx hoặc YYYY, rows là các chỉ số)
+            # Dạng 2: Dạng bảng dọc (mỗi row là một kỳ báo cáo)
+            period_cols = [
+                c
+                for c in df.columns
+                if any(char.isdigit() for char in str(c))
+                and ("-" in str(c) or len(str(c)) == 4)
+            ]
+
+            if period_cols and ("item" in df.columns or "item_id" in df.columns):
+                # Xử lý dạng 1: Ma trận xoay chiều (pivot)
+                # Map các chỉ số chuẩn hóa
+                metric_row_map: dict[str, dict[str, Any]] = {}
+                for col_name in period_cols:
+                    col_str = str(col_name).strip()
+                    # Parse year và quarter từ tên cột (ví dụ '2024-Q3', '2024_Q2', '2024')
+                    parts = col_str.replace("_", "-").split("-")
+                    year = int(parts[0]) if parts[0].isdigit() else 0
+                    quarter = None
+                    if len(parts) > 1 and "Q" in parts[1].upper():
+                        q_str = parts[1].upper().replace("Q", "")
+                        quarter = int(q_str) if q_str.isdigit() else None
+
+                    metric_row_map[col_str] = {
+                        "id": uuid.uuid4(),
+                        "symbol": symbol,
+                        "period": period,
+                        "year": year,
+                        "quarter": quarter,
+                        "source": self.svc.source,
+                        "updated_at": now_utc,
+                    }
+
+                for _, row in df.iterrows():
+                    item_name = str(row.get("item", "")).lower()
+                    item_id = str(row.get("item_id", "")).lower()
+                    target_field: str | None = None
+
+                    if "p/e" in item_name or "p/e" in item_id or "pe" == item_id:
+                        target_field = "pe"
+                    elif "p/b" in item_name or "p/b" in item_id or "pb" == item_id:
+                        target_field = "pb"
+                    elif "p/s" in item_name or "ps" == item_id:
+                        target_field = "ps"
+                    elif "roe" in item_name or "roe" in item_id:
+                        target_field = "roe"
+                    elif "roa" in item_name or "roa" in item_id:
+                        target_field = "roa"
+                    elif "roic" in item_name or "roic" in item_id:
+                        target_field = "roic"
+                    elif (
+                        "eps" in item_name
+                        or "eps" in item_id
+                        or "thu nhập trên mỗi cổ phần" in item_name
+                    ):
+                        target_field = "eps"
+                    elif (
+                        "bvps" in item_name
+                        or "bvps" in item_id
+                        or "giá trị sổ sách" in item_name
+                    ):
+                        target_field = "bvps"
+                    elif "biên lợi nhuận gộp" in item_name or "gross_margin" in item_id:
+                        target_field = "gross_margin"
+                    elif "biên lợi nhuận ròng" in item_name or "net_margin" in item_id:
+                        target_field = "net_margin"
+                    elif (
+                        "nợ/vốn" in item_name
+                        or "debt_to_equity" in item_id
+                        or "d/e" in item_name
+                    ):
+                        target_field = "debt_to_equity"
+                    elif "thanh toán nhanh" in item_name or "quick_ratio" in item_id:
+                        target_field = "quick_ratio"
+                    elif (
+                        "thanh toán hiện hành" in item_name
+                        or "current_ratio" in item_id
+                    ):
+                        target_field = "current_ratio"
+                    elif "cổ tức" in item_name or "dividend_yield" in item_id:
+                        target_field = "dividend_yield"
+
+                    if target_field:
+                        for col_name in period_cols:
+                            raw_val = row.get(col_name)
+                            try:
+                                val = float(raw_val) if pd.notna(raw_val) else None
+                            except (ValueError, TypeError):
+                                val = None
+                            metric_row_map[str(col_name).strip()][target_field] = val
+
+                records = [r for r in metric_row_map.values() if r["year"] > 0]
+            else:
+                # Xử lý dạng 2: Bảng chuẩn từng row là 1 kỳ
+                for _, row in df.iterrows():
+                    year = self._extract_int(row, "year", "yearReport", default=0)
+                    quarter = self._extract_int(
+                        row, "quarter", "lengthReport", default=None
+                    )
+                    if year == 0:
+                        continue
+                    records.append(
+                        {
+                            "id": uuid.uuid4(),
+                            "symbol": symbol,
+                            "period": period,
+                            "year": year,
+                            "quarter": quarter,
+                            "pe": self._extract_float(
+                                row, "pe", "priceToEarning", "p/e"
+                            ),
+                            "pb": self._extract_float(row, "pb", "priceToBook", "p/b"),
+                            "ps": self._extract_float(row, "ps", "p/s"),
+                            "roe": self._extract_float(row, "roe"),
+                            "roa": self._extract_float(row, "roa"),
+                            "roic": self._extract_float(row, "roic"),
+                            "eps": self._extract_float(row, "eps"),
+                            "bvps": self._extract_float(row, "bvps"),
+                            "gross_margin": self._extract_float(
+                                row, "gross_margin", "grossMargin"
+                            ),
+                            "net_margin": self._extract_float(
+                                row, "net_margin", "netMargin"
+                            ),
+                            "debt_to_equity": self._extract_float(
+                                row, "debt_to_equity", "debtToEquity"
+                            ),
+                            "quick_ratio": self._extract_float(
+                                row, "quick_ratio", "quickRatio"
+                            ),
+                            "current_ratio": self._extract_float(
+                                row, "current_ratio", "currentRatio"
+                            ),
+                            "dividend_yield": self._extract_float(
+                                row, "dividend_yield", "dividendYield"
+                            ),
+                            "source": self.svc.source,
+                            "updated_at": now_utc,
+                        }
+                    )
+
+            if not records:
+                return 0
+
+            count = self._bulk_upsert(
+                FinancialRatio,
+                records,
+                ["symbol", "period", "year", "quarter"],
+                FINANCIAL_RATIO_UPDATE_FIELDS,
+            )
+            self.session.commit()
+            logger.info("Synced %d financial ratio records for %s", count, symbol)
+            return count
+
+        return self._run_sync_task("ratios", _task, symbol=symbol)
+
+    def sync_company_shareholders(self, symbol: str) -> DataSyncLog:
+        """Đồng bộ danh sách cổ đông lớn / cổ đông nội bộ bằng Bulk UPSERT."""
+
+        def _task() -> int:
+            df = self.svc.fetch_company_shareholders(symbol)
+            if df is None or df.empty:
+                return 0
+
+            self._ensure_symbol_exists(symbol)
+            now_utc = datetime.now(VN_TZ)
+            records: list[dict[str, Any]] = []
+
+            for _, row in df.iterrows():
+                name = self._extract_str(
+                    row, "name", "shareHolderName", "shareholder_name", default=""
+                )
+                if not name:
+                    continue
+                share_count = (
+                    self._extract_float(
+                        row, "shares_owned", "shareCount", "share_count", default=0.0
+                    )
+                    or 0.0
+                )
+                ownership_pct = (
+                    self._extract_float(
+                        row,
+                        "ownership_percentage",
+                        "sharePercentage",
+                        "ownership_pct",
+                        default=0.0,
+                    )
+                    or 0.0
+                )
+
+                records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "symbol": symbol,
+                        "shareholder_name": name[:255],
+                        "share_count": share_count,
+                        "ownership_pct": ownership_pct,
+                        "is_institutional": bool(row.get("is_institutional", False)),
+                        "is_foreign": bool(row.get("is_foreign", False)),
+                        "is_state": bool(row.get("is_state", False)),
+                        "updated_at": now_utc,
+                    }
+                )
+
+            if not records:
+                return 0
+
+            count = self._bulk_upsert(
+                CompanyShareholder,
+                records,
+                ["symbol", "shareholder_name"],
+                COMPANY_SHAREHOLDER_UPDATE_FIELDS,
+            )
+            self.session.commit()
+            logger.info("Synced %d shareholders for %s", count, symbol)
+            return count
+
+        return self._run_sync_task("shareholders", _task, symbol=symbol)
+
+    def sync_company_officers(self, symbol: str) -> DataSyncLog:
+        """Đồng bộ ban điều hành & Hội đồng quản trị doanh nghiệp bằng Bulk UPSERT."""
+
+        def _task() -> int:
+            df = self.svc.fetch_company_officers(symbol)
+            if df is None or df.empty:
+                return 0
+
+            self._ensure_symbol_exists(symbol)
+            now_utc = datetime.now(VN_TZ)
+            records: list[dict[str, Any]] = []
+
+            for _, row in df.iterrows():
+                name = self._extract_str(
+                    row, "name", "officerName", "officer_name", default=""
+                )
+                position = self._extract_str(
+                    row,
+                    "position",
+                    "officerPosition",
+                    "position_en",
+                    default="Lãnh đạo",
+                )
+                if not name:
+                    continue
+
+                records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "symbol": symbol,
+                        "officer_name": name[:255],
+                        "position": position[:255],
+                        "share_count": self._extract_float(
+                            row, "shares_owned", "shareCount", "share_count"
+                        ),
+                        "ownership_pct": self._extract_float(
+                            row, "ownership_percentage", "sharePercentage"
+                        ),
+                        "updated_at": now_utc,
+                    }
+                )
+
+            if not records:
+                return 0
+
+            count = self._bulk_upsert(
+                CompanyOfficer,
+                records,
+                ["symbol", "officer_name", "position"],
+                COMPANY_OFFICER_UPDATE_FIELDS,
+            )
+            self.session.commit()
+            logger.info("Synced %d officers for %s", count, symbol)
+            return count
+
+        return self._run_sync_task("officers", _task, symbol=symbol)
+
+    def sync_corporate_events(self, symbol: str) -> DataSyncLog:
+        """Đồng bộ sự kiện doanh nghiệp & lịch chi trả cổ tức bằng Bulk UPSERT."""
+
+        def _task() -> int:
+            df = self.svc.fetch_company_events(symbol)
+            if df is None or df.empty:
+                return 0
+
+            self._ensure_symbol_exists(symbol)
+            now_utc = datetime.now(VN_TZ)
+            records: list[dict[str, Any]] = []
+
+            for _, row in df.iterrows():
+                event_title = self._extract_str(
+                    row,
+                    "event_title",
+                    "eventTitle",
+                    "content",
+                    default="Sự kiện doanh nghiệp",
+                )
+                event_type = self._extract_str(
+                    row, "event_type", "eventType", "type", default="dividend"
+                )
+
+                # Parse ngày giao dịch không hưởng quyền (ex_date)
+                raw_ex_date = row.get("ex_date") or row.get("exDate") or row.get("date")
+                ex_date: date | None = None
+                if raw_ex_date and pd.notna(raw_ex_date):
+                    try:
+                        ex_date = date.fromisoformat(str(raw_ex_date)[:10])
+                    except (ValueError, TypeError):
+                        ex_date = None
+
+                records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "symbol": symbol,
+                        "event_type": event_type[:30],
+                        "event_title": event_title[:500],
+                        "ex_date": ex_date,
+                        "cash_rate": self._extract_float(
+                            row, "cash_rate", "cashRate", "value"
+                        ),
+                        "stock_rate": self._extract_float(
+                            row, "stock_rate", "stockRate", "ratio"
+                        ),
+                        "ratio_string": self._extract_str(
+                            row, "ratio_string", "ratioString"
+                        ),
+                        "notes": self._extract_str(row, "notes", "note"),
+                        "details": {},
+                        "source": self.svc.source,
+                        "created_at": now_utc,
+                    }
+                )
+
+            if not records:
+                return 0
+
+            count = self._bulk_upsert(
+                CorporateEvent,
+                records,
+                ["symbol", "event_type", "ex_date"],
+                CORPORATE_EVENT_UPDATE_FIELDS,
+            )
+            self.session.commit()
+            logger.info("Synced %d corporate events for %s", count, symbol)
+            return count
+
+        return self._run_sync_task("events", _task, symbol=symbol)
+
+    def sync_index_constituents(self, group: str = "VN30") -> DataSyncLog:
+        """Đồng bộ danh sách thành phần và tỷ trọng rổ chỉ số (VN30, VN100, VNFINLEAD)."""
+
+        def _task() -> int:
+            symbols = self.svc.fetch_group_symbols(group=group)
+            if not symbols:
+                return 0
+
+            # Đảm bảo các mã tồn tại trong bảng stock_symbol
+            self._find_or_create_symbols(symbols, exchange="HOSE", asset_type="stock")
+
+            now_utc = datetime.now(VN_TZ)
+            today_date = date.today()
+            records: list[dict[str, Any]] = []
+            default_weight = round(100.0 / len(symbols), 4)
+
+            for sym in symbols:
+                records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "index_code": group.upper(),
+                        "symbol": sym.strip().upper(),
+                        "weight": default_weight,
+                        "effective_date": today_date,
+                        "updated_at": now_utc,
+                    }
+                )
+
+            count = self._bulk_upsert(
+                IndexConstituent,
+                records,
+                ["index_code", "symbol", "effective_date"],
+                INDEX_CONSTITUENT_UPDATE_FIELDS,
+            )
+            self.session.commit()
+            logger.info("Synced %d constituents for index group %s", count, group)
+            return count
+
+        return self._run_sync_task("constituents", _task, symbol=group.upper())
+
+    def sync_company_full(self, symbol: str) -> dict[str, Any]:
+        """Đồng bộ toàn diện thông tin doanh nghiệp (Hồ sơ + Cổ đông + Ban lãnh đạo + Sự kiện)."""
+        sym_clean = symbol.strip().upper()
+        results = {
+            "profile": self.sync_company_profile(sym_clean),
+            "shareholders": self.sync_company_shareholders(sym_clean),
+            "officers": self.sync_company_officers(sym_clean),
+            "events": self.sync_corporate_events(sym_clean),
+        }
+        return {
+            k: {"status": v.status, "rows_synced": v.rows_synced}
+            for k, v in results.items()
+        }
+
+    def sync_financials_full(
+        self, symbol: str, period: str = "quarter"
+    ) -> dict[str, Any]:
+        """Đồng bộ toàn diện BCTC (KQKD + CĐKT + LCTT) và bộ chỉ số tài chính Ratios."""
+        sym_clean = symbol.strip().upper()
+        results = {
+            "income_statement": self.sync_financials(
+                sym_clean, report_type="income_statement", period=period
+            ),
+            "balance_sheet": self.sync_financials(
+                sym_clean, report_type="balance_sheet", period=period
+            ),
+            "cash_flow": self.sync_financials(
+                sym_clean, report_type="cash_flow", period=period
+            ),
+            "ratios": self.sync_financial_ratios(sym_clean, period=period),
+        }
+        return {
+            k: {"status": v.status, "rows_synced": v.rows_synced}
+            for k, v in results.items()
+        }
+
+    def sync_batch_symbols_data(
+        self,
+        symbols: list[str],
+        sync_types: list[str],
+        delay_sec: float = 0.3,
+    ) -> dict[str, Any]:
+        """Đồng bộ dữ liệu hàng loạt mã cổ phiếu có kiểm soát tần suất gọi (Rule 7.2 Anti-Ban)."""
+        batch_summary: dict[str, dict[str, Any]] = {}
+        for sym in symbols:
+            sym_clean = sym.strip().upper()
+            sym_result: dict[str, Any] = {}
+            for st in sync_types:
+                if st == "profile":
+                    sym_result["profile"] = self.sync_company_profile(sym_clean).status
+                elif st == "shareholders":
+                    sym_result["shareholders"] = self.sync_company_shareholders(
+                        sym_clean
+                    ).status
+                elif st == "officers":
+                    sym_result["officers"] = self.sync_company_officers(
+                        sym_clean
+                    ).status
+                elif st == "events":
+                    sym_result["events"] = self.sync_corporate_events(sym_clean).status
+                elif st == "financials":
+                    sym_result["financials"] = self.sync_financials(sym_clean).status
+                elif st == "ratios":
+                    sym_result["ratios"] = self.sync_financial_ratios(sym_clean).status
+                elif st == "daily":
+                    sym_result["daily"] = self.sync_daily_incremental(sym_clean).status
+                time.sleep(delay_sec)
+
+            batch_summary[sym_clean] = sym_result
+            time.sleep(delay_sec)
+
+        return batch_summary

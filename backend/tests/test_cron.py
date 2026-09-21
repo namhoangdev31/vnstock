@@ -184,3 +184,26 @@ def test_start_scheduler_task_flag() -> None:
     with patch.object(settings, "ENABLE_INPROCESS_CRON", False):
         task = start_scheduler_task()
         assert task is None
+
+
+def test_run_sync_daily_market_job(session: Session) -> None:  # noqa: F811
+    """Kiểm tra runner đồng bộ nến ngày sau phiên ATC."""
+    from app.cron.sync_daily_market import run_sync_daily_market_job
+
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_group_symbols.return_value = ["FPT"]
+    mock_log = DataSyncLog(
+        sync_type="daily",
+        symbol="FPT",
+        source="VCI",
+        status="success",
+        rows_synced=1,
+    )
+    with (
+        patch("app.cron.sync_daily_market.vnstock_service", mock_svc),
+        patch.object(DataSyncManager, "sync_daily_incremental", return_value=mock_log),
+    ):
+        logs = run_sync_daily_market_job(session=session, delay_sec=0)
+        assert len(logs) >= 1
+        assert logs[0].status == "success"

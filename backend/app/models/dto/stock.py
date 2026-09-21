@@ -166,3 +166,118 @@ class RelatedAssetsResponse(SQLModel):
     derivative_contracts: list[DerivativeContractPublic] = []
     underlying_asset: StockSymbolPublic | None = None
     issuer_asset: StockSymbolPublic | None = None
+
+
+class FinancialRatioPublic(SQLModel):
+    """Chỉ số tài chính định lượng & định giá (P/E, P/B, ROE, ROA, EPS, BVPS...)."""
+
+    id: uuid.UUID | None = None
+    symbol: str
+    period: str
+    year: int
+    quarter: int | None = None
+    pe: float | None = None
+    pb: float | None = None
+    ps: float | None = None
+    roe: float | None = None
+    roa: float | None = None
+    roic: float | None = None
+    eps: float | None = None
+    bvps: float | None = None
+    gross_margin: float | None = None
+    net_margin: float | None = None
+    debt_to_equity: float | None = None
+    quick_ratio: float | None = None
+    current_ratio: float | None = None
+    dividend_yield: float | None = None
+
+
+class FinancialRatiosResponse(SQLModel):
+    """Danh sách các chỉ số tài chính theo kỳ của một doanh nghiệp."""
+
+    symbol: str
+    count: int
+    data: list[FinancialRatioPublic]
+
+
+class CompanyShareholderPublic(SQLModel):
+    """Thông tin cơ cấu cổ đông lớn / cổ đông nội bộ."""
+
+    id: uuid.UUID | None = None
+    symbol: str
+    shareholder_name: str
+    share_count: float = 0.0
+    ownership_pct: float = 0.0
+    is_institutional: bool = False
+    is_foreign: bool = False
+    is_state: bool = False
+
+
+class CompanyShareholdersResponse(SQLModel):
+    """Danh sách cổ đông của một doanh nghiệp."""
+
+    symbol: str
+    count: int
+    data: list[CompanyShareholderPublic]
+
+
+class CompanyOfficerPublic(SQLModel):
+    """Thông tin thành viên ban lãnh đạo / Hội đồng quản trị."""
+
+    id: uuid.UUID | None = None
+    symbol: str
+    officer_name: str
+    position: str
+    share_count: float | None = None
+    ownership_pct: float | None = None
+
+
+class CompanyOfficersResponse(SQLModel):
+    """Danh sách thành viên ban điều hành & HĐQT của một doanh nghiệp."""
+
+    symbol: str
+    count: int
+    data: list[CompanyOfficerPublic]
+
+
+class CorporateEventPublic(SQLModel):
+    """Sự kiện doanh nghiệp & lịch chi trả cổ tức."""
+
+    id: uuid.UUID | None = None
+    symbol: str
+    event_type: str
+    event_title: str
+    ex_date: date | None = None
+    record_date: date | None = None
+    effective_date: date | None = None
+    cash_rate: float | None = None
+    stock_rate: float | None = None
+    ratio_string: str | None = None
+    notes: str | None = None
+
+
+class CorporateEventsResponse(SQLModel):
+    """Danh sách sự kiện doanh nghiệp & lịch cổ tức."""
+
+    symbol: str
+    count: int
+    data: list[CorporateEventPublic]
+
+
+class IndexConstituentPublic(SQLModel):
+    """Thành phần và tỷ trọng rổ chỉ số (VN30, VN100, VNFINLEAD)."""
+
+    id: uuid.UUID | None = None
+    index_code: str
+    symbol: str
+    weight: float = 0.0
+    free_float_shares: float | None = None
+    effective_date: date
+
+
+class IndexConstituentsResponse(SQLModel):
+    """Danh sách thành phần rổ chỉ số."""
+
+    index_code: str
+    count: int
+    data: list[IndexConstituentPublic]

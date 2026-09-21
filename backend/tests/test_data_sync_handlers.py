@@ -9,6 +9,11 @@ import pytest
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.models.models_stock import (
+    CompanyOfficer,
+    CompanyShareholder,
+    CorporateEvent,
+    FinancialRatio,
+    IndexConstituent,
     StockSymbol,
 )
 from app.services.data_sync import (
@@ -373,3 +378,173 @@ def test_upsert_postgresql_execution() -> None:
     assert count_nothing == 2
     assert mock_session.execute.called
     assert mock_session.flush.called
+
+
+def test_sync_financial_ratios(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ chỉ số tài chính định lượng & định giá."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_financial_ratios.return_value = pd.DataFrame(
+        [
+            {
+                "item": "Chỉ số giá thị trường trên thu nhập (P/E)",
+                "item_id": "pe",
+                "2024-Q3": 18.5,
+                "2024-Q2": 17.2,
+            },
+            {
+                "item": "Chỉ số giá thị trường trên giá trị sổ sách (P/B)",
+                "item_id": "pb",
+                "2024-Q3": 3.2,
+                "2024-Q2": 3.0,
+            },
+            {
+                "item": "Lợi nhuận trên vốn chủ sở hữu (ROE)",
+                "item_id": "roe",
+                "2024-Q3": 25.4,
+                "2024-Q2": 24.1,
+            },
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_financial_ratios("FPT", period="quarter")
+    assert log.status == "success"
+    assert log.rows_synced == 2
+
+    ratios = sqlite_session.exec(
+        select(FinancialRatio).where(FinancialRatio.symbol == "FPT")
+    ).all()
+    assert len(ratios) == 2
+    r_q3 = next(r for r in ratios if r.quarter == 3)
+    assert r_q3.pe == 18.5
+    assert r_q3.pb == 3.2
+    assert r_q3.roe == 25.4
+
+
+def test_sync_company_shareholders(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ cơ cấu cổ đông lớn."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_company_shareholders.return_value = pd.DataFrame(
+        [
+            {
+                "name": "Tổng Công ty Đầu tư và Kinh doanh vốn Nhà nước (SCIC)",
+                "shares_owned": 75000000,
+                "ownership_percentage": 5.8,
+                "is_state": True,
+            },
+            {
+                "name": "Trương Gia Bình",
+                "shares_owned": 88000000,
+                "ownership_percentage": 6.9,
+                "is_institutional": False,
+            },
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_company_shareholders("FPT")
+    assert log.status == "success"
+    assert log.rows_synced == 2
+
+    shareholders = sqlite_session.exec(
+        select(CompanyShareholder).where(CompanyShareholder.symbol == "FPT")
+    ).all()
+    assert len(shareholders) == 2
+
+
+def test_sync_company_officers(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ ban điều hành và HĐQT."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_company_officers.return_value = pd.DataFrame(
+        [
+            {
+                "name": "Trương Gia Bình",
+                "position": "Chủ tịch HĐQT",
+                "shares_owned": 88000000,
+                "ownership_percentage": 6.9,
+            },
+            {
+                "name": "Nguyễn Văn Khoa",
+                "position": "Tổng Giám đốc",
+                "shares_owned": 5000000,
+                "ownership_percentage": 0.4,
+            },
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_company_officers("FPT")
+    assert log.status == "success"
+    assert log.rows_synced == 2
+
+    officers = sqlite_session.exec(
+        select(CompanyOfficer).where(CompanyOfficer.symbol == "FPT")
+    ).all()
+    assert len(officers) == 2
+
+
+def test_sync_corporate_events(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ sự kiện doanh nghiệp & cổ tức."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_company_events.return_value = pd.DataFrame(
+        [
+            {
+                "event_title": "Trả cổ tức đợt 1/2024 bằng tiền",
+                "event_type": "cash_dividend",
+                "ex_date": "2024-08-15",
+                "cash_rate": 1000.0,
+                "notes": "Tỷ lệ 10%",
+            }
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_corporate_events("FPT")
+    assert log.status == "success"
+    assert log.rows_synced == 1
+
+    events = sqlite_session.exec(
+        select(CorporateEvent).where(CorporateEvent.symbol == "FPT")
+    ).all()
+    assert len(events) == 1
+    assert events[0].cash_rate == 1000.0
+
+
+def test_sync_index_constituents(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ thành phần rổ chỉ số VN30."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_group_symbols.return_value = ["FPT", "VIC", "VNM"]
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_index_constituents("VN30")
+    assert log.status == "success"
+    assert log.rows_synced == 3
+
+    constituents = sqlite_session.exec(
+        select(IndexConstituent).where(IndexConstituent.index_code == "VN30")
+    ).all()
+    assert len(constituents) == 3
+
+
+def test_sync_consolidated_and_batch(sqlite_session: Session) -> None:
+    """Kiểm tra các hàm đồng bộ tổng hợp (Full Sync) và theo lô (Batch Sync)."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_company_overview.return_value = {"companyName": "CTCP FPT"}
+    mock_svc.fetch_company_shareholders.return_value = pd.DataFrame()
+    mock_svc.fetch_company_officers.return_value = pd.DataFrame()
+    mock_svc.fetch_company_events.return_value = pd.DataFrame()
+    mock_svc.fetch_financials.return_value = pd.DataFrame()
+    mock_svc.fetch_financial_ratios.return_value = pd.DataFrame()
+
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    company_res = manager.sync_company_full("FPT")
+    assert "profile" in company_res
+
+    fin_res = manager.sync_financials_full("FPT")
+    assert "ratios" in fin_res
+
+    batch_res = manager.sync_batch_symbols_data(
+        ["FPT"], sync_types=["profile"], delay_sec=0
+    )
+    assert "FPT" in batch_res
