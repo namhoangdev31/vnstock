@@ -9,7 +9,7 @@ import uuid
 from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, UniqueConstraint
+from sqlalchemy import DateTime, Index, UniqueConstraint
 from sqlmodel import Field, Relationship
 
 from app.models.base import AwareSQLModel, JSONBVariant, get_datetime_utc
@@ -111,6 +111,10 @@ class StockOHLCVDaily(AwareSQLModel, table=True):
     foreign_buy_volume: int | None = None  # Khối lượng mua của Khối ngoại
     foreign_sell_volume: int | None = None  # Khối lượng bán của Khối ngoại
     foreign_net_volume: int | None = None  # Mua/Bán ròng của Khối ngoại
+    open_interest: int | None = None  # Khối lượng vị thế mở qua đêm (phái sinh VN30F1M)
+    basis: float | None = (
+        None  # Độ lệch giá đóng cửa phái sinh so với VN30 (VN30F1M - VN30)
+    )
     source: str = Field(max_length=10)  # VCI, KBS, TCBS
 
 
@@ -205,7 +209,17 @@ class FinancialReport(AwareSQLModel, table=True):
 
     __tablename__ = "financial_report"
     __table_args__ = (
-        UniqueConstraint("symbol", "report_type", "period", "year", "quarter"),
+        UniqueConstraint(
+            "symbol", "report_type", "report_scope", "period", "year", "quarter"
+        ),
+        Index(
+            "ix_financial_report_lookup",
+            "symbol",
+            "report_type",
+            "report_scope",
+            "year",
+            "quarter",
+        ),
     )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -213,13 +227,34 @@ class FinancialReport(AwareSQLModel, table=True):
     report_type: str = Field(
         max_length=20
     )  # income_statement, balance_sheet, cash_flow
+    report_scope: str = Field(
+        default="consolidated", max_length=20, index=True
+    )  # consolidated (hợp nhất), parent (công ty mẹ)
     period: str = Field(max_length=10)  # quarter, year
     year: int
     quarter: int | None = None  # 1-4 cho quý, None cho năm
+    is_audited: bool = Field(default=False)  # Đã kiểm toán
+
+    # Cột tóm tắt tài chính cốt lõi (Top-line & Bottom-line) dạng số học tường minh
+    revenue: float | None = None  # Doanh thu thuần
+    gross_profit: float | None = None  # Lợi nhuận gộp
+    operating_profit: float | None = None  # Lợi nhuận từ HĐKD
+    net_profit_parent: float | None = None  # LNST của CĐ công ty mẹ
+    total_assets: float | None = None  # Tổng tài sản
+    short_term_assets: float | None = None  # Tài sản ngắn hạn
+    cash_and_equivalents: float | None = None  # Tiền & tương đương tiền
+    total_liabilities: float | None = None  # Tổng nợ phải trả
+    short_term_debt: float | None = None  # Vay nợ ngắn hạn
+    long_term_debt: float | None = None  # Vay nợ dài hạn
+    owners_equity: float | None = None  # Vốn chủ sở hữu
+    operating_cash_flow: float | None = None  # Lưu chuyển tiền thuần từ HĐKD
+    investing_cash_flow: float | None = None  # Lưu chuyển tiền thuần từ HĐĐT
+    financing_cash_flow: float | None = None  # Lưu chuyển tiền thuần từ HĐTC
+
     data: dict = Field(
         default_factory=dict,
         sa_type=JSONBVariant,  # type: ignore
-    )  # Lưu trữ payload gốc vnstock
+    )  # Lưu trữ payload gốc vnstock làm fallback thứ cấp
     source: str = Field(max_length=10)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -252,13 +287,25 @@ class FinancialRatio(AwareSQLModel, table=True):
     """Bảng lưu trữ các chỉ số tài chính định giá & tăng trưởng (Finance.ratio() & Fundamental)."""
 
     __tablename__ = "financial_ratio"
-    __table_args__ = (UniqueConstraint("symbol", "period", "year", "quarter"),)
+    __table_args__ = (
+        UniqueConstraint("symbol", "period", "year", "quarter"),
+        Index("ix_financial_ratio_screener", "year", "quarter", "pe", "roe"),
+        Index(
+            "ix_financial_ratio_growth",
+            "year",
+            "quarter",
+            "revenue_growth_yoy",
+            "net_profit_growth_yoy",
+        ),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
     period: str = Field(max_length=10)  # quarter, year
     year: int
     quarter: int | None = None  # 1-4 cho quý, None cho năm
+
+    # Định giá & Sinh lời cơ bản
     pe: float | None = None  # Tỷ số P/E
     pb: float | None = None  # Tỷ số P/B
     ps: float | None = None  # Tỷ số P/S
@@ -273,10 +320,40 @@ class FinancialRatio(AwareSQLModel, table=True):
     quick_ratio: float | None = None  # Hệ số thanh toán nhanh
     current_ratio: float | None = None  # Hệ số thanh toán hiện hành
     dividend_yield: float | None = None  # Tỷ suất cổ tức (%)
+
+    # Định giá & Dòng tiền bổ sung (Explicit Columns thay cho JSONB)
+    ev_to_ebitda: float | None = None  # Tỷ số EV/EBITDA
+    ev_to_ebit: float | None = None  # Tỷ số EV/EBIT
+    p_to_fcf: float | None = None  # Giá trên Dòng tiền tự do (P/FCF)
+    p_to_ocf: float | None = None  # Giá trên Dòng tiền HĐKD (P/OCF)
+    fcf: float | None = None  # Dòng tiền tự do FCF (VND)
+
+    # Hiệu quả hoạt động & Lợi nhuận bổ sung
+    ebit_margin: float | None = None  # Biên EBIT (%)
+    ebitda_margin: float | None = None  # Biên EBITDA (%)
+    asset_turnover: float | None = None  # Vòng quay tổng tài sản
+    inventory_turnover: float | None = None  # Vòng quay hàng tồn kho
+    receivables_turnover: float | None = None  # Vòng quay các khoản phải thu
+
+    # Cơ cấu vốn & Khả năng thanh toán bổ sung
+    debt_to_assets: float | None = None  # Tỷ lệ Tổng nợ / Tổng tài sản
+    interest_coverage: float | None = None  # Hệ số chi trả lãi vay (EBIT / Lãi vay)
+    cash_ratio: float | None = None  # Tỷ số thanh toán tiền mặt
+
+    # Tăng trưởng (Growth)
+    revenue_growth_yoy: float | None = None  # Tăng trưởng doanh thu cùng kỳ (%)
+    net_profit_growth_yoy: float | None = None  # Tăng trưởng lợi nhuận cùng kỳ (%)
+    revenue_growth_qoq: float | None = (
+        None  # Tăng trưởng doanh thu so với quý trước (%)
+    )
+    net_profit_growth_qoq: float | None = (
+        None  # Tăng trưởng lợi nhuận so với quý trước (%)
+    )
+
     data: dict = Field(
         default_factory=dict,
         sa_type=JSONBVariant,  # type: ignore
-    )  # Lưu trữ trọn vẹn toàn bộ 58 chỉ số tài chính gốc từ vnstock
+    )  # Lưu trữ trọn vẹn toàn bộ 58 chỉ số tài chính gốc từ vnstock làm fallback
     source: str = Field(max_length=10)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,

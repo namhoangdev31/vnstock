@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import DateTime, UniqueConstraint
+from sqlalchemy import DateTime, Index, UniqueConstraint
 from sqlmodel import Field
 
 from app.models.base import AwareSQLModel, JSONBVariant, get_datetime_utc
@@ -45,12 +45,7 @@ class ForecastJournal(AwareSQLModel, table=True):
     )
     error: float | None = None
     score: float | None = None
-    status: str = Field(default=ForecastStatus.PENDING, max_length=10, index=True)
-
-    created_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-    )
+    status: ForecastStatus = Field(default=ForecastStatus.PENDING, index=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -76,17 +71,19 @@ class MacroIndicator(AwareSQLModel, table=True):
 
 
 class TickFlowAggregated(AwareSQLModel, table=True):
-    """Bảng tổng hợp luồng lệnh mua/bán chủ động khung 1 phút (Động cơ 1: Kỹ thuật & Orderflow)."""
+    """Bảng nén tick-by-tick thành nến 1 phút kèm volume delta (Động cơ 1: Khớp lệnh chủ động)."""
 
     __tablename__ = "tick_flow_aggregated"
-    __table_args__ = (UniqueConstraint("symbol", "timestamp"),)
+    __table_args__ = (UniqueConstraint("symbol", "interval_start"),)
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, index=True)
-    timestamp: datetime = Field(
-        sa_type=DateTime(timezone=True),  # type: ignore
-        index=True,
-    )
+    interval_start: datetime = Field(sa_type=DateTime(timezone=True), index=True)  # type: ignore
+    open: float = 0.0
+    high: float = 0.0
+    low: float = 0.0
+    close: float = 0.0
+    volume: int = 0
     aggressive_buy_volume: int = 0
     aggressive_sell_volume: int = 0
     volume_delta: int = 0
@@ -99,17 +96,35 @@ class InstitutionalFlow(AwareSQLModel, table=True):
     """Bảng theo dõi dòng tiền tổ chức: Khối ngoại & Tự doanh (Động cơ 2: Thanh khoản)."""
 
     __tablename__ = "institutional_flow"
-    __table_args__ = (UniqueConstraint("trading_date", "symbol", "source"),)
+    __table_args__ = (
+        UniqueConstraint("trading_date", "symbol", "source"),
+        Index("ix_inst_flow_symbol_date", "symbol", "trading_date"),
+        Index("ix_inst_flow_date_net_val", "trading_date", "foreign_net_value"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     trading_date: date = Field(index=True)
     symbol: str = Field(max_length=20, index=True)
+
+    # Khối ngoại (Foreign Trading)
+    foreign_buy_volume: int | None = None
+    foreign_sell_volume: int | None = None
+    foreign_net_volume: int | None = None
     foreign_buy_value: float | None = None
     foreign_sell_value: float | None = None
     foreign_net_value: float | None = None
+    foreign_room_total: float | None = None
+    foreign_room_current: float | None = None
+    foreign_room_pct: float | None = None
+
+    # Tự doanh (Proprietary Trading)
+    prop_buy_volume: int | None = None
+    prop_sell_volume: int | None = None
+    prop_net_volume: int | None = None
     prop_buy_value: float | None = None
     prop_sell_value: float | None = None
     prop_net_value: float | None = None
+
     source: str = Field(max_length=20)
 
 

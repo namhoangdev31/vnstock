@@ -21,15 +21,15 @@ from app.services.vnstock_service import vnstock_service
 
 logger = logging.getLogger(__name__)
 
-# Danh sách các chỉ số thị trường trọng yếu cần cập nhật hàng ngày
-CORE_INDEXES: list[str] = ["VNINDEX", "VN30", "HNX", "UPCOM"]
+# Danh sách các chỉ số thị trường trọng yếu và phái sinh cần cập nhật hàng ngày
+CORE_INDEXES: list[str] = ["VNINDEX", "VN30", "HNX", "UPCOM", "VN30F1M"]
 
 
 def run_sync_daily_market_job(
     session: Session | None = None,
     delay_sec: float = 0.3,
 ) -> list[DataSyncLog]:
-    """Đồng bộ dữ liệu nến ngày (OHLCV Daily) cho các chỉ số chính và rổ cổ phiếu VN30 sau phiên ATC."""
+    """Đồng bộ dữ liệu nến ngày (OHLCV Daily) cho các chỉ số chính, rổ VN30, dòng tiền tổ chức và basis phái sinh."""
 
     def _execute(mgr: DataSyncManager) -> list[DataSyncLog]:
         logs: list[DataSyncLog] = []
@@ -56,6 +56,23 @@ def run_sync_daily_market_job(
                 time.sleep(delay_sec)
             except Exception as exc:
                 logger.warning("Lỗi đồng bộ nến ngày cho %s: %s", sym, exc)
+
+        # 2. Đồng bộ dòng tiền tổ chức (Khối ngoại, Tự doanh, Room ngoại)
+        try:
+            logger.info("Đang đồng bộ dòng tiền tổ chức...")
+            flow_log = mgr.sync_institutional_flow(
+                trading_date=None, symbols=target_symbols
+            )
+            logs.append(flow_log)
+        except Exception as exc:
+            logger.warning("Lỗi đồng bộ dòng tiền tổ chức: %s", exc)
+
+        # 3. Tính toán và cập nhật Basis phái sinh (VN30F1M - VN30)
+        try:
+            logger.info("Đang tính toán Basis phái sinh VN30F1M...")
+            mgr.compute_daily_derivative_basis(trading_date=None)
+        except Exception as exc:
+            logger.warning("Lỗi tính toán Basis phái sinh: %s", exc)
 
         return logs
 

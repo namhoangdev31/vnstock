@@ -208,9 +208,17 @@ def test_run_sync_daily_market_job(session: Session) -> None:  # noqa: F811
         status="success",
         rows_synced=1,
     )
+    flow_log = DataSyncLog(
+        sync_type="institutional_flow",
+        source="VCI",
+        status="success",
+        rows_synced=5,
+    )
     with (
         patch("app.cron.sync_daily_market.vnstock_service", mock_svc),
         patch.object(DataSyncManager, "sync_daily_incremental", return_value=mock_log),
+        patch.object(DataSyncManager, "sync_institutional_flow", return_value=flow_log),
+        patch.object(DataSyncManager, "compute_daily_derivative_basis", return_value=1),
     ):
         logs = run_sync_daily_market_job(session=session, delay_sec=0)
         assert len(logs) >= 1

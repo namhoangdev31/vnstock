@@ -64,7 +64,9 @@ from app.models.models_stock import (
     OHLCVRecord,
     PriceHistoryResponse,
     RelatedAssetsResponse,
+    ScreenerResultItem,
     StockOHLCVDaily,
+    StockScreenerResponse,
     StockSymbol,
     StockSymbolPublic,
     StockSymbolsPublic,
@@ -378,6 +380,140 @@ def get_financial_ratios(
 
     data = [FinancialRatioPublic.model_validate(r) for r in ratios]
     return FinancialRatiosResponse(symbol=sym_code, count=len(data), data=data)
+
+
+# ---------------------------------------------------------------------------
+# GET /stock/screener — Quantitative & financial ratio screener
+# ---------------------------------------------------------------------------
+
+
+@router.get("/screener", response_model=StockScreenerResponse)
+def screen_stocks(
+    session: SessionDep,
+    current_user: CurrentUser,  # noqa: ARG001
+    min_pe: float | None = Query(default=None, description="P/E tối thiểu"),
+    max_pe: float | None = Query(default=None, description="P/E tối đa"),
+    min_pb: float | None = Query(default=None, description="P/B tối thiểu"),
+    max_pb: float | None = Query(default=None, description="P/B tối đa"),
+    min_roe: float | None = Query(default=None, description="ROE (%) tối thiểu"),
+    max_roe: float | None = Query(default=None, description="ROE (%) tối đa"),
+    min_roa: float | None = Query(default=None, description="ROA (%) tối thiểu"),
+    max_debt_to_equity: float | None = Query(
+        default=None, description="Tỷ lệ Nợ/Vốn CSH tối đa"
+    ),
+    min_revenue_growth_yoy: float | None = Query(
+        default=None, description="Tăng trưởng doanh thu YoY (%) tối thiểu"
+    ),
+    min_net_profit_growth_yoy: float | None = Query(
+        default=None, description="Tăng trưởng LNST YoY (%) tối thiểu"
+    ),
+    min_ev_to_ebitda: float | None = Query(
+        default=None, description="EV/EBITDA tối thiểu"
+    ),
+    max_ev_to_ebitda: float | None = Query(
+        default=None, description="EV/EBITDA tối đa"
+    ),
+    exchange: str | None = Query(
+        default=None, description="Sàn niêm yết (HOSE, HNX, UPCOM)"
+    ),
+    industry: str | None = Query(default=None, description="Ngành"),
+    period: str = Query(default="quarter", description="quarter hoặc year"),
+    year: int | None = Query(default=None, description="Năm tài chính"),
+    quarter: int | None = Query(default=None, description="Quý tài chính (1-4)"),
+    skip: int = 0,
+    limit: int = 50,
+) -> Any:
+    """Bộ lọc cổ phiếu định lượng dựa trên các trường chỉ số tài chính đã được đánh chỉ mục B-Tree."""
+    # Nếu không cung cấp năm, tìm kỳ báo cáo mới nhất trong cơ sở dữ liệu
+    target_year = year
+    target_quarter = quarter
+    if target_year is None:
+        latest_period = session.exec(
+            select(FinancialRatio.year, FinancialRatio.quarter)
+            .where(FinancialRatio.period == period)
+            .order_by(
+                col(FinancialRatio.year).desc(), col(FinancialRatio.quarter).desc()
+            )
+            .limit(1)
+        ).first()
+        if latest_period:
+            target_year, target_quarter = latest_period[0], latest_period[1]
+
+    query = (
+        select(FinancialRatio, StockSymbol)
+        .join(StockSymbol, col(FinancialRatio.symbol) == col(StockSymbol.symbol))
+        .where(col(FinancialRatio.period) == period)
+    )
+
+    if target_year is not None:
+        query = query.where(col(FinancialRatio.year) == target_year)
+    if target_quarter is not None and period == "quarter":
+        query = query.where(col(FinancialRatio.quarter) == target_quarter)
+
+    if min_pe is not None:
+        query = query.where(col(FinancialRatio.pe) >= min_pe)
+    if max_pe is not None:
+        query = query.where(col(FinancialRatio.pe) <= max_pe)
+    if min_pb is not None:
+        query = query.where(col(FinancialRatio.pb) >= min_pb)
+    if max_pb is not None:
+        query = query.where(col(FinancialRatio.pb) <= max_pb)
+    if min_roe is not None:
+        query = query.where(col(FinancialRatio.roe) >= min_roe)
+    if max_roe is not None:
+        query = query.where(col(FinancialRatio.roe) <= max_roe)
+    if min_roa is not None:
+        query = query.where(col(FinancialRatio.roa) >= min_roa)
+    if max_debt_to_equity is not None:
+        query = query.where(col(FinancialRatio.debt_to_equity) <= max_debt_to_equity)
+    if min_revenue_growth_yoy is not None:
+        query = query.where(
+            col(FinancialRatio.revenue_growth_yoy) >= min_revenue_growth_yoy
+        )
+    if min_net_profit_growth_yoy is not None:
+        query = query.where(
+            col(FinancialRatio.net_profit_growth_yoy) >= min_net_profit_growth_yoy
+        )
+    if min_ev_to_ebitda is not None:
+        query = query.where(col(FinancialRatio.ev_to_ebitda) >= min_ev_to_ebitda)
+    if max_ev_to_ebitda is not None:
+        query = query.where(col(FinancialRatio.ev_to_ebitda) <= max_ev_to_ebitda)
+
+    if exchange:
+        query = query.where(col(StockSymbol.exchange) == exchange.strip().upper())
+    if industry:
+        query = query.where(col(StockSymbol.industry) == industry.strip())
+
+    # Tối ưu hóa truy vấn với Index B-Tree
+    query = (
+        query.order_by(col(FinancialRatio.roe).desc().nullslast())
+        .offset(skip)
+        .limit(limit)
+    )
+    records = session.exec(query).all()
+
+    items = [
+        ScreenerResultItem(
+            symbol=sym.symbol,
+            organ_name=sym.organ_name,
+            exchange=sym.exchange,
+            industry=sym.industry,
+            fiscal_year=ratio.year,
+            fiscal_quarter=ratio.quarter,
+            pe=ratio.pe,
+            pb=ratio.pb,
+            roe=ratio.roe,
+            roa=ratio.roa,
+            debt_to_equity=ratio.debt_to_equity,
+            ev_to_ebitda=ratio.ev_to_ebitda,
+            net_profit_margin=ratio.net_margin,
+            revenue_growth_yoy=ratio.revenue_growth_yoy,
+            net_profit_growth_yoy=ratio.net_profit_growth_yoy,
+        )
+        for ratio, sym in records
+    ]
+
+    return StockScreenerResponse(count=len(items), data=items)
 
 
 # ---------------------------------------------------------------------------

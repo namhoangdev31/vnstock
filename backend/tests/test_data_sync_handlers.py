@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel import Session, SQLModel, col, create_engine, select
 
+from app.models.models_quant import InstitutionalFlow
 from app.models.models_stock import (
     CapitalHistory,
     CompanyOfficer,
@@ -18,11 +20,13 @@ from app.models.models_stock import (
     FinancialRatio,
     IndexConstituent,
     InsiderTrading,
+    StockOHLCVDaily,
     StockSymbol,
 )
 from app.services.data_sync import (
     STOCK_SYMBOL_UPDATE_FIELDS,
     DataSyncManager,
+    _extract_financial_summary_fields,
 )
 from app.services.vnstock_service import VnstockServiceError
 
@@ -653,3 +657,246 @@ def test_sync_capital_history(sqlite_session: Session) -> None:
     assert len(rows) == 1
     assert rows[0].shares_issued == 150000000.0
     assert rows[0].charter_capital == 14500000000000.0
+
+
+def test_extract_financial_summary_fields() -> None:
+    """Kiểm tra helper _extract_financial_summary_fields phân tích chính xác 14 chỉ tiêu tài chính cốt lõi."""
+    payload = {
+        "Doanh thu thuần về bán hàng và cung cấp dịch vụ": "52851000000000",
+        "Lợi nhuận gộp về bán hàng và cung cấp dịch vụ": "19850000000000",
+        "Lợi nhuận thuần từ hoạt động kinh doanh": "9200000000000",
+        "Lợi nhuận sau thuế của công ty mẹ": "7800000000000",
+        "TỔNG CỘNG TÀI SẢN": "60200000000000",
+        "TÀI SẢN NGẮN HẠN": "38500000000000",
+        "Tiền và các khoản tương đương tiền": "8500000000000",
+        "NỢ PHẢI TRẢ": "28500000000000",
+        "Vay và nợ thuê tài chính ngắn hạn": "12000000000000",
+        "Vay và nợ thuê tài chính dài hạn": "1500000000000",
+        "VỐN CHỦ SỞ HỮU": "31700000000000",
+        "Lưu chuyển tiền thuần từ hoạt động kinh doanh": "6500000000000",
+        "Lưu chuyển tiền thuần từ hoạt động đầu tư": "-3200000000000",
+        "Lưu chuyển tiền thuần từ hoạt động tài chính": "-1500000000000",
+    }
+    res = _extract_financial_summary_fields(payload)
+    assert res["revenue"] == 52851000000000.0
+    assert res["gross_profit"] == 19850000000000.0
+    assert res["operating_profit"] == 9200000000000.0
+    assert res["net_profit_parent"] == 7800000000000.0
+    assert res["total_assets"] == 60200000000000.0
+    assert res["short_term_assets"] == 38500000000000.0
+    assert res["cash_and_equivalents"] == 8500000000000.0
+    assert res["total_liabilities"] == 28500000000000.0
+    assert res["short_term_debt"] == 12000000000000.0
+    assert res["long_term_debt"] == 1500000000000.0
+    assert res["owners_equity"] == 31700000000000.0
+    assert res["operating_cash_flow"] == 6500000000000.0
+    assert res["investing_cash_flow"] == -3200000000000.0
+    assert res["financing_cash_flow"] == -1500000000000.0
+
+
+def test_sync_financial_ratios_with_explicit_columns(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ chỉ số tài chính lưu đầy đủ 17 cột tường minh phục vụ screener."""
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    # Dạng bảng phẳng với các chỉ số nâng cao
+    mock_svc.fetch_financial_ratios.return_value = pd.DataFrame(
+        [
+            {
+                "symbol": "FPT",
+                "year": 2026,
+                "quarter": 2,
+                "pe": 18.5,
+                "pb": 3.8,
+                "roe": 26.5,
+                "roa": 12.8,
+                "debt_to_equity": 0.42,
+                "ev_to_ebitda": 14.2,
+                "ev_to_ebit": 16.5,
+                "p_to_fcf": 21.0,
+                "ebit_margin": 17.5,
+                "ebitda_margin": 22.0,
+                "revenue_growth_yoy": 19.5,
+                "net_profit_growth_yoy": 21.2,
+            }
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_financial_ratios("FPT", period="quarter")
+    assert log.status == "success"
+    assert log.rows_synced == 1
+
+    ratio = sqlite_session.exec(
+        select(FinancialRatio)
+        .where(FinancialRatio.symbol == "FPT")
+        .where(FinancialRatio.year == 2026)
+        .where(FinancialRatio.quarter == 2)
+    ).first()
+    assert ratio is not None
+    assert ratio.pe == 18.5
+    assert ratio.roe == 26.5
+    assert ratio.ev_to_ebitda == 14.2
+    assert ratio.revenue_growth_yoy == 19.5
+    assert ratio.net_profit_growth_yoy == 21.2
+
+
+def test_compute_daily_derivative_basis(sqlite_session: Session) -> None:
+    """Kiểm tra tính toán Basis phái sinh = VN30F1M.close - VN30.close."""
+    d = date(2026, 9, 18)
+    # Tạo nến cơ sở VN30 và nến phái sinh VN30F1M
+    bar_vn30 = StockOHLCVDaily(
+        symbol="VN30",
+        trading_date=d,
+        open=1240.0,
+        high=1248.0,
+        low=1239.0,
+        close=1245.5,
+        volume=250000000,
+        source="VCI",
+    )
+    bar_vn30f = StockOHLCVDaily(
+        symbol="VN30F1M",
+        trading_date=d,
+        open=1242.0,
+        high=1252.0,
+        low=1241.0,
+        close=1250.0,
+        volume=180000,
+        open_interest=52000,
+        source="VCI",
+    )
+    sqlite_session.add(bar_vn30)
+    sqlite_session.add(bar_vn30f)
+    sqlite_session.commit()
+
+    manager = DataSyncManager(sqlite_session, MagicMock())
+    updated_count = manager.compute_daily_derivative_basis(trading_date=d)
+    assert updated_count == 1
+
+    # Kiểm tra basis đã được tính và lưu
+    sqlite_session.refresh(bar_vn30f)
+    assert bar_vn30f.basis == 4.5  # 1250.0 - 1245.5
+
+
+def test_sync_institutional_flow_explicit_metrics(sqlite_session: Session) -> None:
+    """Kiểm tra đồng bộ dữ liệu dòng tiền khối ngoại và tự doanh với đầy đủ khối lượng và room ngoại."""
+    d = date(2026, 9, 18)
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    # Giả lập trả về từ VCI/TCBS
+    mock_svc.fetch_foreign_flow.return_value = pd.DataFrame(
+        [
+            {
+                "symbol": "FPT",
+                "buy_val": 150000000000.0,
+                "sell_val": 80000000000.0,
+                "net_val": 70000000000.0,
+                "buy_vol": 1150000,
+                "sell_vol": 615000,
+                "net_vol": 535000,
+                "room_total": 490000000,
+                "room_current": 4900000,
+                "room_pct": 1.0,
+            }
+        ]
+    )
+    mock_svc.fetch_prop_flow.return_value = pd.DataFrame(
+        [
+            {
+                "symbol": "FPT",
+                "buy_val": 30000000000.0,
+                "sell_val": 10000000000.0,
+                "net_val": 20000000000.0,
+                "buy_vol": 230000,
+                "sell_vol": 77000,
+                "net_vol": 153000,
+            }
+        ]
+    )
+    manager = DataSyncManager(sqlite_session, mock_svc)
+    log = manager.sync_institutional_flow(trading_date=d, symbols=["FPT"])
+    assert log.status == "success"
+    assert log.rows_synced == 1
+
+    flow = sqlite_session.exec(
+        select(InstitutionalFlow)
+        .where(InstitutionalFlow.symbol == "FPT")
+        .where(InstitutionalFlow.trading_date == d)
+    ).first()
+    assert flow is not None
+    assert flow.foreign_net_value == 70000000000.0
+    assert flow.foreign_net_volume == 535000
+    assert flow.prop_net_value == 20000000000.0
+    assert flow.prop_net_volume == 153000
+    assert flow.foreign_room_pct == 1.0
+
+
+def test_screener_query_with_explicit_indexes(sqlite_session: Session) -> None:
+    """Kiểm tra truy vấn lọc cổ phiếu định lượng hoạt động chính xác trên các trường số học."""
+    # Tạo các mã chứng khoán
+    s1 = StockSymbol(
+        symbol="FPT", organ_name="Tập đoàn FPT", exchange="HOSE", industry="Công nghệ"
+    )
+    s2 = StockSymbol(
+        symbol="HPG", organ_name="Tập đoàn Hòa Phát", exchange="HOSE", industry="Thép"
+    )
+    s3 = StockSymbol(
+        symbol="VND",
+        organ_name="Chứng khoán VNDirect",
+        exchange="VND",
+        industry="Chứng khoán",
+    )
+    sqlite_session.add_all([s1, s2, s3])
+    sqlite_session.commit()
+
+    # Thêm chỉ số tài chính quý 2/2026
+    r1 = FinancialRatio(
+        symbol="FPT",
+        period="quarter",
+        year=2026,
+        quarter=2,
+        pe=18.0,
+        roe=28.0,
+        debt_to_equity=0.4,
+        revenue_growth_yoy=20.0,
+        source="VCI",
+    )
+    r2 = FinancialRatio(
+        symbol="HPG",
+        period="quarter",
+        year=2026,
+        quarter=2,
+        pe=9.5,
+        roe=16.0,
+        debt_to_equity=0.8,
+        revenue_growth_yoy=12.0,
+        source="VCI",
+    )
+    r3 = FinancialRatio(
+        symbol="VND",
+        period="quarter",
+        year=2026,
+        quarter=2,
+        pe=14.0,
+        roe=11.0,
+        debt_to_equity=1.5,
+        revenue_growth_yoy=5.0,
+        source="VCI",
+    )
+    sqlite_session.add_all([r1, r2, r3])
+    sqlite_session.commit()
+
+    # Lọc cổ phiếu có ROE >= 20% và Nợ/VCSH <= 0.5
+    query = (
+        select(FinancialRatio, StockSymbol)
+        .join(StockSymbol, col(FinancialRatio.symbol) == col(StockSymbol.symbol))
+        .where(col(FinancialRatio.period) == "quarter")
+        .where(col(FinancialRatio.year) == 2026)
+        .where(col(FinancialRatio.quarter) == 2)
+        .where(col(FinancialRatio.roe) >= 20.0)
+        .where(col(FinancialRatio.debt_to_equity) <= 0.5)
+    )
+    matched = sqlite_session.exec(query).all()
+    assert len(matched) == 1
+    ratio, sym = matched[0]
+    assert sym.symbol == "FPT"
+    assert ratio.roe == 28.0

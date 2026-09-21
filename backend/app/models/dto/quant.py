@@ -124,9 +124,18 @@ class InstitutionalFlowPublic(SQLModel):
 
     trading_date: date
     symbol: str
+    foreign_buy_volume: int | None = None
+    foreign_sell_volume: int | None = None
+    foreign_net_volume: int | None = None
     foreign_buy_value: float | None = None
     foreign_sell_value: float | None = None
     foreign_net_value: float | None = None
+    foreign_room_total: float | None = None
+    foreign_room_current: float | None = None
+    foreign_room_pct: float | None = None
+    prop_buy_volume: int | None = None
+    prop_sell_volume: int | None = None
+    prop_net_volume: int | None = None
     prop_buy_value: float | None = None
     prop_sell_value: float | None = None
     prop_net_value: float | None = None

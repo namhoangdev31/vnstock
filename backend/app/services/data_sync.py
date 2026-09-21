@@ -23,6 +23,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import Session, col, select
 
 from app.models import VN_TZ
+from app.models.models_quant import InstitutionalFlow
 from app.models.models_stock import (
     BondSpecification,
     CapitalHistory,
@@ -60,6 +61,7 @@ from app.services.sync_constants import (
     FINANCIAL_REPORT_UPDATE_FIELDS,
     INDEX_CONSTITUENT_UPDATE_FIELDS,
     INSIDER_TRADING_UPDATE_FIELDS,
+    INSTITUTIONAL_FLOW_UPDATE_FIELDS,
     INTRADAY_OHLCV_UPDATE_FIELDS,
     META_FINANCIAL_KEYS,
     STANDARD_INDEXES,
@@ -69,6 +71,114 @@ from app.services.sync_constants import (
 from app.services.vnstock_service import VnstockService, VnstockServiceError
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_financial_summary_fields(
+    data: dict[str, Any],
+) -> dict[str, float | None]:
+    """Trích xuất các chỉ tiêu tài chính cốt lõi vào các cột số học tường minh từ payload."""
+    res: dict[str, float | None] = {
+        "revenue": None,
+        "gross_profit": None,
+        "operating_profit": None,
+        "net_profit_parent": None,
+        "total_assets": None,
+        "short_term_assets": None,
+        "cash_and_equivalents": None,
+        "total_liabilities": None,
+        "short_term_debt": None,
+        "long_term_debt": None,
+        "owners_equity": None,
+        "operating_cash_flow": None,
+        "investing_cash_flow": None,
+        "financing_cash_flow": None,
+    }
+    for k, v in data.items():
+        if v is None:
+            continue
+        try:
+            val = float(v)
+        except (ValueError, TypeError):
+            continue
+        kl = str(k).lower()
+        if "doanh thu thuần" in kl or "net_revenue" in kl or kl == "revenue":
+            if res["revenue"] is None:
+                res["revenue"] = val
+        elif "lợi nhuận gộp" in kl or "gross_profit" in kl:
+            if res["gross_profit"] is None:
+                res["gross_profit"] = val
+        elif (
+            "lợi nhuận thuần từ hoạt động kinh doanh" in kl or "operating_profit" in kl
+        ):
+            if res["operating_profit"] is None:
+                res["operating_profit"] = val
+        elif (
+            "lợi nhuận sau thuế của công ty mẹ" in kl
+            or "cổ đông công ty mẹ" in kl
+            or "net_profit_parent" in kl
+            or "lnst cty mẹ" in kl
+        ):
+            if res["net_profit_parent"] is None:
+                res["net_profit_parent"] = val
+        elif ("lợi nhuận sau thuế" in kl or "net_profit" in kl) and res[
+            "net_profit_parent"
+        ] is None:
+            res["net_profit_parent"] = val
+        elif "tổng cộng tài sản" in kl or "tổng tài sản" in kl or "total_assets" in kl:
+            if res["total_assets"] is None:
+                res["total_assets"] = val
+        elif "tài sản ngắn hạn" in kl or "short_term_assets" in kl:
+            if res["short_term_assets"] is None:
+                res["short_term_assets"] = val
+        elif (
+            "tiền và các khoản tương đương tiền" in kl
+            or "tiền và tương đương tiền" in kl
+            or kl == "cash"
+        ):
+            if res["cash_and_equivalents"] is None:
+                res["cash_and_equivalents"] = val
+        elif (
+            "nợ phải trả" in kl or "tổng nợ phải trả" in kl or "total_liabilities" in kl
+        ):
+            if res["total_liabilities"] is None:
+                res["total_liabilities"] = val
+        elif (
+            "vay và nợ thuê tài chính ngắn hạn" in kl
+            or "vay ngắn hạn" in kl
+            or "short_term_debt" in kl
+        ):
+            if res["short_term_debt"] is None:
+                res["short_term_debt"] = val
+        elif (
+            "vay và nợ thuê tài chính dài hạn" in kl
+            or "vay dài hạn" in kl
+            or "long_term_debt" in kl
+        ):
+            if res["long_term_debt"] is None:
+                res["long_term_debt"] = val
+        elif "vốn chủ sở hữu" in kl or "owners_equity" in kl or kl == "equity":
+            if res["owners_equity"] is None:
+                res["owners_equity"] = val
+        elif (
+            "lưu chuyển tiền thuần từ hoạt động kinh doanh" in kl
+            or "operating_cash_flow" in kl
+            or "ocf" == kl
+        ):
+            if res["operating_cash_flow"] is None:
+                res["operating_cash_flow"] = val
+        elif (
+            "lưu chuyển tiền thuần từ hoạt động đầu tư" in kl
+            or "investing_cash_flow" in kl
+        ):
+            if res["investing_cash_flow"] is None:
+                res["investing_cash_flow"] = val
+        elif (
+            "lưu chuyển tiền thuần từ hoạt động tài chính" in kl
+            or "financing_cash_flow" in kl
+        ):
+            if res["financing_cash_flow"] is None:
+                res["financing_cash_flow"] = val
+    return res
 
 
 class DataSyncManager:
@@ -1281,9 +1391,11 @@ class DataSyncManager:
                             "id": report_id,
                             "symbol": symbol,
                             "report_type": report_type,
+                            "report_scope": "consolidated",
                             "period": clean_period,
                             "year": year,
                             "quarter": quarter,
+                            "is_audited": False,
                             "data": {},
                             "source": self.svc.source,
                             "updated_at": now_utc,
@@ -1331,9 +1443,11 @@ class DataSyncManager:
                             "id": uuid.uuid4(),
                             "symbol": symbol,
                             "report_type": report_type,
+                            "report_scope": "consolidated",
                             "period": clean_period,
                             "year": year,
                             "quarter": quarter,
+                            "is_audited": False,
                             "data": row_data,
                             "source": self.svc.source,
                             "updated_at": now_utc,
@@ -1343,10 +1457,15 @@ class DataSyncManager:
             if not records:
                 return 0
 
+            # Điền các cột số học tường minh từ payload data
+            for rec in records:
+                summary_vals = _extract_financial_summary_fields(rec["data"])
+                rec.update(summary_vals)
+
             count = self._bulk_upsert(
                 FinancialReport,
                 records,
-                ["symbol", "report_type", "period", "year", "quarter"],
+                ["symbol", "report_type", "report_scope", "period", "year", "quarter"],
                 FINANCIAL_REPORT_UPDATE_FIELDS,
             )
             self.session.commit()
@@ -1360,7 +1479,7 @@ class DataSyncManager:
         symbol: str,
         period: str = "quarter",
     ) -> DataSyncLog:
-        """Đồng bộ bộ chỉ số tài chính định lượng & định giá (P/E, P/B, ROE, ROA, EPS...) bằng Bulk UPSERT."""
+        """Đồng bộ bộ chỉ số tài chính định lượng & định giá bằng Bulk UPSERT vào các cột số học tường minh."""
 
         def _task() -> int:
             clean_period = "quarter" if "quarter" in period.lower() else "year"
@@ -1412,6 +1531,23 @@ class DataSyncManager:
                         "quick_ratio": None,
                         "current_ratio": None,
                         "dividend_yield": None,
+                        "ev_to_ebitda": None,
+                        "ev_to_ebit": None,
+                        "p_to_fcf": None,
+                        "p_to_ocf": None,
+                        "fcf": None,
+                        "ebit_margin": None,
+                        "ebitda_margin": None,
+                        "asset_turnover": None,
+                        "inventory_turnover": None,
+                        "receivables_turnover": None,
+                        "debt_to_assets": None,
+                        "interest_coverage": None,
+                        "cash_ratio": None,
+                        "revenue_growth_yoy": None,
+                        "net_profit_growth_yoy": None,
+                        "revenue_growth_qoq": None,
+                        "net_profit_growth_qoq": None,
                         "data": {},
                         "source": self.svc.source,
                         "updated_at": now_utc,
@@ -1468,6 +1604,94 @@ class DataSyncManager:
                         target_field = "current_ratio"
                     elif "cổ tức" in item_name or "dividend_yield" in item_id:
                         target_field = "dividend_yield"
+                    elif (
+                        "ev/ebitda" in item_name
+                        or "ev_to_ebitda" in item_id
+                        or "ev_ebitda" in item_id
+                    ):
+                        target_field = "ev_to_ebitda"
+                    elif (
+                        "ev/ebit" in item_name
+                        or "ev_to_ebit" in item_id
+                        or "ev_ebit" in item_id
+                    ):
+                        target_field = "ev_to_ebit"
+                    elif (
+                        "p/fcf" in item_name
+                        or "p_to_fcf" in item_id
+                        or "giá/dòng tiền tự do" in item_name
+                    ):
+                        target_field = "p_to_fcf"
+                    elif (
+                        "p/ocf" in item_name
+                        or "p_to_ocf" in item_id
+                        or "giá/dòng tiền hđkd" in item_name
+                    ):
+                        target_field = "p_to_ocf"
+                    elif (
+                        "free cash flow" in item_name
+                        or "fcf" == item_id
+                        or "dòng tiền tự do" in item_name
+                    ):
+                        target_field = "fcf"
+                    elif (
+                        "ebit margin" in item_name
+                        or "ebit_margin" in item_id
+                        or "biên ebit" in item_name
+                    ):
+                        target_field = "ebit_margin"
+                    elif (
+                        "ebitda margin" in item_name
+                        or "ebitda_margin" in item_id
+                        or "biên ebitda" in item_name
+                    ):
+                        target_field = "ebitda_margin"
+                    elif (
+                        "vòng quay tổng tài sản" in item_name
+                        or "asset_turnover" in item_id
+                    ):
+                        target_field = "asset_turnover"
+                    elif (
+                        "vòng quay hàng tồn kho" in item_name
+                        or "inventory_turnover" in item_id
+                    ):
+                        target_field = "inventory_turnover"
+                    elif (
+                        "vòng quay các khoản phải thu" in item_name
+                        or "receivables_turnover" in item_id
+                    ):
+                        target_field = "receivables_turnover"
+                    elif (
+                        "nợ/tổng tài sản" in item_name
+                        or "debt_to_assets" in item_id
+                        or "d/a" in item_name
+                    ):
+                        target_field = "debt_to_assets"
+                    elif (
+                        "khả năng trả lãi" in item_name
+                        or "interest_coverage" in item_id
+                    ):
+                        target_field = "interest_coverage"
+                    elif "thanh toán tiền mặt" in item_name or "cash_ratio" in item_id:
+                        target_field = "cash_ratio"
+                    elif (
+                        "tăng trưởng doanh thu" in item_name and "cùng kỳ" in item_name
+                    ) or "revenue_growth_yoy" in item_id:
+                        target_field = "revenue_growth_yoy"
+                    elif (
+                        "tăng trưởng lợi nhuận" in item_name and "cùng kỳ" in item_name
+                    ) or "net_profit_growth_yoy" in item_id:
+                        target_field = "net_profit_growth_yoy"
+                    elif (
+                        "tăng trưởng doanh thu" in item_name
+                        and "quý trước" in item_name
+                    ) or "revenue_growth_qoq" in item_id:
+                        target_field = "revenue_growth_qoq"
+                    elif (
+                        "tăng trưởng lợi nhuận" in item_name
+                        and "quý trước" in item_name
+                    ) or "net_profit_growth_qoq" in item_id:
+                        target_field = "net_profit_growth_qoq"
 
                     for col_name in period_cols:
                         raw_val = row.get(col_name)
@@ -1533,6 +1757,51 @@ class DataSyncManager:
                             ),
                             "dividend_yield": self._extract_float(
                                 row, "dividend_yield", "dividendYield"
+                            ),
+                            "ev_to_ebitda": self._extract_float(
+                                row, "ev_to_ebitda", "ev/ebitda"
+                            ),
+                            "ev_to_ebit": self._extract_float(
+                                row, "ev_to_ebit", "ev/ebit"
+                            ),
+                            "p_to_fcf": self._extract_float(row, "p_to_fcf", "p/fcf"),
+                            "p_to_ocf": self._extract_float(row, "p_to_ocf", "p/ocf"),
+                            "fcf": self._extract_float(row, "fcf", "free_cash_flow"),
+                            "ebit_margin": self._extract_float(
+                                row, "ebit_margin", "ebitMargin"
+                            ),
+                            "ebitda_margin": self._extract_float(
+                                row, "ebitda_margin", "ebitdaMargin"
+                            ),
+                            "asset_turnover": self._extract_float(
+                                row, "asset_turnover", "assetTurnover"
+                            ),
+                            "inventory_turnover": self._extract_float(
+                                row, "inventory_turnover", "inventoryTurnover"
+                            ),
+                            "receivables_turnover": self._extract_float(
+                                row, "receivables_turnover", "receivablesTurnover"
+                            ),
+                            "debt_to_assets": self._extract_float(
+                                row, "debt_to_assets", "debtToAssets"
+                            ),
+                            "interest_coverage": self._extract_float(
+                                row, "interest_coverage", "interestCoverage"
+                            ),
+                            "cash_ratio": self._extract_float(
+                                row, "cash_ratio", "cashRatio"
+                            ),
+                            "revenue_growth_yoy": self._extract_float(
+                                row, "revenue_growth_yoy", "revenueGrowth"
+                            ),
+                            "net_profit_growth_yoy": self._extract_float(
+                                row, "net_profit_growth_yoy", "netProfitGrowth"
+                            ),
+                            "revenue_growth_qoq": self._extract_float(
+                                row, "revenue_growth_qoq"
+                            ),
+                            "net_profit_growth_qoq": self._extract_float(
+                                row, "net_profit_growth_qoq"
                             ),
                             "data": row_data,
                             "source": self.svc.source,
@@ -2104,6 +2373,10 @@ class DataSyncManager:
                         sym_result["ratios"] = self.sync_financial_ratios(
                             sym_clean
                         ).status
+                    elif st == "institutional_flow":
+                        sym_result["institutional_flow"] = self.sync_institutional_flow(
+                            symbols=[sym_clean]
+                        ).status
                     elif st == "daily":
                         daily_logs = self.sync_daily_incremental([sym_clean])
                         sym_result["daily"] = (
@@ -2120,6 +2393,225 @@ class DataSyncManager:
             time.sleep(delay_sec)
 
         return batch_summary
+
+    def compute_daily_derivative_basis(self, trading_date: date | None = None) -> int:
+        """Tính toán và lưu độ lệch cơ sở (basis = VN30F1M.close - VN30.close) vào StockOHLCVDaily."""
+        target_date = trading_date or date.today()
+        vn30 = self.session.exec(
+            select(StockOHLCVDaily).where(
+                StockOHLCVDaily.symbol == "VN30",
+                StockOHLCVDaily.trading_date == target_date,
+            )
+        ).first()
+        f1m = self.session.exec(
+            select(StockOHLCVDaily).where(
+                StockOHLCVDaily.symbol == "VN30F1M",
+                StockOHLCVDaily.trading_date == target_date,
+            )
+        ).first()
+        if vn30 and f1m:
+            f1m.basis = round(f1m.close - vn30.close, 2)
+            self.session.add(f1m)
+            self.session.commit()
+            return 1
+        return 0
+
+    def sync_institutional_flow(
+        self,
+        trading_date: date | None = None,
+        symbols: list[str] | None = None,
+    ) -> DataSyncLog:
+        """Đồng bộ dòng tiền tổ chức: Khối ngoại & Tự doanh (Động cơ 2: Thanh khoản)."""
+        target_date = trading_date or date.today()
+
+        def _task() -> int:
+            target_symbols = symbols
+            if target_symbols is None:
+                active = self.session.exec(
+                    select(StockSymbol.symbol).where(StockSymbol.is_active == True)  # noqa: E712
+                ).all()
+                target_symbols = list(active)
+
+            # Thử lấy dữ liệu dòng tiền khối ngoại và tự doanh trực tiếp từ API nếu có
+            foreign_map: dict[str, Any] = {}
+            prop_map: dict[str, Any] = {}
+            fetch_foreign_fn = getattr(self.svc, "fetch_foreign_flow", None)
+            if callable(fetch_foreign_fn):
+                try:
+                    f_df = fetch_foreign_fn(trading_date=target_date)
+                    if f_df is not None and not f_df.empty:
+                        sym_c = self._resolve_symbol_column(f_df) or "symbol"
+                        for _, row in f_df.iterrows():
+                            s = str(row.get(sym_c, "")).strip().upper()
+                            if s:
+                                foreign_map[s] = row
+                except Exception:
+                    pass
+
+            fetch_prop_fn = getattr(self.svc, "fetch_prop_flow", None)
+            if callable(fetch_prop_fn):
+                try:
+                    p_df = fetch_prop_fn(trading_date=target_date)
+                    if p_df is not None and not p_df.empty:
+                        sym_c = self._resolve_symbol_column(p_df) or "symbol"
+                        for _, row in p_df.iterrows():
+                            s = str(row.get(sym_c, "")).strip().upper()
+                            if s:
+                                prop_map[s] = row
+                except Exception:
+                    pass
+
+            records: list[dict[str, Any]] = []
+
+            for sym in target_symbols:
+                sym_clean = sym.strip().upper()
+                f_row = foreign_map.get(sym_clean)
+                p_row = prop_map.get(sym_clean)
+
+                daily_bar = self.session.exec(
+                    select(StockOHLCVDaily).where(
+                        StockOHLCVDaily.symbol == sym_clean,
+                        StockOHLCVDaily.trading_date == target_date,
+                    )
+                ).first()
+
+                close_price = daily_bar.close if daily_bar else 0.0
+
+                # Khối ngoại
+                if f_row is not None:
+                    foreign_buy_vol = self._extract_int(
+                        f_row, "buy_vol", "foreign_buy_volume", default=None
+                    )
+                    foreign_sell_vol = self._extract_int(
+                        f_row, "sell_vol", "foreign_sell_volume", default=None
+                    )
+                    foreign_net_vol = self._extract_int(
+                        f_row, "net_vol", "foreign_net_volume", default=None
+                    )
+                    foreign_buy_val = self._extract_float(
+                        f_row, "buy_val", "foreign_buy_value"
+                    )
+                    foreign_sell_val = self._extract_float(
+                        f_row, "sell_val", "foreign_sell_value"
+                    )
+                    foreign_net_val = self._extract_float(
+                        f_row, "net_val", "foreign_net_value"
+                    )
+                    foreign_room_total = self._extract_int(
+                        f_row, "room_total", "foreign_room_total", default=None
+                    )
+                    foreign_room_current = self._extract_int(
+                        f_row, "room_current", "foreign_room_current", default=None
+                    )
+                    foreign_room_pct = self._extract_float(
+                        f_row, "room_pct", "foreign_room_pct"
+                    )
+                else:
+                    foreign_buy_vol = (
+                        daily_bar.foreign_buy_volume if daily_bar else None
+                    )
+                    foreign_sell_vol = (
+                        daily_bar.foreign_sell_volume if daily_bar else None
+                    )
+                    foreign_net_vol = (
+                        daily_bar.foreign_net_volume if daily_bar else None
+                    )
+                    foreign_buy_val = (
+                        float(foreign_buy_vol) * close_price
+                        if foreign_buy_vol is not None
+                        else None
+                    )
+                    foreign_sell_val = (
+                        float(foreign_sell_vol) * close_price
+                        if foreign_sell_vol is not None
+                        else None
+                    )
+                    foreign_net_val = (
+                        float(foreign_net_vol) * close_price
+                        if foreign_net_vol is not None
+                        else None
+                    )
+                    profile = self.session.exec(
+                        select(CompanyProfile).where(CompanyProfile.symbol == sym_clean)
+                    ).first()
+                    foreign_room_pct = (
+                        profile.foreign_ownership_pct if profile else None
+                    )
+                    foreign_room_total = (
+                        int(profile.max_foreign_ownership_pct)
+                        if profile and profile.max_foreign_ownership_pct is not None
+                        else None
+                    )
+                    foreign_room_current = None
+
+                # Tự doanh
+                if p_row is not None:
+                    prop_buy_vol = self._extract_int(
+                        p_row, "buy_vol", "prop_buy_volume", default=None
+                    )
+                    prop_sell_vol = self._extract_int(
+                        p_row, "sell_vol", "prop_sell_volume", default=None
+                    )
+                    prop_net_vol = self._extract_int(
+                        p_row, "net_vol", "prop_net_volume", default=None
+                    )
+                    prop_buy_val = self._extract_float(
+                        p_row, "buy_val", "prop_buy_value"
+                    )
+                    prop_sell_val = self._extract_float(
+                        p_row, "sell_val", "prop_sell_value"
+                    )
+                    prop_net_val = self._extract_float(
+                        p_row, "net_val", "prop_net_value"
+                    )
+                else:
+                    prop_buy_vol = None
+                    prop_sell_vol = None
+                    prop_net_vol = None
+                    prop_buy_val = None
+                    prop_sell_val = None
+                    prop_net_val = None
+
+                records.append(
+                    {
+                        "id": uuid.uuid4(),
+                        "trading_date": target_date,
+                        "symbol": sym_clean,
+                        "foreign_buy_volume": foreign_buy_vol,
+                        "foreign_sell_volume": foreign_sell_vol,
+                        "foreign_net_volume": foreign_net_vol,
+                        "foreign_buy_value": foreign_buy_val,
+                        "foreign_sell_value": foreign_sell_val,
+                        "foreign_net_value": foreign_net_val,
+                        "foreign_room_total": foreign_room_total,
+                        "foreign_room_current": foreign_room_current,
+                        "foreign_room_pct": foreign_room_pct,
+                        "prop_buy_volume": prop_buy_vol,
+                        "prop_sell_volume": prop_sell_vol,
+                        "prop_net_volume": prop_net_vol,
+                        "prop_buy_value": prop_buy_val,
+                        "prop_sell_value": prop_sell_val,
+                        "prop_net_value": prop_net_val,
+                        "source": self.svc.source,
+                    }
+                )
+
+            if not records:
+                return 0
+
+            count = self._bulk_upsert(
+                InstitutionalFlow,
+                records,
+                ["trading_date", "symbol", "source"],
+                INSTITUTIONAL_FLOW_UPDATE_FIELDS,
+            )
+            self.session.commit()
+            logger.info(
+                "Đã đồng bộ dòng tiền tổ chức cho %d mã ngày %s", count, target_date
+            )
+            return count
+
+        return self._run_sync_task("institutional_flow", _task)
 
 
 __all__ = [

@@ -46,6 +46,8 @@ class OHLCVRecord(SQLModel):
     close: float
     volume: int
     value: float | None = None
+    open_interest: int | None = None
+    basis: float | None = None
 
 
 class PriceHistoryResponse(SQLModel):
@@ -85,10 +87,29 @@ class FinancialReportPublic(SQLModel):
     """Bản ghi báo cáo tài chính trả về cho API."""
 
     report_type: str
+    report_scope: str = "consolidated"
     period: str
     year: int
     quarter: int | None = None
-    data: dict
+    is_audited: bool = False
+
+    # Các chỉ tiêu tài chính cốt lõi
+    revenue: float | None = None
+    gross_profit: float | None = None
+    operating_profit: float | None = None
+    net_profit_parent: float | None = None
+    total_assets: float | None = None
+    short_term_assets: float | None = None
+    cash_and_equivalents: float | None = None
+    total_liabilities: float | None = None
+    short_term_debt: float | None = None
+    long_term_debt: float | None = None
+    owners_equity: float | None = None
+    operating_cash_flow: float | None = None
+    investing_cash_flow: float | None = None
+    financing_cash_flow: float | None = None
+
+    data: dict | None = None
 
 
 class FinancialReportsResponse(SQLModel):
@@ -198,6 +219,32 @@ class FinancialRatioPublic(SQLModel):
     quick_ratio: float | None = None
     current_ratio: float | None = None
     dividend_yield: float | None = None
+
+    # Định giá & Dòng tiền bổ sung
+    ev_to_ebitda: float | None = None
+    ev_to_ebit: float | None = None
+    p_to_fcf: float | None = None
+    p_to_ocf: float | None = None
+    fcf: float | None = None
+
+    # Hiệu quả hoạt động & Lợi nhuận bổ sung
+    ebit_margin: float | None = None
+    ebitda_margin: float | None = None
+    asset_turnover: float | None = None
+    inventory_turnover: float | None = None
+    receivables_turnover: float | None = None
+
+    # Cơ cấu vốn & Khả năng thanh toán bổ sung
+    debt_to_assets: float | None = None
+    interest_coverage: float | None = None
+    cash_ratio: float | None = None
+
+    # Tăng trưởng (Growth)
+    revenue_growth_yoy: float | None = None
+    net_profit_growth_yoy: float | None = None
+    revenue_growth_qoq: float | None = None
+    net_profit_growth_qoq: float | None = None
+
     data: dict[str, Any] | None = None
 
 
@@ -349,3 +396,31 @@ class CapitalHistoryResponse(SQLModel):
     symbol: str
     count: int
     data: list[CapitalHistoryPublic]
+
+
+class ScreenerResultItem(SQLModel):
+    """Bản ghi kết quả lọc cổ phiếu theo chỉ số tài chính & tăng trưởng."""
+
+    symbol: str
+    organ_name: str | None = None
+    exchange: str | None = None
+    industry: str | None = None
+    fiscal_year: int
+    fiscal_quarter: int | None = None
+    pe: float | None = None
+    pb: float | None = None
+    roe: float | None = None
+    roa: float | None = None
+    debt_to_equity: float | None = None
+    ev_to_ebitda: float | None = None
+    net_profit_margin: float | None = None
+    revenue_growth_yoy: float | None = None
+    net_profit_growth_yoy: float | None = None
+    market_cap: float | None = None
+
+
+class StockScreenerResponse(SQLModel):
+    """Phản hồi kết quả bộ lọc cổ phiếu định lượng."""
+
+    count: int
+    data: list[ScreenerResultItem]

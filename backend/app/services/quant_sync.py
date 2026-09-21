@@ -85,10 +85,35 @@ def aggregate_tick_orderflow(
         total_vol = int(grp["volume"].sum())
         notional = float(grp["_notional"].sum())
         vwap = round(notional / total_vol, 4) if total_vol else None
+        p_open = (
+            float(grp["price"].iloc[0])
+            if "price" in grp.columns and len(grp) > 0
+            else 0.0
+        )
+        p_high = (
+            float(grp["price"].max())
+            if "price" in grp.columns and len(grp) > 0
+            else 0.0
+        )
+        p_low = (
+            float(grp["price"].min())
+            if "price" in grp.columns and len(grp) > 0
+            else 0.0
+        )
+        p_close = (
+            float(grp["price"].iloc[-1])
+            if "price" in grp.columns and len(grp) > 0
+            else 0.0
+        )
         rows.append(
             TickFlowAggregated(
                 symbol=str(grp["symbol"].iloc[0]) if "symbol" in grp.columns else "",
-                timestamp=minute,
+                interval_start=minute,
+                open=p_open,
+                high=p_high,
+                low=p_low,
+                close=p_close,
+                volume=total_vol,
                 aggressive_buy_volume=buy_vol,
                 aggressive_sell_volume=sell_vol,
                 volume_delta=buy_vol - sell_vol,
@@ -97,7 +122,7 @@ def aggregate_tick_orderflow(
                 source=source,
             )
         )
-    rows.sort(key=lambda r: r.timestamp)
+    rows.sort(key=lambda r: r.interval_start)
     return rows
 
 
@@ -238,7 +263,7 @@ class QuantSyncManager:
                 existing = self.session.exec(
                     select(TickFlowAggregated)
                     .where(TickFlowAggregated.symbol == bar.symbol)
-                    .where(TickFlowAggregated.timestamp == bar.timestamp)
+                    .where(TickFlowAggregated.interval_start == bar.interval_start)
                 ).first()
                 if existing:
                     existing.aggressive_buy_volume = bar.aggressive_buy_volume
