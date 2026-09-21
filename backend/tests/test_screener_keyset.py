@@ -175,3 +175,77 @@ def test_screener_filters(screener_db_session: Session) -> None:
     )
     # HPG (pe=8.5), DELISTED bị loại vì is_active=False
     assert [x.symbol for x in res_pe.items] == ["HPG"]
+
+
+def test_screen_stocks_endpoint_with_keyset_cursor(
+    screener_db_session: Session,
+) -> None:
+    """Kiểm tra endpoint screen_stocks tích hợp ScreenerService và trả về metadata keyset."""
+    from app.api.routes.stock import screen_stocks
+    from app.models import User
+
+    # Thêm 2 bản ghi snapshot vào DB
+    today = date(2026, 9, 21)
+    inst1 = Instrument(
+        instrument_type="EQUITY",
+        canonical_code="EQUITY:VNM",
+        exchange="HOSE",
+        currency="VND",
+    )
+    inst2 = Instrument(
+        instrument_type="EQUITY",
+        canonical_code="EQUITY:FPT",
+        exchange="HOSE",
+        currency="VND",
+    )
+    screener_db_session.add(inst1)
+    screener_db_session.add(inst2)
+    screener_db_session.commit()
+
+    snap1 = ScreenerSnapshot(
+        instrument_id=inst1.id,
+        snapshot_date=today,
+        symbol="VNM",
+        exchange="HOSE",
+        is_active=True,
+        roe=20.0,
+        pe=15.0,
+    )
+    snap2 = ScreenerSnapshot(
+        instrument_id=inst2.id,
+        snapshot_date=today,
+        symbol="FPT",
+        exchange="HOSE",
+        is_active=True,
+        roe=30.0,
+        pe=18.0,
+    )
+    screener_db_session.add(snap1)
+    screener_db_session.add(snap2)
+    screener_db_session.commit()
+
+    mock_user = User(email="test@example.com", hashed_password="hashed_test_password")
+
+    # Trang 1: limit=1
+    resp1 = screen_stocks(
+        session=screener_db_session,
+        current_user=mock_user,
+        limit=1,
+    )
+    assert resp1.count == 1
+    assert resp1.has_next is True
+    assert resp1.data[0].symbol == "FPT"  # ROE 30.0 > 20.0
+    assert resp1.next_cursor_roe == 30.0
+    assert resp1.next_cursor_instrument_id == inst2.id
+
+    # Trang 2: Dùng con trỏ từ trang 1
+    resp2 = screen_stocks(
+        session=screener_db_session,
+        current_user=mock_user,
+        limit=1,
+        cursor_roe=resp1.next_cursor_roe,
+        cursor_instrument_id=resp1.next_cursor_instrument_id,
+    )
+    assert resp2.count == 1
+    assert resp2.data[0].symbol == "VNM"
+    assert resp2.has_next is False

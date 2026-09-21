@@ -140,7 +140,8 @@ def upgrade() -> None:
         sa.Column("foreign_room_pct", sa.Float(), nullable=True),
         sa.Column("t2_pressure_score", sa.Float(), nullable=True),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.UniqueConstraint("snapshot_date", "instrument_id", name="uq_screener_hist_date_instrument"),
+        sa.Column("as_of", sa.DateTime(timezone=True), nullable=False, default=sa.func.now(), index=True),
+        sa.UniqueConstraint("snapshot_date", "instrument_id", "as_of", name="uq_screener_hist_date_instrument_as_of"),
     )
 
     op.create_index(
@@ -148,9 +149,15 @@ def upgrade() -> None:
         "screener_snapshot_historical",
         ["snapshot_date", "roe"],
     )
+    op.create_index(
+        "ix_screener_hist_inst_as_of",
+        "screener_snapshot_historical",
+        ["instrument_id", "as_of"],
+    )
 
 
 def downgrade() -> None:
+    op.drop_index("ix_screener_hist_inst_as_of", table_name="screener_snapshot_historical")
     op.drop_index("ix_screener_hist_date_roe", table_name="screener_snapshot_historical")
     op.drop_table("screener_snapshot_historical")
     op.drop_index("ix_screener_snapshot_pe_inst", table_name="screener_snapshot")

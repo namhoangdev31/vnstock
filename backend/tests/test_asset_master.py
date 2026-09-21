@@ -214,3 +214,37 @@ def test_instrument_relation_underlying_mapping(db_session: Session) -> None:
     assert loaded_rel is not None
     assert loaded_rel.target_instrument_id == idx.id
     assert loaded_rel.relation_type == "UNDERLYING_OF_FUTURES"
+
+
+def test_vn30f1m_continuous_instrument_and_roll_rule(db_session: Session) -> None:
+    """Kiểm tra Instrument liên tục VN30F1M có roll_rule và alias CONTINUOUS_ROLLING chuẩn."""
+    continuous_fut = Instrument(
+        instrument_type="FUTURES",
+        canonical_code="FUTURES:VN30F1M:CONTINUOUS",
+        exchange="VNFE",
+        currency="VND",
+        roll_rule="THIRD_THURSDAY",
+        is_active=True,
+    )
+    db_session.add(continuous_fut)
+    db_session.commit()
+    db_session.refresh(continuous_fut)
+
+    alias = InstrumentAlias(
+        instrument_id=continuous_fut.id,
+        alias="VN30F1M",
+        alias_type="CONTINUOUS_ROLLING",
+        valid_from=date(2017, 8, 10),
+    )
+    db_session.add(alias)
+    db_session.commit()
+
+    loaded = db_session.exec(
+        select(Instrument).where(
+            Instrument.canonical_code == "FUTURES:VN30F1M:CONTINUOUS"
+        )
+    ).first()
+    assert loaded is not None
+    assert loaded.roll_rule == "THIRD_THURSDAY"
+    assert loaded.aliases[0].alias == "VN30F1M"
+    assert loaded.aliases[0].alias_type == "CONTINUOUS_ROLLING"

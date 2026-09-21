@@ -105,5 +105,31 @@ def test_worker_daemon_single_cycle() -> None:
 def test_worker_advisory_lock_sqlite_fallback() -> None:
     """Kiểm tra hàm try_acquire_worker_advisory_lock tương thích với SQLite."""
     engine = create_engine("sqlite:///:memory:")
-    assert try_acquire_worker_advisory_lock(engine) is True
-    release_worker_advisory_lock(engine)  # Không được ném lỗi
+    has_lock, conn = try_acquire_worker_advisory_lock(engine)
+    assert has_lock is True
+    assert conn is None
+    release_worker_advisory_lock(conn)  # Không được ném lỗi
+
+
+def test_worker_advisory_lock_postgres_lifecycle() -> None:
+    """Kiểm tra vòng đời chiếm và giải phóng advisory lock trên PostgreSQL connection."""
+    from unittest.mock import MagicMock
+
+    mock_engine = MagicMock()
+    mock_engine.dialect.name = "postgresql"
+
+    mock_conn = MagicMock()
+    mock_conn.closed = False
+    mock_conn.execute.return_value.scalar.return_value = True
+    mock_engine.connect.return_value = mock_conn
+
+    # 1. Chiếm lock -> connection phải được giữ mở (chưa close)
+    has_lock, conn = try_acquire_worker_advisory_lock(mock_engine)
+    assert has_lock is True
+    assert conn is mock_conn
+    mock_conn.close.assert_not_called()
+
+    # 2. Giải phóng lock -> execute pg_advisory_unlock và đóng connection
+    release_worker_advisory_lock(conn)
+    mock_conn.execute.assert_called()
+    mock_conn.close.assert_called_once()

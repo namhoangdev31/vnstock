@@ -424,3 +424,6 @@ class StockScreenerResponse(SQLModel):
 
     count: int
     data: list[ScreenerResultItem]
+    has_next: bool | None = None
+    next_cursor_roe: float | None = None
+    next_cursor_instrument_id: uuid.UUID | None = None

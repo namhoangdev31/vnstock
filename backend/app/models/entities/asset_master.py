@@ -64,6 +64,9 @@ class Instrument(AwareSQLModel, table=True):
     figi: str | None = Field(default=None, max_length=20, unique=True, index=True)
     exchange: str = Field(max_length=20, index=True)  # HOSE, HNX, UPCOM, VNFE
     currency: str = Field(default="VND", max_length=10)
+    roll_rule: str | None = Field(
+        default=None, max_length=100
+    )  # e.g. "THIRD_THURSDAY", "EXPIRATION_MINUS_1D"
     is_active: bool = Field(default=True, index=True)
     created_at: datetime = Field(
         default_factory=get_datetime_utc,

@@ -103,8 +103,9 @@ class ScreenerSnapshotHistorical(ScreenerSnapshotBase, table=True):
 
     __tablename__ = "screener_snapshot_historical"
     __table_args__ = (
-        UniqueConstraint("snapshot_date", "instrument_id"),
+        UniqueConstraint("snapshot_date", "instrument_id", "as_of"),
         Index("ix_screener_hist_date_roe", "snapshot_date", "roe"),
+        Index("ix_screener_hist_inst_as_of", "instrument_id", "as_of"),
     )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -113,3 +114,8 @@ class ScreenerSnapshotHistorical(ScreenerSnapshotBase, table=True):
         index=True,
     )
     snapshot_date: date = Field(index=True)
+    as_of: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        index=True,
+    )

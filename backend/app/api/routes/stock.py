@@ -16,6 +16,7 @@ from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.cron.sync_daily_market import run_sync_daily_market_job
 from app.cron.sync_quarterly_financials import run_sync_quarterly_financials_job
+from app.models.entities.screener import ScreenerSnapshot
 from app.models.models_quant import (
     InstitutionalFlow,
     InstitutionalFlowPublic,
@@ -74,6 +75,7 @@ from app.models.models_stock import (
 )
 from app.services.cache import metadata_cache, realtime_cache
 from app.services.data_sync import DataSyncManager
+from app.services.screener_service import ScreenerCursor, ScreenerService
 from app.services.vnstock_service import VnstockServiceError, vnstock_service
 
 router = APIRouter(prefix="/stock", tags=["stock"])
@@ -422,9 +424,111 @@ def screen_stocks(
     quarter: int | None = Query(default=None, description="Quý tài chính (1-4)"),
     skip: int = 0,
     limit: int = 50,
+    cursor_roe: float | None = Query(
+        default=None, description="Con trỏ ROE cho Keyset Pagination"
+    ),
+    cursor_instrument_id: uuid.UUID | None = Query(
+        default=None, description="Con trỏ Instrument ID cho Keyset Pagination"
+    ),
 ) -> Any:
-    """Bộ lọc cổ phiếu định lượng dựa trên các trường chỉ số tài chính đã được đánh chỉ mục B-Tree."""
-    # Nếu không cung cấp năm, tìm kỳ báo cáo mới nhất trong cơ sở dữ liệu
+    """Bộ lọc cổ phiếu định lượng tối ưu SLA P95 < 10ms qua Keyset Pagination & ScreenerSnapshot."""
+    # 1. Ưu tiên sử dụng ScreenerService với bảng pre-computed ScreenerSnapshot (Keyset Pagination)
+    clean_cursor_id = (
+        cursor_instrument_id if isinstance(cursor_instrument_id, uuid.UUID) else None
+    )
+    clean_cursor_roe = (
+        float(cursor_roe) if isinstance(cursor_roe, (int, float)) else None
+    )
+    cursor = None
+    if clean_cursor_id is not None:
+        cursor = ScreenerCursor(roe=clean_cursor_roe, instrument_id=clean_cursor_id)
+
+    # Kiểm tra sự tồn tại của snapshot trong cơ sở dữ liệu
+    has_snapshots = False
+    try:
+        has_snapshots = (
+            session.exec(select(func.count()).select_from(ScreenerSnapshot)).one() > 0
+        )
+    except Exception:
+        has_snapshots = False
+
+    clean_limit = limit if isinstance(limit, int) else 50
+    clean_exchange = exchange if isinstance(exchange, str) else None
+    clean_industry = industry if isinstance(industry, str) else None
+    clean_min_pe = float(min_pe) if isinstance(min_pe, (int, float)) else None
+    clean_max_pe = float(max_pe) if isinstance(max_pe, (int, float)) else None
+    clean_min_roe = float(min_roe) if isinstance(min_roe, (int, float)) else None
+
+    clean_year = year if isinstance(year, int) else date.today().year
+    clean_quarter = quarter if isinstance(quarter, int) else None
+
+    if has_snapshots or cursor is not None:
+        screener_res = ScreenerService.query_screener_keyset(
+            session=session,
+            page_size=clean_limit,
+            cursor=cursor,
+            exchange=clean_exchange,
+            industry=clean_industry,
+            min_pe=clean_min_pe,
+            max_pe=clean_max_pe,
+            min_roe=clean_min_roe,
+        )
+        if screener_res.items or cursor is not None:
+            items = [
+                ScreenerResultItem(
+                    symbol=item.symbol,
+                    organ_name=item.symbol,
+                    exchange=item.exchange,
+                    industry=item.industry,
+                    fiscal_year=clean_year,
+                    fiscal_quarter=clean_quarter,
+                    pe=float(item.pe) if item.pe is not None else None,
+                    pb=float(item.pb) if item.pb is not None else None,
+                    roe=float(item.roe) if item.roe is not None else None,
+                    roa=float(item.roa) if item.roa is not None else None,
+                    debt_to_equity=(
+                        float(item.debt_to_equity)
+                        if item.debt_to_equity is not None
+                        else None
+                    ),
+                    ev_to_ebitda=(
+                        float(item.ev_to_ebitda)
+                        if item.ev_to_ebitda is not None
+                        else None
+                    ),
+                    net_profit_margin=(
+                        float(item.net_margin) if item.net_margin is not None else None
+                    ),
+                    revenue_growth_yoy=(
+                        float(item.revenue_growth_yoy)
+                        if item.revenue_growth_yoy is not None
+                        else None
+                    ),
+                    net_profit_growth_yoy=(
+                        float(item.profit_growth_yoy)
+                        if item.profit_growth_yoy is not None
+                        else None
+                    ),
+                )
+                for item in screener_res.items
+            ]
+            next_roe = (
+                screener_res.next_cursor.roe if screener_res.next_cursor else None
+            )
+            next_inst_id = (
+                screener_res.next_cursor.instrument_id
+                if screener_res.next_cursor
+                else None
+            )
+            return StockScreenerResponse(
+                count=len(items),
+                data=items,
+                has_next=screener_res.has_next,
+                next_cursor_roe=next_roe,
+                next_cursor_instrument_id=next_inst_id,
+            )
+
+    # 2. Fallback sang logic truy vấn cũ nếu hệ thống chưa tạo pre-computed snapshot
     target_year = year
     target_quarter = quarter
     if target_year is None:

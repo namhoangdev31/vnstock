@@ -224,17 +224,17 @@ class VnstockCapabilityRegistry:
             module="Retail",
             action="gold()",
             status=CapabilityStatus.AVAILABLE,
-            primary_source="retail",
-            fallback_sources=[],
-            description="Giá vàng miếng SJC và giá vàng quốc tế quy đổi",
+            primary_source="sjc",
+            fallback_sources=["btmc"],
+            description="Giá vàng miếng SJC và Bảo Tín Minh Châu (BTMC) trong nước",
         ),
         "retail.exchange_rate": CapabilityInfo(
             module="Retail",
             action="exchange_rate()",
             status=CapabilityStatus.AVAILABLE,
-            primary_source="retail",
+            primary_source="vcb",
             fallback_sources=[],
-            description="Tỷ giá USD/VND thị trường liên ngân hàng",
+            description="Tỷ giá hối đoái ngoại tệ chính thức từ Vietcombank (VCB)",
         ),
         # 6. Market Module (Đầy đủ 10 lớp tài sản v4.0.6)
         "market.quote": CapabilityInfo(

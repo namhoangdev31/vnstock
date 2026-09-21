@@ -22,7 +22,7 @@ from sqlalchemy import and_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import Session, col, select
 
-from app.models import VN_TZ
+from app.models import VN_TZ, InstrumentAlias
 from app.models.models_quant import InstitutionalFlow
 from app.models.models_stock import (
     BondSpecification,
@@ -42,6 +42,10 @@ from app.models.models_stock import (
     StockOHLCVDaily,
     StockOHLCVIntraday,
     StockSymbol,
+)
+from app.services.financial_revision_service import (
+    acquire_financial_report_lock,
+    record_financial_report_revision,
 )
 from app.services.sync_constants import (
     BOND_SPECIFICATION_UPDATE_FIELDS,
@@ -190,7 +194,9 @@ class DataSyncManager:
         vnstock_svc: VnstockService | None = None,
     ) -> None:
         self.session = session
-        self.svc = vnstock_svc or VnstockService()
+        self.svc = vnstock_svc or VnstockService(db_session=session)
+        if getattr(self.svc, "db_session", None) is None:
+            self.svc.db_session = session
 
     @property
     def is_postgresql(self) -> bool:
@@ -1457,10 +1463,20 @@ class DataSyncManager:
             if not records:
                 return 0
 
+            # Phân giải canonical instrument_id nếu có
+            alias_row = self.session.exec(
+                select(InstrumentAlias.instrument_id)
+                .where(InstrumentAlias.alias == symbol)
+                .where(col(InstrumentAlias.valid_to).is_(None))
+            ).first()
+            inst_id = alias_row if alias_row else None
+
             # Điền các cột số học tường minh từ payload data
             for rec in records:
                 summary_vals = _extract_financial_summary_fields(rec["data"])
                 rec.update(summary_vals)
+                if inst_id is not None:
+                    rec["instrument_id"] = inst_id
 
             count = self._bulk_upsert(
                 FinancialReport,
@@ -1469,7 +1485,47 @@ class DataSyncManager:
                 FINANCIAL_REPORT_UPDATE_FIELDS,
             )
             self.session.commit()
-            logger.info("Synced %d financial records for %s", count, symbol)
+
+            # Ghi nhận FinancialReportRevision và thực hiện Transaction Advisory Lock theo natural key
+            for rec in records:
+                q_val = rec.get("quarter")
+                if inst_id is not None:
+                    acquire_financial_report_lock(
+                        self.session,
+                        inst_id,
+                        rec["report_type"],
+                        rec["report_scope"],
+                        rec["period"],
+                        rec["year"],
+                        q_val,
+                    )
+
+                query = (
+                    select(FinancialReport)
+                    .where(FinancialReport.symbol == symbol)
+                    .where(FinancialReport.report_type == rec["report_type"])
+                    .where(FinancialReport.report_scope == rec["report_scope"])
+                    .where(FinancialReport.period == rec["period"])
+                    .where(FinancialReport.year == rec["year"])
+                )
+                if q_val is not None:
+                    query = query.where(FinancialReport.quarter == q_val)
+                else:
+                    query = query.where(col(FinancialReport.quarter).is_(None))
+
+                master_report = self.session.exec(query).first()
+                if master_report is not None:
+                    record_financial_report_revision(
+                        session=self.session,
+                        report=master_report,
+                        data=rec["data"],
+                        published_at=None,
+                        restated_reason="Sync update",
+                    )
+            self.session.commit()
+            logger.info(
+                "Synced %d financial records and audit revisions for %s", count, symbol
+            )
             return count
 
         return self._run_sync_task("financials", _task, symbol=symbol)

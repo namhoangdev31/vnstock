@@ -7,10 +7,14 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from sqlalchemy import create_engine
-from sqlmodel import Session, SQLModel
+from sqlmodel import Session, SQLModel, select
 
 from app.models.entities.asset_master import Instrument
-from app.models.entities.stock import FinancialReport, StockSymbol
+from app.models.entities.stock import (
+    FinancialReport,
+    FinancialReportRevision,
+    StockSymbol,
+)
 from app.services.financial_revision_service import (
     acquire_financial_report_lock,
     canonical_payload_hash,
@@ -219,3 +223,42 @@ def test_advisory_lock_helper(db_session: Session) -> None:
         year=2026,
         quarter=2,
     )
+
+
+def test_sync_financials_creates_revisions_in_data_sync(db_session: Session) -> None:
+    """Kiểm tra DataSyncManager.sync_financials() tự động tích hợp FinancialRevisionService."""
+    from unittest.mock import MagicMock
+
+    import pandas as pd
+
+    from app.services.data_sync import DataSyncManager
+
+    sym = StockSymbol(symbol="HPG", organ_name="Tập đoàn Hòa Phát", exchange="HOSE")
+    db_session.add(sym)
+    db_session.commit()
+
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_financials.return_value = pd.DataFrame(
+        [
+            {
+                "year": 2026,
+                "quarter": 1,
+                "revenue": 35000000000000.0,
+                "net_profit": 3200000000000.0,
+            }
+        ]
+    )
+
+    manager = DataSyncManager(db_session, mock_svc)
+    log = manager.sync_financials(
+        "HPG", report_type="income_statement", period="quarter"
+    )
+    assert log.rows_synced == 1
+    assert log.status == "success"
+
+    revisions = db_session.exec(select(FinancialReportRevision)).all()
+    assert len(revisions) == 1
+    assert revisions[0].revision_number == 1
+    assert revisions[0].is_provisional is True
+    assert revisions[0].payload_hash is not None

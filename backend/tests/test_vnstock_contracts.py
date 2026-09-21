@@ -1,5 +1,7 @@
 """Contract tests for Vnstock v4 Capability Registry, Source Provenance and Availability."""
 
+import pytest
+
 from app.services.vnstock_registry import (
     CapabilityStatus,
     DataAvailability,
@@ -154,3 +156,32 @@ def test_vnstock_service_source_provenance():
     assert service.last_successful_source is None
     # Source candidate priority
     assert service.sources == ["vci", "kbs", "msn"]
+
+    # Record success for KBS
+    service.record_success("kbs")
+    assert service.last_successful_source == "kbs"
+
+
+def test_vnstock_service_circuit_breaker_integration():
+    """Test VnstockService honors circuit breaker state and tracks failures."""
+    from unittest.mock import MagicMock
+
+    from app.services.rate_limit import CircuitBreakerOpenError
+
+    mock_limiter = MagicMock()
+    # Giả lập VCI đang OPEN (không khả dụng)
+    mock_limiter.is_available.side_effect = lambda prov, **kw: prov != "vci"
+
+    service = VnstockService(limiter=mock_limiter)
+
+    # Gọi _throttle cho VCI -> phải ném CircuitBreakerOpenError
+    with pytest.raises(CircuitBreakerOpenError):
+        service._throttle("vci")
+
+    # Gọi _throttle cho KBS (khả dụng) -> thành công
+    service._throttle("kbs")
+    mock_limiter.wait.assert_called_with(provider="kbs", session=None)
+
+    # Ghi nhận thất bại cho KBS
+    service.record_failure("kbs")
+    mock_limiter.record_failure.assert_called_with(provider="kbs", session=None)

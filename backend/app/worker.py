@@ -21,7 +21,7 @@ from types import FrameType
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Connection, Engine
 
 from app.core.db import engine
 from app.services.settlement_service import VietnamHolidayCalendar
@@ -109,41 +109,62 @@ def get_current_session_state(dt: datetime | None = None) -> MarketSessionState:
     return MarketSessionState.OVERNIGHT_SIMULATION
 
 
-def try_acquire_worker_advisory_lock(db_engine: Engine) -> bool:
+def try_acquire_worker_advisory_lock(
+    db_engine: Engine,
+) -> tuple[bool, Connection | None]:
     """Cố gắng chiếm độc quyền PostgreSQL Advisory Lock cho tiến trình Market Worker.
 
-    Trả về True nếu chiếm lock thành công; False nếu đã có worker khác đang giữ lock.
-    Với SQLite (testing/local), mặc định trả về True.
+    Trả về (True, conn) nếu chiếm lock thành công; connection này PHẢI được duy trì sống
+    suốt vòng đời daemon để bảo vệ session-level lock.
+    Trả về (False, None) nếu đã có worker khác đang giữ lock.
+    Với SQLite (testing/local), trả về (True, None).
     """
     if db_engine.dialect.name != "postgresql":
-        return True
+        return True, None
 
+    conn = db_engine.connect()
     try:
-        with db_engine.connect() as conn:
-            result = conn.execute(
-                text("SELECT pg_try_advisory_lock(:lock_id)"),
-                {"lock_id": WORKER_ADVISORY_LOCK_ID},
-            ).scalar()
-            return bool(result)
+        result = conn.execute(
+            text("SELECT pg_try_advisory_lock(:lock_id)"),
+            {"lock_id": WORKER_ADVISORY_LOCK_ID},
+        ).scalar()
+        if bool(result):
+            return True, conn
+        conn.close()
+        return False, None
     except Exception as exc:
         logger.error("Lỗi khi kiểm tra PostgreSQL Advisory Lock: %s", exc)
-        return False
+        conn.close()
+        return False, None
 
 
-def release_worker_advisory_lock(db_engine: Engine) -> None:
-    """Giải phóng PostgreSQL Advisory Lock khi tiến trình dừng."""
-    if db_engine.dialect.name != "postgresql":
+def release_worker_advisory_lock(target: Connection | Engine | None) -> None:
+    """Giải phóng PostgreSQL Advisory Lock trên connection đang giữ lock và đóng connection."""
+    if target is None:
+        return
+
+    if isinstance(target, Engine):
+        if target.dialect.name != "postgresql":
+            return
+        logger.warning(
+            "release_worker_advisory_lock nhận Engine thay vì Connection giữ lock. Lock session-level cần connection cụ thể."
+        )
+        return
+
+    conn: Connection = target
+    if conn.closed:
         return
 
     try:
-        with db_engine.connect() as conn:
-            conn.execute(
-                text("SELECT pg_advisory_unlock(:lock_id)"),
-                {"lock_id": WORKER_ADVISORY_LOCK_ID},
-            )
-            logger.info("Đã giải phóng thành công PostgreSQL Advisory Lock.")
+        conn.execute(
+            text("SELECT pg_advisory_unlock(:lock_id)"),
+            {"lock_id": WORKER_ADVISORY_LOCK_ID},
+        )
+        logger.info("Đã giải phóng thành công PostgreSQL Advisory Lock.")
     except Exception as exc:
         logger.warning("Không thể giải phóng advisory lock: %s", exc)
+    finally:
+        conn.close()
 
 
 class MarketWorkerDaemon:
@@ -153,6 +174,7 @@ class MarketWorkerDaemon:
         self.db_engine = db_engine
         self._running = False
         self._has_lock = False
+        self._lock_conn: Connection | None = None
         self.total_cycles = 0
         self.start_time: float | None = None
 
@@ -205,8 +227,10 @@ class MarketWorkerDaemon:
 
         logger.info("Khởi động Standalone Market Worker Daemon...")
 
-        # Chiếm Advisory Lock
-        self._has_lock = try_acquire_worker_advisory_lock(self.db_engine)
+        # Chiếm Advisory Lock và giữ Connection mở suốt thời gian chạy
+        self._has_lock, self._lock_conn = try_acquire_worker_advisory_lock(
+            self.db_engine
+        )
         if not self._has_lock:
             logger.warning(
                 "Đã có một tiến trình Market Worker khác đang giữ Advisory Lock (%d). Tiến trình này sẽ dừng ngay.",
@@ -234,7 +258,8 @@ class MarketWorkerDaemon:
         finally:
             self._running = False
             if self._has_lock:
-                release_worker_advisory_lock(self.db_engine)
+                release_worker_advisory_lock(self._lock_conn)
+                self._lock_conn = None
             logger.info(
                 "Market Worker Daemon đã kết thúc sạch sẽ (Total cycles: %d).",
                 self.total_cycles,

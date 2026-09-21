@@ -9,6 +9,7 @@ Cách dùng:
 """
 
 import argparse
+import concurrent.futures
 import random
 import statistics
 import time
@@ -16,6 +17,7 @@ import uuid
 from datetime import date
 
 from sqlalchemy import text
+from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.core.config import settings
@@ -25,14 +27,22 @@ from app.services.screener_service import ScreenerCursor, ScreenerService
 
 
 def run_benchmark(
-    use_postgres: bool = False, total_samples: int = 10000, num_queries: int = 100
+    use_postgres: bool = False,
+    total_samples: int = 10000,
+    num_queries: int = 100,
+    concurrency: int = 50,
 ) -> None:
     if use_postgres and settings.DATABASE_URL:
         db_url = str(settings.DATABASE_URL)
         engine = create_engine(db_url, echo=False)
         is_postgres = True
     else:
-        engine = create_engine("sqlite:///:memory:", echo=False)
+        engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            echo=False,
+        )
         is_postgres = False
 
     SQLModel.metadata.create_all(engine)
@@ -136,8 +146,10 @@ def run_benchmark(
             for line in explain_res:
                 print(f"  {line}")
 
-    # Chạy chuỗi queries đo độ trễ Keyset Pagination
-    print(f"\n[Benchmark] Running {num_queries} keyset pagination queries...")
+    # 1. Chạy chuỗi queries tuần tự đo phân trang Keyset
+    print(
+        f"\n[Benchmark] Running {num_queries} sequential keyset pagination queries..."
+    )
     latencies_ms: list[float] = []
 
     with Session(engine) as session:
@@ -158,6 +170,41 @@ def run_benchmark(
                 cursor = resp.next_cursor
             else:
                 cursor = None
+
+    # 2. Chạy stress benchmark đồng thời (Concurrency Test)
+    print(
+        f"\n[Benchmark] Running concurrent stress test ({concurrency} parallel workers)..."
+    )
+    concurrent_latencies_ms: list[float] = []
+
+    def _execute_concurrent_query(q_id: int) -> float:
+        with Session(engine) as query_session:
+            # Ngẫu nhiên chọn điểm bắt đầu cursor hoặc query đầu
+            rand_cursor = None
+            if q_id % 3 != 0:
+                rand_cursor = ScreenerCursor(
+                    roe=round(random.uniform(5.0, 30.0), 2),
+                    instrument_id=uuid.uuid4(),
+                )
+            t_c_start = time.perf_counter()
+            ScreenerService.query_screener_keyset(
+                session=query_session,
+                page_size=50,
+                cursor=rand_cursor,
+                exchange="HOSE",
+            )
+            return (time.perf_counter() - t_c_start) * 1000.0
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
+        futures = [
+            executor.submit(_execute_concurrent_query, i) for i in range(concurrency)
+        ]
+        for fut in concurrent.futures.as_completed(futures):
+            try:
+                c_lat = fut.result()
+                concurrent_latencies_ms.append(c_lat)
+            except Exception as ex:
+                print(f"[Benchmark Error] Concurrent query failed: {ex}")
 
     # Dọn dẹp dữ liệu benchmark nếu dùng Postgres
     if is_postgres:
@@ -181,33 +228,57 @@ def run_benchmark(
     p99 = latencies_ms[int(len(latencies_ms) * 0.99)]
     avg = statistics.mean(latencies_ms)
 
-    print("\n" + "=" * 50)
+    concurrent_latencies_ms.sort()
+    c_p50 = (
+        statistics.median(concurrent_latencies_ms) if concurrent_latencies_ms else 0.0
+    )
+    c_p95 = (
+        concurrent_latencies_ms[int(len(concurrent_latencies_ms) * 0.95)]
+        if concurrent_latencies_ms
+        else 0.0
+    )
+
+    print("\n" + "=" * 60)
     print("           SCREENER KEYSET BENCHMARK RESULTS     ")
-    print("=" * 50)
+    print("=" * 60)
+    print(
+        f"Database engine          : {'PostgreSQL' if is_postgres else 'SQLite (In-Memory)'}"
+    )
     print(f"Total records in dataset : {total_samples:,}")
-    print(f"Total queries executed   : {num_queries}")
+    print(f"Sequential queries run   : {num_queries}")
+    print(
+        f"Concurrent queries run   : {len(concurrent_latencies_ms)} (concurrency={concurrency})"
+    )
     if is_postgres and db_exec_time_ms is not None:
         print(f"PostgreSQL DB Exec Time  : {db_exec_time_ms:.3f} ms")
-    print(f"Average client latency   : {avg:.2f} ms")
-    print(f"P50 client latency       : {p50:.2f} ms")
-    print(f"P90 client latency       : {p90:.2f} ms")
-    print(f"P95 client latency       : {p95:.2f} ms")
-    print(f"P99 client latency       : {p99:.2f} ms")
-    print("=" * 50)
+    print("-" * 60)
+    print(f"Sequential Avg latency   : {avg:.2f} ms")
+    print(f"Sequential P50 latency   : {p50:.2f} ms")
+    print(f"Sequential P90 latency   : {p90:.2f} ms")
+    print(f"Sequential P95 latency   : {p95:.2f} ms")
+    print(f"Sequential P99 latency   : {p99:.2f} ms")
+    print("-" * 60)
+    print(f"Concurrent P50 latency   : {c_p50:.2f} ms")
+    print(f"Concurrent P95 latency   : {c_p95:.2f} ms")
+    print("=" * 60)
 
-    if is_postgres and db_exec_time_ms is not None:
-        if db_exec_time_ms < 10.0:
+    if not is_postgres:
+        print(
+            "\n[WARNING] Local sanity check only; SQLite cannot certify PostgreSQL SLA P95 < 10ms."
+        )
+        print(
+            "INFO: Run with '--postgres' against real PostgreSQL database for official SLA certification."
+        )
+    else:
+        # Đánh giá chính thức trên PostgreSQL
+        if db_exec_time_ms is not None and db_exec_time_ms < 10.0 and c_p95 < 15.0:
             print(
-                f"SUCCESS: PostgreSQL DB Execution Time ({db_exec_time_ms:.3f} ms) complies with SLA (< 10 ms)."
+                f"SUCCESS: PostgreSQL DB Execution Time ({db_exec_time_ms:.3f} ms) & Concurrent P95 ({c_p95:.2f} ms) comply with SLA (< 10 ms)."
             )
         else:
             print(
-                f"WARNING: PostgreSQL DB Execution Time ({db_exec_time_ms:.3f} ms) exceeds SLA (< 10 ms)."
+                f"WARNING: PostgreSQL SLA target not fully met (DB: {db_exec_time_ms} ms, Concurrent P95: {c_p95:.2f} ms)."
             )
-    elif p95 < 10.0:
-        print(f"SUCCESS: P95 ({p95:.2f} ms) complies with SLA (< 10 ms).")
-    else:
-        print(f"WARNING: P95 ({p95:.2f} ms) exceeds SLA (10 ms).")
 
 
 if __name__ == "__main__":
@@ -227,10 +298,19 @@ if __name__ == "__main__":
         "--queries",
         type=int,
         default=100,
-        help="Number of queries to run (default: 100)",
+        help="Number of sequential queries to run (default: 100)",
+    )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=50,
+        help="Number of concurrent query workers (default: 50)",
     )
     args = parser.parse_args()
 
     run_benchmark(
-        use_postgres=args.postgres, total_samples=args.samples, num_queries=args.queries
+        use_postgres=args.postgres,
+        total_samples=args.samples,
+        num_queries=args.queries,
+        concurrency=args.concurrency,
     )

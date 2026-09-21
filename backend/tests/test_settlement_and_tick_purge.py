@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel
 
+from app.models.entities.quant import TickFlowAggregated
 from app.models.entities.stock import StockOHLCVIntraday, StockSymbol, StockTickIntraday
 from app.services.settlement_service import SettlementService, SettlementStatus
 from app.services.tick_storage_service import TickStorageService
@@ -125,7 +126,7 @@ def test_safe_purge_gate_blocks_deletion_without_aggregation(
 
 
 def test_safe_purge_gate_allows_deletion_when_aggregated(db_session: Session) -> None:
-    """Safe Purge Gate: Cho phép xóa tick khi đã tổng hợp nến 1m thành công."""
+    """Safe Purge Gate: Kiểm tra điều kiện nến 1m đạt MIN_BARS_PER_SESSION hoặc có TickFlowAggregated."""
     sym = StockSymbol(symbol="VND", organ_name="VNDIRECT", exchange="HOSE")
     db_session.add(sym)
     db_session.commit()
@@ -141,7 +142,7 @@ def test_safe_purge_gate_allows_deletion_when_aggregated(db_session: Session) ->
     )
     db_session.add(tick)
 
-    # Thêm nến 1m đại diện cho ngày old_day
+    # 1. Nếu chỉ có 1 nến 1m (< MIN_BARS_PER_SESSION = 180) -> Gate CHẶN
     candle = StockOHLCVIntraday(
         symbol="VND",
         timestamp=datetime.combine(old_day, time(9, 30), tzinfo=VN_TZ),
@@ -156,10 +157,37 @@ def test_safe_purge_gate_allows_deletion_when_aggregated(db_session: Session) ->
     db_session.add(candle)
     db_session.commit()
 
-    # Gate thông qua vì đã có nến 1m
+    # Mặc định cần 180 nến -> 1 nến chưa đủ điều kiện
+    assert TickStorageService.verify_safe_purge_gate(db_session, old_day) is False
+    assert (
+        TickStorageService.purge_ticks_before_date(
+            db_session, cutoff_date=date(2026, 8, 15), force=False
+        )
+        == 0
+    )
+
+    # 2. Thêm bản ghi tổng hợp TickFlowAggregated -> Gate THÔNG QUA
+    flow_agg = TickFlowAggregated(
+        symbol="VND",
+        interval_start=datetime.combine(old_day, time(9, 30), tzinfo=VN_TZ),
+        open=18000.0,
+        high=18050.0,
+        low=17950.0,
+        close=18000.0,
+        volume=10000,
+        aggressive_buy_volume=0,
+        aggressive_sell_volume=10000,
+        volume_delta=-10000,
+        trade_count=1,
+        source="VCI",
+    )
+    db_session.add(flow_agg)
+    db_session.commit()
+
+    # Giờ đã có TickFlowAggregated -> Gate mở
     assert TickStorageService.verify_safe_purge_gate(db_session, old_day) is True
 
-    # Purge thành công tick cũ
+    # Purge thành công tick cũ bằng bulk delete
     purged_count = TickStorageService.purge_ticks_before_date(
         db_session,
         cutoff_date=date(2026, 8, 15),

@@ -47,6 +47,7 @@ def upgrade() -> None:
         sa.Column("figi", sa.String(length=20), nullable=True),
         sa.Column("exchange", sa.String(length=20), nullable=False),
         sa.Column("currency", sa.String(length=10), server_default="VND", nullable=False),
+        sa.Column("roll_rule", sa.String(length=100), nullable=True),
         sa.Column("is_active", sa.Boolean(), server_default=sa.text("true"), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -198,7 +199,7 @@ def upgrade() -> None:
 
             -- 3. Tạo Instrument liên tục (Continuous Rolling) cho VN30F1M
             INSERT INTO instrument (
-                id, legal_entity_id, instrument_type, canonical_code, exchange, currency, is_active, created_at, updated_at
+                id, legal_entity_id, instrument_type, canonical_code, exchange, currency, roll_rule, is_active, created_at, updated_at
             )
             VALUES (
                 gen_random_uuid(),
@@ -207,6 +208,7 @@ def upgrade() -> None:
                 'FUTURES:VN30F1M:CONTINUOUS',
                 'VNFE',
                 'VND',
+                'THIRD_THURSDAY',
                 TRUE,
                 NOW(),
                 NOW()
@@ -231,6 +233,7 @@ def upgrade() -> None:
             FROM stock_symbol s
             JOIN instrument i ON i.canonical_code = (
                 CASE 
+                    WHEN s.symbol = 'VN30F1M' THEN 'FUTURES:VN30F1M:CONTINUOUS'
                     WHEN s.asset_type = 'DERIVATIVE' OR s.symbol LIKE 'VN30F%' THEN 'FUTURES:' || s.symbol
                     WHEN s.symbol LIKE 'C%' AND LENGTH(s.symbol) = 8 THEN 'COVERED_WARRANT:' || s.symbol
                     WHEN s.symbol IN ('VN30', 'VN100', 'VNINDEX', 'HNXINDEX', 'UPCOMINDEX') THEN 'INDEX:' || s.symbol

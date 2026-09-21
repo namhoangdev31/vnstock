@@ -13,6 +13,7 @@ from datetime import date
 from typing import Any
 
 import pandas as pd
+from sqlmodel import Session
 from vnstock import (
     Company,
     Finance,
@@ -25,7 +26,7 @@ from vnstock import (
 )
 
 from app.core.config import settings
-from app.services.rate_limit import RateLimiter
+from app.services.rate_limit import CircuitBreakerOpenError, RateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,7 @@ class VnstockService:
         fallback_source: str | None = None,
         tertiary_source: str | None = None,
         limiter: RateLimiter | None = None,
+        db_session: Session | None = None,
     ) -> None:
         """Khởi tạo dịch vụ VnstockService với danh sách nguồn ưu tiên và bộ điều tiết tần suất."""
         self.source = (source or settings.VNSTOCK_SOURCE).lower()
@@ -60,7 +62,9 @@ class VnstockService:
         self._limiter = limiter or RateLimiter(
             min_delay=settings.VNSTOCK_REQUEST_MIN_DELAY
         )
+        self.db_session = db_session
         self.last_successful_source: str | None = None
+        self._current_source: str = self.source
 
     @property
     def sources(self) -> list[str]:
@@ -87,9 +91,45 @@ class VnstockService:
         """Lọc danh sách nguồn hợp lệ cho từng bộ chuyển đổi cụ thể."""
         return [s for s in self.sources if s in allowed_sources]
 
-    def _throttle(self) -> None:
-        """Kích hoạt độ trễ tối thiểu giữa các lệnh gọi API bên ngoài để tránh nghẽn/khóa IP."""
-        self._limiter.wait()
+    def _throttle(self, provider: str | None = None) -> None:
+        """Kích hoạt độ trễ tối thiểu và kiểm tra circuit breaker theo từng provider."""
+        src = provider or getattr(self, "_current_source", "vci")
+        self._current_source = src
+
+        # Kiểm tra circuit breaker trước khi request
+        if hasattr(self._limiter, "is_available"):
+            try:
+                if not self._limiter.is_available(src, session=self.db_session):
+                    raise CircuitBreakerOpenError(src)
+            except CircuitBreakerOpenError:
+                raise
+            except Exception:
+                pass
+
+        if hasattr(self._limiter, "wait"):
+            try:
+                self._limiter.wait(provider=src, session=self.db_session)
+            except TypeError:
+                self._limiter.wait()
+
+    def record_success(self, provider: str | None = None) -> None:
+        """Ghi nhận thành công nguồn dữ liệu và cập nhật last_successful_source."""
+        src = provider or getattr(self, "_current_source", "vci")
+        self.last_successful_source = src
+        if hasattr(self._limiter, "record_success"):
+            try:
+                self._limiter.record_success(provider=src, session=self.db_session)
+            except Exception:
+                pass
+
+    def record_failure(self, provider: str | None = None) -> None:
+        """Ghi nhận thất bại nguồn dữ liệu và cập nhật circuit breaker."""
+        src = provider or getattr(self, "_current_source", "vci")
+        if hasattr(self._limiter, "record_failure"):
+            try:
+                self._limiter.record_failure(provider=src, session=self.db_session)
+            except Exception:
+                pass
 
     # =========================================================================
     # PHÂN HỆ 1: THAM CHIẾU & DANH MỤC THỊ TRƯỜNG (REFERENCE DATA)
