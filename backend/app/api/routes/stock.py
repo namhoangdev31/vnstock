@@ -14,6 +14,7 @@ from sqlmodel import and_, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
+from app.cron.sync_daily_market import run_sync_daily_market_job
 from app.models.models_quant import (
     InstitutionalFlow,
     InstitutionalFlowPublic,
@@ -624,6 +625,34 @@ def cron_sync_symbols(
     manager = DataSyncManager(session, vnstock_service)
     log = manager.sync_symbols()
     return SyncStatusPublic.model_validate(log)
+
+
+# ---------------------------------------------------------------------------
+# POST /stock/cron/sync-daily-market — Automated Daily Market Sync Webhook
+# ---------------------------------------------------------------------------
+
+
+@router.post("/cron/sync-daily-market", response_model=list[SyncStatusPublic])
+def cron_sync_daily_market(
+    session: SessionDep,
+    x_cron_secret: Annotated[str | None, Header(alias="X-Cron-Secret")] = None,
+    secret_key: str | None = Query(default=None),
+) -> Any:
+    """Kích hoạt đồng bộ nến ngày cho các chỉ số và rổ VN30 sau phiên ATC (15:15).
+
+    Yêu cầu header 'X-Cron-Secret' hoặc query param 'secret_key' khớp với cấu hình hệ thống.
+    """
+    valid_secret = settings.CRON_SECRET_KEY or settings.SECRET_KEY
+    provided_secret = x_cron_secret or secret_key
+
+    if not provided_secret or provided_secret != valid_secret:
+        raise HTTPException(
+            status_code=403,
+            detail="Mã bảo mật Cron (X-Cron-Secret) không hợp lệ",
+        )
+
+    logs = run_sync_daily_market_job(session=session)
+    return [SyncStatusPublic.model_validate(log) for log in logs]
 
 
 # ---------------------------------------------------------------------------

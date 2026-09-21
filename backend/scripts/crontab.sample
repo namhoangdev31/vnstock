@@ -1,16 +1,34 @@
 # ==============================================================================
-# VNSTOCK QUANT TRADING ENGINE - CRONTAB SAMPLE
+# VNSTOCK QUANT TRADING ENGINE - CRONTAB SAMPLE CONFIGURATION
 # ==============================================================================
-# Lịch đồng bộ danh mục mã cổ phiếu và hợp đồng phái sinh mới từ vnstock v4.
-# Tần suất: 08:00 sáng Thứ Hai và Thứ Năm hàng tuần (Giờ Việt Nam UTC+7).
+# Hệ thống hỗ trợ 2 tác vụ đồng bộ định kỳ chính:
+# 1. Đồng bộ danh mục mã cổ phiếu, phái sinh (VN30F1M), chứng quyền, trái phiếu
+#    -> Tần suất: 08:00 sáng Thứ Hai và Thứ Năm hàng tuần (Giờ Việt Nam UTC+7).
+# 2. Đồng bộ nến ngày (OHLCV Daily) cho chỉ số chính & rổ VN30 sau phiên ATC
+#    -> Tần suất: 15:15 chiều Thứ Hai đến Thứ Sáu hàng tuần (Giờ Việt Nam UTC+7).
 #
-# Cài đặt trên máy chủ Linux:
+# Cài đặt trên máy chủ Linux / VPS:
 #   crontab -e
-#   Dán một trong hai cấu hình bên dưới và lưu lại.
+#   Dán cấu hình phù hợp bên dưới và lưu lại.
 # ==============================================================================
 
-# Cách 1: Chạy runner Python độc lập qua uv (Khuyên dùng khi triển khai máy chủ riêng/VPS)
+# ------------------------------------------------------------------------------
+# CÁCH 1: CHẠY RUNNER PYTHON ĐỘC LẬP QUA UV (Khuyên dùng khi triển khai máy chủ riêng/VPS)
+# ------------------------------------------------------------------------------
+# 1.1 Đồng bộ danh mục mã & phái sinh (T2, T5 lúc 08:00 sáng)
 0 8 * * 1,4 cd /path/to/vnstock/backend && uv run python -m app.cron.sync_symbols >> /var/log/vnstock_cron_symbols.log 2>&1
 
-# Cách 2: Gọi Webhook API bảo mật tới FastAPI Cloud hoặc Docker container
-# 0 8 * * 1,4 curl -s -X POST "https://your-app.fastapicloud.dev/api/v1/stock/cron/sync-symbols" -H "X-Cron-Secret: YOUR_SECRET_KEY" >> /var/log/vnstock_cron_webhook.log 2>&1
+# 1.2 Đồng bộ nến ngày thị trường sau phiên ATC (T2 - T5 lúc 15:15 chiều)
+15 15 * * 1-5 cd /path/to/vnstock/backend && uv run python -m app.cron.sync_daily_market >> /var/log/vnstock_cron_daily_market.log 2>&1
+
+
+# ------------------------------------------------------------------------------
+# CÁCH 2: GỌI WEBHOOK API BẢO MẬT (Dành cho FastAPI Cloud, Docker, hoặc GitHub Actions)
+# ------------------------------------------------------------------------------
+# Yêu cầu cấu hình header X-Cron-Secret hoặc query param secret_key khớp với CRON_SECRET_KEY / SECRET_KEY
+
+# 2.1 Webhook đồng bộ danh mục mã (T2, T5 lúc 08:00 sáng)
+# 0 8 * * 1,4 curl -s -X POST "https://your-app.fastapicloud.dev/api/v1/stock/cron/sync-symbols" -H "X-Cron-Secret: YOUR_SECRET_KEY" >> /var/log/vnstock_webhook_symbols.log 2>&1
+
+# 2.2 Webhook đồng bộ nến ngày sau phiên ATC (T2 - T6 lúc 15:15 chiều)
+# 15 15 * * 1-5 curl -s -X POST "https://your-app.fastapicloud.dev/api/v1/stock/cron/sync-daily-market" -H "X-Cron-Secret: YOUR_SECRET_KEY" >> /var/log/vnstock_webhook_daily.log 2>&1

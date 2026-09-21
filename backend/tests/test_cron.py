@@ -207,3 +207,55 @@ def test_run_sync_daily_market_job(session: Session) -> None:  # noqa: F811
         logs = run_sync_daily_market_job(session=session, delay_sec=0)
         assert len(logs) >= 1
         assert logs[0].status == "success"
+
+
+def test_cron_sync_daily_market_api_endpoint(api_client, monkeypatch) -> None:  # noqa: F811
+    """Kiểm tra bảo mật và hoạt động của endpoint POST /api/v1/stock/cron/sync-daily-market."""
+    monkeypatch.setattr(settings, "CRON_SECRET_KEY", "test-cron-secret-daily-999")
+
+    # 1. Gọi không kèm secret -> Bị từ chối 403
+    resp_no_secret = api_client.post("/api/v1/stock/cron/sync-daily-market")
+    assert resp_no_secret.status_code == 403
+
+    # 2. Gọi kèm secret sai -> Bị từ chối 403
+    resp_bad_secret = api_client.post(
+        "/api/v1/stock/cron/sync-daily-market",
+        headers={"X-Cron-Secret": "wrong-secret"},
+    )
+    assert resp_bad_secret.status_code == 403
+
+    mock_log = DataSyncLog(
+        sync_type="daily",
+        symbol="VNINDEX",
+        source="VCI",
+        status="success",
+        rows_synced=1,
+    )
+
+    # 3. Gọi kèm secret đúng qua Header
+    with patch(
+        "app.api.routes.stock.run_sync_daily_market_job", return_value=[mock_log]
+    ):
+        resp_ok = api_client.post(
+            "/api/v1/stock/cron/sync-daily-market",
+            headers={"X-Cron-Secret": "test-cron-secret-daily-999"},
+        )
+        assert resp_ok.status_code == 200
+        data = resp_ok.json()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["symbol"] == "VNINDEX"
+        assert data[0]["status"] == "success"
+
+    # 4. Gọi kèm secret đúng qua Query param
+    with patch(
+        "app.api.routes.stock.run_sync_daily_market_job", return_value=[mock_log]
+    ):
+        resp_query = api_client.post(
+            "/api/v1/stock/cron/sync-daily-market?secret_key=test-cron-secret-daily-999"
+        )
+        assert resp_query.status_code == 200
+        data = resp_query.json()
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["symbol"] == "VNINDEX"
