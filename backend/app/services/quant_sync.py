@@ -23,6 +23,7 @@ import pandas as pd
 from sqlmodel import Session, select
 
 from app.models import VN_TZ
+from app.models.entities.stock import StockTickIntraday
 from app.models.enums import MacroIndicatorCode
 from app.models.models_quant import MacroIndicator, TickFlowAggregated
 from app.models.models_stock import DataSyncLog
@@ -255,6 +256,61 @@ class QuantSyncManager:
                 return self._finish_log(log, "partial", rows_synced=0)
             if "symbol" not in df.columns:
                 df = df.assign(symbol=symbol)
+
+            clean_ticks: list[StockTickIntraday] = []
+            seq_map: dict[tuple[str, datetime], int] = {}
+            for _, row in df.iterrows():
+                raw_time = row.get("time")
+                ts = _to_utc_aware(raw_time) if raw_time is not None else None
+                if ts is None:
+                    continue
+                try:
+                    p_val = float(row.get("price", 0.0))
+                    v_val = int(row.get("volume", 0))
+                except (ValueError, TypeError):
+                    continue
+                if v_val <= 0:
+                    continue
+
+                m_type = str(row.get("match_type") or "UNKNOWN").upper()
+                acc_vol_raw = row.get("accumulated_volume") or row.get("a_vol")
+                acc_val_raw = row.get("accumulated_value") or row.get("a_val")
+
+                key = (symbol, ts)
+                seq_idx = seq_map.get(key, 0)
+                seq_map[key] = seq_idx + 1
+
+                clean_ticks.append(
+                    StockTickIntraday(
+                        symbol=symbol,
+                        timestamp=ts,
+                        price=p_val,
+                        volume=v_val,
+                        match_type=m_type[:10],
+                        accumulated_volume=(
+                            int(acc_vol_raw)
+                            if acc_vol_raw is not None and pd.notna(acc_vol_raw)
+                            else None
+                        ),
+                        accumulated_value=(
+                            float(acc_val_raw)
+                            if acc_val_raw is not None and pd.notna(acc_val_raw)
+                            else None
+                        ),
+                        sequence_number=seq_idx,
+                        source=self.svc.source[:10],
+                    )
+                )
+
+            for tick in clean_ticks:
+                existing_tick = self.session.exec(
+                    select(StockTickIntraday)
+                    .where(StockTickIntraday.symbol == tick.symbol)
+                    .where(StockTickIntraday.timestamp == tick.timestamp)
+                    .where(StockTickIntraday.sequence_number == tick.sequence_number)
+                ).first()
+                if not existing_tick:
+                    self.session.add(tick)
 
             bars = aggregate_tick_orderflow(df, source=self.svc.source)
             count = 0

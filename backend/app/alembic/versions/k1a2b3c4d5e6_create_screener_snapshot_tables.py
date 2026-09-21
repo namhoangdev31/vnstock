@@ -67,33 +67,38 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
 
-    # Partial indexes for ScreenerSnapshot
+    # Partial indexes for ScreenerSnapshot with exact ordering to prevent TEMP B-TREE sorts
     if is_postgres:
-        op.create_index(
-            "ix_screener_snapshot_roe_inst",
-            "screener_snapshot",
-            ["roe", "instrument_id"],
-            postgresql_where=sa.text("is_active = true"),
+        op.execute(
+            """
+            CREATE INDEX ix_screener_snapshot_roe_inst
+            ON screener_snapshot (roe DESC NULLS LAST, instrument_id ASC)
+            WHERE is_active = true;
+            """
         )
-        op.create_index(
-            "ix_screener_snapshot_pe_inst",
-            "screener_snapshot",
-            ["pe", "instrument_id"],
-            postgresql_where=sa.text("is_active = true"),
+        op.execute(
+            """
+            CREATE INDEX ix_screener_snapshot_pe_inst
+            ON screener_snapshot (pe ASC NULLS LAST, instrument_id ASC)
+            WHERE is_active = true;
+            """
         )
     else:
-        op.create_index(
-            "ix_screener_snapshot_roe_inst",
-            "screener_snapshot",
-            ["roe", "instrument_id"],
-            sqlite_where=sa.text("is_active = 1"),
+        op.execute(
+            """
+            CREATE INDEX ix_screener_snapshot_roe_inst
+            ON screener_snapshot (roe DESC, instrument_id ASC)
+            WHERE is_active = 1;
+            """
         )
-        op.create_index(
-            "ix_screener_snapshot_pe_inst",
-            "screener_snapshot",
-            ["pe", "instrument_id"],
-            sqlite_where=sa.text("is_active = 1"),
+        op.execute(
+            """
+            CREATE INDEX ix_screener_snapshot_pe_inst
+            ON screener_snapshot (pe ASC, instrument_id ASC)
+            WHERE is_active = 1;
+            """
         )
+
 
     # 2. Bảng screener_snapshot_historical (lịch sử snapshot Point-in-Time)
     op.create_table(

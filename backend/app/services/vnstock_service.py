@@ -93,7 +93,11 @@ class VnstockService:
 
     def _throttle(self, provider: str | None = None) -> None:
         """Kích hoạt độ trễ tối thiểu và kiểm tra circuit breaker theo từng provider."""
-        src = provider or getattr(self, "_current_source", "vci")
+        src = (
+            provider
+            or getattr(self, "_current_source", None)
+            or getattr(self, "source", "vci")
+        )
         self._current_source = src
 
         # Kiểm tra circuit breaker trước khi request
@@ -114,7 +118,11 @@ class VnstockService:
 
     def record_success(self, provider: str | None = None) -> None:
         """Ghi nhận thành công nguồn dữ liệu và cập nhật last_successful_source."""
-        src = provider or getattr(self, "_current_source", "vci")
+        src = (
+            provider
+            or getattr(self, "_current_source", None)
+            or getattr(self, "source", "vci")
+        )
         self.last_successful_source = src
         if hasattr(self._limiter, "record_success"):
             try:
@@ -124,7 +132,11 @@ class VnstockService:
 
     def record_failure(self, provider: str | None = None) -> None:
         """Ghi nhận thất bại nguồn dữ liệu và cập nhật circuit breaker."""
-        src = provider or getattr(self, "_current_source", "vci")
+        src = (
+            provider
+            or getattr(self, "_current_source", None)
+            or getattr(self, "source", "vci")
+        )
         if hasattr(self._limiter, "record_failure"):
             try:
                 self._limiter.record_failure(provider=src, session=self.db_session)
@@ -144,12 +156,13 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 lst = Listing(source=src, show_log=False)
                 # Ưu tiên symbols_by_exchange để có sẵn thông tin cột sàn niêm yết (exchange)
                 if hasattr(lst, "symbols_by_exchange"):
                     df = lst.symbols_by_exchange()
                     if df is not None and not df.empty:
+                        self.record_success(src)
                         logger.info(
                             "Đã tải %d mã cổ phiếu (kèm cột sàn) qua nguồn %s",
                             len(df),
@@ -159,9 +172,14 @@ class VnstockService:
 
                 df = lst.all_symbols()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info("Đã tải %d mã cổ phiếu qua nguồn %s", len(df), src)
                     return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 logger.warning(
                     "Lỗi tải danh sách mã qua nguồn %s, đang thử nguồn dự phòng...",
                     src,
@@ -185,10 +203,11 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 lst = Listing(source=src, show_log=False)
                 df = lst.symbols_by_exchange()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     if exchange and "exchange" in df.columns:
                         target_exs = (
                             {"HOSE", "HSX"}
@@ -209,7 +228,11 @@ class VnstockService:
                         "Đã tải toàn bộ %d mã kèm sàn qua nguồn %s", len(df), src
                     )
                     return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 logger.warning(
                     "Lỗi tải mã theo sàn %s qua nguồn %s, thử nguồn khác...",
                     exchange or "tất cả",
@@ -231,7 +254,7 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 lst = Listing(source=src, show_log=False)
                 # Thử symbols_by_industries trước, sau đó thử industries_icb
                 if hasattr(lst, "symbols_by_industries"):
@@ -240,11 +263,16 @@ class VnstockService:
                     df = lst.industries_icb()
 
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải danh mục phân ngành (%d dòng) qua %s", len(df), src
                     )
                     return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 logger.warning(
                     "Lỗi tải phân ngành qua %s, thử tiếp...", src, exc_info=True
                 )
@@ -266,11 +294,12 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 lst = Listing(source=src, show_log=False)
                 result = lst.symbols_by_group(group=group.upper())
                 symbols = self._series_to_symbols(result)
                 if symbols:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d mã cho nhóm chỉ số %s qua nguồn %s",
                         len(symbols),
@@ -278,7 +307,11 @@ class VnstockService:
                         src,
                     )
                     return symbols
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 logger.warning(
                     "Lỗi tải nhóm chỉ số %s qua nguồn %s, thử tiếp...",
                     group,
@@ -508,14 +541,19 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 lst = Listing(source=src, show_log=False)
                 if hasattr(lst, "all_future_indices"):
                     df = lst.all_future_indices()
                     if df is not None and not df.empty:
+                        self.record_success(src)
                         logger.info("Đã tải %d hợp đồng phái sinh qua %s", len(df), src)
                         return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         # Thử qua Reference layer
@@ -529,10 +567,13 @@ class VnstockService:
             sub = self._resolve_sub_obj(ref, "warrant")
             res = sub.list() if sub is not None else None
             if isinstance(res, pd.DataFrame) and not res.empty:
+                self.record_success()
                 return res
             elif isinstance(res, (list, tuple, pd.Series)):
+                self.record_success()
                 return pd.DataFrame({"symbol": list(res)})
         except Exception:
+            self.record_failure()
             logger.warning(
                 "Lỗi tải danh mục chứng quyền qua Reference.warrant.list", exc_info=True
             )
@@ -548,14 +589,19 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_LISTING)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 lst = Listing(source=src, show_log=False)
                 if hasattr(lst, "all_covered_warrant"):
                     res = lst.all_covered_warrant()
                     if res is not None and not res.empty:
+                        self.record_success(src)
                         logger.info("Đã tải %d chứng quyền qua %s", len(res), src)
                         return res
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         # Thử qua Reference layer
@@ -726,12 +772,17 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_COMPANY)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 c = Company(symbol=symbol, source=src, show_log=False)
                 df = c.overview()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     return df.iloc[0].to_dict()
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 logger.warning(
                     "Lỗi tải hồ sơ doanh nghiệp %s qua nguồn %s, thử tiếp...",
                     symbol,
@@ -754,15 +805,19 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_COMPANY)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 c = Company(symbol=symbol, source=src, show_log=False)
                 df = c.shareholders()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d cổ đông lớn của %s qua %s", len(df), symbol, src
                     )
                     return df
+            except CircuitBreakerOpenError:
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         return pd.DataFrame()
@@ -779,15 +834,19 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_COMPANY)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 c = Company(symbol=symbol, source=src, show_log=False)
                 df = c.officers()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d lãnh đạo của %s qua %s", len(df), symbol, src
                     )
                     return df
+            except CircuitBreakerOpenError:
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         return pd.DataFrame()
@@ -804,15 +863,19 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_COMPANY)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 c = Company(symbol=symbol, source=src, show_log=False)
                 df = c.subsidiaries()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d công ty con của %s qua %s", len(df), symbol, src
                     )
                     return df
+            except CircuitBreakerOpenError:
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         return pd.DataFrame()
@@ -829,15 +892,19 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_COMPANY)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 c = Company(symbol=symbol, source=src, show_log=False)
                 df = c.insider_trading()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d giao dịch nội bộ của %s qua %s", len(df), symbol, src
                     )
                     return df
+            except CircuitBreakerOpenError:
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         return pd.DataFrame()
@@ -854,10 +921,11 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_COMPANY)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 c = Company(symbol=symbol, source=src, show_log=False)
                 df = c.capital_history()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải lịch sử vốn (%d sự kiện) của %s qua %s",
                         len(df),
@@ -865,7 +933,10 @@ class VnstockService:
                         src,
                     )
                     return df
+            except CircuitBreakerOpenError:
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         return pd.DataFrame()
@@ -882,13 +953,17 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_COMPANY)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 c = Company(symbol=symbol, source=src, show_log=False)
                 df = c.news()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info("Đã tải %d tin tức cho %s qua %s", len(df), symbol, src)
                     return df
+            except CircuitBreakerOpenError:
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         return pd.DataFrame()
@@ -905,13 +980,17 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_COMPANY)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 c = Company(symbol=symbol, source=src, show_log=False)
                 df = c.events()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info("Đã tải %d sự kiện cho %s qua %s", len(df), symbol, src)
                     return df
+            except CircuitBreakerOpenError:
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         return pd.DataFrame()
@@ -1222,7 +1301,7 @@ class VnstockService:
 
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 q = Quote(symbol=symbol, source=src, show_log=False)
                 kwargs: dict[str, Any] = {"interval": interval}
                 if start_str:
@@ -1234,6 +1313,7 @@ class VnstockService:
 
                 df = q.history(**kwargs)
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d nến giá cho %s (%s-%s, %s) qua nguồn %s",
                         len(df),
@@ -1244,7 +1324,11 @@ class VnstockService:
                         src,
                     )
                     return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 logger.warning(
                     "Lỗi tải nến giá cho %s qua nguồn %s, thử nguồn tiếp...",
                     symbol,
@@ -1274,13 +1358,14 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_QUOTE)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 q = Quote(symbol=symbol, source=src, show_log=False)
                 df = q.history(
                     interval=interval,
                     count_back=count_back,
                 )
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d nến intraday cho %s (%s) qua nguồn %s",
                         len(df),
@@ -1289,7 +1374,11 @@ class VnstockService:
                         src,
                     )
                     return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 logger.warning(
                     "Lỗi tải nến intraday cho %s qua nguồn %s, thử nguồn tiếp...",
                     symbol,
@@ -1319,10 +1408,11 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_QUOTE)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 q = Quote(symbol=symbol, source=src, show_log=False)
                 df = q.intraday(symbol=symbol, page_size=page_size)
                 if df is not None:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d tick khớp lệnh cho %s qua nguồn %s",
                         len(df),
@@ -1330,7 +1420,11 @@ class VnstockService:
                         src,
                     )
                     return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 logger.warning(
                     "Lỗi tải tick orderflow cho %s qua nguồn %s, thử nguồn tiếp...",
                     symbol,
@@ -2054,6 +2148,7 @@ class VnstockService:
                 if fetch_fn is not None:
                     df = fetch_fn(period=period_clean, orient=orient)
                     if isinstance(df, pd.DataFrame) and not df.empty:
+                        self.record_success()
                         logger.info(
                             "Đã tải %d dòng BCTC %s cho %s (%s, %s) qua Fundamental",
                             len(df),
@@ -2064,8 +2159,10 @@ class VnstockService:
                         )
                         return df
                     elif df is not None and not isinstance(df, pd.DataFrame):
+                        self.record_success()
                         return pd.DataFrame(df)
         except Exception:
+            self.record_failure()
             logger.warning(
                 "Lỗi tải BCTC %s cho %s qua Fundamental, thử fallback qua Finance...",
                 report_type,
@@ -2076,7 +2173,7 @@ class VnstockService:
         # Fallback qua lớp Finance truyền thống
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 f = Finance(
                     symbol=symbol,
                     source=src,
@@ -2094,6 +2191,7 @@ class VnstockService:
 
                 df = fetch_fn_legacy(period=period_clean)
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải %d dòng BCTC %s cho %s (%s) qua Finance/%s",
                         len(df),
@@ -2103,7 +2201,11 @@ class VnstockService:
                         src,
                     )
                     return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         raise VnstockServiceError(
@@ -2193,6 +2295,7 @@ class VnstockService:
             if eq is not None and hasattr(eq, "ratio"):
                 df = eq.ratio(orient=orient)
                 if isinstance(df, pd.DataFrame) and not df.empty:
+                    self.record_success()
                     logger.info(
                         "Đã tải %d chỉ số tài chính cho %s qua Fundamental.equity.ratio",
                         len(df),
@@ -2200,8 +2303,10 @@ class VnstockService:
                     )
                     return df
                 elif df is not None and not isinstance(df, pd.DataFrame):
+                    self.record_success()
                     return pd.DataFrame(df)
         except Exception:
+            self.record_failure()
             logger.warning(
                 "Lỗi tải chỉ số tài chính qua Fundamental cho %s, thử Finance...",
                 symbol,
@@ -2212,15 +2317,20 @@ class VnstockService:
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_FINANCE)
         for src in valid_sources:
             try:
-                self._throttle()
+                self._throttle(src)
                 f = Finance(symbol=symbol, source=src, show_log=False)
                 df = f.ratio()
                 if df is not None and not df.empty:
+                    self.record_success(src)
                     logger.info(
                         "Đã tải chỉ số tài chính cho %s qua Finance/%s", symbol, src
                     )
                     return df
+            except CircuitBreakerOpenError:
+                logger.warning("Circuit breaker is OPEN for %s, skipping provider", src)
+                continue
             except Exception:
+                self.record_failure(src)
                 continue
 
         raise VnstockServiceError(f"Không thể tải chỉ số tài chính cho mã {symbol}")

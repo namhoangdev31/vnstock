@@ -77,15 +77,15 @@ class ScreenerSnapshot(ScreenerSnapshotBase, table=True):
     __table_args__ = (
         Index(
             "ix_screener_snapshot_roe_inst",
-            "roe",
-            "instrument_id",
+            text("roe DESC"),
+            text("instrument_id ASC"),
             postgresql_where=text("is_active = true"),
             sqlite_where=text("is_active = 1"),
         ),
         Index(
             "ix_screener_snapshot_pe_inst",
-            "pe",
-            "instrument_id",
+            text("pe ASC"),
+            text("instrument_id ASC"),
             postgresql_where=text("is_active = true"),
             sqlite_where=text("is_active = 1"),
         ),

@@ -47,6 +47,7 @@ from app.services.financial_revision_service import (
     acquire_financial_report_lock,
     record_financial_report_revision,
 )
+from app.services.screener_service import ScreenerService
 from app.services.sync_constants import (
     BOND_SPECIFICATION_UPDATE_FIELDS,
     BOND_TYPE_CONFIG,
@@ -183,6 +184,46 @@ def _extract_financial_summary_fields(
             if res["financing_cash_flow"] is None:
                 res["financing_cash_flow"] = val
     return res
+
+
+def _extract_published_at(data: dict[str, Any]) -> datetime | None:
+    """Trích xuất ngày công bố thực tế từ payload nếu có."""
+    date_keys = [
+        "publish_date",
+        "published_date",
+        "published_at",
+        "public_date",
+        "ngay_cong_bo",
+        "ngay_cbtt",
+        "issue_date",
+        "audit_date",
+        "release_date",
+    ]
+    for key in date_keys:
+        val = data.get(key)
+        if val:
+            if isinstance(val, datetime):
+                return (
+                    val.astimezone(VN_TZ) if val.tzinfo else val.replace(tzinfo=VN_TZ)
+                )
+            if isinstance(val, date):
+                return datetime.combine(val, datetime.min.time(), tzinfo=VN_TZ)
+            if isinstance(val, str):
+                s = val.strip()
+                if not s:
+                    continue
+                try:
+                    dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+                    return (
+                        dt.astimezone(VN_TZ) if dt.tzinfo else dt.replace(tzinfo=VN_TZ)
+                    )
+                except (ValueError, TypeError):
+                    try:
+                        d = date.fromisoformat(s)
+                        return datetime.combine(d, datetime.min.time(), tzinfo=VN_TZ)
+                    except (ValueError, TypeError):
+                        pass
+    return None
 
 
 class DataSyncManager:
@@ -1478,15 +1519,9 @@ class DataSyncManager:
                 if inst_id is not None:
                     rec["instrument_id"] = inst_id
 
-            count = self._bulk_upsert(
-                FinancialReport,
-                records,
-                ["symbol", "report_type", "report_scope", "period", "year", "quarter"],
-                FINANCIAL_REPORT_UPDATE_FIELDS,
-            )
-            self.session.commit()
-
-            # Ghi nhận FinancialReportRevision và thực hiện Transaction Advisory Lock theo natural key
+            # Thực hiện cập nhật Master Record và ghi nhận FinancialReportRevision
+            # đồng thời dưới Transaction Advisory Lock theo natural key trong cùng transaction
+            count = 0
             for rec in records:
                 q_val = rec.get("quarter")
                 if inst_id is not None:
@@ -1514,14 +1549,59 @@ class DataSyncManager:
                     query = query.where(col(FinancialReport.quarter).is_(None))
 
                 master_report = self.session.exec(query).first()
-                if master_report is not None:
-                    record_financial_report_revision(
-                        session=self.session,
-                        report=master_report,
+                if master_report is None:
+                    master_report = FinancialReport(
+                        id=rec.get("id") or uuid.uuid4(),
+                        symbol=symbol,
+                        instrument_id=inst_id,
+                        report_type=rec["report_type"],
+                        report_scope=rec["report_scope"],
+                        period=rec["period"],
+                        year=rec["year"],
+                        quarter=q_val,
+                        is_audited=rec.get("is_audited", False),
                         data=rec["data"],
-                        published_at=None,
-                        restated_reason="Sync update",
+                        source=self.svc.source,
+                        updated_at=now_utc,
+                        revenue=rec.get("revenue"),
+                        gross_profit=rec.get("gross_profit"),
+                        operating_profit=rec.get("operating_profit"),
+                        net_profit_parent=rec.get("net_profit_parent"),
+                        total_assets=rec.get("total_assets"),
+                        short_term_assets=rec.get("short_term_assets"),
+                        cash_and_equivalents=rec.get("cash_and_equivalents"),
+                        total_liabilities=rec.get("total_liabilities"),
+                        short_term_debt=rec.get("short_term_debt"),
+                        long_term_debt=rec.get("long_term_debt"),
+                        owners_equity=rec.get("owners_equity"),
+                        operating_cash_flow=rec.get("operating_cash_flow"),
+                        investing_cash_flow=rec.get("investing_cash_flow"),
+                        financing_cash_flow=rec.get("financing_cash_flow"),
                     )
+                    self.session.add(master_report)
+                else:
+                    if inst_id is not None and master_report.instrument_id is None:
+                        master_report.instrument_id = inst_id
+                    master_report.data = rec["data"]
+                    master_report.source = self.svc.source
+                    master_report.updated_at = now_utc
+                    for field in FINANCIAL_REPORT_UPDATE_FIELDS:
+                        if field in rec and rec[field] is not None:
+                            setattr(master_report, field, rec[field])
+                    self.session.add(master_report)
+
+                self.session.flush()
+
+                pub_at = _extract_published_at(rec["data"])
+                record_financial_report_revision(
+                    session=self.session,
+                    report=master_report,
+                    data=rec["data"],
+                    published_at=pub_at,
+                    restated_reason="Sync update",
+                )
+                count += 1
+
             self.session.commit()
             logger.info(
                 "Synced %d financial records and audit revisions for %s", count, symbol
@@ -2340,6 +2420,16 @@ class DataSyncManager:
             return count
 
         return self._run_sync_task("capital_history", _task, symbol=symbol)
+
+    def sync_screener_snapshots(self, snapshot_date: date | None = None) -> DataSyncLog:
+        """Sinh và đồng bộ ảnh chụp màn hình bộ lọc ScreenerSnapshot & Historical."""
+
+        def _task() -> int:
+            return ScreenerService.generate_daily_snapshot(
+                self.session, snapshot_date=snapshot_date
+            )
+
+        return self._run_sync_task("screener", _task)
 
     def sync_company_full(self, symbol: str) -> dict[str, Any]:
         """Đồng bộ toàn diện thông tin doanh nghiệp (Hồ sơ + Cổ đông + Lãnh đạo + Sự kiện + Cty con + GDNB + Tăng vốn)."""

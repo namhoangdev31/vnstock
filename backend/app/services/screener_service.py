@@ -9,11 +9,15 @@ Tuân thủ nghiêm ngặt SLA DB execution time P95 < 10 ms:
 """
 
 import uuid
+from datetime import date, datetime
 
 from pydantic import BaseModel
 from sqlmodel import Session, and_, col, or_, select
 
-from app.models.entities.screener import ScreenerSnapshot
+from app.models.base import VN_TZ
+from app.models.entities.asset_master import Instrument
+from app.models.entities.screener import ScreenerSnapshot, ScreenerSnapshotHistorical
+from app.models.entities.stock import CompanyProfile, FinancialRatio, StockOHLCVDaily
 
 
 class ScreenerCursor(BaseModel):
@@ -45,9 +49,18 @@ class ScreenerService:
         industry: str | None = None,
         min_pe: float | None = None,
         max_pe: float | None = None,
+        min_pb: float | None = None,
+        max_pb: float | None = None,
         min_roe: float | None = None,
+        max_roe: float | None = None,
+        min_roa: float | None = None,
+        max_debt_to_equity: float | None = None,
+        min_revenue_growth_yoy: float | None = None,
+        min_net_profit_growth_yoy: float | None = None,
+        min_ev_to_ebitda: float | None = None,
+        max_ev_to_ebitda: float | None = None,
     ) -> ScreenerResponse:
-        """Truy vấn bảng ScreenerSnapshot bằng thuật toán Keyset 2 pha."""
+        """Truy vấn bảng ScreenerSnapshot bằng thuật toán Keyset 2 pha với đầy đủ bộ lọc."""
         # Điều kiện lọc cơ bản
         base_filters = [col(ScreenerSnapshot.is_active).is_(True)]
 
@@ -59,8 +72,32 @@ class ScreenerService:
             base_filters.append(col(ScreenerSnapshot.pe) >= min_pe)
         if max_pe is not None:
             base_filters.append(col(ScreenerSnapshot.pe) <= max_pe)
+        if min_pb is not None:
+            base_filters.append(col(ScreenerSnapshot.pb) >= min_pb)
+        if max_pb is not None:
+            base_filters.append(col(ScreenerSnapshot.pb) <= max_pb)
         if min_roe is not None:
             base_filters.append(col(ScreenerSnapshot.roe) >= min_roe)
+        if max_roe is not None:
+            base_filters.append(col(ScreenerSnapshot.roe) <= max_roe)
+        if min_roa is not None:
+            base_filters.append(col(ScreenerSnapshot.roa) >= min_roa)
+        if max_debt_to_equity is not None:
+            base_filters.append(
+                col(ScreenerSnapshot.debt_to_equity) <= max_debt_to_equity
+            )
+        if min_revenue_growth_yoy is not None:
+            base_filters.append(
+                col(ScreenerSnapshot.revenue_growth_yoy) >= min_revenue_growth_yoy
+            )
+        if min_net_profit_growth_yoy is not None:
+            base_filters.append(
+                col(ScreenerSnapshot.profit_growth_yoy) >= min_net_profit_growth_yoy
+            )
+        if min_ev_to_ebitda is not None:
+            base_filters.append(col(ScreenerSnapshot.ev_to_ebitda) >= min_ev_to_ebitda)
+        if max_ev_to_ebitda is not None:
+            base_filters.append(col(ScreenerSnapshot.ev_to_ebitda) <= max_ev_to_ebitda)
 
         query = select(ScreenerSnapshot).where(*base_filters)
 
@@ -118,3 +155,159 @@ class ScreenerService:
             has_next=has_next,
             next_cursor=next_cursor,
         )
+
+    @classmethod
+    def generate_daily_snapshot(
+        cls,
+        session: Session,
+        snapshot_date: date | None = None,
+    ) -> int:
+        """Tạo snapshot định lượng hàng ngày và lưu trữ lịch sử Point-in-Time."""
+        target_date = snapshot_date or date.today()
+        # Lấy danh sách Instrument đang hoạt động
+        instruments = session.exec(
+            select(Instrument).where(col(Instrument.is_active).is_(True))
+        ).all()
+        if not instruments:
+            return 0
+
+        # Lấy bản đồ profile công ty
+        profiles = {p.symbol: p for p in session.exec(select(CompanyProfile)).all()}
+
+        created_count = 0
+        now_utc = datetime.now(VN_TZ)
+
+        for inst in instruments:
+            sym = inst.canonical_code.split(":")[-1]
+            prof = profiles.get(sym)
+
+            # Lấy giá đóng cửa ngày gần nhất
+            daily_bar = session.exec(
+                select(StockOHLCVDaily)
+                .where(
+                    or_(
+                        col(StockOHLCVDaily.instrument_id) == inst.id,
+                        col(StockOHLCVDaily.symbol) == sym,
+                    )
+                )
+                .where(col(StockOHLCVDaily.trading_date) <= target_date)
+                .order_by(col(StockOHLCVDaily.trading_date).desc())
+            ).first()
+
+            # Lấy chỉ số tài chính gần nhất
+            ratio = session.exec(
+                select(FinancialRatio)
+                .where(
+                    or_(
+                        col(FinancialRatio.instrument_id) == inst.id,
+                        col(FinancialRatio.symbol) == sym,
+                    )
+                )
+                .order_by(
+                    col(FinancialRatio.year).desc(),
+                    col(FinancialRatio.quarter).desc().nulls_last(),
+                )
+            ).first()
+
+            price_val = float(daily_bar.close) if daily_bar else None
+            change_val = (
+                float(daily_bar.change_pct)
+                if daily_bar and daily_bar.change_pct is not None
+                else None
+            )
+            vol_val = float(daily_bar.volume) if daily_bar else None
+
+            # Upsert vào ScreenerSnapshot
+            snap = session.exec(
+                select(ScreenerSnapshot).where(
+                    col(ScreenerSnapshot.instrument_id) == inst.id
+                )
+            ).first()
+
+            snap_data = {
+                "instrument_id": inst.id,
+                "snapshot_date": target_date,
+                "symbol": sym,
+                "exchange": inst.exchange or "HOSE",
+                "industry": prof.industry_name if prof else None,
+                "is_active": inst.is_active,
+                "pe": float(ratio.pe) if ratio and ratio.pe is not None else None,
+                "pb": float(ratio.pb) if ratio and ratio.pb is not None else None,
+                "ps": float(ratio.ps) if ratio and ratio.ps is not None else None,
+                "ev_to_ebitda": (
+                    float(ratio.ev_to_ebitda)
+                    if ratio and ratio.ev_to_ebitda is not None
+                    else None
+                ),
+                "dividend_yield": (
+                    float(ratio.dividend_yield)
+                    if ratio and ratio.dividend_yield is not None
+                    else None
+                ),
+                "roe": float(ratio.roe) if ratio and ratio.roe is not None else None,
+                "roa": float(ratio.roa) if ratio and ratio.roa is not None else None,
+                "roic": float(ratio.roic) if ratio and ratio.roic is not None else None,
+                "gross_margin": (
+                    float(ratio.gross_margin)
+                    if ratio and ratio.gross_margin is not None
+                    else None
+                ),
+                "net_margin": (
+                    float(ratio.net_margin)
+                    if ratio and ratio.net_margin is not None
+                    else None
+                ),
+                "revenue_growth_yoy": (
+                    float(ratio.revenue_growth_yoy)
+                    if ratio and ratio.revenue_growth_yoy is not None
+                    else None
+                ),
+                "profit_growth_yoy": (
+                    float(ratio.net_profit_growth_yoy)
+                    if ratio and ratio.net_profit_growth_yoy is not None
+                    else None
+                ),
+                "debt_to_equity": (
+                    float(ratio.debt_to_equity)
+                    if ratio and ratio.debt_to_equity is not None
+                    else None
+                ),
+                "current_ratio": (
+                    float(ratio.current_ratio)
+                    if ratio and ratio.current_ratio is not None
+                    else None
+                ),
+                "quick_ratio": (
+                    float(ratio.quick_ratio)
+                    if ratio and ratio.quick_ratio is not None
+                    else None
+                ),
+                "interest_coverage": (
+                    float(ratio.interest_coverage)
+                    if ratio and ratio.interest_coverage is not None
+                    else None
+                ),
+                "price": price_val,
+                "change_pct": change_val,
+                "volume_ma20": vol_val,
+                "updated_at": now_utc,
+            }
+
+            if snap is None:
+                snap = ScreenerSnapshot(**snap_data)
+                session.add(snap)
+            else:
+                for k, v in snap_data.items():
+                    setattr(snap, k, v)
+                session.add(snap)
+
+            # Lưu bản ghi lịch sử vintage (ScreenerSnapshotHistorical)
+            hist_snap = ScreenerSnapshotHistorical(
+                **snap_data,
+                as_of=now_utc,
+            )
+            session.add(hist_snap)
+            created_count += 1
+
+        session.commit()
+        return created_count

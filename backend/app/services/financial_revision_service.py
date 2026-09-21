@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import func
-from sqlmodel import Session, col, select
+from sqlmodel import Session, and_, col, or_, select
 
 from app.models.base import VN_TZ
 from app.models.entities.stock import FinancialReport, FinancialReportRevision
@@ -110,14 +110,31 @@ def get_as_of_financial_report_revision(
     as_of_date: datetime,
     report_scope: str = "consolidated",
     quarter: int | None = None,
+    allow_provisional_if_ingested: bool = True,
 ) -> FinancialReportRevision | None:
     """Truy vấn bản sửa đổi BCTC có hiệu lực tại một thời điểm quá khứ (Point-in-Time Query).
 
     Quy tắc chống Look-Ahead Bias:
-    - Chỉ lấy bản ghi có published_at xác thực <= as_of_date.
-    - Tuyệt đối loại bỏ các bản ghi is_provisional = True (dữ liệu chưa rõ thời điểm công bố).
-    - Lấy bản revision mới nhất được công bố tính đến thời điểm as_of_date.
+    - Nếu bản ghi đã có ngày công bố chính thức (is_provisional = False): chỉ lấy khi published_at <= as_of_date.
+    - Nếu là dữ liệu tạm (is_provisional = True):
+        + Nếu allow_provisional_if_ingested = True: chỉ lấy khi created_at <= as_of_date (thời điểm hệ thống đã thực tế cào/lưu bản ghi).
+        + Nếu allow_provisional_if_ingested = False: loại bỏ hoàn toàn bản provisional (chế độ kiểm toán khắt khe).
+    - Lấy bản revision mới nhất (revision_number DESC) thỏa mãn điều kiện khả dụng tính đến as_of_date.
     """
+    availability_cond = and_(
+        col(FinancialReportRevision.is_provisional).is_(False),
+        col(FinancialReportRevision.published_at).is_not(None),
+        col(FinancialReportRevision.published_at) <= as_of_date,
+    )
+    if allow_provisional_if_ingested:
+        availability_cond = or_(
+            availability_cond,
+            and_(
+                col(FinancialReportRevision.is_provisional).is_(True),
+                col(FinancialReportRevision.created_at) <= as_of_date,
+            ),
+        )
+
     query = (
         select(FinancialReportRevision)
         .join(
@@ -130,9 +147,7 @@ def get_as_of_financial_report_revision(
         .where(col(FinancialReport.period) == period)
         .where(col(FinancialReport.year) == year)
         .where(col(FinancialReport.quarter) == quarter)
-        .where(col(FinancialReportRevision.is_provisional).is_(False))
-        .where(col(FinancialReportRevision.published_at).is_not(None))
-        .where(col(FinancialReportRevision.published_at) <= as_of_date)
+        .where(availability_cond)
         .order_by(col(FinancialReportRevision.revision_number).desc())
     )
     return session.exec(query).first()

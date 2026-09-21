@@ -457,7 +457,32 @@ def screen_stocks(
     clean_industry = industry if isinstance(industry, str) else None
     clean_min_pe = float(min_pe) if isinstance(min_pe, (int, float)) else None
     clean_max_pe = float(max_pe) if isinstance(max_pe, (int, float)) else None
+    clean_min_pb = float(min_pb) if isinstance(min_pb, (int, float)) else None
+    clean_max_pb = float(max_pb) if isinstance(max_pb, (int, float)) else None
     clean_min_roe = float(min_roe) if isinstance(min_roe, (int, float)) else None
+    clean_max_roe = float(max_roe) if isinstance(max_roe, (int, float)) else None
+    clean_min_roa = float(min_roa) if isinstance(min_roa, (int, float)) else None
+    clean_max_debt_to_equity = (
+        float(max_debt_to_equity)
+        if isinstance(max_debt_to_equity, (int, float))
+        else None
+    )
+    clean_min_revenue_growth_yoy = (
+        float(min_revenue_growth_yoy)
+        if isinstance(min_revenue_growth_yoy, (int, float))
+        else None
+    )
+    clean_min_net_profit_growth_yoy = (
+        float(min_net_profit_growth_yoy)
+        if isinstance(min_net_profit_growth_yoy, (int, float))
+        else None
+    )
+    clean_min_ev_to_ebitda = (
+        float(min_ev_to_ebitda) if isinstance(min_ev_to_ebitda, (int, float)) else None
+    )
+    clean_max_ev_to_ebitda = (
+        float(max_ev_to_ebitda) if isinstance(max_ev_to_ebitda, (int, float)) else None
+    )
 
     clean_year = year if isinstance(year, int) else date.today().year
     clean_quarter = quarter if isinstance(quarter, int) else None
@@ -471,7 +496,16 @@ def screen_stocks(
             industry=clean_industry,
             min_pe=clean_min_pe,
             max_pe=clean_max_pe,
+            min_pb=clean_min_pb,
+            max_pb=clean_max_pb,
             min_roe=clean_min_roe,
+            max_roe=clean_max_roe,
+            min_roa=clean_min_roa,
+            max_debt_to_equity=clean_max_debt_to_equity,
+            min_revenue_growth_yoy=clean_min_revenue_growth_yoy,
+            min_net_profit_growth_yoy=clean_min_net_profit_growth_yoy,
+            min_ev_to_ebitda=clean_min_ev_to_ebitda,
+            max_ev_to_ebitda=clean_max_ev_to_ebitda,
         )
         if screener_res.items or cursor is not None:
             items = [
@@ -899,82 +933,91 @@ def trigger_sync(
 
     manager = DataSyncManager(session, vnstock_service)
 
-    if sync_type == "symbols":
-        log = manager.sync_symbols()
-    elif sync_type == "daily":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for daily sync"
+    match sync_type:
+        case "symbols":
+            log = manager.sync_symbols()
+        case "daily":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for daily sync"
+                )
+            start_date = date.fromisoformat(start) if start else date(2024, 1, 1)
+            end_date = date.fromisoformat(end) if end else date.today()
+            log = manager.backfill_daily(symbol, start_date, end_date)
+        case "intraday":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for intraday sync"
+                )
+            log = manager.collect_intraday(symbol)
+        case "profile":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for profile sync"
+                )
+            log = manager.sync_company_profile(symbol)
+        case "financials":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for financials sync"
+                )
+            log = manager.sync_financials(
+                symbol, report_type=report_type, period=period
             )
-        start_date = date.fromisoformat(start) if start else date(2024, 1, 1)
-        end_date = date.fromisoformat(end) if end else date.today()
-        log = manager.backfill_daily(symbol, start_date, end_date)
-    elif sync_type == "intraday":
-        if not symbol:
+        case "ratios":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for ratios sync"
+                )
+            clean_period = "quarter" if "quarter" in period else "year"
+            log = manager.sync_financial_ratios(symbol, period=clean_period)
+        case "shareholders":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for shareholders sync"
+                )
+            log = manager.sync_company_shareholders(symbol)
+        case "officers":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for officers sync"
+                )
+            log = manager.sync_company_officers(symbol)
+        case "events":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for events sync"
+                )
+            log = manager.sync_corporate_events(symbol)
+        case "subsidiaries":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400, detail="symbol is required for subsidiaries sync"
+                )
+            log = manager.sync_company_subsidiaries(symbol)
+        case "insider_trading":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400,
+                    detail="symbol is required for insider_trading sync",
+                )
+            log = manager.sync_insider_trading(symbol)
+        case "capital_history":
+            if not symbol:
+                raise HTTPException(
+                    status_code=400,
+                    detail="symbol is required for capital_history sync",
+                )
+            log = manager.sync_capital_history(symbol)
+        case "constituents":
+            target_group = symbol or "VN30"
+            log = manager.sync_index_constituents(group=target_group)
+        case "screener":
+            log = manager.sync_screener_snapshots()
+        case _:
             raise HTTPException(
-                status_code=400, detail="symbol is required for intraday sync"
+                status_code=400, detail=f"Unknown sync type: {sync_type}"
             )
-        log = manager.collect_intraday(symbol)
-    elif sync_type == "profile":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for profile sync"
-            )
-        log = manager.sync_company_profile(symbol)
-    elif sync_type == "financials":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for financials sync"
-            )
-        log = manager.sync_financials(symbol, report_type=report_type, period=period)
-    elif sync_type == "ratios":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for ratios sync"
-            )
-        clean_period = "quarter" if "quarter" in period else "year"
-        log = manager.sync_financial_ratios(symbol, period=clean_period)
-    elif sync_type == "shareholders":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for shareholders sync"
-            )
-        log = manager.sync_company_shareholders(symbol)
-    elif sync_type == "officers":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for officers sync"
-            )
-        log = manager.sync_company_officers(symbol)
-    elif sync_type == "events":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for events sync"
-            )
-        log = manager.sync_corporate_events(symbol)
-    elif sync_type == "subsidiaries":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for subsidiaries sync"
-            )
-        log = manager.sync_company_subsidiaries(symbol)
-    elif sync_type == "insider_trading":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for insider_trading sync"
-            )
-        log = manager.sync_insider_trading(symbol)
-    elif sync_type == "capital_history":
-        if not symbol:
-            raise HTTPException(
-                status_code=400, detail="symbol is required for capital_history sync"
-            )
-        log = manager.sync_capital_history(symbol)
-    elif sync_type == "constituents":
-        target_group = symbol or "VN30"
-        log = manager.sync_index_constituents(group=target_group)
-    else:
-        raise HTTPException(status_code=400, detail=f"Unknown sync type: {sync_type}")
 
     return SyncStatusPublic.model_validate(log)
 

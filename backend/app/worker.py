@@ -22,8 +22,10 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import text
 from sqlalchemy.engine import Connection, Engine
+from sqlmodel import Session
 
 from app.core.db import engine
+from app.services.screener_service import ScreenerService
 from app.services.settlement_service import VietnamHolidayCalendar
 
 logger = logging.getLogger("market_worker")
@@ -213,8 +215,17 @@ class MarketWorkerDaemon:
             # Khớp ATC thực tế
             pass
         elif state == MarketSessionState.POST_MARKET_EVAL:
-            # Đối soát sổ nhật ký tín hiệu ForecastJournal
-            pass
+            with Session(self.db_engine) as session:
+                try:
+                    snaps_count = ScreenerService.generate_daily_snapshot(session)
+                    logger.info(
+                        "Generated %d screener snapshots in POST_MARKET_EVAL",
+                        snaps_count,
+                    )
+                except Exception:
+                    logger.exception(
+                        "Error generating daily screener snapshot in POST_MARKET_EVAL"
+                    )
         elif state == MarketSessionState.OVERNIGHT_SIMULATION:
             # Tối ưu hóa mô phỏng Monte Carlo qua đêm
             pass
