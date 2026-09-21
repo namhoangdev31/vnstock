@@ -165,7 +165,7 @@ class FlowLiquidityEngineResponse(SQLModel):
     as_of: datetime
     score: float  # -1.0 đến +1.0
     institutional_momentum: float = 0.0
-    market_breadth: float = 0.0
+    market_breadth: float | None = None
     t2_pressure: float = 0.0  # 0.0 đến 1.0
     macro_sentiment: float = 0.0
 

@@ -55,7 +55,7 @@ def test_sources_ordering_and_deduplication(mock_limiter):
     assert sources[0] == "kbs"
     assert sources[1] == "vci"
     assert "msn" in sources
-    assert "dnse" in sources
+    assert "dnse" not in sources
     # Đảm bảo không có phần tử trùng lặp
     assert len(sources) == len(set(sources))
 

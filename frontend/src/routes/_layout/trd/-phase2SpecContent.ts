@@ -191,7 +191,7 @@ class ForecastJournal(SQLModel, table=True):
     symbol: str = Field(index=True, max_length=20)  # e.g., "VN30F1M"
     horizon: str = Field(max_length=20)  # "INTRADAY", "ATC", "T+1", "WEEKLY"
     
-    predicted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+    predicted_at: datetime = Field(default_factory=lambda: datetime.now(VN_TZ), index=True)
     realized_at: Optional[datetime] = Field(default=None)
 
     predicted_direction: str = Field(max_length=10)  # "LONG", "SHORT", "NEUTRAL"

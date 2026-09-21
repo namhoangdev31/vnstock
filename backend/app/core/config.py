@@ -1,3 +1,4 @@
+import urllib.parse
 import warnings
 from typing import Literal, Self
 
@@ -10,6 +11,19 @@ from pydantic import (
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+VALID_PSYCOPG_PARAMS: set[str] = {
+    "connect_timeout",
+    "sslmode",
+    "application_name",
+    "keepalives",
+    "keepalives_idle",
+    "keepalives_interval",
+    "keepalives_count",
+    "channel_binding",
+    "options",
+    "target_session_attrs",
+}
 
 
 class Settings(BaseSettings):
@@ -29,11 +43,12 @@ class Settings(BaseSettings):
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
     DATABASE_URL: PostgresDsn
+    DIRECT_URL: PostgresDsn | None = None
 
     # vnstock config
-    VNSTOCK_SOURCE: str = "TCBS"
-    VNSTOCK_FALLBACK_SOURCE: str = "VCI"
-    VNSTOCK_TERTIARY_SOURCE: str = "KBS"
+    VNSTOCK_SOURCE: str = "VCI"
+    VNSTOCK_FALLBACK_SOURCE: str = "KBS"
+    VNSTOCK_TERTIARY_SOURCE: str = "MSN"
     VNSTOCK_REALTIME_CACHE_TTL: int = 5  # seconds
     VNSTOCK_METADATA_CACHE_TTL: int = 86400  # 24 hours
     # Minimum spacing between external vnstock requests (anti-ban, AGENTS §7.2).
@@ -44,14 +59,60 @@ class Settings(BaseSettings):
     CRON_SECRET_KEY: str | None = None
     ENABLE_INPROCESS_CRON: bool = False
 
+    @classmethod
+    def _validate_and_normalize_postgres_url(
+        cls, value: str | PostgresDsn | None, field_name: str
+    ) -> str | None:
+        if value is None:
+            return None
+        url_str = str(value).strip()
+        if not url_str:
+            return None
+
+        # Check for unencoded '@' in credentials authority (RFC 3986)
+        rest = url_str
+        for prefix in ("postgres://", "postgresql://", "postgresql+psycopg://"):
+            if rest.startswith(prefix):
+                rest = rest[len(prefix) :]
+                break
+
+        authority = rest.split("/", 1)[0].split("?", 1)[0]
+        if authority.count("@") > 1:
+            raise ValueError(
+                f"{field_name} contains unencoded '@' in credentials. "
+                "Per RFC 3986, passwords with '@' must be percent-encoded as '%40' to prevent ambiguous URI parsing."
+            )
+
+        # Parse query parameters and validate against allow-list
+        if "?" in url_str:
+            _base_url, query_str = url_str.split("?", 1)
+            query_params = urllib.parse.parse_qsl(query_str, keep_blank_values=True)
+            unknown_params = [
+                k for k, _ in query_params if k not in VALID_PSYCOPG_PARAMS
+            ]
+            if unknown_params:
+                raise ValueError(
+                    f"{field_name} contains invalid psycopg connection parameter(s): {unknown_params}. "
+                    f"Only valid libpq parameters {sorted(VALID_PSYCOPG_PARAMS)} are allowed. "
+                    "Please remove unsupported options like '?pgbouncer=true' from your connection string."
+                )
+
+        for scheme in ("postgres://", "postgresql://"):
+            if url_str.startswith(scheme):
+                return url_str.replace(scheme, "postgresql+psycopg://", 1)
+        return url_str
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
-    def _use_psycopg_driver(cls, value: str | PostgresDsn) -> str:
-        database_url = str(value)
-        for scheme in ("postgres://", "postgresql://"):
-            if database_url.startswith(scheme):
-                return database_url.replace(scheme, "postgresql+psycopg://", 1)
-        return database_url
+    def _validate_database_url(cls, value: str | PostgresDsn) -> str:
+        res = cls._validate_and_normalize_postgres_url(value, "DATABASE_URL")
+        assert res is not None
+        return res
+
+    @field_validator("DIRECT_URL", mode="before")
+    @classmethod
+    def _validate_direct_url(cls, value: str | PostgresDsn | None) -> str | None:
+        return cls._validate_and_normalize_postgres_url(value, "DIRECT_URL")
 
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False

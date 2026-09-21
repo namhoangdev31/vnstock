@@ -2537,11 +2537,17 @@ class DataSyncManager:
                     foreign_room_pct = (
                         profile.foreign_ownership_pct if profile else None
                     )
-                    foreign_room_total = (
-                        int(profile.max_foreign_ownership_pct)
-                        if profile and profile.max_foreign_ownership_pct is not None
-                        else None
-                    )
+                    if (
+                        profile
+                        and profile.outstanding_shares
+                        and profile.max_foreign_ownership_pct is not None
+                    ):
+                        foreign_room_total = int(
+                            profile.outstanding_shares
+                            * (profile.max_foreign_ownership_pct / 100.0)
+                        )
+                    else:
+                        foreign_room_total = None
                     foreign_room_current = None
 
                 # Tự doanh
@@ -2572,6 +2578,28 @@ class DataSyncManager:
                     prop_sell_val = None
                     prop_net_val = None
 
+                # Không tạo bản ghi NULL giả nếu không có bất kỳ dữ liệu dòng tiền thực tế nào
+                has_foreign = (
+                    foreign_buy_vol is not None
+                    or foreign_sell_vol is not None
+                    or foreign_net_vol is not None
+                )
+                has_prop = (
+                    prop_buy_vol is not None
+                    or prop_sell_vol is not None
+                    or prop_net_vol is not None
+                )
+                if not has_foreign and not has_prop:
+                    continue
+
+                last_src = getattr(self.svc, "last_successful_source", None)
+                if isinstance(last_src, str) and last_src:
+                    actual_src = last_src
+                else:
+                    svc_src = getattr(self.svc, "source", None)
+                    actual_src = (
+                        svc_src if isinstance(svc_src, str) and svc_src else "VCI"
+                    )
                 records.append(
                     {
                         "id": uuid.uuid4(),
@@ -2592,11 +2620,15 @@ class DataSyncManager:
                         "prop_buy_value": prop_buy_val,
                         "prop_sell_value": prop_sell_val,
                         "prop_net_value": prop_net_val,
-                        "source": self.svc.source,
+                        "source": actual_src,
                     }
                 )
 
             if not records:
+                logger.info(
+                    "Không có dữ liệu dòng tiền thực tế nào được tìm thấy cho ngày %s (bỏ qua ghi nhận NULL)",
+                    target_date,
+                )
                 return 0
 
             count = self._bulk_upsert(

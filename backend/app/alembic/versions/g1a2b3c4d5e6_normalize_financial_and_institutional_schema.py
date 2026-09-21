@@ -65,21 +65,27 @@ def upgrade() -> None:
     op.add_column("financial_report", sa.Column("financing_cash_flow", sa.Float(), nullable=True))
 
     # Update Unique Constraint for financial_report to include report_scope
-    try:
-        op.drop_constraint("uq_financial_report_record", "financial_report", type_="unique")
-    except Exception:
-        pass
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_uqs = inspector.get_unique_constraints("financial_report")
+    for uq in existing_uqs:
+        cols = set(uq.get("column_names", []))
+        if cols == {"symbol", "report_type", "period", "year", "quarter"}:
+            uq_name = uq.get("name")
+            if uq_name:
+                op.drop_constraint(str(uq_name), "financial_report", type_="unique")
+
     op.create_unique_constraint(
         "uq_financial_report_record",
         "financial_report",
-        ["symbol", "report_type", "fiscal_year", "fiscal_quarter", "report_scope"],
+        ["symbol", "report_type", "report_scope", "period", "year", "quarter"],
     )
 
     # Add lookup index for financial_report
     op.create_index(
         "ix_financial_report_lookup",
         "financial_report",
-        ["symbol", "report_type", "fiscal_year", "fiscal_quarter", "report_scope"],
+        ["symbol", "report_type", "report_scope", "year", "quarter"],
     )
 
     # 3. Update financial_ratio (17 explicit fields and indexes)
@@ -177,14 +183,11 @@ def downgrade() -> None:
 
     # 2. Revert financial_report
     op.drop_index("ix_financial_report_lookup", table_name="financial_report")
-    try:
-        op.drop_constraint("uq_financial_report_record", "financial_report", type_="unique")
-    except Exception:
-        pass
+    op.drop_constraint("uq_financial_report_record", "financial_report", type_="unique")
     op.create_unique_constraint(
-        "uq_financial_report_record",
+        "financial_report_symbol_report_type_period_year_quarter_key",
         "financial_report",
-        ["symbol", "report_type", "fiscal_year", "fiscal_quarter"],
+        ["symbol", "report_type", "period", "year", "quarter"],
     )
 
     for col in [

@@ -18,14 +18,14 @@ def db() -> Generator[Session]:
         init_db(session)
         yield session
         statement = delete(Item)
-        session.execute(statement)
+        session.exec(statement)
         statement = delete(User)
-        session.execute(statement)
+        session.exec(statement)
         session.commit()
 
 
 @pytest.fixture(scope="module")
-def client() -> Generator[TestClient]:
+def client(db: Session) -> Generator[TestClient]:  # noqa: ARG001
     with TestClient(app) as c:
         yield c
 

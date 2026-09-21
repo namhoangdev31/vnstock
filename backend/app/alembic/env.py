@@ -25,6 +25,8 @@ target_metadata = SQLModel.metadata
 
 
 def get_url():
+    if settings.DIRECT_URL:
+        return str(settings.DIRECT_URL)
     return str(settings.DATABASE_URL)
 
 

@@ -3,6 +3,12 @@
 Được sử dụng bởi SQLAlchemy Engine, CRUD và Alembic Migrations.
 """
 
+from app.models.entities.asset_master import (
+    Instrument,
+    InstrumentAlias,
+    InstrumentRelation,
+    LegalEntity,
+)
 from app.models.entities.quant import (
     ForecastJournal,
     InstitutionalFlow,
@@ -10,6 +16,13 @@ from app.models.entities.quant import (
     MarketBreadth,
     SignalLog,
     TickFlowAggregated,
+)
+from app.models.entities.rate_limit import (
+    ProviderRateLimitState,
+)
+from app.models.entities.screener import (
+    ScreenerSnapshot,
+    ScreenerSnapshotHistorical,
 )
 from app.models.entities.simulation import (
     Order,
@@ -33,6 +46,7 @@ from app.models.entities.stock import (
     FinancialRatio,
     FinancialReport,
     FinancialReportItem,
+    FinancialReportRevision,
     IndexConstituent,
     InsiderTrading,
     StockOHLCVDaily,
@@ -61,17 +75,25 @@ __all__ = [
     "FinancialRatio",
     "FinancialReport",
     "FinancialReportItem",
+    "FinancialReportRevision",
     "ForecastJournal",
     "IndexConstituent",
     "InsiderTrading",
     "InstitutionalFlow",
+    "Instrument",
+    "InstrumentAlias",
+    "InstrumentRelation",
     "Item",
     "ItemBase",
+    "LegalEntity",
     "MacroIndicator",
     "MarketBreadth",
     "Order",
     "Portfolio",
     "Position",
+    "ProviderRateLimitState",
+    "ScreenerSnapshot",
+    "ScreenerSnapshotHistorical",
     "SignalLog",
     "StockOHLCVDaily",
     "StockOHLCVIntraday",

@@ -97,19 +97,9 @@ def _run_migrations_and_seed() -> None:
 async def lifespan(_app: FastAPI):
     # Khởi động migration & seed trong background thread để không chặn startup và readiness probe
     migration_task = asyncio.create_task(asyncio.to_thread(_run_migrations_and_seed))
-
-    from app.cron.scheduler import start_scheduler_task
-
-    cron_task = start_scheduler_task()
     try:
         yield
     finally:
-        if cron_task and not cron_task.done():
-            cron_task.cancel()
-            try:
-                await cron_task
-            except asyncio.CancelledError:
-                pass
         if not migration_task.done():
             migration_task.cancel()
 

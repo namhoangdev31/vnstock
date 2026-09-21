@@ -233,6 +233,32 @@ def test_e2_05_usd_vnd_macro_impact():
     assert macro_score < 0.0  # Tác động tiêu cực (điểm âm)
 
 
+def test_e2_06_dynamic_reweighting_when_breadth_none():
+    """TEST-E2-06: Dynamic reweighting khi market_breadth là None (tỷ trọng 0.35 tái phân bổ)."""
+    engine = FlowLiquidityEngine()
+    assert engine.compute_market_breadth(None) is None
+
+    # Khi breadth = None, w_ifm = 0.45/0.75 = 0.6, w_t2 = -0.20/0.75, w_macro = 0.10/0.75
+    # Giả sử IFM = 1.0, t2_pressure = 0.0, macro = 0.0 -> score = 0.6
+    score = engine.compute_composite_score(
+        institutional_momentum=1.0,
+        market_breadth=None,
+        t2_pressure=0.0,
+        macro_sentiment=0.0,
+    )
+    assert score == 0.6
+
+    # Phân tích trả về FlowLiquidityEngineResponse với market_breadth=None
+    res = engine.analyze(
+        flows=[],
+        breadth=None,
+        daily_volumes=[],
+        macro_items=[],
+    )
+    assert res.market_breadth is None
+    assert res.score == 0.0
+
+
 # ===========================================================================
 # NHÓM 3: ENGINE 3 (ĐỊNH LƯỢNG ML, BASIS & CHUYỂN PHIÊN)
 # ===========================================================================

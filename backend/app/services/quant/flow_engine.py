@@ -86,14 +86,15 @@ class FlowLiquidityEngine:
     def compute_market_breadth(
         self,
         breadth_record: MarketBreadth | dict[str, Any] | None,
-    ) -> float:
+    ) -> float | None:
         """Tính chỉ số độ rộng thị trường (Market Breadth Index - MBI) trong [-1.0, +1.0].
 
         Công thức: (Mã tăng - Mã giảm) / Tổng số mã giao dịch.
         Xử lý ca biên: 100% mã giảm -> -1.0, 100% mã tăng -> +1.0.
+        Tuân thủ RULE 3: Trả về None nếu không có dữ liệu độ rộng thị trường (không bịa đặt số liệu).
         """
         if breadth_record is None:
-            return 0.0
+            return None
 
         adv = (
             breadth_record.advancers
@@ -217,20 +218,32 @@ class FlowLiquidityEngine:
     def compute_composite_score(
         self,
         institutional_momentum: float,
-        market_breadth: float,
+        market_breadth: float | None,
         t2_pressure: float,
         macro_sentiment: float,
     ) -> float:
         """Tổng hợp điểm số của Engine 2 trong dải [-1.0, +1.0].
 
-        Công thức: 0.45 * IFM + 0.35 * MBI - 0.20 * Pressure_T2 + 0.10 * Macro
+        Công thức chuẩn: 0.45 * IFM + 0.35 * MBI - 0.20 * Pressure_T2 + 0.10 * Macro.
+        Dynamic Reweighting: Nếu market_breadth là None (nguồn feed chưa hỗ trợ hoặc unavailable),
+        tái phân bổ trọng số 0.35 tỷ lệ sang 3 thành phần còn lại (tổng mẫu số = 0.45 + 0.20 + 0.10 = 0.75):
+        - institutional_momentum: 0.45 / 0.75 = 0.60
+        - t2_pressure: 0.20 / 0.75 = 0.2667
+        - macro_sentiment: 0.10 / 0.75 = 0.1333
         """
-        raw = (
-            0.45 * institutional_momentum
-            + 0.35 * market_breadth
-            - 0.20 * t2_pressure
-            + 0.10 * macro_sentiment
-        )
+        if market_breadth is None:
+            raw = (
+                (0.45 / 0.75) * institutional_momentum
+                - (0.20 / 0.75) * t2_pressure
+                + (0.10 / 0.75) * macro_sentiment
+            )
+        else:
+            raw = (
+                0.45 * institutional_momentum
+                + 0.35 * market_breadth
+                - 0.20 * t2_pressure
+                + 0.10 * macro_sentiment
+            )
         return round(max(-1.0, min(1.0, raw)), 4)
 
     def analyze(

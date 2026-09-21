@@ -101,6 +101,9 @@ class StockOHLCVDaily(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
+    instrument_id: uuid.UUID | None = Field(
+        default=None, foreign_key="instrument.id", index=True
+    )
     trading_date: date = Field(index=True)
     open: float
     high: float
@@ -243,6 +246,9 @@ class FinancialReport(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
+    instrument_id: uuid.UUID | None = Field(
+        default=None, foreign_key="instrument.id", index=True
+    )
     report_type: str = Field(
         max_length=20
     )  # income_statement, balance_sheet, cash_flow
@@ -282,6 +288,48 @@ class FinancialReport(AwareSQLModel, table=True):
 
     symbol_rel: Optional[StockSymbol] = Relationship(back_populates="financial_reports")
     items: list["FinancialReportItem"] = Relationship(back_populates="report")
+    revisions: list["FinancialReportRevision"] = Relationship(back_populates="report")
+
+
+class FinancialReportRevision(AwareSQLModel, table=True):
+    """Bảng lưu trữ lịch sử các bản sửa đổi/bổ sung của BCTC (Restatements & Revisions).
+
+    Bảo vệ tính toàn vẹn kiểm toán (Rule 3) và loại trừ Look-ahead bias:
+    - payload_hash: SHA256 canonical JSON để nhận diện sửa đổi nội dung tất định.
+    - is_provisional: Đánh dấu dữ liệu tạm nếu chưa xác thực được ngày công bố chính thức.
+    """
+
+    __tablename__ = "financial_report_revision"
+    __table_args__ = (
+        UniqueConstraint("report_id", "revision_number"),
+        Index(
+            "ix_financial_report_rev_pub", "report_id", "published_at", "is_provisional"
+        ),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    report_id: uuid.UUID = Field(foreign_key="financial_report.id", index=True)
+    revision_number: int = Field(
+        default=1
+    )  # 1: bản đầu, 2: bản soát xét/kiểm toán, 3+: sửa đổi sau kiểm toán
+    payload_hash: str = Field(max_length=64, index=True)  # SHA-256 canonical JSON
+    published_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        index=True,
+    )
+    is_provisional: bool = Field(default=False, index=True)
+    restated_reason: str | None = Field(default=None, max_length=500)
+    data: dict = Field(
+        default_factory=dict,
+        sa_type=JSONBVariant,  # type: ignore
+    )
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    report: Optional["FinancialReport"] = Relationship(back_populates="revisions")
 
 
 class FinancialReportItem(AwareSQLModel, table=True):
@@ -320,6 +368,9 @@ class FinancialRatio(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
+    instrument_id: uuid.UUID | None = Field(
+        default=None, foreign_key="instrument.id", index=True
+    )
     period: str = Field(max_length=10)  # quarter, year
     year: int
     quarter: int | None = None  # 1-4 cho quý, None cho năm

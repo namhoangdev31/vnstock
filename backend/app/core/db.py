@@ -7,7 +7,8 @@ from app.models import User, UserCreate
 engine = create_engine(
     str(settings.DATABASE_URL),
     pool_pre_ping=True,
-    connect_args={"connect_timeout": 5},
+    pool_recycle=300,
+    connect_args={"connect_timeout": 5, "prepare_threshold": None},
 )
 
 
