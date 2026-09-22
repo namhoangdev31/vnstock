@@ -28,6 +28,7 @@ from vnstock import (
 
 from app.core.config import settings
 from app.services.rate_limit import CircuitBreakerOpenError, RateLimiter
+from app.services.vnstock_registry import DataAvailability, VnstockCapabilityRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +40,18 @@ class VnstockServiceError(Exception):
 class VnstockService:
     """Đóng gói toàn diện thư viện vnstock với cơ chế đa nguồn và quản lý lỗi chuẩn hóa."""
 
-    VALID_SOURCES_QUOTE = ["vci", "kbs", "msn"]
-    VALID_SOURCES_LISTING = ["kbs", "vci", "msn"]
-    VALID_SOURCES_COMPANY = ["kbs", "vci"]
-    VALID_SOURCES_FINANCE = ["kbs", "vci"]
+    VALID_SOURCES_QUOTE = VnstockCapabilityRegistry.check_availability(
+        "quote.history_daily"
+    ).supported_sources or ["vci", "kbs", "msn"]
+    VALID_SOURCES_LISTING = VnstockCapabilityRegistry.check_availability(
+        "listing.all_symbols"
+    ).supported_sources or ["kbs", "vci", "msn"]
+    VALID_SOURCES_COMPANY = VnstockCapabilityRegistry.check_availability(
+        "company.overview"
+    ).supported_sources or ["kbs", "vci"]
+    VALID_SOURCES_FINANCE = VnstockCapabilityRegistry.check_availability(
+        "finance.income_statement"
+    ).supported_sources or ["kbs", "vci"]
 
     def __init__(
         self,
@@ -81,8 +90,8 @@ class VnstockService:
             if s and s not in normalized:
                 normalized.append(s)
 
-        # Bổ sung các nguồn chuẩn nếu chưa có trong cấu hình
-        for default_src in ["vci", "kbs", "msn"]:
+        # Bổ sung các nguồn chuẩn theo thứ tự fallback của VnstockCapabilityRegistry
+        for default_src in VnstockCapabilityRegistry.FALLBACK_ORDER:
             if default_src not in normalized:
                 normalized.append(default_src)
 
@@ -91,6 +100,21 @@ class VnstockService:
     def _get_valid_sources(self, allowed_sources: list[str]) -> list[str]:
         """Lọc danh sách nguồn hợp lệ cho từng bộ chuyển đổi cụ thể."""
         return [s for s in self.sources if s in allowed_sources]
+
+    def get_capability_sources(self, capability_key: str) -> list[str]:
+        """Lấy danh sách các nguồn hỗ trợ cho một capability, ưu tiên theo cấu hình hiện tại."""
+        avail = VnstockCapabilityRegistry.check_availability(capability_key)
+        if not avail.supported_sources:
+            return []
+        return [s for s in self.sources if s in avail.supported_sources]
+
+    def is_capability_available(self, capability_key: str) -> bool:
+        """Kiểm tra tính khả dụng của một tính năng theo VnstockCapabilityRegistry."""
+        return VnstockCapabilityRegistry.is_available(capability_key)
+
+    def check_capability(self, capability_key: str) -> DataAvailability:
+        """Kiểm tra chi tiết tính khả dụng và metadata nguồn cấp của tính năng."""
+        return VnstockCapabilityRegistry.check_availability(capability_key)
 
     def _throttle(self, provider: str | None = None) -> None:
         """Kích hoạt độ trễ tối thiểu và kiểm tra circuit breaker theo từng provider."""

@@ -6,9 +6,14 @@ import logging
 from typing import Any
 
 import pandas as pd
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from app.models.models_vnstock import VnstockSymbolResponse
+from app.services.vnstock_registry import (
+    CapabilityInfo,
+    CapabilityStatus,
+    VnstockCapabilityRegistry,
+)
 from app.services.vnstock_service import vnstock_service
 
 router = APIRouter(prefix="/vnstock", tags=["vnstock"])
@@ -43,3 +48,39 @@ def get_vnstock_sources() -> list[str]:
     sources = vnstock_service.sources
     logger.info("Danh sách nguồn dữ liệu vnstock: %s", sources)
     return sources
+
+
+@router.get("/capabilities", response_model=dict[str, CapabilityInfo])
+def get_vnstock_capabilities(
+    status: CapabilityStatus | None = Query(
+        default=None,
+        description="Lọc theo trạng thái năng lực: 'available', 'unavailable', hoặc 'out_of_scope'.",
+    ),
+    module: str | None = Query(
+        default=None,
+        description="Lọc theo tên module (ví dụ: Quote, Listing, Company, Finance, Retail, Market, Reference, Flow, External).",
+    ),
+) -> dict[str, CapabilityInfo]:
+    """Lấy toàn bộ ma trận năng lực và nguồn cấp dữ liệu của hệ sinh thái vnstock v4."""
+    capabilities = VnstockCapabilityRegistry.CAPABILITIES
+    result: dict[str, CapabilityInfo] = {}
+    for key, info in capabilities.items():
+        if status is not None and info.status != status:
+            continue
+        if module is not None and info.module.lower() != module.lower():
+            continue
+        result[key] = info
+    logger.info("Trả về %d capabilities từ VnstockCapabilityRegistry", len(result))
+    return result
+
+
+@router.get("/capabilities/{key}", response_model=CapabilityInfo)
+def get_vnstock_capability_detail(key: str) -> CapabilityInfo:
+    """Tra cứu chi tiết một tính năng cụ thể trong ma trận năng lực vnstock."""
+    info = VnstockCapabilityRegistry.CAPABILITIES.get(key)
+    if not info:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Capability '{key}' không tồn tại trong VnstockCapabilityRegistry",
+        )
+    return info

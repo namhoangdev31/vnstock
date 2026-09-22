@@ -14,6 +14,7 @@ from sqlmodel import and_, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
+from app.cron.purge_ticks import run_purge_ticks_job
 from app.cron.sync_daily_market import run_sync_daily_market_job
 from app.cron.sync_quarterly_financials import run_sync_quarterly_financials_job
 from app.models.entities.screener import ScreenerSnapshot
@@ -1144,6 +1145,42 @@ def cron_sync_quarterly_financials(
 
     logs = run_sync_quarterly_financials_job(session=session, group=group)
     return [SyncStatusPublic.model_validate(log) for log in logs]
+
+
+# ---------------------------------------------------------------------------
+# POST /stock/cron/purge-ticks — Automated Tick Purge Webhook
+# ---------------------------------------------------------------------------
+
+
+@router.post("/cron/purge-ticks", response_model=SyncStatusPublic)
+def cron_purge_ticks(
+    session: SessionDep,
+    x_cron_secret: Annotated[str | None, Header(alias="X-Cron-Secret")] = None,
+    secret_key: str | None = Query(default=None),
+    retention_days: int = Query(
+        default=30, ge=1, le=365, description="Số ngày lưu trữ tick (mặc định 30 ngày)"
+    ),
+    force: bool = Query(
+        default=False, description="Bỏ qua Safe Purge Gate (chỉ dùng khi bắt buộc)"
+    ),
+) -> Any:
+    """Kích hoạt dọn dẹp tick cũ hơn retention_days ngày qua Safe Purge Gate.
+
+    Yêu cầu header 'X-Cron-Secret' hoặc query param 'secret_key' khớp với cấu hình hệ thống.
+    """
+    valid_secret = settings.CRON_SECRET_KEY or settings.SECRET_KEY
+    provided_secret = x_cron_secret or secret_key
+
+    if not provided_secret or provided_secret != valid_secret:
+        raise HTTPException(
+            status_code=403,
+            detail="Mã bảo mật Cron (X-Cron-Secret) không hợp lệ",
+        )
+
+    log = run_purge_ticks_job(
+        session=session, retention_days=retention_days, force=force
+    )
+    return SyncStatusPublic.model_validate(log)
 
 
 # ---------------------------------------------------------------------------

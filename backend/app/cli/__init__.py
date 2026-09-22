@@ -6,6 +6,7 @@ Usage:
     python -m app.cli.stock_sync daily
     python -m app.cli.stock_sync daily --symbols VNM,FPT,VN30F1M
     python -m app.cli.stock_sync intraday --symbol VN30F1M --interval 1m
+    python -m app.cli.stock_sync purge-ticks --retention-days 30
     python -m app.cli.stock_sync status --last 10
 """
 
@@ -15,6 +16,7 @@ import typer
 from sqlmodel import Session, col, select
 
 from app.core.db import engine
+from app.cron.purge_ticks import run_purge_ticks_job
 from app.models.models_stock import DataSyncLog
 from app.services.data_sync import DataSyncManager
 
@@ -115,6 +117,26 @@ def financials(
         manager = DataSyncManager(session)
         log = manager.sync_financials(symbol, report_type=report_type, period=period)
         typer.echo(f"Symbol: {symbol} | Status: {log.status} | Rows: {log.rows_synced}")
+        if log.error_message:
+            typer.echo(f"Error: {log.error_message}", err=True)
+            raise typer.Exit(code=1)
+
+
+@app.command(name="purge-ticks")
+def purge_ticks(
+    retention_days: int = typer.Option(
+        default=30, help="Số ngày lưu trữ tick (mặc định 30 ngày theo AGENTS §7.2)"
+    ),
+    force: bool = typer.Option(
+        default=False, help="Bỏ qua Safe Purge Gate (chỉ dùng khi bắt buộc)"
+    ),
+) -> None:
+    """Dọn dẹp dữ liệu tick cũ hơn N ngày qua Safe Purge Gate."""
+    with Session(engine) as session:
+        log = run_purge_ticks_job(
+            session=session, retention_days=retention_days, force=force
+        )
+        typer.echo(f"Status: {log.status} | Ticks purged: {log.rows_synced}")
         if log.error_message:
             typer.echo(f"Error: {log.error_message}", err=True)
             raise typer.Exit(code=1)
