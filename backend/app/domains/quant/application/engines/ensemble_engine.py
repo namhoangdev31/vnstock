@@ -4,8 +4,15 @@
 kết hợp điều chỉnh trọng số động theo chu kỳ phiên (Time-of-Day Blending), giải quyết xung đột tín hiệu,
 tính toán khoảng quản trị rủi ro Stop Loss / Take Profit động (đảm bảo R:R >= 1:2.0)
 và bắt buộc tự động ghi nhận vào sổ nhật ký kiểm toán ForecastJournal (tuân thủ RULE 3).
+
+Nâng cấp ML:
+- Engine Disagreement Metric: std(E1,E2,E3) đo mức đồng thuận giữa các engines
+- Adaptive Confidence: confidence phản ánh disagreement thay vì chỉ abs(score)
+- Adaptive Conflict Threshold: ngưỡng xung đột thích ứng theo mức bất đồng
+- Regime-Aware Weight Adjustment: điều chỉnh trọng số theo chế độ thị trường E1
 """
 
+import statistics
 import uuid
 from datetime import datetime
 from typing import Any
@@ -79,8 +86,15 @@ class EnsembleEngine:
         self,
         dt: datetime | None = None,
         custom_weights: dict[str, float] | None = None,
+        regime: str = "RANGING",
     ) -> tuple[str, dict[str, float]]:
-        """Lấy bộ trọng số tương ứng theo thời điểm giao dịch thực tế (chuẩn hóa tổng = 1.0)."""
+        """Lấy bộ trọng số tương ứng theo thời điểm giao dịch thực tế và chế độ thị trường.
+
+        Chuẩn hóa tổng = 1.0. Regime-aware adjustment:
+        - "VOLATILE": tăng w3 (basis/quant) +20%, giảm w1 (technical) -20% (ngoài ATC/PRE_ATC)
+        - "TRENDING" : tăng w1 (technical momentum đáng tin) +10%, giảm w2 -10%
+        - "RANGING"  : giữ nguyên trọng số phase
+        """
         now = dt or datetime.now(VN_TZ)
         phase = self.engine3.classify_session_phase(now)
 
@@ -91,7 +105,26 @@ class EnsembleEngine:
             return phase, self._custom_weights_override
 
         schedule_w = DEFAULT_SCHEDULE.get(phase, {"w1": 0.34, "w2": 0.33, "w3": 0.33})
-        return phase, self.normalize_weights(schedule_w)
+        base_w = self.normalize_weights(schedule_w)
+
+        if regime == "VOLATILE" and phase not in (
+            SessionPhase.ATC,
+            SessionPhase.PRE_ATC,
+        ):
+            w1 = base_w["w1"] * 0.80
+            w2 = base_w["w2"]
+            w3 = base_w["w3"] * 1.20
+            return phase, self.normalize_weights({"w1": w1, "w2": w2, "w3": w3})
+        if regime == "TRENDING" and phase not in (
+            SessionPhase.ATC,
+            SessionPhase.PRE_ATC,
+        ):
+            w1 = base_w["w1"] * 1.10
+            w2 = base_w["w2"] * 0.90
+            w3 = base_w["w3"]
+            return phase, self.normalize_weights({"w1": w1, "w2": w2, "w3": w3})
+
+        return phase, base_w
 
     def resolve_signal_conflicts(
         self,
@@ -99,29 +132,49 @@ class EnsembleEngine:
         score_e2: float,
         score_e3: float,
         weights: dict[str, float],
-    ) -> tuple[float, float, bool]:
+    ) -> tuple[float, float, bool, float]:
         """Hợp nhất điểm số và xử lý triệt tiêu xung đột tín hiệu.
 
-        Trả về (điểm_cuối_cùng, độ_tin_cậy, có_xung_đột).
+        Trả về (điểm_cuối_cùng, độ_tin_cậy, có_xung_đột, disagreement).
+
+        Adaptive Conflict: ngưỡng xung đột phụ thuộc vào mức bất đồng:
+        - Disagreement = std(E1, E2, E3) — đo mức "chênh nhau" giữa 3 engines
+        - Conflict threshold = max(0.35, 0.50 - 0.10 * disagreement)
+        - Khi agreement cao (low disagreement): threshold cao → khó trigger conflict hơn
+        - Khi agreement thấp (high disagreement): threshold thấp → dễ neutralize hơn
+
         Nếu Engine 1 (Kỹ thuật) và Engine 3 (Định lượng/Basis) mâu thuẫn đối nghịch mạnh
-        (|E1| > 0.5 và |E3| > 0.5 trái dấu), tín hiệu tự động đưa về NEUTRAL (độ tin cậy 50%).
+        (|E1| > threshold và |E3| > threshold trái dấu), tín hiệu tự động đưa về NEUTRAL.
         """
         w1 = weights["w1"]
         w2 = weights["w2"]
         w3 = weights["w3"]
         raw_score = w1 * score_e1 + w2 * score_e2 + w3 * score_e3
 
+        scores = [score_e1, score_e2, score_e3]
+        disagreement = round(statistics.pstdev(scores), 4) if len(scores) >= 2 else 0.0
+
+        conflict_threshold = max(0.35, 0.50 - 0.10 * disagreement)
+
         conflict = False
-        if (score_e1 > 0.5 and score_e3 < -0.5) or (score_e1 < -0.5 and score_e3 > 0.5):
+        if (score_e1 > conflict_threshold and score_e3 < -conflict_threshold) or (
+            score_e1 < -conflict_threshold and score_e3 > conflict_threshold
+        ):
             conflict = True
-            # Triệt tiêu điểm số về trung tính do xung đột cấu trúc nghiêm trọng
             final_score = 0.0
             confidence = 0.50
         else:
             final_score = max(-1.0, min(1.0, raw_score))
-            confidence = round(min(1.0, abs(final_score) + 0.20), 4)
+            # Adaptive confidence: phản ánh mức đồng thuận giữa engines
+            # Cũ: abs(score) + 0.20 (oversimplified)
+            # Mới: penalty khi disagreement cao, reward khi agreement cao
+            agreement_factor = max(0.0, 1.0 - 0.8 * disagreement)
+            confidence = round(
+                max(0.10, abs(final_score) * agreement_factor + 0.15),
+                4,
+            )
 
-        return round(final_score, 4), confidence, conflict
+        return round(final_score, 4), confidence, conflict, disagreement
 
     def classify_direction(self, score: float) -> str:
         """Phân loại xu hướng: Score >= +0.35 -> LONG, Score <= -0.35 -> SHORT, còn lại NEUTRAL."""
@@ -264,11 +317,11 @@ class EnsembleEngine:
             as_of=now,
         )
 
-        # 2. Điều phối trọng số động & Giải quyết xung đột
+        regime = e1_res.regime
         _phase, weights = self.get_dynamic_weights(
-            now, custom_weights=request.custom_weights
+            now, custom_weights=request.custom_weights, regime=regime
         )
-        final_score, confidence, conflict = self.resolve_signal_conflicts(
+        final_score, confidence, conflict, disagreement = self.resolve_signal_conflicts(
             score_e1=e1_res.score,
             score_e2=e2_res.score,
             score_e3=e3_res.score,
@@ -318,6 +371,8 @@ class EnsembleEngine:
                 "conflict_detected": conflict,
                 "stop_loss": stop_loss,
                 "take_profit": take_profit,
+                "engine_disagreement": disagreement,
+                "regime": regime,
             },
         )
 
@@ -335,6 +390,7 @@ class EnsembleEngine:
             engine_weights=weights,
             engine_scores=engine_scores,
             model_version=self.MODEL_VERSION,
+            engine_disagreement=disagreement,
         )
 
     def get_weights_status(self) -> EnsembleWeightsResponse:

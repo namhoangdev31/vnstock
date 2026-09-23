@@ -253,3 +253,238 @@ def compute_zscore(value: float, mean: float, std: float) -> float:
     if std <= 1e-9:
         return 0.0
     return round((value - mean) / std, 4)
+
+
+# =============================================================================
+# PHẦN 2 — Hàm nâng cấp ML/thuật toán (không phụ thuộc thư viện ngoài)
+# =============================================================================
+
+
+def compute_rsi_smooth(closes: Sequence[float], period: int = 14) -> float | None:
+    """Tính RSI làm mượt bằng Sigmoid Transform — liên tục, không có ngưỡng ngắt quãng.
+
+    Thay thế logic if/elif cliff (RSI>=70 → fixed -0.3) bằng hàm sigmoid liên tục:
+        rsi_signal = 2 / (1 + exp(-k * (rsi - 50) / 50)) - 1,  k = 5
+    - RSI = 50  → 0.0  (trung tính)
+    - RSI = 80  → +0.84 (bullish mạnh)
+    - RSI = 20  → -0.84 (bearish mạnh)
+    - RSI = 100 → +1.0  (saturate)
+    - RSI = 0   → -1.0  (saturate)
+    Trả về None nếu không đủ dữ liệu.
+    """
+    rsi_val = compute_rsi(closes, period)
+    if rsi_val is None:
+        return None
+    k = 5.0
+    signal = 2.0 / (1.0 + math.exp(-k * (rsi_val - 50.0) / 50.0)) - 1.0
+    return round(max(-1.0, min(1.0, signal)), 4)
+
+
+def detect_market_regime(
+    closes: Sequence[float],
+    highs: Sequence[float] | None = None,
+    lows: Sequence[float] | None = None,
+    window: int = 14,
+) -> str:
+    """Phát hiện chế độ thị trường theo phương pháp ADX-inspired thuần Python.
+
+    Trả về:
+    - "TRENDING"  : Xu hướng rõ, ADX-proxy > 25 → MACD/momentum đáng tin cậy hơn
+    - "RANGING"   : Sideway, ADX-proxy ≤ 25, vol thấp → RSI/Bollinger đáng tin cậy hơn
+    - "VOLATILE"  : Biến động bất thường, HV tăng đột ngột → ATR/BB quan trọng hơn
+
+    Thuật toán:
+    1. ADX-proxy từ DM+/DM-/TR trên closes (nếu có H/L, dùng chính xác hơn)
+    2. Phát hiện volatile khi HV hiện tại > 1.5 * HV median
+    """
+    n = len(closes)
+    if n < window + 2:
+        return "RANGING"
+
+    # === 1. Volatility regime: so sánh HV ngắn hạn vs trung hạn ===
+    short_window = max(5, window // 2)
+    hv_short = compute_historical_volatility(list(closes[-short_window:]))
+    hv_long = compute_historical_volatility(list(closes[-window:]))
+
+    if hv_long > 1e-9 and hv_short > 1.6 * hv_long:
+        return "VOLATILE"
+
+    # === 2. ADX-proxy dùng True Range và Directional Movement ===
+    if highs and lows and len(highs) >= window + 1 and len(lows) >= window + 1:
+        h = list(highs)
+        lo = list(lows)
+        cl = list(closes)
+
+        tr_list: list[float] = []
+        dm_plus_list: list[float] = []
+        dm_minus_list: list[float] = []
+
+        for i in range(1, len(cl)):
+            high_i = h[i]
+            low_i = lo[i]
+            close_prev = cl[i - 1]
+            high_prev = h[i - 1]
+            low_prev = lo[i - 1]
+
+            tr = max(
+                high_i - low_i,
+                abs(high_i - close_prev),
+                abs(low_i - close_prev),
+            )
+            tr_list.append(tr)
+
+            up_move = high_i - high_prev
+            down_move = low_prev - low_i
+            dm_plus_list.append(up_move if up_move > down_move and up_move > 0 else 0.0)
+            dm_minus_list.append(
+                down_move if down_move > up_move and down_move > 0 else 0.0
+            )
+
+        if len(tr_list) >= window:
+            atr_w = statistics.fmean(tr_list[-window:]) or 1e-9
+            di_plus = 100.0 * statistics.fmean(dm_plus_list[-window:]) / atr_w
+            di_minus = 100.0 * statistics.fmean(dm_minus_list[-window:]) / atr_w
+            dx = 100.0 * abs(di_plus - di_minus) / (di_plus + di_minus + 1e-9)
+            return "TRENDING" if dx > 25.0 else "RANGING"
+
+    # === 3. Fallback khi không có H/L: slope-based regime ===
+    window_closes = list(closes[-window:])
+    mid = window // 2
+    first_half_mean = statistics.fmean(window_closes[:mid])
+    second_half_mean = statistics.fmean(window_closes[mid:])
+    price_range = max(window_closes) - min(window_closes)
+    trend_strength = abs(second_half_mean - first_half_mean) / (price_range + 1e-9)
+
+    return "TRENDING" if trend_strength > 0.25 else "RANGING"
+
+
+def compute_roc(closes: Sequence[float], period: int = 10) -> float:
+    """Tính Rate of Change (ROC) — xung lượng tương đối trong khoảng `period` phiên.
+
+    ROC = (close[-1] - close[-period]) / close[-period]
+    Trả về giá trị trong dải [-1.0, +1.0] (cap extreme values).
+    Trả về 0.0 khi không đủ dữ liệu.
+    """
+    if len(closes) < period + 1:
+        return 0.0
+    prev = closes[-(period + 1)]
+    if abs(prev) < 1e-9:
+        return 0.0
+    roc = (closes[-1] - prev) / prev
+    return round(max(-1.0, min(1.0, roc)), 4)
+
+
+def compute_linear_regression_slope(
+    values: Sequence[float],
+    window: int = 10,
+) -> float:
+    """Tính độ dốc hồi quy tuyến tính (Ordinary Least Squares) chuẩn hóa theo cửa sổ `window`.
+
+    Chuẩn hóa slope bằng cách chia cho mean giá trị để có đơn vị %/bar.
+    Trả về giá trị trong dải [-1.0, +1.0]:
+    - Dương mạnh: xu hướng tăng rõ
+    - Âm mạnh: xu hướng giảm rõ
+    - Gần 0: sideway
+    Trả về 0.0 khi không đủ dữ liệu.
+    """
+    n = min(window, len(values))
+    if n < 3:
+        return 0.0
+
+    series = list(values[-n:])
+    x_mean = (n - 1) / 2.0
+    y_mean = statistics.fmean(series)
+
+    if abs(y_mean) < 1e-9:
+        return 0.0
+
+    numerator = sum((i - x_mean) * (y - y_mean) for i, y in enumerate(series))
+    denominator = sum((i - x_mean) ** 2 for i in range(n))
+
+    if abs(denominator) < 1e-9:
+        return 0.0
+
+    slope = numerator / denominator
+    # Chuẩn hóa: slope theo %/bar rồi scale lên để có ý nghĩa kinh tế
+    normalized = slope / y_mean * n  # slope%/bar * n_bars ≈ tổng % thay đổi
+    return round(max(-1.0, min(1.0, normalized)), 4)
+
+
+def compute_adaptive_zscore(
+    value: float,
+    series: Sequence[float],
+    window: int = 60,
+) -> float:
+    """Tính Z-Score động (rolling) trên cửa sổ `window` thay vì population stats cố định.
+
+    Ưu điểm so với compute_zscore() tĩnh:
+    - Tự thích nghi khi phân phối dịch chuyển (drift)
+    - Không bị ảnh hưởng bởi outliers từ cách đây quá lâu
+
+    Fallback khi series ngắn (< 5 phần tử): dùng value / 5.0 (tương tự fallback cũ).
+    Trả về giá trị trong dải [-5.0, +5.0].
+    """
+    relevant = list(series[-window:]) if len(series) >= 5 else []
+    if len(relevant) < 5:
+        # Fallback conservative: coi std ≈ 5.0 điểm index (VN30 convention)
+        z = value / 5.0
+        return round(max(-5.0, min(5.0, z)), 4)
+
+    mean_val = statistics.fmean(relevant)
+    std_val = statistics.pstdev(relevant)
+
+    if std_val < 1e-9:
+        return 0.0
+
+    z = (value - mean_val) / std_val
+    return round(max(-5.0, min(5.0, z)), 4)
+
+
+def compute_entropy(distribution: Sequence[float]) -> float:
+    """Tính Shannon Entropy chuẩn hóa cho một phân phối xác suất.
+
+    Đo mức độ bất định / không đồng thuận của phân phối:
+    - Entropy = 0.0: tất cả mass dồn vào 1 điểm (certainty)
+    - Entropy = 1.0: phân phối đều hoàn toàn (maximum uncertainty)
+
+    Dùng cho: đánh giá mức độ đồng thuận của các engine scores.
+    Input: chuỗi số thực dương (không cần chuẩn hóa, hàm tự normalize).
+    Trả về 0.0 khi distribution rỗng hoặc tất cả bằng 0.
+    """
+    if not distribution:
+        return 0.0
+
+    abs_vals = [abs(v) for v in distribution]
+    total = sum(abs_vals)
+    if total < 1e-9:
+        return 0.0
+
+    probs = [v / total for v in abs_vals]
+    n = len(probs)
+    max_entropy = math.log(n) if n > 1 else 1.0
+
+    h = -sum(p * math.log(p + 1e-12) for p in probs if p > 1e-12)
+    return round(h / max_entropy, 4) if max_entropy > 1e-9 else 0.0
+
+
+def compute_exponential_smoothing(
+    values: Sequence[float],
+    alpha: float = 0.3,
+) -> list[float]:
+    """Làm mượt chuỗi thời gian bằng Exponential Weighted Moving Average (EWMA).
+
+    Công thức: S_t = alpha * x_t + (1 - alpha) * S_{t-1}
+    - alpha cao (0.7-0.9): phản ứng nhanh, ít làm mượt
+    - alpha thấp (0.1-0.3): làm mượt mạnh, phản ứng chậm
+
+    Trả về chuỗi đã làm mượt cùng độ dài với input.
+    Trả về [] khi input rỗng.
+    """
+    if not values:
+        return []
+
+    smoothed: list[float] = [values[0]]
+    for v in values[1:]:
+        smoothed.append(alpha * v + (1.0 - alpha) * smoothed[-1])
+
+    return smoothed

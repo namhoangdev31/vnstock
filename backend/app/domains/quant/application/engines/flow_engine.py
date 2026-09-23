@@ -5,6 +5,7 @@ các chỉ báo vĩ mô (tỷ giá USD/VND, vàng SJC) và mô hình hóa chu k�
 cùng áp lực bán xả hàng phiên chiều tại thị trường chứng khoán Việt Nam.
 """
 
+import math
 from collections.abc import Sequence
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -14,6 +15,7 @@ from sqlmodel import Session, col, select
 from app.core.enums import MacroIndicatorCode
 from app.core.models_base import VN_TZ
 from app.domains.quant.application.schemas import FlowLiquidityEngineResponse
+from app.domains.quant.domain.indicators import compute_exponential_smoothing
 from app.domains.quant.domain.models import (
     InstitutionalFlow,
     MacroIndicator,
@@ -73,6 +75,16 @@ class FlowLiquidityEngine:
             return 0.0
 
         sorted_dates = sorted(by_date.keys(), reverse=True)
+        chronological = list(reversed(sorted_dates))
+        f_series = [by_date[d]["f"] or 0.0 for d in chronological]
+        p_series = [by_date[d]["p"] or 0.0 for d in chronological]
+        f_smoothed = compute_exponential_smoothing(f_series, alpha=0.4)
+        p_smoothed = compute_exponential_smoothing(p_series, alpha=0.4)
+        by_date_smoothed: dict[Any, tuple[float, float]] = {
+            d: (s_f, s_p)
+            for d, s_f, s_p in zip(chronological, f_smoothed, p_smoothed, strict=True)
+        }
+
         recent_5_dates = sorted_dates[:5]
 
         f_5d = 0.0
@@ -82,11 +94,12 @@ class FlowLiquidityEngine:
 
         for d in recent_5_dates:
             entry = by_date[d]
+            s_f, s_p = by_date_smoothed[d]
             if entry["has_f"]:
-                f_5d += entry["f"] or 0.0
+                f_5d += s_f
                 has_f = True
             if entry["has_p"]:
-                p_5d += entry["p"] or 0.0
+                p_5d += s_p
                 has_p = True
 
         if not has_f and not has_p:
@@ -98,7 +111,9 @@ class FlowLiquidityEngine:
                 max_v = max(history_vals)
                 if max_v > min_v:
                     return 2.0 * (current_val - min_v) / (max_v - min_v) - 1.0
-            scale_denom = 1_000_000_000_000.0
+            # Adaptive fallback: dùng 1e9 (1 tỷ) thay vì 1e12 để giữ tín hiệu
+            # không bị flatten về 0 khi flow nhỏ hơn 10x đơn vị tham chiếu
+            scale_denom = 1_000_000_000.0
             return max(-1.0, min(1.0, current_val / scale_denom))
 
         f_history: list[float] = []
@@ -106,8 +121,8 @@ class FlowLiquidityEngine:
         if len(sorted_dates) > 5:
             for i in range(len(sorted_dates) - 4):
                 w_dates = sorted_dates[i : i + 5]
-                f_history.append(sum((by_date[wd]["f"] or 0.0) for wd in w_dates))
-                p_history.append(sum((by_date[wd]["p"] or 0.0) for wd in w_dates))
+                f_history.append(sum(by_date_smoothed[wd][0] for wd in w_dates))
+                p_history.append(sum(by_date_smoothed[wd][1] for wd in w_dates))
 
         norm_f = _normalize_series(f_5d, f_history)
         norm_p = _normalize_series(p_5d, p_history)
@@ -190,15 +205,17 @@ class FlowLiquidityEngine:
     ) -> float:
         """Tính chỉ số áp lực bán phiên chiều T+2 (T+2 Pressure Index) trong dải [0.0, 1.0].
 
-        Công thức chuẩn theo TRD §2.2.4:
-            Pressure_T2 = min(1.0, Vol_T2 / (MA(Vol_20) * 1.5))
-        Nếu khối lượng ngày T-2 bùng nổ vượt trội so với baseline MA20,
-        lượng hàng bắt đáy lớn sẽ về tài khoản lúc 13:00 hôm nay, tạo áp lực chốt lời/cắt lỗ gia tăng.
+        Công thức chuẩn theo TRD §2.2.4 với bổ sung Z-score volume:
+            Pressure_T2_base = min(1.0, Vol_T2 / (MA(Vol_20) * 1.5))
+            Z_vol            = (Vol_T2 - MA20) / (Std20 + eps)
+            Pressure_T2      = 0.7 * Pressure_T2_base + 0.3 * clip(Z_vol / 2, 0, 1)
+
+        Kết hợp cả độ lớn tuyệt đối (MA-ratio) và độ bất ngờ (Z-score) để
+        phân biệt "volume cao nhưng bình thường" với "volume spike thực sự".
         """
         if len(daily_volumes) < 3:
             return 0.0
 
-        # Khối lượng ngày T-2 là phần tử kế cuối
         vol_t2 = daily_volumes[-2]
         window = daily_volumes[max(0, len(daily_volumes) - baseline_ma_window - 2) : -2]
         if not window:
@@ -208,7 +225,18 @@ class FlowLiquidityEngine:
         if avg_vol <= 0:
             return 0.0
 
-        pressure = vol_t2 / (avg_vol * 1.5)
+        pressure_base = vol_t2 / (avg_vol * 1.5)
+
+        if len(window) >= 5:
+            mean_w = sum(window) / len(window)
+            var_w = sum((v - mean_w) ** 2 for v in window) / len(window)
+            std_w = math.sqrt(var_w) if var_w > 1e-9 else avg_vol * 0.3
+            z_vol = (vol_t2 - mean_w) / (std_w + 1e-9)
+            pressure_z = max(0.0, min(1.0, z_vol / 2.0))
+            pressure = 0.85 * min(1.0, pressure_base) + 0.15 * pressure_z
+        else:
+            pressure = min(1.0, pressure_base)
+
         return round(min(1.0, max(0.0, pressure)), 4)
 
     def compute_macro_sentiment(
@@ -239,17 +267,15 @@ class FlowLiquidityEngine:
                 continue
 
             if code == MacroIndicatorCode.USD_VND:
-                # Đồng nội tệ mất giá mạnh > +0.5% là tín hiệu bất lợi cho chứng khoán
                 if change > 0.5:
                     score -= min(1.0, (change - 0.5) * 2.0 + 0.3)
                 elif change < -0.5:
-                    score += 0.3
+                    score += min(0.5, abs(change + 0.5) * 1.0 + 0.2)
                 count += 1
             elif code in (
                 MacroIndicatorCode.SJC_GOLD_BUY,
                 MacroIndicatorCode.SJC_GOLD_SELL,
             ):
-                # Giá vàng trong nước tăng vọt > +1% báo hiệu dòng tiền tìm nơi trú ẩn
                 if change > 1.0:
                     score -= 0.2
                 elif change < -1.0:

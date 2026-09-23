@@ -20,6 +20,7 @@ from app.core.models_base import VN_TZ
 from app.domains.quant.application.schemas import QuantMLEngineResponse
 from app.domains.quant.domain.indicators import (
     compute_historical_volatility,
+    compute_linear_regression_slope,
     compute_parkinson_volatility,
     compute_zscore,
 )
@@ -73,16 +74,31 @@ class QuantMLEngine:
         futures_price: float,
         spot_index_price: float,
         historical_basis: Sequence[float] | None = None,
+        highs: Sequence[float] | None = None,
+        lows: Sequence[float] | None = None,
     ) -> tuple[float, float]:
         """Tính chênh lệch Basis (Phái sinh - Cơ sở) và Z-score lăn.
 
         Nguyên lý Hồi quy Trung bình (Mean-Reversion):
         - Z_basis > +2.0: Phái sinh đắt hơn bất thường -> Thiên hướng Bán (Short Bias)
         - Z_basis < -2.0: Phái sinh chiết khấu quá sâu -> Thiên hướng Mua (Long Bias)
+
+        Fallback cải tiến khi thiếu lịch sử:
+        - Nếu có H/L gần đây: dùng ATR estimate để chuẩn hóa basis (thích nghi hơn cố định 5.0)
+        - Nếu không: vẫn dùng 5.0 như cũ (backward-compatible)
         """
         basis = futures_price - spot_index_price
         if not historical_basis or len(historical_basis) < 2:
-            # Khi thiếu lịch sử, giả định trung bình = 0.0 và độ lệch chuẩn điển hình = 5.0 điểm
+            if highs and lows and len(highs) >= 3 and len(lows) >= 3:
+                recent_ranges = [
+                    h - lo for h, lo in zip(highs[-5:], lows[-5:], strict=False)
+                ]
+                if recent_ranges:
+                    atr_est = sum(recent_ranges) / len(recent_ranges)
+                    adaptive_std = max(2.0, atr_est * 1.5)
+                    z = basis / adaptive_std
+                    return round(basis, 2), round(max(-3.0, min(3.0, z)), 4)
+            # Fallback: std = 5.0 điểm index (VN30 convention)
             z = basis / 5.0
             return round(basis, 2), round(max(-3.0, min(3.0, z)), 4)
 
@@ -108,46 +124,64 @@ class QuantMLEngine:
         volatility: float,
         n_simulations: int = 1000,
         seed: int | None = 42,
+        n_steps: int = 8,
     ) -> dict[str, float]:
         """Thực hiện mô phỏng Monte Carlo cho đường đi giá phiên tiếp theo (T+1).
 
         Áp dụng mô hình Chuyển động Brown Hình học (GBM) kèm ràng buộc biên độ trần/sàn Việt Nam:
         Giới hạn biến động trong ngày là ±7.0% tính từ giá tham chiếu.
-        Trả về {"p05": phân vị 5% (đáy), "p50": trung vị, "p95": phân vị 95% (đỉnh)}.
+
+        Multi-step (n_steps=8): chia phiên thành 8 bước 30 phút, mỗi bước clip vào biên độ
+        để capture dynamics intraday (giá có thể chạm ceiling rồi quay đầu, không chỉ nhảy 1 nhát).
+
+        Trả về {"p05", "p50", "p95"} là các phân vị cuối ngày, kèm "mc_max_drawdown_p50" (phân vị
+        50% của max drawdown trong ngày theo %).
         """
         if current_price <= 0.0:
-            return {"p05": 0.0, "p50": 0.0, "p95": 0.0}
+            return {"p05": 0.0, "p50": 0.0, "p95": 0.0, "mc_max_drawdown_p50": 0.0}
 
         rng = random.Random(seed)
         effective_vol = max(0.05, min(0.60, volatility if volatility > 0 else 0.20))
 
-        # Khung thời gian 1 ngày (1/252 ngày giao dịch trong năm)
-        dt = 1.0 / 252.0
-        drift = 0.0  # Giả định xu hướng trôi trung tính cho mô phỏng
+        dt = 1.0 / 252.0 / n_steps
+        drift = 0.0
         mu_step = (drift - 0.5 * (effective_vol**2)) * dt
         vol_step = effective_vol * math.sqrt(dt)
 
-        # Biên độ trần/sàn ±7% của HOSE và Hợp đồng tương lai VN30F1M
         floor_limit = round(current_price * 0.93, 2)
         ceiling_limit = round(current_price * 1.07, 2)
 
-        simulated_prices: list[float] = []
-        for _ in range(n_simulations):
-            z = rng.gauss(0.0, 1.0)
-            p = current_price * math.exp(mu_step + vol_step * z)
-            bounded_p = max(floor_limit, min(ceiling_limit, p))
-            simulated_prices.append(bounded_p)
+        final_prices: list[float] = []
+        max_drawdowns: list[float] = []
 
-        simulated_prices.sort()
+        for _ in range(n_simulations):
+            price = current_price
+            peak = current_price
+            max_dd = 0.0
+            for _step in range(n_steps):
+                z = rng.gauss(0.0, 1.0)
+                price = price * math.exp(mu_step + vol_step * z)
+                price = max(floor_limit, min(ceiling_limit, price))
+                if price > peak:
+                    peak = price
+                dd = (peak - price) / peak if peak > 0 else 0.0
+                if dd > max_dd:
+                    max_dd = dd
+            final_prices.append(price)
+            max_drawdowns.append(max_dd)
+
+        final_prices.sort()
+        max_drawdowns.sort()
 
         idx_05 = int(0.05 * n_simulations)
         idx_50 = int(0.50 * n_simulations)
         idx_95 = int(0.95 * n_simulations)
 
         return {
-            "p05": round(simulated_prices[idx_05], 2),
-            "p50": round(simulated_prices[idx_50], 2),
-            "p95": round(simulated_prices[idx_95], 2),
+            "p05": round(final_prices[idx_05], 2),
+            "p50": round(final_prices[idx_50], 2),
+            "p95": round(final_prices[idx_95], 2),
+            "mc_max_drawdown_p50": round(max_drawdowns[idx_50] * 100.0, 4),
         }
 
     def predict_ato_gap(
@@ -175,8 +209,6 @@ class QuantMLEngine:
         gap_value = current_price - prev_close
         gap_pct = (gap_value / prev_close) * 100.0
 
-        # Nếu có historical_gaps (phân phối 60 ngày theo TRD)
-        threshold = 0.30  # 0.30%
         if historical_gaps and len(historical_gaps) >= 10:
             mean_gap = sum(historical_gaps) / len(historical_gaps)
             var_gap = sum((g - mean_gap) ** 2 for g in historical_gaps) / len(
@@ -194,18 +226,17 @@ class QuantMLEngine:
                 gap_type = "NORMAL_GAP"
                 direction_bias = "NEUTRAL"
         else:
-            if gap_pct > threshold:
+            adaptive_threshold = 0.30
+            if gap_pct > adaptive_threshold:
                 gap_type = "BULLISH_GAP"
                 direction_bias = "BULLISH"
-            elif gap_pct < -threshold:
+            elif gap_pct < -adaptive_threshold:
                 gap_type = "BEARISH_GAP"
                 direction_bias = "BEARISH"
             else:
                 gap_type = "NORMAL_GAP"
                 direction_bias = "NEUTRAL"
 
-        # Kết hợp gap và chênh lệch basis qua đêm
-        # Overnight basis dương hỗ trợ đà tăng, âm tạo áp lực chiết khấu
         combined_signal = (gap_pct / 1.0) + (overnight_basis / 5.0)
         transition_score = round(max(-1.0, min(1.0, combined_signal / 2.0)), 4)
 
@@ -224,8 +255,6 @@ class QuantMLEngine:
         order_imbalance: float = 0.0,
     ) -> dict[str, Any]:
         """Dự phóng mức dịch chuyển giá khớp cân bằng trong phiên khớp lệnh định kỳ đóng cửa ATC."""
-        # Hội tụ Basis: Trong phiên ATC, basis phái sinh có xu hướng co hẹp về chỉ số cơ sở
-        # Nếu basis dương cao, giá có áp lực kéo xuống để thu hẹp khoảng cách
         convergence_delta = -basis_zscore * 0.5
         imbalance_impact = order_imbalance * 1.5
 
@@ -251,18 +280,30 @@ class QuantMLEngine:
         self,
         basis_zscore: float,
         transition_score: float = 0.0,
+        lr_trend_score: float | None = None,
     ) -> float:
         """Tổng hợp điểm số của Engine 3 trong dải [-1.0, +1.0].
 
         Logic Hồi quy Trung bình từ Basis:
         - Nếu Z > 0 (phái sinh đắt), điểm âm (Short bias)
         - Nếu Z < 0 (phái sinh rẻ), điểm dương (Long bias)
+
+        Khi có lr_trend_score (linear regression slope 10 ngày):
+        - 0.40 * mean_reversion_score + 0.40 * transition_score + 0.20 * lr_trend_score
+        Khi không: fallback về 0.50/0.50 (backward-compatible)
         """
-        # Đảo ngược dấu Z-Score theo lực kéo hồi quy trung bình
         mean_reversion_score = -1.0 * (basis_zscore / 2.5)
         mean_reversion_score = max(-1.0, min(1.0, mean_reversion_score))
 
-        score = 0.50 * mean_reversion_score + 0.50 * transition_score
+        if lr_trend_score is not None:
+            trend_signal = max(-1.0, min(1.0, lr_trend_score))
+            score = (
+                0.40 * mean_reversion_score
+                + 0.40 * transition_score
+                + 0.20 * trend_signal
+            )
+        else:
+            score = 0.50 * mean_reversion_score + 0.50 * transition_score
         return round(max(-1.0, min(1.0, score)), 4)
 
     def analyze(
@@ -284,6 +325,8 @@ class QuantMLEngine:
             futures_price=futures_price,
             spot_index_price=spot_index_price,
             historical_basis=historical_basis,
+            highs=highs,
+            lows=lows,
         )
 
         hv = 0.15
@@ -296,9 +339,6 @@ class QuantMLEngine:
             volatility=max(hv, pv),
         )
 
-        # Chuyển phiên linh hoạt theo mốc giờ thị trường:
-        # - Khung giờ sáng (Pre-ATO & ATO): Đánh giá Opening Gap
-        # - Các khung giờ còn lại: Đánh giá chuyển phiên ATC và hội tụ Basis
         if phase in (SessionPhase.PRE_ATO, SessionPhase.ATO):
             prev_c = closes[-1] if closes else futures_price
             trans_pred = self.predict_ato_gap(
@@ -313,7 +353,12 @@ class QuantMLEngine:
             )
 
         trans_score = float(trans_pred.get("transition_score", 0.0))
-        score = self.compute_composite_score(basis_z, trans_score)
+
+        lr_trend_score: float | None = None
+        if closes and len(closes) >= 5:
+            lr_trend_score = compute_linear_regression_slope(list(closes), window=10)
+
+        score = self.compute_composite_score(basis_z, trans_score, lr_trend_score)
 
         return QuantMLEngineResponse(
             symbol=symbol,
@@ -325,4 +370,6 @@ class QuantMLEngine:
             parkinson_vol=pv,
             session_phase=phase,
             monte_carlo_targets=mc_targets,
+            lr_trend_score=lr_trend_score if lr_trend_score is not None else 0.0,
+            mc_max_drawdown_p50=mc_targets.get("mc_max_drawdown_p50", 0.0),
         )

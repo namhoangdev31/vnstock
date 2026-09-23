@@ -217,13 +217,15 @@ def test_e2_04_t2_pressure_volume_spike():
     volumes_spike_3x = [10_000.0] * 20 + [30_000.0, 12_000.0]
     assert engine.compute_t2_pressure_index(volumes_spike_3x) == 1.0
 
-    # Khối lượng T-2 = 15,000 (gấp 1.5 lần avg_vol) -> Pressure_T2 = 1.0
+    # Khối lượng T-2 = 15,000 (gấp 1.5 lần avg_vol)
+    # Enhanced formula: 0.85 * 1.0 + 0.15 * z_vol_clipped → ~0.975
     volumes_spike_1_5x = [10_000.0] * 20 + [15_000.0, 12_000.0]
-    assert engine.compute_t2_pressure_index(volumes_spike_1_5x) == 1.0
+    assert abs(engine.compute_t2_pressure_index(volumes_spike_1_5x) - 0.975) < 0.02
 
-    # Khối lượng T-2 = 7,500 (gấp 0.75 lần avg_vol) -> Pressure_T2 = 7,500 / 15,000 = 0.5
+    # Khối lượng T-2 = 7,500 (dưới avg): Z-score component = 0 (below avg clipped)
+    # Enhanced formula: 0.85 * 0.5 + 0.15 * 0.0 → 0.425
     volumes_normal = [10_000.0] * 20 + [7_500.0, 10_000.0]
-    assert engine.compute_t2_pressure_index(volumes_normal) == 0.5
+    assert abs(engine.compute_t2_pressure_index(volumes_normal) - 0.425) < 0.02
 
 
 def test_e2_05_usd_vnd_macro_impact():
@@ -419,7 +421,7 @@ def test_ens_02_conflict_resolution_neutralizes():
     """TEST-ENS-02: Tín hiệu cực đoan đối nghịch (E1 > +0.5 & E3 < -0.5) phải triệt tiêu về NEUTRAL."""
     engine = EnsembleEngine()
     weights = {"w1": 0.5, "w2": 0.2, "w3": 0.3}
-    final_score, confidence, conflict = engine.resolve_signal_conflicts(
+    final_score, confidence, conflict, disagreement = engine.resolve_signal_conflicts(
         score_e1=0.80,  # Kỹ thuật tăng mạnh
         score_e2=0.10,
         score_e3=-0.80,  # Định lượng giảm mạnh
@@ -428,6 +430,7 @@ def test_ens_02_conflict_resolution_neutralizes():
     assert conflict is True
     assert final_score == 0.0
     assert confidence == 0.50
+    assert disagreement > 0.0
 
 
 def test_ens_03_forecast_journal_auto_logging(sqlite_session):
@@ -776,3 +779,76 @@ def test_e1_additional_branches():
         lows=[1290.0, 1295.0, 1300.0],
     )
     assert res_mismatch.vwap is not None
+
+
+def test_advanced_ml_indicators_suite():
+    """Kiểm tra toàn diện 7 hàm chỉ báo ML nâng cao mới được bổ sung trong indicators.py."""
+    from app.domains.quant.domain.indicators import (
+        compute_adaptive_zscore,
+        compute_entropy,
+        compute_exponential_smoothing,
+        compute_linear_regression_slope,
+        compute_roc,
+        compute_rsi_smooth,
+        detect_market_regime,
+    )
+
+    # 1. compute_rsi_smooth
+    assert compute_rsi_smooth([100.0, 102.0]) is None
+    trend_up = [100.0 + i * 2.0 for i in range(20)]
+    rsi_up = compute_rsi_smooth(trend_up)
+    assert rsi_up is not None and rsi_up > 0.5
+    trend_down = [100.0 - i * 2.0 for i in range(20)]
+    rsi_down = compute_rsi_smooth(trend_down)
+    assert rsi_down is not None and rsi_down < -0.5
+
+    # 2. detect_market_regime
+    # Chuỗi ngắn
+    assert detect_market_regime([100.0, 101.0]) == "RANGING"
+    # Chuỗi có High/Low rõ xu hướng tăng (dx > 25)
+    highs = [100.0 + i * 3.0 for i in range(20)]
+    lows = [95.0 + i * 3.0 for i in range(20)]
+    closes = [98.0 + i * 3.0 for i in range(20)]
+    regime_hl = detect_market_regime(closes, highs=highs, lows=lows, window=14)
+    assert regime_hl in ("TRENDING", "RANGING", "VOLATILE")
+    # Fallback chỉ có closes
+    regime_closes = detect_market_regime(closes, window=14)
+    assert regime_closes in ("TRENDING", "RANGING", "VOLATILE")
+
+    # 3. compute_roc
+    assert compute_roc([100.0, 101.0], period=10) == 0.0
+    assert compute_roc([0.0] * 12, period=10) == 0.0
+    roc_val = compute_roc([100.0 + i * 1.0 for i in range(15)], period=10)
+    assert roc_val > 0.0
+
+    # 4. compute_linear_regression_slope
+    assert compute_linear_regression_slope([100.0, 101.0]) == 0.0
+    assert compute_linear_regression_slope([0.0] * 10) == 0.0
+    slope_pos = compute_linear_regression_slope([100.0 + i * 2.0 for i in range(15)])
+    assert slope_pos > 0.0
+    slope_neg = compute_linear_regression_slope([100.0 - i * 2.0 for i in range(15)])
+    assert slope_neg < 0.0
+
+    # 5. compute_adaptive_zscore
+    # Series ngắn
+    assert compute_adaptive_zscore(10.0, [10.0, 11.0]) == 2.0
+    # Series đều (std < 1e-9)
+    assert compute_adaptive_zscore(10.0, [10.0] * 20) == 0.0
+    # Series bình thường
+    z_adapt = compute_adaptive_zscore(15.0, [10.0 + (i % 3) for i in range(20)])
+    assert -5.0 <= z_adapt <= 5.0
+
+    # 6. compute_entropy
+    assert compute_entropy([]) == 0.0
+    assert compute_entropy([0.0, 0.0, 0.0]) == 0.0
+    # Phân phối đều -> entropy tiệm cận 1.0
+    assert compute_entropy([1.0, 1.0, 1.0, 1.0]) >= 0.99
+    # Phân phối lệch tập trung -> entropy thấp
+    assert compute_entropy([100.0, 0.001, 0.001]) < 0.1
+
+    # 7. compute_exponential_smoothing
+    assert compute_exponential_smoothing([]) == []
+    smoothed = compute_exponential_smoothing([10.0, 20.0, 30.0], alpha=0.4)
+    assert len(smoothed) == 3
+    assert smoothed[0] == 10.0
+    assert smoothed[1] == 0.4 * 20.0 + 0.6 * 10.0

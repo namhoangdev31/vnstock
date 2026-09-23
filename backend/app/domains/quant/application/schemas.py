@@ -157,6 +157,8 @@ class TechnicalEngineResponse(SQLModel):
     fvg_detected: bool = False
     fvg_details: dict = Field(default_factory=dict)
     liquidity_sweeps: dict = Field(default_factory=dict)
+    regime: str = "RANGING"  # "TRENDING" | "RANGING" | "VOLATILE"
+    roc: float | None = None  # Rate of Change [-1.0, +1.0]
 
 
 class FlowLiquidityEngineResponse(SQLModel):
@@ -184,6 +186,8 @@ class QuantMLEngineResponse(SQLModel):
     parkinson_vol: float = 0.0
     session_phase: str = "CONTINUOUS"
     monte_carlo_targets: dict = Field(default_factory=dict)
+    lr_trend_score: float = 0.0  # Linear regression slope [-1.0, +1.0]
+    mc_max_drawdown_p50: float = 0.0  # Max drawdown percentile 50 intraday (%)
 
 
 class EnsembleSignalResponse(SQLModel):
@@ -202,6 +206,9 @@ class EnsembleSignalResponse(SQLModel):
     engine_weights: dict
     engine_scores: dict
     model_version: str = "v2.0.0"
+    engine_disagreement: float = (
+        0.0  # std(E1,E2,E3) — 0.0 = full consensus, 1.0+ = max divergence
+    )
     disclaimer: str = (
         "CẢNH BÁO RỦI RO (RULE 4): Tín hiệu mô phỏng định lượng mang tính chất tham khảo "
         "và nghiên cứu giáo dục, không phải là lời khuyên đầu tư tài chính hay khuyến nghị đặt lệnh."
