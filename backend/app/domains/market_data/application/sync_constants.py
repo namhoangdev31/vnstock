@@ -8,8 +8,9 @@ from __future__ import annotations
 from datetime import date
 
 # Bảng tra cứu & thiết lập cấu hình định danh
+# LƯU Ý: "UPCOM" bị loại bỏ — vnstock v4 từ chối tên sàn làm symbol giao dịch.
 STANDARD_INDEXES: frozenset[str] = frozenset(
-    {"VNINDEX", "VN30", "HNX", "HNX30", "UPCOM"}
+    {"VNINDEX", "VN30", "HNX", "HNX30"}
 )
 
 BOND_TYPE_CONFIG: dict[str, tuple[str, str]] = {

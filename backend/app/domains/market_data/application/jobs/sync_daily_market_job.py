@@ -21,8 +21,9 @@ from app.domains.market_data.infrastructure.vnstock_adapter import (
 
 logger = logging.getLogger(__name__)
 
-# Danh sách các chỉ số thị trường trọng yếu và phái sinh cần cập nhật hàng ngày
-CORE_INDEXES: list[str] = ["VNINDEX", "VN30", "HNX", "UPCOM", "VN30F1M"]
+# LƯU Ý: "UPCOM" bị loại bỏ vì vnstock v4 validate_symbol() từ chối tên sàn.
+# "HNX" được giữ vì source msn hỗ trợ fallback thành công.
+CORE_INDEXES: list[str] = ["VNINDEX", "VN30", "HNX", "VN30F1M"]
 
 
 def run_sync_daily_market_job(
