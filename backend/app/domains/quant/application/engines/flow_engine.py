@@ -111,8 +111,6 @@ class FlowLiquidityEngine:
                 max_v = max(history_vals)
                 if max_v > min_v:
                     return 2.0 * (current_val - min_v) / (max_v - min_v) - 1.0
-            # Adaptive fallback: dùng 1e9 (1 tỷ) thay vì 1e12 để giữ tín hiệu
-            # không bị flatten về 0 khi flow nhỏ hơn 10x đơn vị tham chiếu
             scale_denom = 1_000_000_000.0
             return max(-1.0, min(1.0, current_val / scale_denom))
 
