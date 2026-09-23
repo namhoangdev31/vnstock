@@ -74,9 +74,7 @@ def compute_macd(
 
     dif = dif_series[-1]
     dea = dea_series[-1]
-    hist = (
-        dif - dea
-    ) * 2.0  # Hệ số nhân x2 cho Histogram theo thông lệ định lượng Việt Nam
+    hist = (dif - dea) * 2.0
 
     return {"dif": round(dif, 4), "dea": round(dea, 4), "hist": round(hist, 4)}
 
@@ -256,11 +254,6 @@ def compute_zscore(value: float, mean: float, std: float) -> float:
     return round((value - mean) / std, 4)
 
 
-# =============================================================================
-# PHẦN 2 — Hàm nâng cấp ML/thuật toán (không phụ thuộc thư viện ngoài)
-# =============================================================================
-
-
 def compute_rsi_smooth(closes: Sequence[float], period: int = 14) -> float | None:
     """Tính RSI làm mượt bằng Sigmoid Transform — liên tục, không có ngưỡng ngắt quãng.
 
@@ -302,7 +295,6 @@ def detect_market_regime(
     if n < window + 2:
         return "RANGING"
 
-    # === 1. Volatility regime: so sánh HV ngắn hạn vs trung hạn ===
     short_window = max(5, window // 2)
     hv_short = compute_historical_volatility(list(closes[-short_window:]))
     hv_long = compute_historical_volatility(list(closes[-window:]))
@@ -310,7 +302,6 @@ def detect_market_regime(
     if hv_long > 1e-9 and hv_short > 1.6 * hv_long:
         return "VOLATILE"
 
-    # === 2. ADX-proxy dùng True Range và Directional Movement ===
     if highs and lows and len(highs) >= window + 1 and len(lows) >= window + 1:
         h = list(highs)
         lo = list(lows)
@@ -348,7 +339,6 @@ def detect_market_regime(
             dx = 100.0 * abs(di_plus - di_minus) / (di_plus + di_minus + 1e-9)
             return "TRENDING" if dx > 25.0 else "RANGING"
 
-    # === 3. Fallback khi không có H/L: slope-based regime ===
     window_closes = list(closes[-window:])
     mid = window // 2
     first_half_mean = statistics.fmean(window_closes[:mid])
@@ -406,8 +396,7 @@ def compute_linear_regression_slope(
         return 0.0
 
     slope = numerator / denominator
-    # Chuẩn hóa: slope theo %/bar rồi scale lên để có ý nghĩa kinh tế
-    normalized = slope / y_mean * n  # slope%/bar * n_bars ≈ tổng % thay đổi
+    normalized = slope / y_mean * n
     return round(max(-1.0, min(1.0, normalized)), 4)
 
 
