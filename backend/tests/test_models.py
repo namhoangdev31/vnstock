@@ -1,4 +1,4 @@
-"""Unit tests for app.models package.
+"""Unit tests for domain models and AwareSQLModel.
 
 Tests timezone-awareness validation, model instantiation, enum values,
 and pure PnL / financial calculation utilities without needing an active PostgreSQL DB.
@@ -9,15 +9,7 @@ from datetime import UTC, date, datetime
 
 import pytest
 
-from app.models.entities.simulation import (
-    Order,
-    Portfolio,
-    Position,
-    Trade,
-    derivative_pnl,
-    round_money,
-)
-from app.models.enums import (
+from app.core.enums import (
     DEFAULT_INITIAL_BALANCE,
     Exchange,
     ForecastDirection,
@@ -30,13 +22,21 @@ from app.models.enums import (
     PositionSide,
     PositionStatus,
 )
-from app.models.models_base import AwareSQLModel, get_datetime_utc
-from app.models.models_quant import (
+from app.core.models_base import AwareSQLModel, get_datetime_utc
+from app.domains.quant.domain.models import (
     ForecastJournal,
     InstitutionalFlow,
     MacroIndicator,
     MarketBreadth,
     TickFlowAggregated,
+)
+from app.domains.simulation.domain.models import (
+    Order,
+    Portfolio,
+    Position,
+    Trade,
+    derivative_pnl,
+    round_money,
 )
 
 
@@ -202,47 +202,20 @@ def test_macro_and_market_breadth_models() -> None:
 
 def test_dto_models_instantiation() -> None:
     """Kiểm tra tính hợp lệ và khả năng khởi tạo của các DTOs (Data Transfer Objects)."""
-    from app.models.dto import (
+    from app.domains.fundamental.application.schemas import (
         CompanyOverviewPublic,
-        EnsembleSignalRequest,
-        EnsembleSignalResponse,
-        EnsembleWeightsResponse,
-        EnsembleWeightsUpdate,
         FinancialReportPublic,
         FinancialReportsResponse,
-        FlowLiquidityEngineResponse,
-        ForecastAggregateResponse,
-        ForecastCreate,
-        ForecastJournalPublic,
-        ForecastResolve,
-        ForecastScoredPublic,
-        InstitutionalFlowPublic,
+    )
+    from app.domains.identity.application.schemas import (
         ItemCreate,
         ItemPublic,
         ItemsPublic,
         ItemUpdate,
-        MacroIndicatorPublic,
-        MacroLatestResponse,
-        MarkToMarketRequest,
         Message,
         NewPassword,
-        OHLCVRecord,
-        OrderCreateRequest,
-        OrderResponse,
-        PortfolioCreateRequest,
-        PortfolioResponse,
-        PortfoliosResponse,
-        PositionCloseRequest,
-        PositionResponse,
-        PriceHistoryResponse,
-        QuantMLEngineResponse,
-        StockSymbolPublic,
-        StockSymbolsPublic,
-        SyncStatusPublic,
-        TechnicalEngineResponse,
         Token,
         TokenPayload,
-        TradeResponse,
         UpdatePassword,
         UserCreate,
         UserPublic,
@@ -250,7 +223,42 @@ def test_dto_models_instantiation() -> None:
         UsersPublic,
         UserUpdate,
         UserUpdateMe,
+    )
+    from app.domains.market_data.application.schemas import (
+        OHLCVRecord,
+        PriceHistoryResponse,
+        StockSymbolPublic,
+        StockSymbolsPublic,
+        SyncStatusPublic,
         VnstockSymbolResponse,
+    )
+    from app.domains.quant.application.schemas import (
+        EnsembleSignalRequest,
+        EnsembleSignalResponse,
+        EnsembleWeightsResponse,
+        EnsembleWeightsUpdate,
+        FlowLiquidityEngineResponse,
+        ForecastAggregateResponse,
+        ForecastCreate,
+        ForecastJournalPublic,
+        ForecastResolve,
+        ForecastScoredPublic,
+        InstitutionalFlowPublic,
+        MacroIndicatorPublic,
+        MacroLatestResponse,
+        QuantMLEngineResponse,
+        TechnicalEngineResponse,
+    )
+    from app.domains.simulation.application.schemas import (
+        MarkToMarketRequest,
+        OrderCreateRequest,
+        OrderResponse,
+        PortfolioCreateRequest,
+        PortfolioResponse,
+        PortfoliosResponse,
+        PositionCloseRequest,
+        PositionResponse,
+        TradeResponse,
     )
 
     # Khởi tạo thử nghiệm Request DTO
@@ -321,14 +329,20 @@ def test_dto_models_instantiation() -> None:
 
 def test_stock_entities_instantiation() -> None:
     """Kiểm tra tính toàn vẹn và khởi tạo của 12 bảng thực thể chứng khoán vnstock."""
-    from app.models.entities import (
+    from app.domains.fundamental.domain.models import (
         CompanyOfficer,
         CompanyProfile,
         CompanyShareholder,
         CorporateEvent,
-        DataSyncLog,
         FinancialRatio,
         FinancialReport,
+        FinancialReportItem,
+    )
+    from app.domains.market_data.domain.models import (
+        BondSpecification,
+        CoveredWarrant,
+        DataSyncLog,
+        DerivativeContract,
         IndexConstituent,
         StockOHLCVDaily,
         StockOHLCVIntraday,
@@ -436,8 +450,6 @@ def test_stock_entities_instantiation() -> None:
     assert report.quarter == 2
 
     # 6b. FinancialReportItem (Relational Normalization)
-    from app.models.entities import FinancialReportItem
-
     report_item = FinancialReportItem(
         report_id=report.id,
         item_code="REVENUE",
@@ -517,8 +529,6 @@ def test_stock_entities_instantiation() -> None:
     assert sync_log.status == "success"
 
     # 13. DerivativeContract
-    from app.models.entities import DerivativeContract
-
     contract = DerivativeContract(
         symbol="VN30F1M",
         underlying_symbol="VN30",
@@ -530,8 +540,6 @@ def test_stock_entities_instantiation() -> None:
     assert contract.underlying_symbol == "VN30"
 
     # 14. CoveredWarrant
-    from app.models.entities import CoveredWarrant
-
     warrant = CoveredWarrant(
         symbol="CFPT2501",
         underlying_symbol="FPT",
@@ -545,8 +553,6 @@ def test_stock_entities_instantiation() -> None:
     assert warrant.warrant_type == "call"
 
     # 15. BondSpecification
-    from app.models.entities import BondSpecification
-
     bond = BondSpecification(
         symbol="MSN123009",
         bond_type="corporate",
@@ -562,7 +568,7 @@ def test_stock_entities_instantiation() -> None:
 
 def test_signal_log_instantiation() -> None:
     """Kiểm tra tính hợp lệ và khả năng khởi tạo của bảng SignalLog."""
-    from app.models.entities import SignalLog
+    from app.domains.quant.domain.models import SignalLog
 
     now = get_datetime_utc()
     signal = SignalLog(
@@ -583,47 +589,80 @@ def test_signal_log_instantiation() -> None:
 
 
 def test_entities_import_completeness() -> None:
-    """Kiểm tra việc import đầy đủ 28 bảng cơ sở dữ liệu từ app.models.entities."""
-    import app.models.entities as entities
+    """Kiểm tra việc import đầy đủ 28 bảng cơ sở dữ liệu từ các domain models."""
+    from app.domains.fundamental.domain.models import (
+        CompanyOfficer,
+        CompanyProfile,
+        CompanyShareholder,
+        CorporateEvent,
+        FinancialRatio,
+        FinancialReport,
+        FinancialReportItem,
+    )
+    from app.domains.identity.domain.models import Item, User
+    from app.domains.market_data.domain.models import (
+        BondSpecification,
+        CoveredWarrant,
+        DataSyncLog,
+        DerivativeContract,
+        IndexConstituent,
+        StockOHLCVDaily,
+        StockOHLCVIntraday,
+        StockSymbol,
+        StockTickIntraday,
+    )
+    from app.domains.quant.domain.models import (
+        ForecastJournal,
+        InstitutionalFlow,
+        MacroIndicator,
+        MarketBreadth,
+        SignalLog,
+        TickFlowAggregated,
+    )
+    from app.domains.simulation.domain.models import (
+        Order,
+        Portfolio,
+        Position,
+        Trade,
+    )
 
-    expected_tables = [
-        "User",
-        "Item",
+    expected_models = [
+        User,
+        Item,
         # 16 Bảng Thực Thể Chứng Khoán & Phái Sinh Vnstock
-        "StockSymbol",
-        "StockOHLCVDaily",
-        "StockOHLCVIntraday",
-        "StockTickIntraday",
-        "CompanyProfile",
-        "FinancialReport",
-        "FinancialReportItem",
-        "FinancialRatio",
-        "CorporateEvent",
-        "CompanyShareholder",
-        "CompanyOfficer",
-        "IndexConstituent",
-        "DataSyncLog",
-        "DerivativeContract",
-        "CoveredWarrant",
-        "BondSpecification",
+        StockSymbol,
+        StockOHLCVDaily,
+        StockOHLCVIntraday,
+        StockTickIntraday,
+        CompanyProfile,
+        FinancialReport,
+        FinancialReportItem,
+        FinancialRatio,
+        CorporateEvent,
+        CompanyShareholder,
+        CompanyOfficer,
+        IndexConstituent,
+        DataSyncLog,
+        DerivativeContract,
+        CoveredWarrant,
+        BondSpecification,
         # 6 Bảng Định lượng, Tín hiệu & Nghiên cứu Quant
-        "ForecastJournal",
-        "SignalLog",
-        "MacroIndicator",
-        "TickFlowAggregated",
-        "InstitutionalFlow",
-        "MarketBreadth",
+        ForecastJournal,
+        SignalLog,
+        MacroIndicator,
+        TickFlowAggregated,
+        InstitutionalFlow,
+        MarketBreadth,
         # 4 Bảng Giao Dịch Mô Phỏng Simulation
-        "Portfolio",
-        "Order",
-        "Position",
-        "Trade",
+        Portfolio,
+        Order,
+        Position,
+        Trade,
     ]
-    for table_name in expected_tables:
-        assert hasattr(entities, table_name), f"Thiếu entity bảng: {table_name}"
-        model_cls = getattr(entities, table_name)
+    assert len(expected_models) == 28
+    for model_cls in expected_models:
         assert hasattr(model_cls, "__tablename__"), (
-            f"{table_name} không phải là bảng ORM"
+            f"{model_cls.__name__} không phải là bảng ORM"
         )
 
 
@@ -634,12 +673,12 @@ def test_cross_asset_sync_upsert_and_relationships() -> None:
     import pandas as pd
     from sqlmodel import Session, SQLModel, create_engine, select
 
-    from app.models.models_stock import (
+    from app.domains.market_data.application.sync_service import DataSyncManager
+    from app.domains.market_data.domain.models import (
         BondSpecification,
         CoveredWarrant,
         StockSymbol,
     )
-    from app.services.data_sync import DataSyncManager
 
     sqlite_engine = create_engine("sqlite:///:memory:")
     SQLModel.metadata.create_all(sqlite_engine)

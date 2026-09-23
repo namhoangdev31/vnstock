@@ -3,5 +3,8 @@
   "python.analysis.extraPaths": ["${workspaceFolder}/backend"],
   "biome.lsp.bin": "./node_modules/.bin/biome",
   "ty.interpreter": ["${workspaceFolder}/.venv/bin/python"],
-  "python-envs.defaultEnvManager": "ms-python.python:system"
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "cursorpyright.analysis.extraPaths": [
+    "${workspaceFolder}/backend"
+  ]
 }

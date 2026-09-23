@@ -9,7 +9,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlmodel.sql.sqltypes import AutoString
 
-from app.models.base import JSONBVariant
+from app.core.models_base import JSONBVariant
 
 # revision identifiers, used by Alembic.
 revision = "f6a7b8c9d0e1"

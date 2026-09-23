@@ -17,9 +17,13 @@ import pytest
 from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel
 
-from app.models import VN_TZ
-from app.models.entities.rate_limit import ProviderRateLimitState
-from app.services.rate_limit import CircuitBreakerOpenError, CircuitState, RateLimiter
+from app.core.models_base import VN_TZ
+from app.domains.market_data.domain.rate_limit import ProviderRateLimitState
+from app.domains.market_data.infrastructure.rate_limiter import (
+    CircuitBreakerOpenError,
+    CircuitState,
+    RateLimiter,
+)
 
 
 @pytest.fixture

@@ -12,7 +12,7 @@ from typer.testing import CliRunner
 from app.cli import app as cli_app
 from app.core.config import settings
 from app.cron.purge_ticks import run_purge_ticks_job
-from app.models.entities.stock import (
+from app.domains.market_data.domain.models import (
     DataSyncLog,
     StockOHLCVIntraday,
     StockSymbol,

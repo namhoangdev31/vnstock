@@ -8,15 +8,17 @@ import pytest
 from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel, select
 
-from app.models.entities.asset_master import (
+from app.domains.fundamental.domain.models import (
+    FinancialRatio,
+    FinancialReport,
+)
+from app.domains.market_data.domain.asset_master import (
     Instrument,
     InstrumentAlias,
     InstrumentRelation,
     LegalEntity,
 )
-from app.models.entities.stock import (
-    FinancialRatio,
-    FinancialReport,
+from app.domains.market_data.domain.models import (
     StockOHLCVDaily,
     StockSymbol,
 )

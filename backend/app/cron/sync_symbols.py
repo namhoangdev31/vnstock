@@ -1,4 +1,4 @@
-"""Runner thực thi tác vụ đồng bộ danh mục mã chứng khoán & phái sinh (Cron job).
+"""CLI Runner: Đồng bộ danh mục mã chứng khoán & phái sinh (Cron job).
 
 Chạy định kỳ vào Thứ 2 và Thứ 5 hàng tuần lúc 08:00 sáng.
 Có thể chạy trực tiếp:
@@ -8,17 +8,21 @@ Có thể chạy trực tiếp:
 
 from __future__ import annotations
 
+import argparse
 import logging
 import sys
 
 from sqlmodel import Session
 
-from app.core.db import engine
-from app.models.models_stock import DataSyncLog
-from app.services.data_sync import DataSyncManager
-from app.services.vnstock_service import vnstock_service
+from app.domains.market_data.application.jobs.sync_symbols_job import (
+    run_sync_symbols_job as _run_sync_symbols_job,
+)
+from app.domains.market_data.domain.models import DataSyncLog
+from app.domains.market_data.infrastructure.vnstock_adapter import vnstock_service
 
 logger = logging.getLogger(__name__)
+
+__all__ = ["main", "run_sync_symbols_job", "vnstock_service"]
 
 
 def run_sync_symbols_job(session: Session | None = None) -> DataSyncLog:
@@ -26,17 +30,16 @@ def run_sync_symbols_job(session: Session | None = None) -> DataSyncLog:
 
     Được thiết kế để chạy độc lập từ CLI / Crontab hoặc từ API webhook / in-process scheduler.
     """
-    if session is not None:
-        manager = DataSyncManager(session, vnstock_service)
-        return manager.sync_symbols()
-
-    with Session(engine) as db_session:
-        manager = DataSyncManager(db_session, vnstock_service)
-        return manager.sync_symbols()
+    return _run_sync_symbols_job(session=session, service=vnstock_service)
 
 
 def main() -> int:
     """Entrypoint dòng lệnh để chạy cronjob đồng bộ mã."""
+    parser = argparse.ArgumentParser(
+        description="Đồng bộ danh mục mã chứng khoán & hợp đồng phái sinh định kỳ"
+    )
+    parser.parse_args()
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",

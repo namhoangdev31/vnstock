@@ -10,12 +10,13 @@ from sqlmodel import Session, select
 from app.core.config import settings
 from app.cron.scheduler import get_next_schedule_delay, start_scheduler_task
 from app.cron.sync_symbols import run_sync_symbols_job
-from app.models.models_stock import (
+from app.domains.market_data.application.sync_constants import get_third_thursday
+from app.domains.market_data.application.sync_service import DataSyncManager
+from app.domains.market_data.domain.models import (
     DataSyncLog,
     DerivativeContract,
     StockSymbol,
 )
-from app.services.data_sync import DataSyncManager, get_third_thursday
 from tests.utils.phase1 import (
     api_client,  # noqa: F401
     session,  # noqa: F401
@@ -250,7 +251,8 @@ def test_cron_sync_daily_market_api_endpoint(api_client, monkeypatch) -> None:  
 
     # 3. Gọi kèm secret đúng qua Header
     with patch(
-        "app.api.routes.stock.run_sync_daily_market_job", return_value=[mock_log]
+        "app.domains.market_data.presentation.sync_router.run_sync_daily_market_job",
+        return_value=[mock_log],
     ):
         resp_ok = api_client.post(
             "/api/v1/stock/cron/sync-daily-market",
@@ -265,11 +267,13 @@ def test_cron_sync_daily_market_api_endpoint(api_client, monkeypatch) -> None:  
 
     # 4. Gọi kèm secret đúng qua Query param
     with patch(
-        "app.api.routes.stock.run_sync_daily_market_job", return_value=[mock_log]
+        "app.domains.market_data.presentation.sync_router.run_sync_daily_market_job",
+        return_value=[mock_log],
     ):
         resp_query = api_client.post(
             "/api/v1/stock/cron/sync-daily-market?secret_key=test-cron-secret-daily-999"
         )
+
         assert resp_query.status_code == 200
         data = resp_query.json()
         assert isinstance(data, list)
@@ -329,7 +333,7 @@ def test_cron_sync_quarterly_financials_api_endpoint(api_client, monkeypatch) ->
         rows_synced=4,
     )
     with patch(
-        "app.api.routes.stock.run_sync_quarterly_financials_job",
+        "app.domains.market_data.presentation.sync_router.run_sync_quarterly_financials_job",
         return_value=[mock_log],
     ):
         resp_ok = api_client.post(

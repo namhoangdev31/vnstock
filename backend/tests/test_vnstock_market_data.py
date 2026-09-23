@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from app.services.vnstock_service import VnstockService
+from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def test_market_date_param_formatting(service: VnstockService) -> None:
     assert service._format_date_param("2024-02-20") == "2024-02-20"
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_equity_methods(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -70,7 +70,7 @@ def test_market_equity_methods(
     mock_mkt.equity.assert_called_with("VCB")
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_index_ohlcv(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -91,7 +91,7 @@ def test_market_index_ohlcv(
     )
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_futures_methods(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -125,7 +125,7 @@ def test_market_futures_methods(
     assert len(df_quote2) == 1
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_warrant_methods(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -144,7 +144,7 @@ def test_market_warrant_methods(
     assert not service.fetch_market_warrant_quote("CFPT2301").empty
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_etf_methods(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -163,7 +163,7 @@ def test_market_etf_methods(
     assert not service.fetch_market_etf_quote("E1VFVN30").empty
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_fund_methods(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -194,7 +194,7 @@ def test_market_fund_methods(
     assert not service.fetch_market_fund_industry_holding("VESAF").empty
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_international_and_macro_assets(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -227,7 +227,7 @@ def test_market_international_and_macro_assets(
     assert not service.fetch_market_commodity_ohlcv("Gold").empty
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_bond_methods(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -246,7 +246,7 @@ def test_market_bond_methods(
     assert not service.fetch_market_bond_trades("TP2024").empty
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_quick_quote(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -270,7 +270,7 @@ def test_market_quick_quote(
     assert len(df_single) == 2
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_market_graceful_error_handling(
     mock_market_cls: MagicMock, service: VnstockService
 ) -> None:

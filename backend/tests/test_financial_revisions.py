@@ -9,18 +9,18 @@ import pytest
 from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel, select
 
-from app.models.entities.asset_master import Instrument
-from app.models.entities.stock import (
-    FinancialReport,
-    FinancialReportRevision,
-    StockSymbol,
-)
-from app.services.financial_revision_service import (
+from app.domains.fundamental.application.revision_service import (
     acquire_financial_report_lock,
     canonical_payload_hash,
     get_as_of_financial_report_revision,
     record_financial_report_revision,
 )
+from app.domains.fundamental.domain.models import (
+    FinancialReport,
+    FinancialReportRevision,
+)
+from app.domains.market_data.domain.asset_master import Instrument
+from app.domains.market_data.domain.models import StockSymbol
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 
@@ -231,7 +231,7 @@ def test_sync_financials_creates_revisions_in_data_sync(db_session: Session) -> 
 
     import pandas as pd
 
-    from app.services.data_sync import DataSyncManager
+    from app.domains.market_data.application.sync_service import DataSyncManager
 
     sym = StockSymbol(symbol="HPG", organ_name="Tập đoàn Hòa Phát", exchange="HOSE")
     db_session.add(sym)

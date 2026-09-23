@@ -18,25 +18,27 @@ import pandas as pd
 import pytest
 from sqlmodel import Session, create_engine
 
-from app.models.enums import ForecastDirection, ForecastHorizon, ForecastStatus
-from app.models.models_base import AwareSQLModel
-from app.models.models_quant import (
-    EnsembleSignalRequest,
-    ForecastJournal,
-    InstitutionalFlow,
-    MacroIndicator,
-    MarketBreadth,
+from app.core.enums import ForecastDirection, ForecastHorizon, ForecastStatus
+from app.core.models_base import AwareSQLModel
+from app.domains.quant.application.engines import (
+    EnsembleEngine,
+    FlowLiquidityEngine,
+    QuantMLEngine,
+    TechnicalEngine,
 )
-from app.services.quant.ensemble_engine import EnsembleEngine
-from app.services.quant.flow_engine import FlowLiquidityEngine
-from app.services.quant.indicators import (
+from app.domains.quant.application.schemas import EnsembleSignalRequest
+from app.domains.quant.domain.indicators import (
     compute_macd,
     compute_parkinson_volatility,
     compute_rsi,
     compute_vwap,
 )
-from app.services.quant.quant_ml_engine import QuantMLEngine
-from app.services.quant.technical_engine import TechnicalEngine
+from app.domains.quant.domain.models import (
+    ForecastJournal,
+    InstitutionalFlow,
+    MacroIndicator,
+    MarketBreadth,
+)
 
 
 # Fixture tạo database SQLite in-memory phục vụ kiểm thử đơn vị thuần túy không phụ thuộc PostgreSQL

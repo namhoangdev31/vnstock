@@ -15,9 +15,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel
 
-from app.models.entities.asset_master import Instrument
-from app.models.entities.screener import ScreenerSnapshot
-from app.services.screener_service import ScreenerCursor, ScreenerService
+from app.domains.fundamental.application.screener_service import (
+    ScreenerCursor,
+    ScreenerService,
+)
+from app.domains.fundamental.domain.models import ScreenerSnapshot
+from app.domains.market_data.domain.asset_master import Instrument
 
 
 @pytest.fixture
@@ -181,8 +184,8 @@ def test_screen_stocks_endpoint_with_keyset_cursor(
     screener_db_session: Session,
 ) -> None:
     """Kiểm tra endpoint screen_stocks tích hợp ScreenerService và trả về metadata keyset."""
-    from app.api.routes.stock import screen_stocks
-    from app.models import User
+    from app.domains.fundamental.presentation.screener_router import screen_stocks
+    from app.domains.identity.domain.models import User
 
     # Thêm 2 bản ghi snapshot vào DB
     today = date(2026, 9, 21)

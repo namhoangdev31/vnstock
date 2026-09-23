@@ -21,9 +21,12 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.core.config import settings
-from app.models.entities.asset_master import Instrument
-from app.models.entities.screener import ScreenerSnapshot
-from app.services.screener_service import ScreenerCursor, ScreenerService
+from app.domains.fundamental.application.screener_service import (
+    ScreenerCursor,
+    ScreenerService,
+)
+from app.domains.fundamental.domain.models import ScreenerSnapshot
+from app.domains.market_data.domain.asset_master import Instrument
 
 
 def run_benchmark(

@@ -4,8 +4,11 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.models.enums import ForecastDirection, ForecastHorizon, ForecastStatus
-from app.services.forecast_journal import ForecastJournalError, ForecastJournalService
+from app.core.enums import ForecastDirection, ForecastHorizon, ForecastStatus
+from app.domains.quant.application.forecast_journal_service import (
+    ForecastJournalError,
+    ForecastJournalService,
+)
 from tests.utils.phase1 import as_utc as _as_utc  # noqa: F401
 from tests.utils.phase1 import session, sqlite_engine, utc_now  # noqa: F401
 

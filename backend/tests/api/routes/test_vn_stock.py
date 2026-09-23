@@ -9,7 +9,9 @@ from app.core.config import settings
 from app.main import app
 
 
-@patch("app.api.routes.vn_stock.vnstock_service.fetch_symbols_by_exchange")
+@patch(
+    "app.domains.market_data.presentation.vnstock_router.vnstock_service.fetch_symbols_by_exchange"
+)
 def test_get_vnstock_symbols(mock_fetch_symbols):
     """Kiểm tra endpoint GET /api/v1/vnstock trả về danh sách {symbol, organ_name, exchange}."""
     mock_fetch_symbols.return_value = pd.DataFrame(
@@ -32,7 +34,9 @@ def test_get_vnstock_symbols(mock_fetch_symbols):
     assert data[1]["exchange"] == "HNX"
 
 
-@patch("app.api.routes.vn_stock.vnstock_service.fetch_symbols_by_exchange")
+@patch(
+    "app.domains.market_data.presentation.vnstock_router.vnstock_service.fetch_symbols_by_exchange"
+)
 def test_get_vnstock_symbols_filter_exchange(mock_fetch_symbols):
     """Kiểm tra endpoint GET /api/v1/vnstock?exchange=HOSE có lọc theo sàn."""
     mock_fetch_symbols.return_value = pd.DataFrame(

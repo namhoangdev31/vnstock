@@ -2,11 +2,11 @@
 
 from fastapi.testclient import TestClient
 
-from app.services.vnstock_registry import (
+from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
+from app.domains.market_data.infrastructure.vnstock_registry import (
     CapabilityStatus,
     VnstockCapabilityRegistry,
 )
-from app.services.vnstock_service import VnstockService
 from tests.utils.phase1 import (
     api_client,  # noqa: F401
     session,  # noqa: F401

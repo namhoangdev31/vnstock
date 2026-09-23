@@ -9,15 +9,22 @@ import uuid
 import pytest
 from sqlmodel import select
 
-from app.models.entities.simulation import (
+from app.core.enums import (
+    OrderSide,
+    OrderStatus,
+    OrderType,
+    PositionSide,
+    PositionStatus,
+)
+from app.domains.simulation.application.engine import SimulationEngine
+from app.domains.simulation.domain.exceptions import SimulationError
+from app.domains.simulation.domain.models import (
     Order,
     Portfolio,
     Position,
     Trade,
     derivative_pnl,
 )
-from app.models.enums import OrderSide, OrderStatus, PositionSide, PositionStatus
-from app.services.simulation_engine import SimulationEngine, SimulationError
 from tests.utils.phase1 import session, sqlite_engine  # noqa: F401
 
 # Any of these substrings in a simulation_* column name would breach RULE 1/2.
@@ -142,7 +149,6 @@ def test_cancel_pending_order(session) -> None:  # noqa: F811
     """A LIMIT order far from market stays PENDING and can be cancelled."""
     engine = SimulationEngine(session)
     portfolio = _new_portfolio(session, balance=200_000_000.0)
-    from app.models.enums import OrderType
 
     order = engine.place_order(
         portfolio=portfolio,

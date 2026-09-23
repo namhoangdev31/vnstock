@@ -7,7 +7,7 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
 
 from app.core.config import settings
-from app.models import VN_TZ
+from app.core.models_base import VN_TZ
 
 password_hash = PasswordHash(
     (

@@ -8,10 +8,17 @@ import pytest
 from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel
 
-from app.models.entities.quant import TickFlowAggregated
-from app.models.entities.stock import StockOHLCVIntraday, StockSymbol, StockTickIntraday
-from app.services.settlement_service import SettlementService, SettlementStatus
-from app.services.tick_storage_service import TickStorageService
+from app.domains.market_data.domain.models import (
+    StockOHLCVIntraday,
+    StockSymbol,
+    StockTickIntraday,
+)
+from app.domains.market_data.infrastructure.tick_storage import TickStorageService
+from app.domains.quant.domain.models import TickFlowAggregated
+from app.domains.simulation.domain.settlement import (
+    SettlementService,
+    SettlementStatus,
+)
 
 VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 

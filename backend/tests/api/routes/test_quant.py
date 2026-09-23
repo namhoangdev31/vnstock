@@ -18,13 +18,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
-import app.models.models_quant  # noqa: F401
-import app.models.models_simulation  # noqa: F401
-import app.models.models_stock  # noqa: F401
+import app.domains.market_data.domain.models  # noqa: F401
+import app.domains.quant.domain.models  # noqa: F401
+import app.domains.simulation.domain.models  # noqa: F401
 from app.api.deps import get_current_user, get_db
 from app.core.config import settings
+from app.domains.identity.domain.models import User
 from app.main import app as fastapi_app
-from app.models.entities.user import User
 
 
 @pytest.fixture(name="api_client")

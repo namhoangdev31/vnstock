@@ -69,7 +69,13 @@ def _run_migrations_and_seed() -> None:
             try:
                 from sqlmodel import SQLModel
 
-                import app.models  # noqa: F401
+                import app.domains.fundamental.domain.models  # noqa: F401
+                import app.domains.identity.domain.models  # noqa: F401
+                import app.domains.market_data.domain.asset_master  # noqa: F401
+                import app.domains.market_data.domain.models  # noqa: F401
+                import app.domains.market_data.domain.rate_limit  # noqa: F401
+                import app.domains.quant.domain.models  # noqa: F401
+                import app.domains.simulation.domain.models  # noqa: F401
 
                 SQLModel.metadata.create_all(engine)
                 logger.info(

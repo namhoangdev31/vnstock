@@ -17,11 +17,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel
 
-import app.models  # noqa: F401 — register all tables with SQLModel.metadata
+import app.domains.fundamental.domain.models  # noqa: F401
+import app.domains.identity.domain.models  # noqa: F401
+import app.domains.market_data.domain.asset_master  # noqa: F401
+import app.domains.market_data.domain.models  # noqa: F401
+import app.domains.market_data.domain.rate_limit  # noqa: F401
+import app.domains.quant.domain.models  # noqa: F401
+import app.domains.simulation.domain.models  # noqa: F401
 from app.api.deps import get_current_user, get_db
+from app.core.models_base import VN_TZ
 from app.core.security import create_access_token
+from app.domains.identity.domain.models import User
 from app.main import app as fastapi_app
-from app.models import VN_TZ, User
 
 
 @pytest.fixture

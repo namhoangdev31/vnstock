@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from app.services.vnstock_service import VnstockService
+from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def service() -> VnstockService:
     return VnstockService(limiter=mock_limiter)
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_reference_equity_methods(
     mock_ref_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -59,7 +59,7 @@ def test_reference_equity_methods(
     mock_equity.list_by_group.assert_called_once_with(group="VN30")
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_reference_index_methods(
     mock_ref_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -91,7 +91,7 @@ def test_reference_index_methods(
     mock_idx.members.assert_called_with(symbol="VN30")
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_reference_other_asset_classes(
     mock_ref_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -140,7 +140,7 @@ def test_reference_other_asset_classes(
     assert service.fetch_funds_list().iloc[0]["symbol"] == "VESAF"
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_reference_search_methods(
     mock_ref_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -168,7 +168,7 @@ def test_reference_search_methods(
     mock_search.info.assert_called_once_with(query="FPT", limit=5)
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_reference_company_methods(
     mock_ref_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -234,7 +234,7 @@ def test_reference_company_methods(
     assert not service.fetch_reference_company_events("VCB").empty
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_reference_graceful_error_handling(
     mock_ref_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -287,7 +287,7 @@ def test_reference_graceful_error_handling(
     assert service.fetch_reference_market_status().empty
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_reference_events_industry_market(
     mock_ref_cls: MagicMock, service: VnstockService
 ) -> None:

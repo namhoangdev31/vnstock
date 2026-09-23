@@ -2,9 +2,10 @@ from fastapi.encoders import jsonable_encoder
 from pwdlib.hashers.bcrypt import BcryptHasher
 from sqlmodel import Session
 
-from app import crud
 from app.core.security import verify_password
-from app.models import User, UserCreate, UserUpdate
+from app.domains.identity.application import crud
+from app.domains.identity.application.schemas import UserCreate, UserUpdate
+from app.domains.identity.domain.models import User
 from tests.utils.utils import random_email, random_lower_string
 
 

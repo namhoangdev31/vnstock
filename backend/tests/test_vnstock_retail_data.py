@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from app.services.vnstock_service import VnstockService
+from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ def service() -> VnstockService:
     return VnstockService(limiter=mock_limiter)
 
 
-@patch("app.services.vnstock_service.Retail")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Retail")
 def test_retail_gold_prices(
     mock_retail_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -56,7 +56,7 @@ def test_retail_gold_prices(
     assert len(df_alias) == 1
 
 
-@patch("app.services.vnstock_service.Retail")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Retail")
 def test_retail_exchange_rate(
     mock_retail_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -102,7 +102,7 @@ def test_retail_exchange_rate(
     assert len(df_alias) == 2
 
 
-@patch("app.services.vnstock_service.Retail")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Retail")
 def test_retail_graceful_error_handling(
     mock_retail_cls: MagicMock, service: VnstockService
 ) -> None:

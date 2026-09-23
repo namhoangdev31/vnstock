@@ -3,9 +3,16 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from sqlmodel import SQLModel
+
+import app.domains.fundamental.domain.models  # noqa: F401
+import app.domains.identity.domain.models  # noqa: F401
+import app.domains.market_data.domain.asset_master  # noqa: F401
+import app.domains.market_data.domain.models  # noqa: F401
+import app.domains.market_data.domain.rate_limit  # noqa: F401
+import app.domains.quant.domain.models  # noqa: F401
+import app.domains.simulation.domain.models  # noqa: F401
 from app.core.config import settings
-from app.models import SQLModel
-from app.models.entities import *  # noqa: F401, F403 — đăng ký toàn bộ Database Tables với SQLAlchemy metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

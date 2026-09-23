@@ -15,8 +15,11 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from app.services.rate_limit import RateLimiter
-from app.services.vnstock_service import VnstockService, VnstockServiceError
+from app.domains.market_data.infrastructure.rate_limiter import RateLimiter
+from app.domains.market_data.infrastructure.vnstock_adapter import (
+    VnstockService,
+    VnstockServiceError,
+)
 
 
 @pytest.fixture
@@ -72,7 +75,7 @@ def test_get_valid_sources(service):
 # =============================================================================
 
 
-@patch("app.services.vnstock_service.Listing")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Listing")
 def test_fetch_all_symbols_success(mock_listing_cls, service):
     """Kiểm tra tải toàn bộ danh sách mã cổ phiếu thành công."""
     mock_inst = MagicMock()
@@ -86,7 +89,7 @@ def test_fetch_all_symbols_success(mock_listing_cls, service):
     assert "VNM" in df["symbol"].values
 
 
-@patch("app.services.vnstock_service.Listing")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Listing")
 def test_fetch_all_symbols_all_fail(mock_listing_cls, service):
     """Kiểm tra ném ngoại lệ khi tất cả nguồn đều không tải được danh sách mã."""
     mock_inst = MagicMock()
@@ -97,7 +100,7 @@ def test_fetch_all_symbols_all_fail(mock_listing_cls, service):
         service.fetch_all_symbols()
 
 
-@patch("app.services.vnstock_service.Listing")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Listing")
 def test_fetch_symbols_by_exchange(mock_listing_cls, service):
     """Kiểm tra lọc danh sách mã theo sàn niêm yết."""
     mock_inst = MagicMock()
@@ -115,7 +118,7 @@ def test_fetch_symbols_by_exchange(mock_listing_cls, service):
     assert df_hose.iloc[0]["symbol"] == "VNM"
 
 
-@patch("app.services.vnstock_service.Listing")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Listing")
 def test_fetch_symbols_by_industry(mock_listing_cls, service):
     """Kiểm tra lấy danh mục phân loại ngành."""
     mock_inst = MagicMock()
@@ -129,7 +132,7 @@ def test_fetch_symbols_by_industry(mock_listing_cls, service):
     assert len(df) == 2
 
 
-@patch("app.services.vnstock_service.Listing")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Listing")
 def test_fetch_group_symbols(mock_listing_cls, service):
     """Kiểm tra lấy danh sách thành viên rổ chỉ số VN30."""
     mock_inst = MagicMock()
@@ -141,7 +144,7 @@ def test_fetch_group_symbols(mock_listing_cls, service):
     assert symbols == ["VNM", "VCB", "FPT"]
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_fetch_index_list(mock_ref_cls, service):
     """Kiểm tra lấy danh sách các chỉ số thị trường."""
     mock_ref = MagicMock()
@@ -153,7 +156,7 @@ def test_fetch_index_list(mock_ref_cls, service):
     assert "VNINDEX" in df["index_code"].values
 
 
-@patch("app.services.vnstock_service.Listing")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Listing")
 def test_fetch_derivatives_list(mock_listing_cls, service):
     """Kiểm tra lấy danh sách hợp đồng phái sinh."""
     mock_inst = MagicMock()
@@ -166,7 +169,7 @@ def test_fetch_derivatives_list(mock_listing_cls, service):
     assert len(df) == 2
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_fetch_funds_list(mock_ref_cls, service):
     """Kiểm tra lấy danh sách quỹ mở FMarket và ETF."""
     mock_ref = MagicMock()
@@ -177,7 +180,7 @@ def test_fetch_funds_list(mock_ref_cls, service):
     assert len(df) == 2
 
 
-@patch("app.services.vnstock_service.Reference")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Reference")
 def test_search_symbols(mock_ref_cls, service):
     """Kiểm tra tìm kiếm mã chứng khoán theo từ khóa."""
     mock_ref = MagicMock()
@@ -196,7 +199,7 @@ def test_search_symbols(mock_ref_cls, service):
 # =============================================================================
 
 
-@patch("app.services.vnstock_service.Company")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Company")
 def test_fetch_company_overview(mock_comp_cls, service):
     """Kiểm tra lấy thông tin tổng quan doanh nghiệp."""
     mock_inst = MagicMock()
@@ -210,7 +213,7 @@ def test_fetch_company_overview(mock_comp_cls, service):
     assert info["symbol"] == "VNM"
 
 
-@patch("app.services.vnstock_service.Company")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Company")
 def test_fetch_company_details(mock_comp_cls, service):
     """Kiểm tra các phương thức chi tiết về doanh nghiệp."""
     mock_inst = MagicMock()
@@ -241,7 +244,7 @@ def test_fetch_company_details(mock_comp_cls, service):
 # =============================================================================
 
 
-@patch("app.services.vnstock_service.Quote")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Quote")
 def test_fetch_price_history_with_count(mock_quote_cls, service):
     """Kiểm tra tải nến lịch sử hỗ trợ tham số count."""
     mock_inst = MagicMock()
@@ -262,7 +265,7 @@ def test_fetch_price_history_with_count(mock_quote_cls, service):
     mock_inst.history.assert_called_once_with(interval="1D", count_back=50)
 
 
-@patch("app.services.vnstock_service.Quote")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Quote")
 def test_fetch_intraday(mock_quote_cls, service):
     """Kiểm tra tải nến intraday."""
     mock_inst = MagicMock()
@@ -275,7 +278,7 @@ def test_fetch_intraday(mock_quote_cls, service):
     assert len(df) == 1
 
 
-@patch("app.services.vnstock_service.Quote")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Quote")
 def test_fetch_tick_orderflow(mock_quote_cls, service):
     """Kiểm tra tải sổ lệnh khớp lệnh tick."""
     mock_inst = MagicMock()
@@ -293,7 +296,7 @@ def test_fetch_tick_orderflow(mock_quote_cls, service):
     assert len(df) == 2
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_fetch_market_quote(mock_mkt_cls, service):
     """Kiểm tra tải bảng giá snapshot realtime."""
     mock_mkt = MagicMock()
@@ -314,7 +317,7 @@ def test_fetch_market_quote(mock_mkt_cls, service):
     assert df.iloc[0]["price"] == 61.2
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_fetch_index_ohlcv(mock_mkt_cls, service):
     """Kiểm tra tải nến chỉ số thị trường."""
     mock_mkt = MagicMock()
@@ -331,7 +334,7 @@ def test_fetch_index_ohlcv(mock_mkt_cls, service):
     assert df.iloc[0]["close"] == 1815.66
 
 
-@patch("app.services.vnstock_service.Market")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Market")
 def test_fetch_futures_quote(mock_mkt_cls, service):
     """Kiểm tra tải bảng giá phái sinh kèm Open Interest (OI)."""
     mock_mkt = MagicMock()
@@ -354,7 +357,7 @@ def test_fetch_futures_quote(mock_mkt_cls, service):
 # =============================================================================
 
 
-@patch("app.services.vnstock_service.Fundamental")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Fundamental")
 def test_fetch_financials_via_fundamental(mock_fnd_cls, service):
     """Kiểm tra tải BCTC qua lớp Fundamental hỗ trợ định dạng orient."""
     mock_fnd = MagicMock()
@@ -374,7 +377,7 @@ def test_fetch_financials_via_fundamental(mock_fnd_cls, service):
     assert len(df) == 2
 
 
-@patch("app.services.vnstock_service.Fundamental")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Fundamental")
 def test_fetch_financial_ratios(mock_fnd_cls, service):
     """Kiểm tra tải bộ 58 chỉ số tài chính định lượng."""
     mock_fnd = MagicMock()
@@ -397,7 +400,7 @@ def test_fetch_financial_ratios(mock_fnd_cls, service):
 # =============================================================================
 
 
-@patch("app.services.vnstock_service.Retail")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Retail")
 def test_fetch_gold_prices_sjc_and_btmc(mock_retail_cls, service):
     """Kiểm tra tải giá vàng hỗ trợ cả SJC và Bảo Tín Minh Châu (BTMC)."""
     mock_retail = MagicMock()
@@ -419,7 +422,7 @@ def test_fetch_gold_prices_sjc_and_btmc(mock_retail_cls, service):
     mock_retail.gold.assert_called_with(source="btmc", date="2026-09-18")
 
 
-@patch("app.services.vnstock_service.Retail")
+@patch("app.domains.market_data.infrastructure.vnstock_adapter.Retail")
 def test_fetch_exchange_rate(mock_retail_cls, service):
     """Kiểm tra tải tỷ giá Vietcombank."""
     mock_retail = MagicMock()

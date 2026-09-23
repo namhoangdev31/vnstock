@@ -25,8 +25,8 @@ from sqlalchemy.engine import Connection, Engine
 from sqlmodel import Session
 
 from app.core.db import engine
-from app.services.screener_service import ScreenerService
-from app.services.settlement_service import VietnamHolidayCalendar
+from app.domains.fundamental.application.screener_service import ScreenerService
+from app.domains.simulation.domain.settlement import VietnamHolidayCalendar
 
 logger = logging.getLogger("market_worker")
 logging.basicConfig(

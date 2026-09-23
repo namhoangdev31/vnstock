@@ -16,9 +16,9 @@ import typer
 from sqlmodel import Session, col, select
 
 from app.core.db import engine
-from app.cron.purge_ticks import run_purge_ticks_job
-from app.models.models_stock import DataSyncLog
-from app.services.data_sync import DataSyncManager
+from app.domains.market_data.application.jobs import run_purge_ticks_job
+from app.domains.market_data.application.sync_service import DataSyncManager
+from app.domains.market_data.domain.models import DataSyncLog
 
 app = typer.Typer(help="Stock data sync CLI for Quant Trading system.")
 

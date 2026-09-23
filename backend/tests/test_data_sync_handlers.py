@@ -10,25 +10,29 @@ import pandas as pd
 import pytest
 from sqlmodel import Session, SQLModel, col, create_engine, select
 
-from app.models.models_quant import InstitutionalFlow
-from app.models.models_stock import (
+from app.domains.fundamental.domain.models import (
     CapitalHistory,
     CompanyOfficer,
     CompanyShareholder,
     CompanySubsidiary,
     CorporateEvent,
     FinancialRatio,
-    IndexConstituent,
     InsiderTrading,
-    StockOHLCVDaily,
-    StockSymbol,
 )
-from app.services.data_sync import (
+from app.domains.market_data.application.sync_constants import (
     STOCK_SYMBOL_UPDATE_FIELDS,
+)
+from app.domains.market_data.application.sync_service import (
     DataSyncManager,
     _extract_financial_summary_fields,
 )
-from app.services.vnstock_service import VnstockServiceError
+from app.domains.market_data.domain.models import (
+    IndexConstituent,
+    StockOHLCVDaily,
+    StockSymbol,
+)
+from app.domains.market_data.infrastructure.vnstock_adapter import VnstockServiceError
+from app.domains.quant.domain.models import InstitutionalFlow
 
 
 @pytest.fixture
@@ -242,8 +246,10 @@ def test_bulk_upsert_composite_conflict_keys(sqlite_session: Session) -> None:
     """Kiểm tra _bulk_upsert với tổ hợp nhiều trường conflict keys (Intraday bars)."""
     from datetime import UTC, datetime
 
-    from app.models.models_stock import StockOHLCVIntraday
-    from app.services.data_sync import INTRADAY_OHLCV_UPDATE_FIELDS
+    from app.domains.market_data.application.sync_constants import (
+        INTRADAY_OHLCV_UPDATE_FIELDS,
+    )
+    from app.domains.market_data.domain.models import StockOHLCVIntraday
 
     manager = DataSyncManager(sqlite_session, MagicMock())
     ts = datetime(2026, 9, 20, 14, 0, 0, tzinfo=UTC)

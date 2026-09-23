@@ -2,13 +2,13 @@
 
 import pytest
 
-from app.services.vnstock_registry import (
+from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
+from app.domains.market_data.infrastructure.vnstock_registry import (
     CapabilityStatus,
     DataAvailability,
     ProviderResponse,
     VnstockCapabilityRegistry,
 )
-from app.services.vnstock_service import VnstockService
 
 
 def test_registry_fallback_order_excludes_dnse():
@@ -166,7 +166,9 @@ def test_vnstock_service_circuit_breaker_integration():
     """Test VnstockService honors circuit breaker state and tracks failures."""
     from unittest.mock import MagicMock
 
-    from app.services.rate_limit import CircuitBreakerOpenError
+    from app.domains.market_data.infrastructure.rate_limiter import (
+        CircuitBreakerOpenError,
+    )
 
     mock_limiter = MagicMock()
     # Giả lập VCI đang OPEN (không khả dụng)
