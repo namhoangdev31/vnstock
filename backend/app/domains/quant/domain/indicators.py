@@ -6,9 +6,9 @@ hoàn toàn tiền định (deterministic) và an toàn tuyệt đối trước 
 """
 
 import math
-from typing import Any
 import statistics
 from collections.abc import Sequence
+from typing import Any
 
 
 def compute_rsi(closes: Sequence[float], period: int = 14) -> float | None:
