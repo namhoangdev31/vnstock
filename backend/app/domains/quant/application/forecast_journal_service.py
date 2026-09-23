@@ -26,7 +26,10 @@ from app.core.enums import (
     ForecastStatus,
 )
 from app.core.models_base import VN_TZ
-from app.domains.quant.domain.exceptions import ForecastJournalError
+from app.domains.quant.domain.exceptions import (
+    ForecastJournalError,
+    ForecastNotFoundError,
+)
 from app.domains.quant.domain.models import ForecastJournal
 
 logger = logging.getLogger(__name__)
@@ -106,15 +109,22 @@ class ForecastJournalService:
         """
         entry = self.session.get(ForecastJournal, forecast_id)
         if entry is None:
-            raise ForecastJournalError(f"Forecast {forecast_id} not found")
+            raise ForecastNotFoundError(f"Forecast {forecast_id} not found")
         if entry.status == ForecastStatus.SCORED:
             raise ForecastJournalError(
                 f"Forecast {forecast_id} is already scored and cannot be re-resolved"
             )
-        if realized_at is not None and realized_at < entry.predicted_at:
-            raise ForecastJournalError(
-                "realized_at cannot precede predicted_at (look-ahead violation)"
-            )
+        if realized_at is not None:
+            pred_dt = entry.predicted_at
+            real_dt = realized_at
+            if pred_dt.tzinfo is None and real_dt.tzinfo is not None:
+                pred_dt = pred_dt.replace(tzinfo=real_dt.tzinfo)
+            elif pred_dt.tzinfo is not None and real_dt.tzinfo is None:
+                real_dt = real_dt.replace(tzinfo=pred_dt.tzinfo)
+            if real_dt < pred_dt:
+                raise ForecastJournalError(
+                    "realized_at cannot precede predicted_at (look-ahead violation)"
+                )
 
         entry.actual_value = actual_value
         entry.actual_direction = actual_direction
@@ -141,7 +151,7 @@ class ForecastJournalService:
         """
         entry = self.session.get(ForecastJournal, forecast_id)
         if entry is None:
-            raise ForecastJournalError(f"Forecast {forecast_id} not found")
+            raise ForecastNotFoundError(f"Forecast {forecast_id} not found")
         if entry.status == ForecastStatus.PENDING:
             raise ForecastJournalError(
                 f"Forecast {forecast_id} is still pending; resolve it before scoring"

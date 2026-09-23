@@ -263,7 +263,14 @@ class TechnicalEngine:
         macd = compute_macd(closes, fast=12, slow=26, signal=9)
         _bb = compute_bollinger_bands(closes, period=20)
         _atr = compute_atr(highs, lows, closes, period=14)
-        vwap = compute_vwap(closes, vols)
+        if highs and lows and len(highs) == len(closes) and len(lows) == len(closes):
+            typical_prices = [
+                (h + low_p + c) / 3.0
+                for h, low_p, c in zip(highs, lows, closes, strict=True)
+            ]
+            vwap = compute_vwap(typical_prices, vols)
+        else:
+            vwap = compute_vwap(closes, vols)
         camarilla = compute_camarilla_pivots(highs[-1], lows[-1], closes[-1])
 
         delta, imbalance = self.compute_orderflow_metrics(df_ticks)

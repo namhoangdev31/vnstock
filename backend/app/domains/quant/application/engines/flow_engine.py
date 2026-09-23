@@ -33,19 +33,22 @@ class FlowLiquidityEngine:
     ) -> float:
         """Tính toán xung lực dòng tiền tổ chức (Institutional Flow Momentum - IFM) trong [-1.0, +1.0].
 
-        Tỷ trọng kết hợp: 60% Mua ròng Khối ngoại + 40% Mua ròng Tự doanh.
-        Tuân thủ RULE 3: Nếu thiếu số liệu Tự doanh (do vnstock v4 chưa có nguồn feed chính thức),
-        hệ thống sẽ tự động chuẩn hóa 100% dựa trên Khối ngoại sẵn có mà không bịa đặt số liệu.
+        Quy trình chuẩn hóa theo TRD §2.2.2:
+        - Tổng hợp mua ròng 5 phiên gần nhất (Rolling 5D): NetF_5D (Khối ngoại) và NetP_5D (Tự doanh).
+        - Chuẩn hóa bằng Z-Score / Min-Max trên chuỗi lịch sử sẵn có, hoặc scale động an toàn.
+        - Tỷ trọng kết hợp: 60% Khối ngoại + 40% Tự doanh.
+        - Tuân thủ RULE 3: Nếu thiếu số liệu Tự doanh, tự động chuẩn hóa 100% theo Khối ngoại.
         """
         if not flows:
             return 0.0
 
-        f_net_total = 0.0
-        p_net_total = 0.0
-        has_f = False
-        has_p = False
-
-        for fl in flows:
+        by_date: dict[Any, dict[str, float | None]] = {}
+        for idx, fl in enumerate(flows):
+            t_date = (
+                fl.trading_date
+                if isinstance(fl, InstitutionalFlow)
+                else fl.get("trading_date", idx)
+            )
             f_val = (
                 fl.foreign_net_value
                 if isinstance(fl, InstitutionalFlow)
@@ -57,28 +60,63 @@ class FlowLiquidityEngine:
                 else fl.get("prop_net_value")
             )
 
+            if t_date not in by_date:
+                by_date[t_date] = {"f": 0.0, "p": 0.0, "has_f": False, "has_p": False}
             if f_val is not None:
-                f_net_total += float(f_val)
-                has_f = True
+                by_date[t_date]["f"] = (by_date[t_date]["f"] or 0.0) + float(f_val)
+                by_date[t_date]["has_f"] = True
             if p_val is not None:
-                p_net_total += float(p_val)
+                by_date[t_date]["p"] = (by_date[t_date]["p"] or 0.0) + float(p_val)
+                by_date[t_date]["has_p"] = True
+
+        if not by_date:
+            return 0.0
+
+        sorted_dates = sorted(by_date.keys(), reverse=True)
+        recent_5_dates = sorted_dates[:5]
+
+        f_5d = 0.0
+        p_5d = 0.0
+        has_f = False
+        has_p = False
+
+        for d in recent_5_dates:
+            entry = by_date[d]
+            if entry["has_f"]:
+                f_5d += entry["f"] or 0.0
+                has_f = True
+            if entry["has_p"]:
+                p_5d += entry["p"] or 0.0
                 has_p = True
 
         if not has_f and not has_p:
             return 0.0
 
-        # Mức chuẩn hóa: giả định chênh lệch dòng tiền 1,000 tỷ VND (~1e12) là xung lực lớn
-        scale_denom = 1_000_000_000_000.0
+        def _normalize_series(current_val: float, history_vals: list[float]) -> float:
+            if len(history_vals) >= 5:
+                min_v = min(history_vals)
+                max_v = max(history_vals)
+                if max_v > min_v:
+                    return 2.0 * (current_val - min_v) / (max_v - min_v) - 1.0
+            scale_denom = 1_000_000_000_000.0
+            return max(-1.0, min(1.0, current_val / scale_denom))
+
+        f_history: list[float] = []
+        p_history: list[float] = []
+        if len(sorted_dates) > 5:
+            for i in range(len(sorted_dates) - 4):
+                w_dates = sorted_dates[i : i + 5]
+                f_history.append(sum((by_date[wd]["f"] or 0.0) for wd in w_dates))
+                p_history.append(sum((by_date[wd]["p"] or 0.0) for wd in w_dates))
+
+        norm_f = _normalize_series(f_5d, f_history)
+        norm_p = _normalize_series(p_5d, p_history)
 
         if has_f and has_p:
-            norm_f = max(-1.0, min(1.0, f_net_total / scale_denom))
-            norm_p = max(-1.0, min(1.0, p_net_total / scale_denom))
             ifm = 0.60 * norm_f + 0.40 * norm_p
         elif has_f:
-            norm_f = max(-1.0, min(1.0, f_net_total / scale_denom))
             ifm = norm_f
         else:
-            norm_p = max(-1.0, min(1.0, p_net_total / scale_denom))
             ifm = norm_p
 
         return round(max(-1.0, min(1.0, ifm)), 4)
@@ -86,12 +124,16 @@ class FlowLiquidityEngine:
     def compute_market_breadth(
         self,
         breadth_record: MarketBreadth | dict[str, Any] | None,
+        ratio_ma20: float | None = None,
     ) -> float | None:
         """Tính chỉ số độ rộng thị trường (Market Breadth Index - MBI) trong [-1.0, +1.0].
 
-        Công thức: (Mã tăng - Mã giảm) / Tổng số mã giao dịch.
-        Xử lý ca biên: 100% mã giảm -> -1.0, 100% mã tăng -> +1.0.
-        Tuân thủ RULE 3: Trả về None nếu không có dữ liệu độ rộng thị trường (không bịa đặt số liệu).
+        Công thức chuẩn hóa theo TRD §2.2.3:
+        - ADR = (Mã tăng - Mã giảm) / (Mã tăng + Mã giảm + Mã không đổi)
+        - Nếu có dữ liệu Ratio_MA20 (tỷ lệ cổ phiếu trên MA20):
+            MBI = 0.70 * ADR + 0.30 * (2.0 * Ratio_MA20 - 1.0)
+        - Nếu chưa có feed Ratio_MA20 (RULE 3 không bịa đặt số liệu):
+            MBI = ADR thuần túy.
         """
         if breadth_record is None:
             return None
@@ -117,7 +159,14 @@ class FlowLiquidityEngine:
             return 0.0
 
         adr = (adv - dec) / float(total)
-        return round(max(-1.0, min(1.0, adr)), 4)
+
+        if ratio_ma20 is not None:
+            clamped_ratio = max(0.0, min(1.0, float(ratio_ma20)))
+            mbi = 0.70 * adr + 0.30 * (2.0 * clamped_ratio - 1.0)
+        else:
+            mbi = adr
+
+        return round(max(-1.0, min(1.0, mbi)), 4)
 
     def compute_t2_settlement_date(self, buy_date: date) -> date:
         """Xác định ngày thanh toán bù trừ T+2 thị trường Việt Nam (bỏ qua cuối tuần).
@@ -141,7 +190,9 @@ class FlowLiquidityEngine:
     ) -> float:
         """Tính chỉ số áp lực bán phiên chiều T+2 (T+2 Pressure Index) trong dải [0.0, 1.0].
 
-        Nếu khối lượng giao dịch ngày T-2 bùng nổ vượt trội so với đường MA20,
+        Công thức chuẩn theo TRD §2.2.4:
+            Pressure_T2 = min(1.0, Vol_T2 / (MA(Vol_20) * 1.5))
+        Nếu khối lượng ngày T-2 bùng nổ vượt trội so với baseline MA20,
         lượng hàng bắt đáy lớn sẽ về tài khoản lúc 13:00 hôm nay, tạo áp lực chốt lời/cắt lỗ gia tăng.
         """
         if len(daily_volumes) < 3:
@@ -157,12 +208,7 @@ class FlowLiquidityEngine:
         if avg_vol <= 0:
             return 0.0
 
-        # Nếu vol_t2 gấp >1.5 lần trung bình, áp lực bán bắt đầu tăng dần tiệm cận 1.0
-        ratio = vol_t2 / avg_vol
-        if ratio <= 1.0:
-            return 0.0
-
-        pressure = (ratio - 1.0) / 2.0  # ratio = 3.0 -> pressure = 1.0
+        pressure = vol_t2 / (avg_vol * 1.5)
         return round(min(1.0, max(0.0, pressure)), 4)
 
     def compute_macro_sentiment(
@@ -252,12 +298,12 @@ class FlowLiquidityEngine:
         breadth: MarketBreadth | dict[str, Any] | None = None,
         daily_volumes: Sequence[float] | None = None,
         macro_items: Sequence[MacroIndicator | dict[str, Any]] | None = None,
+        ratio_ma20: float | None = None,
         as_of: datetime | None = None,
     ) -> FlowLiquidityEngineResponse:
         """Thực thi phân tích thanh khoản, dòng tiền và trả về FlowLiquidityEngineResponse."""
         now = as_of or datetime.now(VN_TZ)
 
-        # Nạp dữ liệu từ DB nếu tham số chưa được truyền trực tiếp
         if flows is None and self.session is not None:
             flows = self.session.exec(
                 select(InstitutionalFlow)
@@ -280,7 +326,7 @@ class FlowLiquidityEngine:
             ).first()
 
         ifm = self.compute_institutional_momentum(flows or [])
-        mbi = self.compute_market_breadth(breadth)
+        mbi = self.compute_market_breadth(breadth, ratio_ma20=ratio_ma20)
         t2_press = self.compute_t2_pressure_index(daily_volumes or [])
         macro = self.compute_macro_sentiment(macro_items or [])
 
@@ -291,11 +337,19 @@ class FlowLiquidityEngine:
             macro_sentiment=macro,
         )
 
+        mbi_formula = (
+            "0.7*ADR + 0.3*(2*Ratio_MA20 - 1)"
+            if ratio_ma20 is not None
+            else ("ADR" if mbi is not None else None)
+        )
+
         return FlowLiquidityEngineResponse(
             as_of=now,
             score=score,
             institutional_momentum=ifm,
             market_breadth=mbi,
+            market_breadth_ratio_ma20=ratio_ma20,
+            mbi_formula=mbi_formula,
             t2_pressure=t2_press,
             macro_sentiment=macro,
         )

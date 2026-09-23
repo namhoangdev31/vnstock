@@ -166,6 +166,8 @@ class FlowLiquidityEngineResponse(SQLModel):
     score: float  # -1.0 đến +1.0
     institutional_momentum: float = 0.0
     market_breadth: float | None = None
+    market_breadth_ratio_ma20: float | None = None
+    mbi_formula: str | None = None
     t2_pressure: float = 0.0  # 0.0 đến 1.0
     macro_sentiment: float = 0.0
 

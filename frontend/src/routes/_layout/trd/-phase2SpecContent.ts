@@ -229,6 +229,7 @@ class ForecastJournal(SQLModel, table=True):
 
 ## 5. Danh Sách API Endpoints Phase 2 (FastAPI)
 
+### 5.1 Quant Analytics Endpoints (\`/api/v1/quant/...\`)
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | /api/v1/quant/engine1/technical/{symbol} | Chỉ báo kỹ thuật, VWAP & Orderflow Delta của Engine 1 |
@@ -239,6 +240,16 @@ class ForecastJournal(SQLModel, table=True):
 | GET | /api/v1/quant/ensemble/next-day-forecast | Dự báo kịch bản T+1 (Dải giá High/Low/Close) |
 | GET | /api/v1/quant/ensemble/weights | Lấy cấu hình trọng số động hiện tại |
 | PUT | /api/v1/quant/ensemble/weights | Cập nhật trọng số w1, w2, w3 (Admin only) |
+
+### 5.2 Forecast Audit Ledger Endpoints (\`/api/v1/forecast/...\` - RULE 3)
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /api/v1/forecast | Ghi nhận bản ghi dự phóng mới (status=pending, RULE 3) |
+| GET | /api/v1/forecast | Danh sách nhật ký dự phóng với bộ lọc symbol, horizon, status |
+| GET | /api/v1/forecast/{id} | Chi tiết 1 bản ghi dự phóng kèm snapshot tham số |
+| POST | /api/v1/forecast/{id}/resolve | Chốt giá thực tế sau khi phiên kết thúc (status=resolved) |
+| POST | /api/v1/forecast/{id}/score | Tự động chấm điểm sai số MAE & chiều hướng (status=scored) |
+| GET | /api/v1/forecast/aggregate | Thống kê MAE & tỷ lệ dự báo chính xác (Directional Accuracy) |
 
 ---
 

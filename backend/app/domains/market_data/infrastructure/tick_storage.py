@@ -11,14 +11,13 @@ import logging
 from datetime import date
 
 from sqlalchemy import func
-from sqlmodel import Session, delete, select
+from sqlmodel import Session, SQLModel, delete, select
 
 from app.domains.market_data.domain.exceptions import SafePurgeGateError
 from app.domains.market_data.domain.models import (
     StockOHLCVIntraday,
     StockTickIntraday,
 )
-from sqlmodel import SQLModel
 
 logger = logging.getLogger(__name__)
 

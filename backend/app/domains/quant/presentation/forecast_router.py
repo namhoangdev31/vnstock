@@ -29,7 +29,10 @@ from app.domains.quant.application.schemas import (
     ForecastResolve,
     ForecastScoredPublic,
 )
-from app.domains.quant.domain.exceptions import ForecastJournalError
+from app.domains.quant.domain.exceptions import (
+    ForecastJournalError,
+    ForecastNotFoundError,
+)
 from app.domains.quant.domain.models import ForecastJournal
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
@@ -137,6 +140,8 @@ def resolve_forecast(
             actual_direction=payload.actual_direction,
             realized_at=payload.realized_at,
         )
+    except ForecastNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
     except ForecastJournalError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return ForecastJournalPublic.model_validate(entry)
@@ -154,6 +159,8 @@ def score_forecast(
     svc = ForecastJournalService(session)
     try:
         entry = svc.score(forecast_id)
+    except ForecastNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
     except ForecastJournalError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return ForecastScoredPublic.model_validate(entry)

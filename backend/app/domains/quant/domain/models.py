@@ -17,7 +17,17 @@ from app.core.models_base import AwareSQLModel, JSONBVariant, get_datetime_utc
 
 
 class ForecastJournal(AwareSQLModel, table=True):
-    """Bảng sổ cái dự phóng bắt buộc (RULE 3): Lưu vết mọi tín hiệu và kết quả tự học."""
+    """Bảng sổ cái dự phóng bắt buộc (RULE 3): Lưu vết mọi tín hiệu và kết quả tự học.
+
+    Tài liệu hóa Ánh Xạ Trường Dữ Liệu theo TRD §3 (Cơ chế JSON-pack an toàn qua `parameter_snapshot`):
+    - `confidence`: Lưu tại `parameter_snapshot["confidence"]`
+    - `entry_price`: Lưu tại `parameter_snapshot["entry_price"]`
+    - `stop_loss`: Lưu tại `parameter_snapshot["stop_loss"]`
+    - `take_profit`: Lưu tại `parameter_snapshot["take_profit"]`
+    - `engine_scores` (E1, E2, E3 snapshot): Lưu tại `parameter_snapshot["engine_scores"]`
+    - `predicted_score`: Lưu tại `parameter_snapshot["predicted_score"]`
+    - `error_mae` / `error_rmse`: Được lưu trữ trực tiếp tại trường `error` và `score`.
+    """
 
     __tablename__ = "forecast_journal"
     __table_args__ = (

@@ -174,7 +174,6 @@ class ScreenerService:
         FinancialRatio.symbol (FK text). exchange/industry được lọc qua subquery trên
         bảng stock_symbol theo tên bảng (SQLAlchemy text join) để tránh cross-domain import.
         """
-        from sqlalchemy import text  # noqa: PLC0415
 
         target_year = year
         target_quarter = quarter
@@ -211,7 +210,9 @@ class ScreenerService:
         if min_roa is not None:
             query = query.where(col(FinancialRatio.roa) >= min_roa)
         if max_debt_to_equity is not None:
-            query = query.where(col(FinancialRatio.debt_to_equity) <= max_debt_to_equity)
+            query = query.where(
+                col(FinancialRatio.debt_to_equity) <= max_debt_to_equity
+            )
         if min_revenue_growth_yoy is not None:
             query = query.where(
                 col(FinancialRatio.revenue_growth_yoy) >= min_revenue_growth_yoy
@@ -226,23 +227,31 @@ class ScreenerService:
             query = query.where(col(FinancialRatio.ev_to_ebitda) <= max_ev_to_ebitda)
 
         # Lọc exchange / industry qua subquery trên stock_symbol (không import cross-domain model)
+        from sqlalchemy import column, table
+
+        sym_col = column("symbol")
+        ex_col = column("exchange")
+        ind_col = column("industry")
+        org_col = column("organ_name")
+        stock_tbl = table("stock_symbol", sym_col, ex_col, ind_col, org_col)
+
         if exchange:
-            sym_subq = session.exec(
-                text(
-                    "SELECT symbol FROM stock_symbol WHERE exchange = :ex"
-                ).bindparams(ex=exchange.strip().upper())
-            ).all()
-            sym_codes = [r[0] for r in sym_subq]
+            stmt = (
+                select(sym_col)
+                .select_from(stock_tbl)
+                .where(ex_col == exchange.strip().upper())
+            )
+            sym_codes = [str(r) for r in session.exec(stmt).all()]
             if not sym_codes:
                 return []
             query = query.where(col(FinancialRatio.symbol).in_(sym_codes))
         if industry:
-            sym_subq = session.exec(
-                text(
-                    "SELECT symbol FROM stock_symbol WHERE industry = :ind"
-                ).bindparams(ind=industry.strip())
-            ).all()
-            sym_codes = [r[0] for r in sym_subq]
+            stmt = (
+                select(sym_col)
+                .select_from(stock_tbl)
+                .where(ind_col == industry.strip())
+            )
+            sym_codes = [str(r) for r in session.exec(stmt).all()]
             if not sym_codes:
                 return []
             query = query.where(col(FinancialRatio.symbol).in_(sym_codes))
@@ -254,17 +263,20 @@ class ScreenerService:
         )
         ratios = session.exec(query).all()
 
-        # Lấy organ_name từ stock_symbol qua raw text query để tránh cross-domain
+        # Lấy organ_name từ stock_symbol qua anonymous table để tránh cross-domain
         symbols = [r.symbol for r in ratios]
         org_map: dict[str, dict] = {}
         if symbols:
-            rows = session.exec(
-                text(
-                    "SELECT symbol, organ_name, exchange, industry FROM stock_symbol"
-                    " WHERE symbol = ANY(:syms)"
-                ).bindparams(syms=symbols)
-            ).all()
-            org_map = {r[0]: {"organ_name": r[1], "exchange": r[2], "industry": r[3]} for r in rows}
+            stmt_org = (
+                select(sym_col, org_col, ex_col, ind_col)
+                .select_from(stock_tbl)
+                .where(sym_col.in_(symbols))
+            )
+            rows = session.exec(stmt_org).all()
+            org_map = {
+                r[0]: {"organ_name": r[1], "exchange": r[2], "industry": r[3]}
+                for r in rows
+            }
 
         return [
             {

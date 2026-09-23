@@ -12,6 +12,7 @@ Kiểm thử 8 REST Endpoints định nghĩa trong TRD Phase 2:
 """
 
 import uuid
+from datetime import UTC
 
 import pytest
 from fastapi.testclient import TestClient
@@ -159,3 +160,95 @@ def test_api_ensemble_weights_get_and_put(api_client: TestClient):
     assert data_put["weights"]["w1"] == 0.6
     assert data_put["weights"]["w2"] == 0.2
     assert data_put["weights"]["w3"] == 0.2
+
+
+def test_api_forecast_journal_lifecycle(api_client: TestClient):
+    """Kiểm tra toàn bộ vòng đời của Forecast Journal qua REST API (RULE 3 Audit Ledger)."""
+    from datetime import datetime
+
+    # 1. Tạo bản ghi dự phóng mới (pending)
+    pred_time = datetime(2026, 9, 23, 9, 0, tzinfo=UTC).isoformat()
+    create_payload = {
+        "symbol": "VN30F1M",
+        "horizon": "T_PLUS_1",
+        "predicted_at": pred_time,
+        "predicted_value": 1315.5,
+        "predicted_direction": "BULLISH",
+        "model_version": "v2.0.0",
+        "engine_weights": {"w1": 0.5, "w2": 0.25, "w3": 0.25},
+        "parameter_snapshot": {"confidence": 0.85},
+    }
+    res_post = api_client.post(f"{settings.API_V1_STR}/forecast", json=create_payload)
+    assert res_post.status_code == 200
+    entry = res_post.json()
+    journal_id = entry["id"]
+    assert entry["symbol"] == "VN30F1M"
+    assert entry["status"] == "pending"
+
+    # 2. Truy vấn danh sách và chi tiết
+    res_list = api_client.get(f"{settings.API_V1_STR}/forecast?symbol=VN30F1M")
+    assert res_list.status_code == 200
+    assert len(res_list.json()) >= 1
+
+    res_get = api_client.get(f"{settings.API_V1_STR}/forecast/{journal_id}")
+    assert res_get.status_code == 200
+    assert res_get.json()["id"] == journal_id
+
+    # 3. Chốt kết quả thực tế (resolve)
+    real_time = datetime(2026, 9, 23, 15, 0, tzinfo=UTC).isoformat()
+    resolve_payload = {
+        "actual_value": 1320.0,
+        "actual_direction": "BULLISH",
+        "realized_at": real_time,
+    }
+    res_resolve = api_client.post(
+        f"{settings.API_V1_STR}/forecast/{journal_id}/resolve",
+        json=resolve_payload,
+    )
+    assert res_resolve.status_code == 200
+    resolved_entry = res_resolve.json()
+    assert resolved_entry["status"] == "resolved"
+    assert resolved_entry["actual_value"] == 1320.0
+
+    # 4. Chấm điểm dự phóng (score)
+    res_score = api_client.post(f"{settings.API_V1_STR}/forecast/{journal_id}/score")
+    assert res_score.status_code == 200
+    scored_entry = res_score.json()
+    assert scored_entry["status"] == "scored"
+    assert scored_entry["error"] == 4.5  # |1315.5 - 1320.0|
+    assert scored_entry["score"] == 1.0  # Direction đúng
+
+    # 5. Tổng hợp độ chính xác (aggregate)
+    res_agg = api_client.get(f"{settings.API_V1_STR}/forecast/aggregate?symbol=VN30F1M")
+    assert res_agg.status_code == 200
+    agg_data = res_agg.json()
+    assert agg_data["count"] >= 1
+    assert agg_data["directional_accuracy"] == 1.0
+    assert agg_data["mae"] == 4.5
+
+    # 6. Kiểm tra các nhánh 404
+    non_existent = str(uuid.uuid4())
+    assert (
+        api_client.get(f"{settings.API_V1_STR}/forecast/{non_existent}").status_code
+        == 404
+    )
+    assert (
+        api_client.post(
+            f"{settings.API_V1_STR}/forecast/{non_existent}/resolve",
+            json={"actual_value": 1.0, "actual_direction": "BULLISH"},
+        ).status_code
+        == 404
+    )
+    assert (
+        api_client.post(
+            f"{settings.API_V1_STR}/forecast/{non_existent}/score"
+        ).status_code
+        == 404
+    )
+
+    # 7. Kiểm tra tham số bộ lọc danh sách
+    res_filtered = api_client.get(
+        f"{settings.API_V1_STR}/forecast?status=scored&from_date=2026-09-01T00:00:00Z&to_date=2026-09-30T23:59:59Z"
+    )
+    assert res_filtered.status_code == 200
+    assert len(res_filtered.json()) >= 1

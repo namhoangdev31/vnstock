@@ -7,3 +7,7 @@ class QuantEngineError(Exception):
 
 class ForecastJournalError(Exception):
     """Raised on invalid forecast-journal operations."""
+
+
+class ForecastNotFoundError(ForecastJournalError):
+    """Raised when a requested forecast entry is not found in the journal."""

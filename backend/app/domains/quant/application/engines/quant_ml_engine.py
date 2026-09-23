@@ -150,6 +150,73 @@ class QuantMLEngine:
             "p95": round(simulated_prices[idx_95], 2),
         }
 
+    def predict_ato_gap(
+        self,
+        current_price: float,
+        prev_close: float,
+        overnight_basis: float = 0.0,
+        historical_gaps: Sequence[float] | None = None,
+    ) -> dict[str, Any]:
+        """Phân loại độ lệch ATO Opening Gap lúc 08:45 dựa trên phân phối lịch sử (TRD §2.3.3).
+
+        - Bullish Gap: Gap tăng vượt ngưỡng phân phối (nghiêng về phe Long)
+        - Bearish Gap: Gap giảm vượt ngưỡng phân phối (nghiêng về phe Short)
+        - Normal Gap: Biên độ thông thường
+        """
+        if prev_close <= 0.0:
+            return {
+                "gap_value": 0.0,
+                "gap_pct": 0.0,
+                "gap_type": "NORMAL_GAP",
+                "direction_bias": "NEUTRAL",
+                "transition_score": 0.0,
+            }
+
+        gap_value = current_price - prev_close
+        gap_pct = (gap_value / prev_close) * 100.0
+
+        # Nếu có historical_gaps (phân phối 60 ngày theo TRD)
+        threshold = 0.30  # 0.30%
+        if historical_gaps and len(historical_gaps) >= 10:
+            mean_gap = sum(historical_gaps) / len(historical_gaps)
+            var_gap = sum((g - mean_gap) ** 2 for g in historical_gaps) / len(
+                historical_gaps
+            )
+            std_gap = math.sqrt(var_gap) if var_gap > 0 else 0.5
+            z_gap = (gap_value - mean_gap) / (std_gap if std_gap > 0 else 1.0)
+            if z_gap > 1.0:
+                gap_type = "BULLISH_GAP"
+                direction_bias = "BULLISH"
+            elif z_gap < -1.0:
+                gap_type = "BEARISH_GAP"
+                direction_bias = "BEARISH"
+            else:
+                gap_type = "NORMAL_GAP"
+                direction_bias = "NEUTRAL"
+        else:
+            if gap_pct > threshold:
+                gap_type = "BULLISH_GAP"
+                direction_bias = "BULLISH"
+            elif gap_pct < -threshold:
+                gap_type = "BEARISH_GAP"
+                direction_bias = "BEARISH"
+            else:
+                gap_type = "NORMAL_GAP"
+                direction_bias = "NEUTRAL"
+
+        # Kết hợp gap và chênh lệch basis qua đêm
+        # Overnight basis dương hỗ trợ đà tăng, âm tạo áp lực chiết khấu
+        combined_signal = (gap_pct / 1.0) + (overnight_basis / 5.0)
+        transition_score = round(max(-1.0, min(1.0, combined_signal / 2.0)), 4)
+
+        return {
+            "gap_value": round(gap_value, 2),
+            "gap_pct": round(gap_pct, 4),
+            "gap_type": gap_type,
+            "direction_bias": direction_bias,
+            "transition_score": transition_score,
+        }
+
     def predict_atc_transition(
         self,
         current_price: float,
@@ -229,12 +296,23 @@ class QuantMLEngine:
             volatility=max(hv, pv),
         )
 
-        atc_pred = self.predict_atc_transition(
-            current_price=futures_price,
-            basis_zscore=basis_z,
-        )
+        # Chuyển phiên linh hoạt theo mốc giờ thị trường:
+        # - Khung giờ sáng (Pre-ATO & ATO): Đánh giá Opening Gap
+        # - Các khung giờ còn lại: Đánh giá chuyển phiên ATC và hội tụ Basis
+        if phase in (SessionPhase.PRE_ATO, SessionPhase.ATO):
+            prev_c = closes[-1] if closes else futures_price
+            trans_pred = self.predict_ato_gap(
+                current_price=futures_price,
+                prev_close=prev_c,
+                overnight_basis=basis_val,
+            )
+        else:
+            trans_pred = self.predict_atc_transition(
+                current_price=futures_price,
+                basis_zscore=basis_z,
+            )
 
-        trans_score = float(atc_pred.get("transition_score", 0.0))
+        trans_score = float(trans_pred.get("transition_score", 0.0))
         score = self.compute_composite_score(basis_z, trans_score)
 
         return QuantMLEngineResponse(

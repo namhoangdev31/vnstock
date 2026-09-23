@@ -211,12 +211,19 @@ def test_e2_03_vietnamese_t2_settlement_calendar():
 
 
 def test_e2_04_t2_pressure_volume_spike():
-    """TEST-E2-04: Đột biến khối lượng ngày T-2 gấp 3 lần trung bình tạo chỉ số áp lực tiệm cận 1.0."""
+    """TEST-E2-04: Đột biến khối lượng ngày T-2 gấp 3 lần trung bình tạo chỉ số áp lực tiệm cận 1.0 (TRD §2.2.4)."""
     engine = FlowLiquidityEngine()
     # 20 ngày trung bình volume = 10,000; ngày T-2 bùng nổ = 30,000 (gấp 3 lần)
-    volumes = [10_000.0] * 20 + [30_000.0, 12_000.0]
-    pressure = engine.compute_t2_pressure_index(volumes)
-    assert pressure == 1.0
+    volumes_spike_3x = [10_000.0] * 20 + [30_000.0, 12_000.0]
+    assert engine.compute_t2_pressure_index(volumes_spike_3x) == 1.0
+
+    # Khối lượng T-2 = 15,000 (gấp 1.5 lần avg_vol) -> Pressure_T2 = 1.0
+    volumes_spike_1_5x = [10_000.0] * 20 + [15_000.0, 12_000.0]
+    assert engine.compute_t2_pressure_index(volumes_spike_1_5x) == 1.0
+
+    # Khối lượng T-2 = 7,500 (gấp 0.75 lần avg_vol) -> Pressure_T2 = 7,500 / 15,000 = 0.5
+    volumes_normal = [10_000.0] * 20 + [7_500.0, 10_000.0]
+    assert engine.compute_t2_pressure_index(volumes_normal) == 0.5
 
 
 def test_e2_05_usd_vnd_macro_impact():
@@ -259,6 +266,21 @@ def test_e2_06_dynamic_reweighting_when_breadth_none():
     )
     assert res.market_breadth is None
     assert res.score == 0.0
+
+
+def test_e2_07_market_breadth_with_ratio_ma20():
+    """TEST-E2-07: Tính Market Breadth Index kết hợp tỷ lệ Ratio_MA20 theo TRD §2.2.3."""
+    engine = FlowLiquidityEngine()
+    breadth = {"advancers": 200, "decliners": 100, "unchanged": 100}
+    # Total = 400, ADR = (200 - 100) / 400 = 0.25
+    # Nếu ratio_ma20 = 0.60:
+    # MBI = 0.70 * 0.25 + 0.30 * (2 * 0.60 - 1.0) = 0.175 + 0.30 * 0.20 = 0.175 + 0.060 = 0.235
+    mbi = engine.compute_market_breadth(breadth, ratio_ma20=0.60)
+    assert mbi == 0.235
+
+    # Nếu không có ratio_ma20 (fallback RULE 3): MBI = ADR = 0.25
+    mbi_raw = engine.compute_market_breadth(breadth)
+    assert mbi_raw == 0.25
 
 
 # ===========================================================================
@@ -308,19 +330,69 @@ def test_e3_04_atc_transition_projection():
     assert pred["expected_delta"] < 0.0  # Basis cao + áp lực bán kéo giá hội tụ xuống
 
 
-def test_e3_05_monte_carlo_price_limits():
-    """TEST-E3-05: 1,000 mô phỏng Monte Carlo T+1 phải tuyệt đối nằm trong biên độ trần/sàn ±7%."""
+def test_e3_05_ato_opening_gap_classification():
+    """TEST-E3-05: Phân loại độ lệch ATO Opening Gap lúc 08:45 dựa trên phân phối lịch sử (TRD §2.3.3)."""
+    engine = QuantMLEngine()
+    prev_close = 1300.0
+
+    # Ca 1: Giá ATO = 1310.0 (+0.77%) -> BULLISH_GAP
+    res_bull = engine.predict_ato_gap(
+        current_price=1310.0,
+        prev_close=prev_close,
+        overnight_basis=3.0,
+    )
+    assert res_bull["gap_type"] == "BULLISH_GAP"
+    assert res_bull["direction_bias"] == "BULLISH"
+    assert res_bull["transition_score"] > 0.0
+
+    # Ca 2: Giá ATO = 1290.0 (-0.77%) -> BEARISH_GAP
+    res_bear = engine.predict_ato_gap(
+        current_price=1290.0,
+        prev_close=prev_close,
+        overnight_basis=-2.0,
+    )
+    assert res_bear["gap_type"] == "BEARISH_GAP"
+    assert res_bear["direction_bias"] == "BEARISH"
+    assert res_bear["transition_score"] < 0.0
+
+    # Ca 3: Giá ATO = 1301.0 (+0.077%) -> NORMAL_GAP
+    res_norm = engine.predict_ato_gap(
+        current_price=1301.0,
+        prev_close=prev_close,
+        overnight_basis=0.0,
+    )
+    assert res_norm["gap_type"] == "NORMAL_GAP"
+    assert res_norm["direction_bias"] == "NEUTRAL"
+
+
+def test_e3_06_monte_carlo_1000_distribution():
+    """TEST-E3-06: 1,000 mô phỏng Monte Carlo T+1 tuân thủ trật tự phân vị P05 < P50 < P95."""
     engine = QuantMLEngine()
     ref_price = 1300.0
     targets = engine.simulate_monte_carlo_t1(
         current_price=ref_price,
-        volatility=0.25,
+        volatility=0.20,
         n_simulations=1000,
-        seed=42,
+        seed=101,
     )
+    assert targets["p05"] < targets["p50"] < targets["p95"]
+    assert targets["p05"] >= ref_price * 0.93
+    assert targets["p95"] <= ref_price * 1.07
+
+
+def test_e3_07_floor_ceiling_reflection():
+    """TEST-E3-07: Kịch bản biến động cực đại (volatility = 100%) vẫn tuyệt đối được rào chắn trong ±7%."""
+    engine = QuantMLEngine()
+    ref_price = 1300.0
     floor_limit = ref_price * 0.93
     ceiling_limit = ref_price * 1.07
 
+    targets = engine.simulate_monte_carlo_t1(
+        current_price=ref_price,
+        volatility=1.0,  # Biến động 100% cực đoan
+        n_simulations=1000,
+        seed=999,
+    )
     assert targets["p05"] >= floor_limit
     assert targets["p95"] <= ceiling_limit
     assert targets["p05"] <= targets["p50"] <= targets["p95"]
@@ -416,3 +488,291 @@ def test_ens_06_rule_4_disclaimer_presence():
     res = engine.generate_signal(request=request)
     assert "CẢNH BÁO RỦI RO" in res.disclaimer
     assert "RULE 4" in res.disclaimer
+
+
+def test_e1_edge_cases_and_sweeps():
+    """Kiểm tra các trường hợp biên của Engine 1: FVG giảm, quét thanh khoản hai chiều, dữ liệu rỗng."""
+    engine = TechnicalEngine()
+
+    # 1. Dữ liệu rỗng
+    empty_res = engine.analyze(symbol="VN30F1M", closes=[])
+    assert empty_res.score == 0.0
+    assert empty_res.rsi is None
+
+    # 2. Bearish FVG: nến 0 high > nến 2 low
+    # highs[i] < lows[i-2] -> khoảng trống giảm giá
+    highs = [1310.0, 1300.0, 1285.0]
+    lows = [1305.0, 1290.0, 1280.0]
+    fvg_detected, fvg_details = engine.detect_fair_value_gaps(highs, lows)
+    assert fvg_detected is True
+    assert fvg_details.get("type") == "BEARISH_FVG"
+
+    # 3. Liquidity Sweeps: Quét đỉnh rút râu (Bearish) và quét đáy rút râu (Bullish)
+    # Quét đỉnh: High vượt đỉnh cũ nhưng close đóng thấp hơn
+    s_highs = [1300.0] * 10 + [1310.0, 1302.0]
+    s_lows = [1290.0] * 10 + [1295.0, 1296.0]
+    s_closes = [1295.0] * 10 + [1305.0, 1298.0]
+    sweeps = engine.detect_liquidity_sweeps(s_highs, s_lows, s_closes)
+    assert "bearish_sweep" in sweeps
+    assert "swing_high" in sweeps
+
+
+def test_e2_edge_cases_and_rolling_flows():
+    """Kiểm tra các trường hợp biên của Engine 2: Vĩ mô nhiều chiều, lịch sử dòng tiền rolling 5D, T+2 volumes."""
+    engine = FlowLiquidityEngine()
+
+    # 1. Macro với USD_VND tăng/giảm và vàng SJC
+    records = [
+        {
+            "indicator_code": "USD_VND",
+            "change_pct": -0.80,
+        },  # VND tăng giá mạnh -> điểm dương
+        {
+            "indicator_code": "SJC_GOLD_BUY",
+            "change_pct": 1.5,
+        },  # Vàng tăng nóng -> điểm âm
+        {
+            "indicator_code": "SJC_GOLD_SELL",
+            "change_pct": -1.5,
+        },  # Vàng giảm mạnh -> điểm dương
+        {"indicator_code": "UNKNOWN", "change_pct": 0.0},
+        {"indicator_code": "USD_VND", "change_pct": None},
+    ]
+    m_score = engine.compute_macro_sentiment(records)
+    assert isinstance(m_score, float)
+
+    # 2. T+2 áp lực với danh sách quá ngắn hoặc volume = 0
+    assert engine.compute_t2_pressure_index([1000.0]) == 0.0
+    assert engine.compute_t2_pressure_index([0.0, 0.0, 0.0]) == 0.0
+
+    # 3. Chuỗi dòng tiền > 5 ngày phân bổ theo ngày
+    flows_10d = [
+        {
+            "trading_date": date(2026, 9, i),
+            "foreign_net_value": 1e11 * i,
+            "prop_net_value": 5e10 * i,
+        }
+        for i in range(1, 11)
+    ]
+    ifm_10d = engine.compute_institutional_momentum(flows_10d)
+    assert -1.0 <= ifm_10d <= 1.0
+
+    # 4. Market breadth với total <= 0
+    assert (
+        engine.compute_market_breadth({"advancers": 0, "decliners": 0, "unchanged": 0})
+        == 0.0
+    )
+
+
+def test_e3_edge_cases_and_session_phases():
+    """Kiểm tra các trường hợp biên của Engine 3: Toàn bộ các mốc phiên giao dịch, MC biên âm, ATO gap với zscore."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    tz = ZoneInfo("Asia/Ho_Chi_Minh")
+
+    engine = QuantMLEngine()
+
+    # 1. Toàn bộ 8 phiên giao dịch Việt Nam
+    phases_to_test = [
+        (datetime(2026, 9, 23, 8, 35, tzinfo=tz), "PRE_ATO"),
+        (datetime(2026, 9, 23, 8, 50, tzinfo=tz), "ATO"),
+        (datetime(2026, 9, 23, 10, 0, tzinfo=tz), "MORNING_CONTINUOUS"),
+        (datetime(2026, 9, 23, 12, 0, tzinfo=tz), "MIDDAY_INTERMISSION"),
+        (datetime(2026, 9, 23, 13, 30, tzinfo=tz), "AFTERNOON_CONTINUOUS"),
+        (datetime(2026, 9, 23, 14, 20, tzinfo=tz), "PRE_ATC"),
+        (datetime(2026, 9, 23, 14, 35, tzinfo=tz), "ATC"),
+        (datetime(2026, 9, 23, 15, 30, tzinfo=tz), "POST_MARKET"),
+    ]
+    for dt_test, expected_phase in phases_to_test:
+        assert engine.classify_session_phase(dt_test) == expected_phase
+
+    # 2. Monte Carlo với current_price <= 0
+    assert engine.simulate_monte_carlo_t1(0.0, 0.2)["p50"] == 0.0
+
+    # 3. ATO gap với prev_close <= 0
+    assert engine.predict_ato_gap(1300.0, 0.0)["transition_score"] == 0.0
+
+    # 4. ATO gap với chuỗi historical_gaps phân phối 15 ngày
+    hist_gaps = [0.1 * i for i in range(-7, 8)]
+    gap_stat = engine.predict_ato_gap(1320.0, 1300.0, historical_gaps=hist_gaps)
+    assert gap_stat["gap_type"] == "BULLISH_GAP"
+
+    # 5. Full analyze chạy qua cả ATO và ATC phases
+    ato_dt = datetime(2026, 9, 23, 8, 50, tzinfo=tz)
+    res_ato = engine.analyze(symbol="VN30F1M", as_of=ato_dt, closes=[1300.0, 1305.0])
+    assert -1.0 <= res_ato.score <= 1.0
+
+
+def test_ens_short_direction_brackets():
+    """Kiểm tra tính Stop Loss / Take Profit cho vị thế SHORT trong EnsembleEngine."""
+    engine = EnsembleEngine()
+    sl, tp = engine.calculate_risk_brackets(
+        entry_price=1300.0,
+        direction="SHORT",
+        atr=5.0,
+    )
+    assert sl is not None and tp is not None
+    assert sl > 1300.0  # Cắt lỗ ở giá cao hơn giá vào lệnh Short
+    assert tp < 1300.0  # Chốt lời ở giá thấp hơn
+    risk = sl - 1300.0
+    reward = 1300.0 - tp
+    assert reward / risk >= 2.0  # R:R >= 1:2.0
+
+
+def test_e1_orderflow_branches_and_composite_score():
+    """Kiểm tra các nhánh TickFlowAggregated, thuần bán, và tổ hợp điểm kỹ thuật."""
+    from app.domains.quant.domain.models import TickFlowAggregated
+
+    engine = TechnicalEngine()
+
+    # 1. Truyền danh sách TickFlowAggregated
+    tick_items = [
+        TickFlowAggregated(
+            trading_date=date(2026, 9, 23),
+            symbol="VN30F1M",
+            aggressive_buy_volume=500,
+            aggressive_sell_volume=300,
+            source="VCI",
+        )
+    ]
+    delta, imb = engine.compute_orderflow_metrics(tick_items)
+    assert delta == 200
+    assert imb > 0.0
+
+    # 2. 100% bán (buy_vol = 0)
+    tick_sell_only = [
+        TickFlowAggregated(
+            trading_date=date(2026, 9, 23),
+            symbol="VN30F1M",
+            aggressive_buy_volume=0,
+            aggressive_sell_volume=1000,
+            source="VCI",
+        )
+    ]
+    _, imb_sell = engine.compute_orderflow_metrics(tick_sell_only)
+    assert imb_sell == -1.0
+
+    # 3. DataFrame không có match_type
+    import pandas as pd
+
+    df_no_type = pd.DataFrame([{"price": 1300.0, "volume": 100}])
+    d_no, imb_no = engine.compute_orderflow_metrics(df_no_type)
+    assert d_no == 100
+
+    # 4. detect_liquidity_sweeps với < 5 nến
+    assert engine.detect_liquidity_sweeps([1300.0], [1290.0], [1295.0]) == {
+        "bearish_sweep": False,
+        "bullish_sweep": False,
+    }
+
+    # 5. Composite score: RSI quá bán (<30) + MACD Hist dương + FVG Bullish + Bullish Sweep
+    score_bull = engine.compute_composite_score(
+        rsi=25.0,
+        macd_hist=1.5,
+        vwap_diff_pct=-0.01,
+        imbalance=0.5,
+        fvg_detected=True,
+        fvg_type="BULLISH_FVG",
+        sweeps={"bullish_sweep": True},
+    )
+    assert score_bull > 0.0
+
+    # 6. Composite score: RSI quá mua (>70) + MACD Hist âm + FVG Bearish + Bearish Sweep
+    score_bear = engine.compute_composite_score(
+        rsi=75.0,
+        macd_hist=-1.5,
+        vwap_diff_pct=0.01,
+        imbalance=-0.5,
+        fvg_detected=True,
+        fvg_type="BEARISH_FVG",
+        sweeps={"bearish_sweep": True},
+    )
+    assert score_bear < 0.0
+
+
+def test_indicators_safety_edge_cases():
+    """Kiểm tra độ an toàn của tất cả chỉ báo khi chuỗi nến ngắn hơn chu kỳ."""
+    from app.domains.quant.domain.indicators import (
+        compute_bollinger_bands,
+        compute_historical_volatility,
+        compute_parkinson_volatility,
+        compute_rsi,
+        compute_zscore,
+    )
+
+    # Chuỗi giá ngắn < period
+    assert compute_rsi([100.0, 102.0], period=14) is None
+    assert compute_bollinger_bands([100.0] * 5, period=20)["bandwidth"] == 0.0
+    assert compute_bollinger_bands([], period=20)["upper"] == 0.0
+    assert compute_historical_volatility([100.0]) == 0.0
+    assert compute_parkinson_volatility([], []) == 0.0
+    assert compute_zscore(10.0, 10.0, 0.0) == 0.0
+    assert compute_zscore(12.0, 10.0, 2.0) == 1.0
+
+
+def test_e1_with_session_fallback(sqlite_session):
+    """Kiểm tra TechnicalEngine khi khởi tạo với DB Session."""
+    from datetime import date
+
+    from app.domains.market_data.domain.models import StockOHLCVDaily
+
+    engine = TechnicalEngine(session=sqlite_session)
+    # 1. Khi chưa có dữ liệu DB
+    res = engine.analyze(symbol="VN30F1M")
+    assert res.score == 0.0
+    assert res.symbol == "VN30F1M"
+
+    # 2. Khi có dữ liệu DB bars
+    for i in range(25):
+        bar = StockOHLCVDaily(
+            symbol="VN30F1M",
+            trading_date=date(2026, 8, 1 + (i % 28)),
+            open=1300.0 + i,
+            high=1310.0 + i,
+            low=1295.0 + i,
+            close=1305.0 + i,
+            volume=10000 + i * 100,
+            source="VCI",
+        )
+        sqlite_session.add(bar)
+    sqlite_session.commit()
+
+    res_db = engine.analyze(symbol="VN30F1M")
+    assert res_db.symbol == "VN30F1M"
+    assert res_db.vwap is not None
+    assert -1.0 <= res_db.score <= 1.0
+
+
+def test_e1_additional_branches():
+    """Kiểm tra các nhánh phụ còn lại của TechnicalEngine: DF rỗng, FVG ngắn, vwap mismatched."""
+    import pandas as pd
+
+    engine = TechnicalEngine()
+
+    # 1. compute_orderflow_metrics với DF rỗng hoặc thiếu volume
+    assert engine.compute_orderflow_metrics(pd.DataFrame()) == (0, 0.0)
+    assert engine.compute_orderflow_metrics(pd.DataFrame([{"price": 100}])) == (0, 0.0)
+
+    # 2. total volume <= 0
+    df_zero = pd.DataFrame([{"volume": 0, "match_type": "BUY"}])
+    assert engine.compute_orderflow_metrics(df_zero) == (0, 0.0)
+
+    # 3. detect_fair_value_gaps với dữ liệu ngắn < 3
+    has_fvg, fvg_dict = engine.detect_fair_value_gaps([100.0], [90.0])
+    assert not has_fvg and fvg_dict == {}
+
+    # 4. detect_liquidity_sweeps với lookback rỗng
+    sweeps = engine.detect_liquidity_sweeps(
+        [100.0] * 5, [90.0] * 5, [95.0] * 5, window=0
+    )
+    assert not sweeps["bearish_sweep"] and not sweeps["bullish_sweep"]
+
+    # 5. vwap fallback khi len(highs) != len(closes)
+    res_mismatch = engine.analyze(
+        symbol="VN30F1M",
+        closes=[1300.0, 1305.0, 1310.0],
+        highs=[1310.0, 1315.0],  # độ dài 2 != 3
+        lows=[1290.0, 1295.0, 1300.0],
+    )
+    assert res_mismatch.vwap is not None
