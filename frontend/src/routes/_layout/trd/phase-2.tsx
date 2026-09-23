@@ -84,7 +84,8 @@ const testCases: TestCase[] = [
     id: "TEST-E1-02",
     category: "SUB",
     group: "Engine 1 (Technical & Orderflow)",
-    scenario: "Tính toán VWAP đa khung thời gian kết hợp nến 1m, 5m, 15m trong phiên",
+    scenario:
+      "Tính toán VWAP đa khung thời gian kết hợp nến 1m, 5m, 15m trong phiên",
     expectation:
       "Đường VWAP tích lũy khối lượng liên tục từ đầu phiên 09:00, không bị lệch pha giữa các khung",
     status: "PASS",
@@ -102,7 +103,8 @@ const testCases: TestCase[] = [
     id: "TEST-E1-04",
     category: "MAIN",
     group: "Engine 1 (Technical & Orderflow)",
-    scenario: "Tính Orderflow Delta với dòng lệnh khớp mua/bán hỗn hợp từ Quote.intraday()",
+    scenario:
+      "Tính Orderflow Delta với dòng lệnh khớp mua/bán hỗn hợp từ Quote.intraday()",
     expectation:
       "Delta = V_buy - V_sell chuẩn xác từng tick; phản ánh đúng xung lực mua/bán chủ động",
     status: "PASS",
@@ -111,7 +113,8 @@ const testCases: TestCase[] = [
     id: "TEST-E1-05",
     category: "EDGE",
     group: "Engine 1 (Technical & Orderflow)",
-    scenario: "Tính Order Imbalance với dòng lệnh 100% mua chủ động (Vol_Sell = 0)",
+    scenario:
+      "Tính Order Imbalance với dòng lệnh 100% mua chủ động (Vol_Sell = 0)",
     expectation:
       "Trả về Imbalance Ratio = +1.0 chuẩn xác, không bị lỗi tính toán biên",
     status: "PASS",
@@ -138,7 +141,8 @@ const testCases: TestCase[] = [
     id: "TEST-E1-08",
     category: "EDGE",
     group: "Engine 1 (Technical & Orderflow)",
-    scenario: "Chuỗi nến Doji liên tiếp (High = Low = Close) trong vùng thị trường mất thanh khoản",
+    scenario:
+      "Chuỗi nến Doji liên tiếp (High = Low = Close) trong vùng thị trường mất thanh khoản",
     expectation:
       "Chỉ báo biến động xử lý an toàn phép chia logarithm; độ biến động tiệm cận 0 mà không crash",
     status: "PASS",
@@ -149,7 +153,8 @@ const testCases: TestCase[] = [
     id: "TEST-E2-01",
     category: "MAIN",
     group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Tổng hợp luồng vốn Khối ngoại và Tự doanh trên toàn bộ 30 mã rổ VN30",
+    scenario:
+      "Tổng hợp luồng vốn Khối ngoại và Tự doanh trên toàn bộ 30 mã rổ VN30",
     expectation:
       "Cộng gộp giá trị mua/bán ròng chính xác; tính ra điểm Institutional Momentum Score",
     status: "PASS",
@@ -158,7 +163,8 @@ const testCases: TestCase[] = [
     id: "TEST-E2-02",
     category: "SUB",
     group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Đánh giá áp lực xả hàng T+2 khi phiên T-2 có thanh khoản bắt đáy đột biến x3",
+    scenario:
+      "Đánh giá áp lực xả hàng T+2 khi phiên T-2 có thanh khoản bắt đáy đột biến x3",
     expectation:
       "Chỉ số t_plus_2_pressure_index tăng vọt cảnh báo nguy cơ rung lắc mạnh phiên chiều",
     status: "PASS",
@@ -167,7 +173,8 @@ const testCases: TestCase[] = [
     id: "TEST-E2-03",
     category: "EDGE",
     group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Tính Institutional Flow Momentum khi thiếu dữ liệu Tự doanh do công bố trễ",
+    scenario:
+      "Tính Institutional Flow Momentum khi thiếu dữ liệu Tự doanh do công bố trễ",
     expectation:
       "Tự động hạ trọng số Tự doanh về 0 và chuẩn hóa theo Khối ngoại; không throw Exception",
     status: "PASS",
@@ -176,7 +183,8 @@ const testCases: TestCase[] = [
     id: "TEST-E2-04",
     category: "MAIN",
     group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Phân tích độ rộng thị trường (Advance/Decline Ratio) trên 400 mã sàn HOSE",
+    scenario:
+      "Phân tích độ rộng thị trường (Advance/Decline Ratio) trên 400 mã sàn HOSE",
     expectation:
       "Tính tỷ lệ mã tăng / mã giảm chuẩn xác; nhận diện độ phân kỳ giữa chỉ số và độ rộng",
     status: "PASS",
@@ -185,7 +193,8 @@ const testCases: TestCase[] = [
     id: "TEST-E2-05",
     category: "EDGE",
     group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Phân tích độ rộng thị trường khi toàn sàn giảm mạnh (100% decliners)",
+    scenario:
+      "Phân tích độ rộng thị trường khi toàn sàn giảm mạnh (100% decliners)",
     expectation:
       "Trả về Breadth Score tiệm cận -1.0; tín hiệu nghiêng hẳn về Bearish an toàn",
     status: "PASS",
@@ -203,7 +212,8 @@ const testCases: TestCase[] = [
     id: "TEST-E2-07",
     category: "EDGE",
     group: "Engine 2 (Liquidity & T+2)",
-    scenario: "Tuần giao dịch có kỳ nghỉ lễ Quốc Khánh/Tết Nguyên Đán kéo dài giữa tuần",
+    scenario:
+      "Tuần giao dịch có kỳ nghỉ lễ Quốc Khánh/Tết Nguyên Đán kéo dài giữa tuần",
     expectation:
       "Tự động dời lịch thanh toán T+2 sang đúng ngày làm việc tiếp theo của thị trường",
     status: "PASS",
@@ -223,7 +233,8 @@ const testCases: TestCase[] = [
     id: "TEST-E3-01",
     category: "MAIN",
     group: "Engine 3 (Basis & Transitions)",
-    scenario: "Tính toán Basis Spread khi giá VN30F1M cao hơn chỉ số cơ sở VN30",
+    scenario:
+      "Tính toán Basis Spread khi giá VN30F1M cao hơn chỉ số cơ sở VN30",
     expectation:
       "Basis mang giá trị dương; Z-score tính đúng theo Mean và Std lăn 20 kỳ",
     status: "PASS",
@@ -241,7 +252,8 @@ const testCases: TestCase[] = [
     id: "TEST-E3-03",
     category: "EDGE",
     group: "Engine 3 (Basis & Transitions)",
-    scenario: "Chỉ số VN30 dừng cập nhật tạm thời do nghẽn mạng phía sở giao dịch",
+    scenario:
+      "Chỉ số VN30 dừng cập nhật tạm thời do nghẽn mạng phía sở giao dịch",
     expectation:
       "Engine 3 chuyển sang cơ chế fallback tính synthetic index từ 30 cổ phiếu thành phần",
     status: "PASS",
@@ -259,7 +271,8 @@ const testCases: TestCase[] = [
     id: "TEST-E3-05",
     category: "SUB",
     group: "Engine 3 (Basis & Transitions)",
-    scenario: "Phân loại độ lệch ATO Opening Gap lúc 08:45 của hợp đồng VN30F1M",
+    scenario:
+      "Phân loại độ lệch ATO Opening Gap lúc 08:45 của hợp đồng VN30F1M",
     expectation:
       "Xác định đúng Bullish Gap, Bearish Gap hay Normal Gap dựa trên phân phối 60 ngày",
     status: "PASS",
@@ -268,7 +281,8 @@ const testCases: TestCase[] = [
     id: "TEST-E3-06",
     category: "MAIN",
     group: "Engine 3 (Basis & Transitions)",
-    scenario: "Dự báo phiên tiếp theo (T+1) với mô phỏng Monte Carlo 10,000 runs",
+    scenario:
+      "Dự báo phiên tiếp theo (T+1) với mô phỏng Monte Carlo 10,000 runs",
     expectation:
       "Dải giá kỳ vọng P_low và P_high tuân thủ nghiêm ngặt biên độ trần/sàn ±7% của VN30F1M",
     status: "PASS",
@@ -288,7 +302,8 @@ const testCases: TestCase[] = [
     id: "TEST-ENS-01",
     category: "MAIN",
     group: "Ensemble & Audit Ledger",
-    scenario: "Điều phối trọng số động theo từng khung giờ phiên (ATO, Continuous, ATC, Post-market)",
+    scenario:
+      "Điều phối trọng số động theo từng khung giờ phiên (ATO, Continuous, ATC, Post-market)",
     expectation:
       "Tổng trọng số w1 + w2 + w3 luôn chuẩn hóa = 1.0; phản ánh đúng trọng tâm từng phiên",
     status: "PASS",
@@ -297,7 +312,8 @@ const testCases: TestCase[] = [
     id: "TEST-ENS-02",
     category: "EDGE",
     group: "Ensemble & Audit Ledger",
-    scenario: "Xung đột tín hiệu: Engine 1 Bullish (+0.85) nhưng Engine 3 Bearish (-0.80)",
+    scenario:
+      "Xung đột tín hiệu: Engine 1 Bullish (+0.85) nhưng Engine 3 Bearish (-0.80)",
     expectation:
       "Ensemble cân bằng điểm số, nhận diện trạng thái mâu thuẫn và phát tín hiệu NEUTRAL an toàn",
     status: "PASS",
@@ -315,7 +331,8 @@ const testCases: TestCase[] = [
     id: "TEST-ENS-04",
     category: "EDGE",
     group: "Ensemble & Audit Ledger",
-    scenario: "Kiểm tra Look-Ahead Bias: cung cấp tập dữ liệu cắt tại thời điểm T",
+    scenario:
+      "Kiểm tra Look-Ahead Bias: cung cấp tập dữ liệu cắt tại thời điểm T",
     expectation:
       "Mô hình hoàn toàn không thể truy cập bất kỳ dữ liệu nào có timestamp > T",
     status: "PASS",
@@ -333,7 +350,8 @@ const testCases: TestCase[] = [
     id: "TEST-ENS-06",
     category: "SUB",
     group: "Ensemble & Audit Ledger",
-    scenario: "Cập nhật đường bám Trailing Stop khi giá phái sinh lập đỉnh/đáy mới",
+    scenario:
+      "Cập nhật đường bám Trailing Stop khi giá phái sinh lập đỉnh/đáy mới",
     expectation:
       "Ngưỡng Stop Loss tịnh tiến theo chiều có lãi, khóa chặt lợi nhuận tích lũy",
     status: "PASS",
@@ -438,7 +456,8 @@ export function Phase2TRDPage() {
       t.scenario.toLowerCase().includes(testSearch.toLowerCase()) ||
       t.expectation.toLowerCase().includes(testSearch.toLowerCase());
     const matchesGroup = selectedGroup === "ALL" || t.group === selectedGroup;
-    const matchesCategory = selectedCategory === "ALL" || t.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "ALL" || t.category === selectedCategory;
     return matchesSearch && matchesGroup && matchesCategory;
   });
 
@@ -508,7 +527,9 @@ export function Phase2TRDPage() {
             Đặc Tả Chi Tiết Phase 2: Tri-Engine Analytics Core
           </h1>
           <p className="mt-2 text-base text-muted-foreground">
-            Technical Requirements Document (TRD), Kiến trúc 3 Động Cơ Phân Tích Định Lượng &amp; Bộ Hợp Nhất Quyết Định Ensemble cho hệ thống vnstock.
+            Technical Requirements Document (TRD), Kiến trúc 3 Động Cơ Phân Tích
+            Định Lượng &amp; Bộ Hợp Nhất Quyết Định Ensemble cho hệ thống
+            vnstock.
           </p>
         </div>
 
@@ -625,40 +646,73 @@ export function Phase2TRDPage() {
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 <CardTitle className="text-base text-emerald-700 dark:text-emerald-400">
-                  Định Hướng Kiến Trúc Tri-Engine Analytics Core (Theo AGENTS.md)
+                  Định Hướng Kiến Trúc Tri-Engine Analytics Core (Theo
+                  AGENTS.md)
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
               <p>
-                Sau khi Phase 1 hoàn tất toàn bộ tầng lưu trữ (Database Models, Forecast Journal, Paper Trading Tables, Vnstock Adapters), <strong>Phase 2 đóng vai trò là "Bộ Não Tính Toán" (Analytics Brain)</strong> của hệ sinh thái vnstock.
+                Sau khi Phase 1 hoàn tất toàn bộ tầng lưu trữ (Database Models,
+                Forecast Journal, Paper Trading Tables, Vnstock Adapters),{" "}
+                <strong>
+                  Phase 2 đóng vai trò là "Bộ Não Tính Toán" (Analytics Brain)
+                </strong>{" "}
+                của hệ sinh thái vnstock.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                 <div className="p-3 rounded-md bg-background/90 border">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="bg-blue-500/10 text-blue-600">Engine 1</Badge>
-                    <span className="font-semibold text-foreground text-sm">Hành Động Giá &amp; Lệnh</span>
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-500/10 text-blue-600"
+                    >
+                      Engine 1
+                    </Badge>
+                    <span className="font-semibold text-foreground text-sm">
+                      Hành Động Giá &amp; Lệnh
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Xử lý đa khung thời gian (1m, 5m, 15m, 1D), chỉ báo kỹ thuật RSI/MACD/Bollinger/ATR/VWAP, Orderflow Volume Delta và các mẫu hình FVG, Liquidity Sweeps.
+                    Xử lý đa khung thời gian (1m, 5m, 15m, 1D), chỉ báo kỹ thuật
+                    RSI/MACD/Bollinger/ATR/VWAP, Orderflow Volume Delta và các
+                    mẫu hình FVG, Liquidity Sweeps.
                   </p>
                 </div>
                 <div className="p-3 rounded-md bg-background/90 border">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="bg-purple-500/10 text-purple-600">Engine 2</Badge>
-                    <span className="font-semibold text-foreground text-sm">Thanh Khoản &amp; T+2</span>
+                    <Badge
+                      variant="outline"
+                      className="bg-purple-500/10 text-purple-600"
+                    >
+                      Engine 2
+                    </Badge>
+                    <span className="font-semibold text-foreground text-sm">
+                      Thanh Khoản &amp; T+2
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Bóc tách dòng tiền Khối ngoại &amp; Tự doanh, độ rộng thị trường, mô hình hóa áp lực bán/mua của chu kỳ thanh toán T+2 và ảnh hưởng vĩ mô USD/VND.
+                    Bóc tách dòng tiền Khối ngoại &amp; Tự doanh, độ rộng thị
+                    trường, mô hình hóa áp lực bán/mua của chu kỳ thanh toán T+2
+                    và ảnh hưởng vĩ mô USD/VND.
                   </p>
                 </div>
                 <div className="p-3 rounded-md bg-background/90 border">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600">Engine 3</Badge>
-                    <span className="font-semibold text-foreground text-sm">Định Lượng &amp; Xác Suất</span>
+                    <Badge
+                      variant="outline"
+                      className="bg-amber-500/10 text-amber-600"
+                    >
+                      Engine 3
+                    </Badge>
+                    <span className="font-semibold text-foreground text-sm">
+                      Định Lượng &amp; Xác Suất
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Theo dõi chênh lệch Basis phái sinh - cơ sở, Z-score phân kỳ, biến động Parkinson/HV, xác suất chuyển phiên ATO/ATC và mô phỏng Monte Carlo T+1.
+                    Theo dõi chênh lệch Basis phái sinh - cơ sở, Z-score phân
+                    kỳ, biến động Parkinson/HV, xác suất chuyển phiên ATO/ATC và
+                    mô phỏng Monte Carlo T+1.
                   </p>
                 </div>
               </div>
@@ -669,49 +723,81 @@ export function Phase2TRDPage() {
           <Card className="border-border/60">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <ShieldAlert className="h-5 w-5 text-amber-500" />
-                4 Quy Tắc Cốt Lõi Bắt Buộc Tuân Thủ Tuyệt Đối (Rule 1 đến 4)
+                <ShieldAlert className="h-5 w-5 text-amber-500" />4 Quy Tắc Cốt
+                Lõi Bắt Buộc Tuân Thủ Tuyệt Đối (Rule 1 đến 4)
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-3.5 rounded-lg border bg-card space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <Badge variant="destructive" className="text-xs font-mono">RULE 1</Badge>
-                    <h4 className="font-semibold text-sm">Tuyệt Đối Không Bot Tiền Thật</h4>
+                    <Badge variant="destructive" className="text-xs font-mono">
+                      RULE 1
+                    </Badge>
+                    <h4 className="font-semibold text-sm">
+                      Tuyệt Đối Không Bot Tiền Thật
+                    </h4>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Hệ thống không tích hợp API đặt lệnh broker thật, không lưu trữ password, trading PIN, OTP. 100% quyết định giải ngân là do con người (Human-in-the-loop).
+                    Hệ thống không tích hợp API đặt lệnh broker thật, không lưu
+                    trữ password, trading PIN, OTP. 100% quyết định giải ngân là
+                    do con người (Human-in-the-loop).
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-lg border bg-card space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs font-mono bg-blue-500/10 text-blue-600">RULE 2</Badge>
-                    <h4 className="font-semibold text-sm">Cách Ly Hoàn Toàn Mô Phỏng</h4>
+                    <Badge
+                      variant="secondary"
+                      className="text-xs font-mono bg-blue-500/10 text-blue-600"
+                    >
+                      RULE 2
+                    </Badge>
+                    <h4 className="font-semibold text-sm">
+                      Cách Ly Hoàn Toàn Mô Phỏng
+                    </h4>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Tín hiệu từ Phase 2 chỉ được truyền sang môi trường Simulation và Paper Trading schema độc lập, đảm bảo an toàn tuyệt đối.
+                    Tín hiệu từ Phase 2 chỉ được truyền sang môi trường
+                    Simulation và Paper Trading schema độc lập, đảm bảo an toàn
+                    tuyệt đối.
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-lg border bg-card space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs font-mono bg-purple-500/10 text-purple-600">RULE 3</Badge>
-                    <h4 className="font-semibold text-sm">Toàn Vẹn Dữ Liệu &amp; Sổ Nhật Ký</h4>
+                    <Badge
+                      variant="secondary"
+                      className="text-xs font-mono bg-purple-500/10 text-purple-600"
+                    >
+                      RULE 3
+                    </Badge>
+                    <h4 className="font-semibold text-sm">
+                      Toàn Vẹn Dữ Liệu &amp; Sổ Nhật Ký
+                    </h4>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Không bịa đặt số liệu, không Look-ahead bias (chỉ dùng dữ liệu tại thời điểm phát tín hiệu), 100% tín hiệu được tự động ghi vào ForecastJournal để tự học.
+                    Không bịa đặt số liệu, không Look-ahead bias (chỉ dùng dữ
+                    liệu tại thời điểm phát tín hiệu), 100% tín hiệu được tự
+                    động ghi vào ForecastJournal để tự học.
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-lg border bg-card space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs font-mono bg-amber-500/10 text-amber-600">RULE 4</Badge>
-                    <h4 className="font-semibold text-sm">Thông Tin Tham Khảo, Không Phải Khuyến Nghị</h4>
+                    <Badge
+                      variant="secondary"
+                      className="text-xs font-mono bg-amber-500/10 text-amber-600"
+                    >
+                      RULE 4
+                    </Badge>
+                    <h4 className="font-semibold text-sm">
+                      Thông Tin Tham Khảo, Không Phải Khuyến Nghị
+                    </h4>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Toàn bộ đầu ra API kèm disclaimer rõ ràng về việc phục vụ nghiên cứu và mô phỏng giáo dục, không cam kết lợi nhuận.
+                    Toàn bộ đầu ra API kèm disclaimer rõ ràng về việc phục vụ
+                    nghiên cứu và mô phỏng giáo dục, không cam kết lợi nhuận.
                   </p>
                 </div>
               </div>
@@ -731,31 +817,50 @@ export function Phase2TRDPage() {
                       <TrendingUp className="h-5 w-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Engine 1: Technical &amp; Price-Action</CardTitle>
+                      <CardTitle className="text-lg">
+                        Engine 1: Technical &amp; Price-Action
+                      </CardTitle>
                       <CardDescription>Mô-đun: TechnicalEngine</CardDescription>
                     </div>
                   </div>
-                  <Badge variant="outline" className="font-mono text-xs">w1: 45%</Badge>
+                  <Badge variant="outline" className="font-mono text-xs">
+                    w1: 45%
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Chỉ báo kỹ thuật:</h4>
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Chỉ báo kỹ thuật:
+                  </h4>
                   <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
                     <li>RSI 14 (Quá mua/bán, phân kỳ đỉnh/đáy)</li>
                     <li>MACD (12, 26, 9) Histogram &amp; Crosses</li>
-                    <li>Bollinger Bands (20, 2) &amp; Squeeze identification</li>
+                    <li>
+                      Bollinger Bands (20, 2) &amp; Squeeze identification
+                    </li>
                     <li>ATR 14: Biến động giá tuyệt đối làm mốc Stop Loss</li>
-                    <li>VWAP: Tính toán tích lũy theo Typical Price * Volume</li>
+                    <li>
+                      VWAP: Tính toán tích lũy theo Typical Price * Volume
+                    </li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Dòng lệnh &amp; Price Action:</h4>
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Dòng lệnh &amp; Price Action:
+                  </h4>
                   <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-                    <li>Volume Delta: Chênh lệch Mua chủ động vs. Bán chủ động</li>
-                    <li>Order Imbalance: Tỷ lệ mất cân bằng lệnh (-1.0 đến +1.0)</li>
+                    <li>
+                      Volume Delta: Chênh lệch Mua chủ động vs. Bán chủ động
+                    </li>
+                    <li>
+                      Order Imbalance: Tỷ lệ mất cân bằng lệnh (-1.0 đến +1.0)
+                    </li>
                     <li>Camarilla Pivots: Hỗ trợ / Kháng cự R1..R4, S1..S4</li>
-                    <li>Fair Value Gaps (FVG) &amp; Liquidity Sweeps (Quét râu đảo chiều)</li>
+                    <li>
+                      Fair Value Gaps (FVG) &amp; Liquidity Sweeps (Quét râu đảo
+                      chiều)
+                    </li>
                   </ul>
                 </div>
               </CardContent>
@@ -770,30 +875,52 @@ export function Phase2TRDPage() {
                       <Layers className="h-5 w-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Engine 2: Liquidity &amp; T+2 Cashflow</CardTitle>
-                      <CardDescription>Mô-đun: FlowLiquidityEngine</CardDescription>
+                      <CardTitle className="text-lg">
+                        Engine 2: Liquidity &amp; T+2 Cashflow
+                      </CardTitle>
+                      <CardDescription>
+                        Mô-đun: FlowLiquidityEngine
+                      </CardDescription>
                     </div>
                   </div>
-                  <Badge variant="outline" className="font-mono text-xs">w2: 25%</Badge>
+                  <Badge variant="outline" className="font-mono text-xs">
+                    w2: 25%
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Dòng tiền tổ chức &amp; Độ rộng:</h4>
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Dòng tiền tổ chức &amp; Độ rộng:
+                  </h4>
                   <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-                    <li>Institutional Flow Momentum (IFM): Mua ròng lăn 3d, 5d, 10d</li>
+                    <li>
+                      Institutional Flow Momentum (IFM): Mua ròng lăn 3d, 5d,
+                      10d
+                    </li>
                     <li>Tỷ trọng kết hợp: 60% Khối ngoại + 40% Tự doanh</li>
                     <li>Advance/Decline Ratio &amp; Market Breadth Score</li>
                     <li>Luân chuyển dòng tiền nhóm ngành theo chuẩn ICB</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Ràng buộc chu kỳ T+2 &amp; Vĩ mô:</h4>
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Ràng buộc chu kỳ T+2 &amp; Vĩ mô:
+                  </h4>
                   <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-                    <li>Mô hình hóa ngày cổ phiếu về tài khoản (13:00 phiên chiều T+2)</li>
-                    <li>Áp lực bán tiềm tàng T+2 (T+2 Pressure Index) từ các phiên bắt đáy</li>
+                    <li>
+                      Mô hình hóa ngày cổ phiếu về tài khoản (13:00 phiên chiều
+                      T+2)
+                    </li>
+                    <li>
+                      Áp lực bán tiềm tàng T+2 (T+2 Pressure Index) từ các phiên
+                      bắt đáy
+                    </li>
                     <li>Tác động tỷ giá USD/VND đối với dòng vốn ngoại FII</li>
-                    <li>Chênh lệch giá vàng SJC và thế giới phản ánh khẩu vị rủi ro</li>
+                    <li>
+                      Chênh lệch giá vàng SJC và thế giới phản ánh khẩu vị rủi
+                      ro
+                    </li>
                   </ul>
                 </div>
               </CardContent>
@@ -808,29 +935,52 @@ export function Phase2TRDPage() {
                       <Cpu className="h-5 w-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Engine 3: Quantitative ML &amp; Basis</CardTitle>
+                      <CardTitle className="text-lg">
+                        Engine 3: Quantitative ML &amp; Basis
+                      </CardTitle>
                       <CardDescription>Mô-đun: QuantMLEngine</CardDescription>
                     </div>
                   </div>
-                  <Badge variant="outline" className="font-mono text-xs">w3: 30%</Badge>
+                  <Badge variant="outline" className="font-mono text-xs">
+                    w3: 30%
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Basis Spread &amp; Arbitrage:</h4>
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Basis Spread &amp; Arbitrage:
+                  </h4>
                   <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-                    <li>Basis = VN30F1M - VN30 Index (Chênh lệch giá tức thời)</li>
-                    <li>Z-score Basis lăn 20 chu kỳ: Nhận diện phân kỳ thống kê</li>
-                    <li>Quy tắc Mean-Reversion: Z &gt; +2.0 (Short Bias), Z &lt; -2.0 (Long Bias)</li>
-                    <li>Đo lường độ biến động: Historical Volatility (HV) &amp; Parkinson Volatility</li>
+                    <li>
+                      Basis = VN30F1M - VN30 Index (Chênh lệch giá tức thời)
+                    </li>
+                    <li>
+                      Z-score Basis lăn 20 chu kỳ: Nhận diện phân kỳ thống kê
+                    </li>
+                    <li>
+                      Quy tắc Mean-Reversion: Z &gt; +2.0 (Short Bias), Z &lt;
+                      -2.0 (Long Bias)
+                    </li>
+                    <li>
+                      Đo lường độ biến động: Historical Volatility (HV) &amp;
+                      Parkinson Volatility
+                    </li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Xác suất chuyển phiên &amp; Mô phỏng:</h4>
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Xác suất chuyển phiên &amp; Mô phỏng:
+                  </h4>
                   <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
                     <li>ATO Transition: Xác suất Gap mở phiên P(Gap &gt; 0)</li>
-                    <li>ATC Transition: Dự báo giá khớp cân bằng đóng cửa 14:45</li>
-                    <li>Monte Carlo T+1: Mô phỏng 1,000 đường đi giá trong biên độ ±7%</li>
+                    <li>
+                      ATC Transition: Dự báo giá khớp cân bằng đóng cửa 14:45
+                    </li>
+                    <li>
+                      Monte Carlo T+1: Mô phỏng 1,000 đường đi giá trong biên độ
+                      ±7%
+                    </li>
                   </ul>
                 </div>
               </CardContent>
@@ -845,29 +995,57 @@ export function Phase2TRDPage() {
                       <Sliders className="h-5 w-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Ensemble Decision Engine</CardTitle>
+                      <CardTitle className="text-lg">
+                        Ensemble Decision Engine
+                      </CardTitle>
                       <CardDescription>Mô-đun: EnsembleEngine</CardDescription>
                     </div>
                   </div>
-                  <Badge className="bg-emerald-600 text-white font-mono text-xs">Tổng hợp</Badge>
+                  <Badge className="bg-emerald-600 text-white font-mono text-xs">
+                    Tổng hợp
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Quy tắc sinh tín hiệu tối ưu:</h4>
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Quy tắc sinh tín hiệu tối ưu:
+                  </h4>
                   <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-                    <li>Score = w1*E1 + w2*E2 + w3*E3 (Tự chuẩn hóa sum = 1.0)</li>
-                    <li>Score &ge; +0.35 ➔ <strong>LONG</strong> (Độ tin cậy = |Score|)</li>
-                    <li>Score &le; -0.35 ➔ <strong>SHORT</strong> (Độ tin cậy = |Score|)</li>
-                    <li>-0.35 &lt; Score &lt; +0.35 ➔ <strong>NEUTRAL</strong> (Đứng ngoài)</li>
+                    <li>
+                      Score = w1*E1 + w2*E2 + w3*E3 (Tự chuẩn hóa sum = 1.0)
+                    </li>
+                    <li>
+                      Score &ge; +0.35 ➔ <strong>LONG</strong> (Độ tin cậy =
+                      |Score|)
+                    </li>
+                    <li>
+                      Score &le; -0.35 ➔ <strong>SHORT</strong> (Độ tin cậy =
+                      |Score|)
+                    </li>
+                    <li>
+                      -0.35 &lt; Score &lt; +0.35 ➔ <strong>NEUTRAL</strong>{" "}
+                      (Đứng ngoài)
+                    </li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">Quản trị rủi ro &amp; Lưu vết:</h4>
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Quản trị rủi ro &amp; Lưu vết:
+                  </h4>
                   <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-                    <li>Cắt lỗ động: Stop Loss = Entry ± 1.5*ATR (kết hợp Pivot gần nhất)</li>
-                    <li>Chốt lời: Take Profit với tỷ lệ Risk:Reward tối thiểu 1:2.0</li>
-                    <li><strong>Ghi sổ ForecastJournal:</strong> Lưu snapshot trọng số, thông số, status 'pending'</li>
+                    <li>
+                      Cắt lỗ động: Stop Loss = Entry ± 1.5*ATR (kết hợp Pivot
+                      gần nhất)
+                    </li>
+                    <li>
+                      Chốt lời: Take Profit với tỷ lệ Risk:Reward tối thiểu
+                      1:2.0
+                    </li>
+                    <li>
+                      <strong>Ghi sổ ForecastJournal:</strong> Lưu snapshot
+                      trọng số, thông số, status 'pending'
+                    </li>
                   </ul>
                 </div>
               </CardContent>
@@ -879,8 +1057,13 @@ export function Phase2TRDPage() {
         <TabsContent value="endpoints" className="mt-6 flex flex-col gap-6">
           <Card className="border-border/60">
             <CardHeader>
-              <CardTitle className="text-base">Danh Sách 8 API Endpoints Mới (FastAPI /api/v1/quant/*)</CardTitle>
-              <CardDescription>Tất cả endpoint đều yêu cầu xác thực JWT qua CurrentUser dependency</CardDescription>
+              <CardTitle className="text-base">
+                Danh Sách 8 API Endpoints Mới (FastAPI /api/v1/quant/*)
+              </CardTitle>
+              <CardDescription>
+                Tất cả endpoint đều yêu cầu xác thực JWT qua CurrentUser
+                dependency
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border overflow-x-auto">
@@ -899,7 +1082,13 @@ export function Phase2TRDPage() {
                       <TableRow key={idx}>
                         <TableCell>
                           <Badge
-                            variant={ep.method === "POST" ? "default" : ep.method === "PUT" ? "secondary" : "outline"}
+                            variant={
+                              ep.method === "POST"
+                                ? "default"
+                                : ep.method === "PUT"
+                                  ? "secondary"
+                                  : "outline"
+                            }
                             className="font-mono text-xs"
                           >
                             {ep.method}
@@ -947,9 +1136,19 @@ export function Phase2TRDPage() {
                     <Check className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm">1. Cấu Trúc Module Độc Lập</h4>
+                    <h4 className="font-semibold text-sm">
+                      1. Cấu Trúc Module Độc Lập
+                    </h4>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Tách biệt hoàn toàn 3 Engine trong <code>backend/app/domains/quant/application/engines/</code> (<code>technical_engine.py</code>, <code>flow_engine.py</code>, <code>quant_ml_engine.py</code>, <code>ensemble_engine.py</code>), không có circular imports.
+                      Tách biệt hoàn toàn 3 Engine trong{" "}
+                      <code>
+                        backend/app/domains/quant/application/engines/
+                      </code>{" "}
+                      (<code>technical_engine.py</code>,{" "}
+                      <code>flow_engine.py</code>,{" "}
+                      <code>quant_ml_engine.py</code>,{" "}
+                      <code>ensemble_engine.py</code>), không có circular
+                      imports.
                     </p>
                   </div>
                 </div>
@@ -959,9 +1158,15 @@ export function Phase2TRDPage() {
                     <Check className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm">2. Tuân Thủ 4 Điều Lệ Cốt Lõi</h4>
+                    <h4 className="font-semibold text-sm">
+                      2. Tuân Thủ 4 Điều Lệ Cốt Lõi
+                    </h4>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Không có broker API hay tài khoản thật (Rule 1 &amp; 2). 100% dự báo sinh ra đều được ghi vào <code>ForecastJournal</code> với status <code>pending</code> (Rule 3). Mọi response API đều có disclaimer rõ ràng (Rule 4).
+                      Không có broker API hay tài khoản thật (Rule 1 &amp; 2).
+                      100% dự báo sinh ra đều được ghi vào{" "}
+                      <code>ForecastJournal</code> với status{" "}
+                      <code>pending</code> (Rule 3). Mọi response API đều có
+                      disclaimer rõ ràng (Rule 4).
                     </p>
                   </div>
                 </div>
@@ -971,9 +1176,14 @@ export function Phase2TRDPage() {
                     <Check className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm">3. Chuẩn Code Quality (0 Lỗi)</h4>
+                    <h4 className="font-semibold text-sm">
+                      3. Chuẩn Code Quality (0 Lỗi)
+                    </h4>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Chạy <code>uv run ruff check</code> đạt 0 lỗi; <code>uv run ruff format --check</code> đúng chuẩn; <code>uv run ty check</code> đạt 0 diagnostics (All checks passed).
+                      Chạy <code>uv run ruff check</code> đạt 0 lỗi;{" "}
+                      <code>uv run ruff format --check</code> đúng chuẩn;{" "}
+                      <code>uv run ty check</code> đạt 0 diagnostics (All checks
+                      passed).
                     </p>
                   </div>
                 </div>
@@ -983,9 +1193,15 @@ export function Phase2TRDPage() {
                     <Check className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm">4. Unit Test Coverage &ge; 90% (39/39 Tests PASS)</h4>
+                    <h4 className="font-semibold text-sm">
+                      4. Unit Test Coverage &ge; 90% (39/39 Tests PASS)
+                    </h4>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Có đầy đủ test cases cho toàn bộ 4 mô-đun engine trong <code>backend/app/domains/quant/</code> (RSI, MACD, VWAP, Orderflow Delta, Basis Z-score, Volatility, Monte Carlo, Ensemble Blending, Forecast Journal, API Routes), tất cả chạy pass 100% qua <code>uv run pytest</code>.
+                      Có đầy đủ test cases cho toàn bộ 4 mô-đun engine trong{" "}
+                      <code>backend/app/domains/quant/</code> (RSI, MACD, VWAP,
+                      Orderflow Delta, Basis Z-score, Volatility, Monte Carlo,
+                      Ensemble Blending, Forecast Journal, API Routes), tất cả
+                      chạy pass 100% qua <code>uv run pytest</code>.
                     </p>
                   </div>
                 </div>
@@ -1000,11 +1216,16 @@ export function Phase2TRDPage() {
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="text-base">Ma Trận 27 Kịch Bản Kiểm Thử (Test Matrix Đa Dạng)</CardTitle>
-                  <CardDescription>Bao gồm đầy đủ Main Cases (luồng chuẩn), Sub Cases (biến thể) và Edge Cases (biên & ngoại lệ)</CardDescription>
+                  <CardTitle className="text-base">
+                    Ma Trận 27 Kịch Bản Kiểm Thử (Test Matrix Đa Dạng)
+                  </CardTitle>
+                  <CardDescription>
+                    Bao gồm đầy đủ Main Cases (luồng chuẩn), Sub Cases (biến
+                    thể) và Edge Cases (biên & ngoại lệ)
+                  </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="relative w-full sm:w-[240px]">
+                  <div className="relative w-full sm:w-60">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Tìm kiếm kịch bản..."
@@ -1020,13 +1241,24 @@ export function Phase2TRDPage() {
               <div className="flex flex-wrap gap-1.5 pt-3 border-b pb-2.5">
                 {[
                   { key: "ALL", label: `Tất cả (${testCases.length})` },
-                  { key: "MAIN", label: `Main Cases (${testCases.filter((t) => t.category === "MAIN").length})` },
-                  { key: "SUB", label: `Sub Cases (${testCases.filter((t) => t.category === "SUB").length})` },
-                  { key: "EDGE", label: `Edge Cases (${testCases.filter((t) => t.category === "EDGE").length})` },
+                  {
+                    key: "MAIN",
+                    label: `Main Cases (${testCases.filter((t) => t.category === "MAIN").length})`,
+                  },
+                  {
+                    key: "SUB",
+                    label: `Sub Cases (${testCases.filter((t) => t.category === "SUB").length})`,
+                  },
+                  {
+                    key: "EDGE",
+                    label: `Edge Cases (${testCases.filter((t) => t.category === "EDGE").length})`,
+                  },
                 ].map((cat) => (
                   <Button
                     key={cat.key}
-                    variant={selectedCategory === cat.key ? "default" : "secondary"}
+                    variant={
+                      selectedCategory === cat.key ? "default" : "secondary"
+                    }
                     size="sm"
                     onClick={() => setSelectedCategory(cat.key)}
                     className="text-xs h-7 px-2.5"
@@ -1038,7 +1270,13 @@ export function Phase2TRDPage() {
 
               {/* Group Filter Buttons */}
               <div className="flex flex-wrap gap-1.5 pt-2">
-                {["ALL", "Engine 1 (Technical & Orderflow)", "Engine 2 (Liquidity & T+2)", "Engine 3 (Basis & Transitions)", "Ensemble & Audit Ledger"].map((grp) => (
+                {[
+                  "ALL",
+                  "Engine 1 (Technical & Orderflow)",
+                  "Engine 2 (Liquidity & T+2)",
+                  "Engine 3 (Basis & Transitions)",
+                  "Ensemble & Audit Ledger",
+                ].map((grp) => (
                   <Button
                     key={grp}
                     variant={selectedGroup === grp ? "default" : "outline"}
@@ -1056,19 +1294,25 @@ export function Phase2TRDPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[120px]">Test ID</TableHead>
-                      <TableHead className="w-[100px]">Phân loại</TableHead>
-                      <TableHead className="w-[180px]">Nhóm</TableHead>
+                      <TableHead className="w-30">Test ID</TableHead>
+                      <TableHead className="w-25">Phân loại</TableHead>
+                      <TableHead className="w-45">Nhóm</TableHead>
                       <TableHead>Tình huống kiểm thử</TableHead>
                       <TableHead>Hành vi kỳ vọng</TableHead>
-                      <TableHead className="w-[100px] text-right">Trạng thái</TableHead>
+                      <TableHead className="w-25 text-right">
+                        Trạng thái
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTests.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground text-xs">
-                          Không tìm thấy kịch bản nào khớp với điều kiện tìm kiếm.
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-6 text-muted-foreground text-xs"
+                        >
+                          Không tìm thấy kịch bản nào khớp với điều kiện tìm
+                          kiếm.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -1084,11 +1328,15 @@ export function Phase2TRDPage() {
                                 tc.category === "MAIN"
                                   ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]"
                                   : tc.category === "SUB"
-                                  ? "bg-blue-500/10 text-blue-600 border-blue-500/30 text-[10px]"
-                                  : "bg-rose-500/10 text-rose-600 border-rose-500/30 text-[10px]"
+                                    ? "bg-blue-500/10 text-blue-600 border-blue-500/30 text-[10px]"
+                                    : "bg-rose-500/10 text-rose-600 border-rose-500/30 text-[10px]"
                               }
                             >
-                              {tc.category === "MAIN" ? "MAIN" : tc.category === "SUB" ? "SUB" : "EDGE"}
+                              {tc.category === "MAIN"
+                                ? "MAIN"
+                                : tc.category === "SUB"
+                                  ? "SUB"
+                                  : "EDGE"}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -1123,22 +1371,41 @@ export function Phase2TRDPage() {
           <Card className="border-border/60">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <div>
-                <CardTitle className="text-base">Mã Nguồn Markdown Gốc (TRD Phase 2)</CardTitle>
-                <CardDescription>Tài liệu chuẩn để copy, chia sẻ hoặc xuất bản tài liệu kỹ thuật</CardDescription>
+                <CardTitle className="text-base">
+                  Mã Nguồn Markdown Gốc (TRD Phase 2)
+                </CardTitle>
+                <CardDescription>
+                  Tài liệu chuẩn để copy, chia sẻ hoặc xuất bản tài liệu kỹ
+                  thuật
+                </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleCopyMarkdown} className="gap-1 text-xs">
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyMarkdown}
+                  className="gap-1 text-xs"
+                >
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                   <span>{copied ? "Đã sao chép" : "Sao chép"}</span>
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleDownloadMarkdown} className="gap-1 text-xs">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadMarkdown}
+                  className="gap-1 text-xs"
+                >
                   <Download className="h-3.5 w-3.5" />
                   <span>Tải file</span>
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <pre className="p-4 rounded-lg bg-muted/60 font-mono text-xs overflow-x-auto max-h-[600px] border whitespace-pre-wrap">
+              <pre className="p-4 rounded-lg bg-muted/60 font-mono text-xs overflow-x-auto max-h-150 border whitespace-pre-wrap">
                 {phase2Markdown}
               </pre>
             </CardContent>
