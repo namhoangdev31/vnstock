@@ -10,7 +10,6 @@ from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import and_, col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.domains.market_data.application.price_service import PriceService
@@ -20,13 +19,10 @@ from app.domains.market_data.application.schemas import (
     PriceHistoryResponse,
     RelatedAssetsResponse,
 )
-from app.domains.market_data.domain.exceptions import SymbolNotFoundError
-from app.domains.market_data.infrastructure.vnstock_adapter import VnstockServiceError
-from app.domains.quant.application.schemas import (
-    InstitutionalFlowPublic,
-    MacroLatestResponse,
+from app.domains.market_data.domain.exceptions import (
+    SymbolNotFoundError,
+    VnstockServiceError,
 )
-from app.domains.quant.domain.models import InstitutionalFlow, MacroIndicator
 
 router = APIRouter()
 
@@ -117,56 +113,3 @@ def list_bonds(
         skip=skip,
         limit=limit,
     )
-
-
-@router.get("/macro/latest", response_model=MacroLatestResponse)
-def get_macro_latest(
-    session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
-) -> Any:
-    """Latest macro indicator per code (USD/VND, SJC gold buy/sell)."""
-    subq = (
-        select(
-            MacroIndicator.indicator_code,
-            func.max(MacroIndicator.recorded_date).label("max_date"),
-        )
-        .group_by(col(MacroIndicator.indicator_code))
-        .subquery()
-    )
-    rows = session.exec(
-        select(MacroIndicator)
-        .join(
-            subq,
-            and_(
-                col(MacroIndicator.indicator_code) == subq.c.indicator_code,
-                col(MacroIndicator.recorded_date) == subq.c.max_date,
-            ),
-        )
-        .order_by(col(MacroIndicator.indicator_code))
-    ).all()
-
-    data = list(rows)
-    as_of = max((r.recorded_date for r in rows), default=None)
-    if as_of is None:
-        raise HTTPException(status_code=404, detail="No macro data available yet")
-    return MacroLatestResponse(as_of=as_of, data=data)
-
-
-@router.get("/institutional-flow", response_model=list[InstitutionalFlowPublic])
-def get_institutional_flow(
-    session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
-    trading_date: date | None = None,
-    symbol: str | None = None,
-    limit: int = Query(default=30, ge=1, le=200),
-) -> Any:
-    """Persisted institutional flow rows (foreign + proprietary desk)."""
-    query = select(InstitutionalFlow)
-    if trading_date is not None:
-        query = query.where(InstitutionalFlow.trading_date == trading_date)
-    if symbol is not None:
-        query = query.where(InstitutionalFlow.symbol == symbol)
-    rows = session.exec(
-        query.order_by(col(InstitutionalFlow.trading_date).desc()).limit(limit)
-    ).all()
-    return [InstitutionalFlowPublic.model_validate(r) for r in rows]

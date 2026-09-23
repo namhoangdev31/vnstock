@@ -17,8 +17,10 @@ from app.domains.market_data.application.schemas import (
     StockSymbolsPublic,
 )
 from app.domains.market_data.application.symbol_service import SymbolService
-from app.domains.market_data.domain.exceptions import SymbolNotFoundError
-from app.domains.market_data.infrastructure.vnstock_adapter import VnstockServiceError
+from app.domains.market_data.domain.exceptions import (
+    SymbolNotFoundError,
+    VnstockServiceError,
+)
 from app.domains.quant.application.schemas import SymbolGroupResponse
 
 router = APIRouter()

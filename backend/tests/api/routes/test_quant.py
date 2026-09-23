@@ -57,8 +57,8 @@ def api_client_fixture():
 
     with TestClient(fastapi_app) as client:
         yield client
-
-    fastapi_app.dependency_overrides.clear()
+    fastapi_app.dependency_overrides.pop(get_db, None)
+    fastapi_app.dependency_overrides.pop(get_current_user, None)
 
 
 def test_api_engine1_technical(api_client: TestClient):

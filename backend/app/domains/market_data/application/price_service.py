@@ -143,14 +143,11 @@ class PriceService:
         if not sym:
             raise SymbolNotFoundError(sym_code)
 
-        # 1. Profile (nếu có)
-        profile_dto = None
-        if sym.profile:
-            profile_dto = CompanyOverviewPublic.model_validate(sym.profile)
-        else:
-            db_prof = session.get(CompanyProfile, sym_code)
-            if db_prof:
-                profile_dto = CompanyOverviewPublic.model_validate(db_prof)
+        # 1. Profile (truy vấn độc lập ở tầng Application)
+        db_prof = session.exec(
+            select(CompanyProfile).where(CompanyProfile.symbol == sym_code)
+        ).first()
+        profile_dto = CompanyOverviewPublic.model_validate(db_prof) if db_prof else None
 
         # 2. Covered Warrants có cơ sở là mã này
         cw_rows = session.exec(

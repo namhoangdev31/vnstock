@@ -21,17 +21,6 @@ from sqlalchemy import DateTime, Index, UniqueConstraint
 from sqlmodel import Field, Relationship
 
 from app.core.models_base import AwareSQLModel, get_datetime_utc
-from app.domains.fundamental.domain.models import (
-    CapitalHistory,
-    CompanyOfficer,
-    CompanyProfile,
-    CompanyShareholder,
-    CompanySubsidiary,
-    CorporateEvent,
-    FinancialRatio,
-    FinancialReport,
-    InsiderTrading,
-)
 
 
 class StockSymbol(AwareSQLModel, table=True):
@@ -71,18 +60,7 @@ class StockSymbol(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
-    # Relationships hai chiều phục vụ truy xuất thông tin chéo
-    profile: Optional["CompanyProfile"] = Relationship(
-        back_populates="symbol_rel",
-        sa_relationship_kwargs={"uselist": False},
-    )
-    financial_reports: list["FinancialReport"] = Relationship(
-        back_populates="symbol_rel"
-    )
-    financial_ratios: list["FinancialRatio"] = Relationship(back_populates="symbol_rel")
-    corporate_events: list["CorporateEvent"] = Relationship(back_populates="symbol_rel")
-    shareholders: list["CompanyShareholder"] = Relationship(back_populates="symbol_rel")
-    officers: list["CompanyOfficer"] = Relationship(back_populates="symbol_rel")
+    # Relationships nội bộ trong Market Data domain
     # Chứng quyền có tài sản cơ sở là mã này (e.g. FPT -> [CFPT2501, CFPT2502])
     covered_warrants: list["CoveredWarrant"] = Relationship(
         back_populates="underlying_rel",
@@ -97,14 +75,6 @@ class StockSymbol(AwareSQLModel, table=True):
     derivative_contracts: list["DerivativeContract"] = Relationship(
         back_populates="underlying_rel",
         sa_relationship_kwargs={"foreign_keys": "DerivativeContract.underlying_symbol"},
-    )
-    # Danh sách công ty con & liên kết (Company.subsidiaries())
-    subsidiaries: list["CompanySubsidiary"] = Relationship(back_populates="symbol_rel")
-    # Nhật ký giao dịch nội bộ (Company.insider_trading())
-    insider_tradings: list["InsiderTrading"] = Relationship(back_populates="symbol_rel")
-    # Lịch sử tăng vốn điều lệ (Company.capital_history())
-    capital_histories: list["CapitalHistory"] = Relationship(
-        back_populates="symbol_rel"
     )
 
 

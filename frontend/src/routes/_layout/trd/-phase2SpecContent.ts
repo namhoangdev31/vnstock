@@ -217,13 +217,13 @@ class ForecastJournal(SQLModel, table=True):
 
 ## 4. Hướng Dẫn Từng Bước Cho Developer (Step-by-Step Implementation Steps)
 
-1. **Bước 1**: Tạo \`backend/app/models/quant.py\` chứa Pydantic schemas & SQLModel \`ForecastJournal\`.
-2. **Bước 2**: Triển khai \`backend/app/services/quant/technical_engine.py\` (Engine 1).
-3. **Bước 3**: Triển khai \`backend/app/services/quant/flow_engine.py\` (Engine 2).
-4. **Bước 4**: Triển khai \`backend/app/services/quant/quant_ml_engine.py\` (Engine 3).
-5. **Bước 5**: Triển khai \`backend/app/services/quant/ensemble_engine.py\` (Ensemble Engine & Auto-Ledger).
-6. **Bước 6**: Tạo FastAPI Router \`backend/app/api/routes/quant.py\` & đăng ký vào \`backend/app/api/main.py\`.
-7. **Bước 7**: Viết Unit Tests trong \`backend/tests/services/test_quant_engines.py\` & kiểm tra \`uv run ruff check\`, \`uv run ty check\`.
+1. **Bước 1**: Tạo \`backend/app/domains/quant/domain/models.py\` chứa SQLModel \`ForecastJournal\`, \`TickFlowAggregated\`, \`InstitutionalFlow\`, \`MarketBreadth\`, \`MacroIndicator\` & schemas trong \`backend/app/domains/quant/application/schemas.py\`.
+2. **Bước 2**: Triển khai \`backend/app/domains/quant/application/engines/technical_engine.py\` (Engine 1).
+3. **Bước 3**: Triển khai \`backend/app/domains/quant/application/engines/flow_engine.py\` (Engine 2).
+4. **Bước 4**: Triển khai \`backend/app/domains/quant/application/engines/quant_ml_engine.py\` (Engine 3).
+5. **Bước 5**: Triển khai \`backend/app/domains/quant/application/engines/ensemble_engine.py\` (Ensemble Engine & Auto-Ledger).
+6. **Bước 6**: Tạo FastAPI Router \`backend/app/domains/quant/presentation/quant_router.py\` & \`forecast_router.py\` đăng ký vào \`backend/app/api/main.py\`.
+7. **Bước 7**: Viết Unit Tests trong \`backend/tests/test_quant_engines.py\`, \`backend/tests/test_forecast_journal.py\`, \`backend/tests/api/routes/test_quant.py\` & kiểm tra \`uv run ruff check\`, \`uv run ty check\`.
 
 ---
 
@@ -244,7 +244,7 @@ class ForecastJournal(SQLModel, table=True):
 
 ## 6. Tiêu Chuẩn Hoàn Thành (Definition of Done - DoD)
 
-1. **Kiến trúc Độc Lập**: 3 Engine & Ensemble nằm trong \`backend/app/services/quant/\` độc lập hoàn toàn, 0 circular imports.
+1. **Kiến trúc Độc Lập**: 3 Engine & Ensemble nằm trong \`backend/app/domains/quant/\` theo chuẩn Domain-Driven Design (DDD) độc lập hoàn toàn, 0 circular imports.
 2. **Tuân thủ Tuyệt đối 4 Master Rules**:
    - **RULE 1 & 2**: Zero broker execution, zero real money. Chỉ phục vụ simulation.
    - **RULE 3**: 100% tín hiệu được ghi vào DB \`forecast_journal\` với trạng thái \`pending\`.
@@ -253,37 +253,44 @@ class ForecastJournal(SQLModel, table=True):
    - \`uv run ruff check\` => **0 errors**.
    - \`uv run ruff format --check\` => **0 issues**.
    - \`uv run ty check app\` => **0 diagnostics**.
-4. **Coverage Kiểm Thử**: Unit test pytest đạt coverage >= 90% cho toàn bộ các module trong \`backend/app/services/quant/\`.
+4. **Coverage Kiểm Thử**: Unit test pytest đạt coverage >= 90% cho toàn bộ các module trong \`backend/app/domains/quant/\` (39/39 tests PASS).
 
 ---
 
-## 7. Ma Trận Kịch Bản Kiểm Thử (Test Matrix - 20 Kịch Bản)
+## 7. Ma Trận Kịch Bản Kiểm Thử (Test Matrix - 27 Kịch Bản)
 
-### Nhóm 1: Engine 1 (Technical & Orderflow)
+### Nhóm 1: Engine 1 (Technical & Orderflow) - 8 Tests
 - **TEST-E1-01**: RSI & MACD calculation (Kiểm tra độ chính xác chỉ báo)
-- **TEST-E1-02**: Intraday VWAP với volume zero (Tránh ZeroDivisionError)
-- **TEST-E1-03**: Order Imbalance 100% Mua chủ động (Trả về Imbalance +1.0)
-- **TEST-E1-04**: Nhận diện Fair Value Gap FVG (Kiểm tra khoảng trống 3 nến)
-- **TEST-E1-05**: Nhận diện Liquidity Sweep (Kiểm tra quét đỉnh/đáy rút râu)
+- **TEST-E1-02**: Intraday VWAP đa khung thời gian kết hợp 1m, 5m, 15m
+- **TEST-E1-03**: Intraday VWAP với volume zero (Tránh ZeroDivisionError)
+- **TEST-E1-04**: Orderflow Delta mua/bán hỗn hợp từ Quote.intraday()
+- **TEST-E1-05**: Order Imbalance 100% Mua chủ động (Trả về Imbalance +1.0)
+- **TEST-E1-06**: Nhận diện Fair Value Gap FVG (Kiểm tra khoảng trống 3 nến)
+- **TEST-E1-07**: Nhận diện Liquidity Sweep (Kiểm tra quét đỉnh/đáy rút râu)
+- **TEST-E1-08**: Parkinson Volatility với nến Doji (Xử lý an toàn log-ratio)
 
-### Nhóm 2: Engine 2 (Liquidity & T+2)
-- **TEST-E2-01**: Thiếu dữ liệu Tự doanh (Chuẩn hóa điểm theo Khối ngoại)
+### Nhóm 2: Engine 2 (Liquidity & T+2) - 6 Tests
+- **TEST-E2-01**: Thiếu dữ liệu Tự doanh (Chuẩn hóa điểm theo Khối ngoại tuân thủ RULE 3)
 - **TEST-E2-02**: Độ rộng thị trường 100% giảm (Breadth score -1.0)
 - **TEST-E2-03**: Lịch thanh toán T+2 lệnh mua thứ 6 (Cổ phiếu về 13:00 thứ 3)
 - **TEST-E2-04**: Áp lực xả hàng T+2 volume nổ x3 (Chỉ số áp lực tiệm cận 1.0)
 - **TEST-E2-05**: Tỷ giá USD/VND tăng mạnh >0.5% (Macro score phản ánh tiêu cực)
+- **TEST-E2-06**: Dynamic Reweighting khi market_breadth là None
 
-### Nhóm 3: Engine 3 (Basis, Volatility & Monte Carlo)
+### Nhóm 3: Engine 3 (Basis, Volatility & Monte Carlo) - 7 Tests
 - **TEST-E3-01**: VN30F1M cao hơn VN30 cash (Basis dương, Z-score chuẩn)
-- **TEST-E3-02**: Basis Z-score > +2.5 (Tín hiệu Short Bias Mean-reversion)
-- **TEST-E3-03**: Parkinson Volatility với nến Doji (Xử lý an toàn log-ratio)
-- **TEST-E3-04**: Dự báo ATC lúc 14:20 (Kịch bản giá & xác suất tăng/giảm)
-- **TEST-E3-05**: Monte Carlo T+1 1,000 runs (Dải giá trong trần/sàn +-7%)
+- **TEST-E3-02**: Basis Z-score > +2.0 (Tín hiệu Short Bias Mean-reversion)
+- **TEST-E3-03**: Basis Z-score < -2.0 (Tín hiệu Long Bias Mean-reversion)
+- **TEST-E3-04**: Dự báo phiên ATC (Kịch bản giá hội tụ & delta)
+- **TEST-E3-05**: Phân loại độ lệch ATO Opening Gap lúc 08:45
+- **TEST-E3-06**: Monte Carlo T+1 1,000 runs (Dải giá trong trần/sàn +-7%)
+- **TEST-E3-07**: Bọc biên độ trần/sàn phản xạ không tạo kịch bản phi thực tế
 
-### Nhóm 4: Ensemble & Forecast Ledger
-- **TEST-ENS-01**: Truyền tổng trọng số != 1.0 (Tự động chuẩn hóa w1+w2+w3=1.0)
+### Nhóm 4: Ensemble & Forecast Ledger - 6 Tests
+- **TEST-ENS-01**: Tự động chuẩn hóa trọng số w1+w2+w3=1.0
 - **TEST-ENS-02**: Xung đột Engine 1 Bullish & Engine 3 Bearish (Trả về NEUTRAL)
-- **TEST-ENS-03**: Tự động lưu ForecastJournal (Thêm row status='pending')
-- **TEST-ENS-04**: Kiểm tra No Look-ahead bias (Không dùng dữ liệu tương lai)
+- **TEST-ENS-03**: Tự động lưu ForecastJournal (Thêm row status='pending' - RULE 3)
+- **TEST-ENS-04**: Phân loại xu hướng ngưỡng >= +0.35 LONG, <= -0.35 SHORT
 - **TEST-ENS-05**: Tính Stop Loss / Take Profit theo ATR (Đảm bảo R:R >= 1:2.0)
+- **TEST-ENS-06**: Phản hồi bắt buộc có thông điệp cảnh báo rủi ro (RULE 4)
 `

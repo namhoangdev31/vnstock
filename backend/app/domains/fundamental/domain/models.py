@@ -11,16 +11,12 @@ Aggregates:
 
 import uuid
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 from sqlalchemy import DateTime, Index, UniqueConstraint, text
 from sqlmodel import Field, Relationship
 
 from app.core.models_base import AwareSQLModel, JSONBVariant, get_datetime_utc
-
-if TYPE_CHECKING:
-    from app.domains.market_data.domain.models import StockSymbol
-
 
 # ===========================================================================
 # 1. SCREENER AGGREGATE
@@ -175,8 +171,6 @@ class CompanyProfile(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
-    symbol_rel: Optional["StockSymbol"] = Relationship(back_populates="profile")
-
 
 # ===========================================================================
 # 3. FINANCIAL STATEMENTS & REVISIONS AGGREGATE
@@ -243,9 +237,6 @@ class FinancialReport(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
-    symbol_rel: Optional["StockSymbol"] = Relationship(
-        back_populates="financial_reports"
-    )
     items: list["FinancialReportItem"] = Relationship(back_populates="report")
     revisions: list["FinancialReportRevision"] = Relationship(back_populates="report")
 
@@ -389,10 +380,6 @@ class FinancialRatio(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
-    symbol_rel: Optional["StockSymbol"] = Relationship(
-        back_populates="financial_ratios"
-    )
-
 
 # ===========================================================================
 # 4. CORPORATE GOVERNANCE AGGREGATES
@@ -437,10 +424,6 @@ class CorporateEvent(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
-    symbol_rel: Optional["StockSymbol"] = Relationship(
-        back_populates="corporate_events"
-    )
-
 
 class CompanyShareholder(AwareSQLModel, table=True):
     """Bảng lưu trữ cơ cấu cổ đông lớn và cổ đông nội bộ (Company.shareholders())."""
@@ -460,8 +443,6 @@ class CompanyShareholder(AwareSQLModel, table=True):
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
-
-    symbol_rel: Optional["StockSymbol"] = Relationship(back_populates="shareholders")
 
 
 class CompanyOfficer(AwareSQLModel, table=True):
@@ -483,8 +464,6 @@ class CompanyOfficer(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
-    symbol_rel: Optional["StockSymbol"] = Relationship(back_populates="officers")
-
 
 class CompanySubsidiary(AwareSQLModel, table=True):
     """Bảng lưu trữ danh sách công ty con và công ty liên kết (Company.subsidiaries())."""
@@ -503,8 +482,6 @@ class CompanySubsidiary(AwareSQLModel, table=True):
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
-
-    symbol_rel: Optional["StockSymbol"] = Relationship(back_populates="subsidiaries")
 
 
 class InsiderTrading(AwareSQLModel, table=True):
@@ -533,10 +510,6 @@ class InsiderTrading(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
-    symbol_rel: Optional["StockSymbol"] = Relationship(
-        back_populates="insider_tradings"
-    )
-
 
 class CapitalHistory(AwareSQLModel, table=True):
     """Bảng lưu trữ lịch sử tăng vốn điều lệ và phát hành cổ phiếu (Company.capital_history())."""
@@ -555,8 +528,4 @@ class CapitalHistory(AwareSQLModel, table=True):
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
-    )
-
-    symbol_rel: Optional["StockSymbol"] = Relationship(
-        back_populates="capital_histories"
     )

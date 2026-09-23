@@ -5,6 +5,7 @@ from app.domains.market_data.domain.exceptions import (
     MarketDataError,
     SafePurgeGateError,
     SymbolNotFoundError,
+    VnstockServiceError,
 )
 from app.domains.market_data.domain.models import (
     BondSpecification,
@@ -32,4 +33,5 @@ __all__ = [
     "StockSymbol",
     "StockTickIntraday",
     "SymbolNotFoundError",
+    "VnstockServiceError",
 ]

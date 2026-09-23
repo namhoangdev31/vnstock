@@ -145,6 +145,149 @@ class ScreenerService:
         )
 
     @classmethod
+    def query_screener_fallback(
+        cls,
+        session: Session,
+        period: str = "quarter",
+        year: int | None = None,
+        quarter: int | None = None,
+        exchange: str | None = None,
+        industry: str | None = None,
+        min_pe: float | None = None,
+        max_pe: float | None = None,
+        min_pb: float | None = None,
+        max_pb: float | None = None,
+        min_roe: float | None = None,
+        max_roe: float | None = None,
+        min_roa: float | None = None,
+        max_debt_to_equity: float | None = None,
+        min_revenue_growth_yoy: float | None = None,
+        min_net_profit_growth_yoy: float | None = None,
+        min_ev_to_ebitda: float | None = None,
+        max_ev_to_ebitda: float | None = None,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> list[dict]:
+        """Fallback screener: truy vấn FinancialRatio trực tiếp, lọc exchange/industry qua FK text.
+
+        Không yêu cầu StockSymbol model — lọc theo các trường được denormalise trong
+        FinancialRatio.symbol (FK text). exchange/industry được lọc qua subquery trên
+        bảng stock_symbol theo tên bảng (SQLAlchemy text join) để tránh cross-domain import.
+        """
+        from sqlalchemy import text  # noqa: PLC0415
+
+        target_year = year
+        target_quarter = quarter
+        if target_year is None:
+            latest_period = session.exec(
+                select(FinancialRatio.year, FinancialRatio.quarter)
+                .where(FinancialRatio.period == period)
+                .order_by(
+                    col(FinancialRatio.year).desc(), col(FinancialRatio.quarter).desc()
+                )
+                .limit(1)
+            ).first()
+            if latest_period:
+                target_year, target_quarter = latest_period[0], latest_period[1]
+
+        query = select(FinancialRatio).where(col(FinancialRatio.period) == period)
+
+        if target_year is not None:
+            query = query.where(col(FinancialRatio.year) == target_year)
+        if target_quarter is not None and period == "quarter":
+            query = query.where(col(FinancialRatio.quarter) == target_quarter)
+        if min_pe is not None:
+            query = query.where(col(FinancialRatio.pe) >= min_pe)
+        if max_pe is not None:
+            query = query.where(col(FinancialRatio.pe) <= max_pe)
+        if min_pb is not None:
+            query = query.where(col(FinancialRatio.pb) >= min_pb)
+        if max_pb is not None:
+            query = query.where(col(FinancialRatio.pb) <= max_pb)
+        if min_roe is not None:
+            query = query.where(col(FinancialRatio.roe) >= min_roe)
+        if max_roe is not None:
+            query = query.where(col(FinancialRatio.roe) <= max_roe)
+        if min_roa is not None:
+            query = query.where(col(FinancialRatio.roa) >= min_roa)
+        if max_debt_to_equity is not None:
+            query = query.where(col(FinancialRatio.debt_to_equity) <= max_debt_to_equity)
+        if min_revenue_growth_yoy is not None:
+            query = query.where(
+                col(FinancialRatio.revenue_growth_yoy) >= min_revenue_growth_yoy
+            )
+        if min_net_profit_growth_yoy is not None:
+            query = query.where(
+                col(FinancialRatio.net_profit_growth_yoy) >= min_net_profit_growth_yoy
+            )
+        if min_ev_to_ebitda is not None:
+            query = query.where(col(FinancialRatio.ev_to_ebitda) >= min_ev_to_ebitda)
+        if max_ev_to_ebitda is not None:
+            query = query.where(col(FinancialRatio.ev_to_ebitda) <= max_ev_to_ebitda)
+
+        # Lọc exchange / industry qua subquery trên stock_symbol (không import cross-domain model)
+        if exchange:
+            sym_subq = session.exec(
+                text(
+                    "SELECT symbol FROM stock_symbol WHERE exchange = :ex"
+                ).bindparams(ex=exchange.strip().upper())
+            ).all()
+            sym_codes = [r[0] for r in sym_subq]
+            if not sym_codes:
+                return []
+            query = query.where(col(FinancialRatio.symbol).in_(sym_codes))
+        if industry:
+            sym_subq = session.exec(
+                text(
+                    "SELECT symbol FROM stock_symbol WHERE industry = :ind"
+                ).bindparams(ind=industry.strip())
+            ).all()
+            sym_codes = [r[0] for r in sym_subq]
+            if not sym_codes:
+                return []
+            query = query.where(col(FinancialRatio.symbol).in_(sym_codes))
+
+        query = (
+            query.order_by(col(FinancialRatio.roe).desc().nulls_last())
+            .offset(skip)
+            .limit(limit)
+        )
+        ratios = session.exec(query).all()
+
+        # Lấy organ_name từ stock_symbol qua raw text query để tránh cross-domain
+        symbols = [r.symbol for r in ratios]
+        org_map: dict[str, dict] = {}
+        if symbols:
+            rows = session.exec(
+                text(
+                    "SELECT symbol, organ_name, exchange, industry FROM stock_symbol"
+                    " WHERE symbol = ANY(:syms)"
+                ).bindparams(syms=symbols)
+            ).all()
+            org_map = {r[0]: {"organ_name": r[1], "exchange": r[2], "industry": r[3]} for r in rows}
+
+        return [
+            {
+                "symbol": ratio.symbol,
+                "organ_name": org_map.get(ratio.symbol, {}).get("organ_name"),
+                "exchange": org_map.get(ratio.symbol, {}).get("exchange"),
+                "industry": org_map.get(ratio.symbol, {}).get("industry"),
+                "fiscal_year": ratio.year,
+                "fiscal_quarter": ratio.quarter,
+                "pe": ratio.pe,
+                "pb": ratio.pb,
+                "roe": ratio.roe,
+                "roa": ratio.roa,
+                "debt_to_equity": ratio.debt_to_equity,
+                "ev_to_ebitda": ratio.ev_to_ebitda,
+                "net_profit_margin": ratio.net_margin,
+                "revenue_growth_yoy": ratio.revenue_growth_yoy,
+                "net_profit_growth_yoy": ratio.net_profit_growth_yoy,
+            }
+            for ratio in ratios
+        ]
+
+    @classmethod
     def generate_daily_snapshot(
         cls,
         session: Session,

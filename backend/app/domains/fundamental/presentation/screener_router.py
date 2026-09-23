@@ -5,7 +5,7 @@ from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Query
-from sqlmodel import col, func, select
+from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.domains.fundamental.application.schemas import (
@@ -14,8 +14,7 @@ from app.domains.fundamental.application.schemas import (
     StockScreenerResponse,
 )
 from app.domains.fundamental.application.screener_service import ScreenerService
-from app.domains.fundamental.domain.models import FinancialRatio, ScreenerSnapshot
-from app.domains.market_data.domain.models import StockSymbol
+from app.domains.fundamental.domain.models import ScreenerSnapshot
 
 router = APIRouter(prefix="/stock", tags=["screener"])
 
@@ -194,92 +193,27 @@ def screen_stocks(
             )
 
     # 2. Fallback sang logic truy vấn cũ nếu hệ thống chưa tạo pre-computed snapshot
-    target_year = year
-    target_quarter = quarter
-    if target_year is None:
-        latest_period = session.exec(
-            select(FinancialRatio.year, FinancialRatio.quarter)
-            .where(FinancialRatio.period == period)
-            .order_by(
-                col(FinancialRatio.year).desc(), col(FinancialRatio.quarter).desc()
-            )
-            .limit(1)
-        ).first()
-        if latest_period:
-            target_year, target_quarter = latest_period[0], latest_period[1]
-
-    query = (
-        select(FinancialRatio, StockSymbol)
-        .join(StockSymbol, col(FinancialRatio.symbol) == col(StockSymbol.symbol))
-        .where(col(FinancialRatio.period) == period)
+    fallback_items_data = ScreenerService.query_screener_fallback(
+        session=session,
+        period=period,
+        year=clean_year,
+        quarter=clean_quarter,
+        exchange=clean_exchange,
+        industry=clean_industry,
+        min_pe=clean_min_pe,
+        max_pe=clean_max_pe,
+        min_pb=clean_min_pb,
+        max_pb=clean_max_pb,
+        min_roe=clean_min_roe,
+        max_roe=clean_max_roe,
+        min_roa=clean_min_roa,
+        max_debt_to_equity=clean_max_debt_to_equity,
+        min_revenue_growth_yoy=clean_min_revenue_growth_yoy,
+        min_net_profit_growth_yoy=clean_min_net_profit_growth_yoy,
+        min_ev_to_ebitda=clean_min_ev_to_ebitda,
+        max_ev_to_ebitda=clean_max_ev_to_ebitda,
+        skip=skip,
+        limit=limit,
     )
-
-    if target_year is not None:
-        query = query.where(col(FinancialRatio.year) == target_year)
-    if target_quarter is not None and period == "quarter":
-        query = query.where(col(FinancialRatio.quarter) == target_quarter)
-
-    if min_pe is not None:
-        query = query.where(col(FinancialRatio.pe) >= min_pe)
-    if max_pe is not None:
-        query = query.where(col(FinancialRatio.pe) <= max_pe)
-    if min_pb is not None:
-        query = query.where(col(FinancialRatio.pb) >= min_pb)
-    if max_pb is not None:
-        query = query.where(col(FinancialRatio.pb) <= max_pb)
-    if min_roe is not None:
-        query = query.where(col(FinancialRatio.roe) >= min_roe)
-    if max_roe is not None:
-        query = query.where(col(FinancialRatio.roe) <= max_roe)
-    if min_roa is not None:
-        query = query.where(col(FinancialRatio.roa) >= min_roa)
-    if max_debt_to_equity is not None:
-        query = query.where(col(FinancialRatio.debt_to_equity) <= max_debt_to_equity)
-    if min_revenue_growth_yoy is not None:
-        query = query.where(
-            col(FinancialRatio.revenue_growth_yoy) >= min_revenue_growth_yoy
-        )
-    if min_net_profit_growth_yoy is not None:
-        query = query.where(
-            col(FinancialRatio.net_profit_growth_yoy) >= min_net_profit_growth_yoy
-        )
-    if min_ev_to_ebitda is not None:
-        query = query.where(col(FinancialRatio.ev_to_ebitda) >= min_ev_to_ebitda)
-    if max_ev_to_ebitda is not None:
-        query = query.where(col(FinancialRatio.ev_to_ebitda) <= max_ev_to_ebitda)
-
-    if exchange:
-        query = query.where(col(StockSymbol.exchange) == exchange.strip().upper())
-    if industry:
-        query = query.where(col(StockSymbol.industry) == industry.strip())
-
-    # Tối ưu hóa truy vấn với Index B-Tree
-    query = (
-        query.order_by(col(FinancialRatio.roe).desc().nullslast())
-        .offset(skip)
-        .limit(limit)
-    )
-    records = session.exec(query).all()
-
-    fallback_items = [
-        ScreenerResultItem(
-            symbol=sym.symbol,
-            organ_name=sym.organ_name,
-            exchange=sym.exchange,
-            industry=sym.industry,
-            fiscal_year=ratio.year,
-            fiscal_quarter=ratio.quarter,
-            pe=ratio.pe,
-            pb=ratio.pb,
-            roe=ratio.roe,
-            roa=ratio.roa,
-            debt_to_equity=ratio.debt_to_equity,
-            ev_to_ebitda=ratio.ev_to_ebitda,
-            net_profit_margin=ratio.net_margin,
-            revenue_growth_yoy=ratio.revenue_growth_yoy,
-            net_profit_growth_yoy=ratio.net_profit_growth_yoy,
-        )
-        for ratio, sym in records
-    ]
-
+    fallback_items = [ScreenerResultItem(**item) for item in fallback_items_data]
     return StockScreenerResponse(count=len(fallback_items), data=fallback_items)

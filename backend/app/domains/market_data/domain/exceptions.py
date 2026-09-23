@@ -19,3 +19,16 @@ class IngestionError(MarketDataError):
 
 class SafePurgeGateError(MarketDataError):
     """Ngoại lệ phát sinh khi Safe Purge Gate chặn việc xóa dữ liệu do chưa có bản tổng hợp thay thế."""
+
+
+class VnstockServiceError(MarketDataError):
+    """Ngoại lệ phát sinh khi tất cả các nguồn dữ liệu vnstock đều thất bại."""
+
+
+__all__ = [
+    "IngestionError",
+    "MarketDataError",
+    "SafePurgeGateError",
+    "SymbolNotFoundError",
+    "VnstockServiceError",
+]

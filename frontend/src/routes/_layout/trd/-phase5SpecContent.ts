@@ -145,34 +145,38 @@ class ModelVersionSnapshot(SQLModel, table=True):
 Kỹ sư backend triển khai theo thứ tự sau:
 
 ### Bước 1: Tạo Models & Migration
-1. Tạo file \`backend/app/models/forecast_journal.py\` chứa 2 model trên.
+1. Tạo file \`backend/app/domains/quant/domain/models.py\` chứa 2 model trên (\`ForecastJournal\`, \`ModelVersionSnapshot\`).
 2. Chạy \`uv run alembic revision --autogenerate -m "add_forecast_journal_tables"\`.
 3. Chạy \`uv run alembic upgrade head\`.
 
 ### Bước 2: Tạo Logger Hook Trong Bộ Ensemble
-1. Mở service \`ensemble_decision_system.py\`.
-2. Mỗi khi hàm \`evaluate()\` sinh tín hiệu thành công:
-   - Tự động gọi \`journal_service.record_signal(...)\`.
-   - Lưu bản ghi vào bảng \`ForecastJournal\` với \`status = 'PENDING'\`.
+1. Mở engine \`backend/app/domains/quant/application/engines/ensemble_engine.py\`.
+2. Mỗi khi hàm \`generate_signal()\` sinh tín hiệu thành công:
+   - Tự động gọi \`log_forecast_to_journal(...)\`.
+   - Lưu bản ghi vào bảng \`ForecastJournal\` với \`status = 'pending'\`.
 
 ### Bước 3: Viết Worker Tự Động Đối Soát Sau Phiên (\`evaluator.py\`)
 1. Được Daemon gọi vào khung giờ \`POST_MARKET_EVAL\` (14:45 - 15:30):
-2. Quét các dòng \`status = 'PENDING'\` có \`horizon = 'ATC'\` của ngày hôm nay.
-3. Lấy giá khớp ATC thực tế từ \`Quote.history()\`.
-4. Cập nhật \`actual_value = price_atc\`, \`realized_at = datetime.now(VN_TZ)\`.
-5. Tính \`directional_correct\`, \`brier_score\`, \`absolute_error\` và chuyển \`status = 'SCORED'\`.
+2. Triển khai tại \`backend/app/domains/quant/application/evaluator.py\`.
+3. Quét các dòng \`status = 'pending'\` có \`horizon = 'ATC'\` của ngày hôm nay.
+4. Lấy giá khớp ATC thực tế từ \`Quote.history()\`.
+5. Cập nhật \`actual_value = price_atc\`, \`realized_at = datetime.now(VN_TZ)\`.
+6. Tính \`directional_correct\`, \`brier_score\`, \`absolute_error\` và chuyển \`status = 'scored'\`.
 
 ### Bước 4: Viết Bộ Tính Toán Hiệu Chuẩn Trọng Số (\`recalibration_engine.py\`)
-1. Hàm \`compute_proposed_weights()\`:
+1. Triển khai tại \`backend/app/domains/quant/application/recalibration_engine.py\`.
+2. Hàm \`compute_proposed_weights()\`:
    - Truy vấn 30 ngày gần nhất trong \`ForecastJournal\`.
    - Tính điểm S1, S2, S3 cho 3 Engine.
    - Áp dụng Softmax và hàm \`clip\` chênh lệch tối đa +-0.05.
    - Tạo một bản ghi mới trong \`ModelVersionSnapshot\` với \`is_active = False\`.
 
 ### Bước 5: Viết API Endpoints Quản Trị Phê Duyệt & Rollback
-- \`GET /api/v1/quant/journal/history\`: Xem lịch sử nhật ký dự báo kèm filter trạng thái, độ chính xác.
-- \`GET /api/v1/quant/journal/metrics\`: Lấy báo cáo thống kê tỷ lệ đúng (Winrate), Brier Score theo tuần/tháng.
-- \`GET /api/v1/quant/versions\`: Xem danh sách các phiên bản mô hình và trọng số tương ứng.
+Triển khai tại \`backend/app/domains/quant/presentation/forecast_router.py\`:
+- \`GET /api/v1/forecast\`: Xem lịch sử nhật ký dự báo kèm filter trạng thái, độ chính xác.
+- \`GET /api/v1/forecast/aggregate\`: Lấy báo cáo thống kê sai số MAE và tỷ lệ đúng hướng (Directional Accuracy).
+- \`POST /api/v1/forecast/{id}/resolve\`: Cập nhật kết quả thực tế khi phiên kết thúc.
+- \`POST /api/v1/forecast/{id}/score\`: Tính điểm tự động cho dự báo.
 - \`POST /api/v1/quant/versions/{version_tag}/promote\`: Phê duyệt kích hoạt phiên bản mới (yêu cầu quyền Admin).
 - \`POST /api/v1/quant/versions/{version_tag}/rollback\`: Khôi phục phiên bản trước đó chỉ với 1 click.
 

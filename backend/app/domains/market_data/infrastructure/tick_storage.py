@@ -18,7 +18,7 @@ from app.domains.market_data.domain.models import (
     StockOHLCVIntraday,
     StockTickIntraday,
 )
-from app.domains.quant.domain.models import TickFlowAggregated
+from sqlmodel import SQLModel
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +54,16 @@ class TickStorageService:
         if ohlcv_count >= required_bars:
             return True
 
-        # Kiểm tra tồn tại trong TickFlowAggregated
-        flow_count = session.exec(
-            select(func.count())
-            .select_from(TickFlowAggregated)
-            .where(func.date(TickFlowAggregated.interval_start) == target_date)
-        ).one()
+        # Kiểm tra tồn tại trong TickFlowAggregated (qua metadata để tránh cross-domain import)
+        tick_flow_table = SQLModel.metadata.tables.get("tick_flow_aggregated")
+        if tick_flow_table is not None:
+            flow_count = session.exec(
+                select(func.count())
+                .select_from(tick_flow_table)
+                .where(func.date(tick_flow_table.c.interval_start) == target_date)
+            ).one()
+        else:
+            flow_count = 0
 
         return flow_count > 0
 

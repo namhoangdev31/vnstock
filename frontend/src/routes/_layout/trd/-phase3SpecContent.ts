@@ -64,7 +64,7 @@ Hệ thống hoạt động dựa trên một Finite State Machine (FSM) đồng
 
 ### 3.1 Cấu Trúc Thành Phần
 \`\`\`
-backend/app/services/quant/daemon/
+backend/app/domains/quant/application/daemon/
 ├── __init__.py
 ├── market_clock.py          # Quản lý giờ thị trường, xác định State hiện tại
 ├── session_state.py         # Enum trạng thái & Context Data của phiên

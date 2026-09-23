@@ -101,7 +101,9 @@ def _run_migrations_and_seed() -> None:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Khởi động migration & seed trong background thread để không chặn startup và readiness probe
+    if os.getenv("TESTING") == "1" or "PYTEST_CURRENT_TEST" in os.environ:
+        yield
+        return
     migration_task = asyncio.create_task(asyncio.to_thread(_run_migrations_and_seed))
     try:
         yield

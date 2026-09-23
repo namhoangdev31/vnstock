@@ -187,34 +187,39 @@ class EquitySettlementLedger(SQLModel, table=True):
 Kỹ sư backend triển khai theo thứ tự sau:
 
 ### Bước 1: Khởi Tạo Models & Chạy Alembic Migration
-1. Tạo file \`backend/app/models/paper_trading.py\` chứa các model trên.
+1. Tạo file \`backend/app/domains/simulation/domain/models.py\` chứa các model trên.
 2. Tạo migration mới: \`uv run alembic revision --autogenerate -m "add_paper_trading_tables"\`.
 3. Chạy nâng cấp DB: \`uv run alembic upgrade head\`.
 
 ### Bước 2: Viết Module \`order_matcher.py\` (Bộ Khớp Lệnh Thực Tế)
-1. Nhận luồng tick gần nhất từ \`Quote.intraday()\`.
-2. Duyệt danh sách các lệnh \`PENDING\` trong bảng \`PaperOrder\`:
+1. Triển khai tại \`backend/app/domains/simulation/application/order_matcher.py\`.
+2. Nhận luồng tick gần nhất từ \`Quote.intraday()\`.
+3. Duyệt danh sách các lệnh \`PENDING\` trong bảng \`PaperOrder\`:
    - Với lệnh Buy \`LO\`: Nếu tick.price <= order.price -> Cập nhật \`filled_volume\`, \`filled_price\`, đổi trạng thái \`FILLED\`.
    - Với lệnh Sell \`LO\`: Nếu tick.price >= order.price -> Khớp lệnh.
-3. Cập nhật vị thế \`PaperPosition\` tương ứng (tính lại \`average_price\` nếu khớp thêm).
+4. Cập nhật vị thế \`PaperPosition\` tương ứng (tính lại \`average_price\` nếu khớp thêm).
 
 ### Bước 3: Viết Module \`margin_calculator.py\`
-1. Mỗi khi có giá mới của \`VN30F1M\`:
+1. Triển khai tại \`backend/app/domains/simulation/application/margin_calculator.py\`.
+2. Mỗi khi có giá mới của \`VN30F1M\`:
    - Tính lại \`unrealized_pnl\` cho từng vị thế.
    - Cập nhật trường \`unrealized_pnl\` trong \`PaperPortfolio\`.
    - Tính \`Margin Ratio\`: Nếu < 10% -> Tự động sinh lệnh đóng vị thế cưỡng bức (\`Force Liquidation\`).
 
 ### Bước 4: Viết Module \`t_plus_2_manager.py\`
-1. Lập lịch định kỳ vào lúc 13:00 các ngày làm việc (Thứ 2 đến Thứ 6).
-2. Quét bảng \`EquitySettlementLedger\` tìm các row có \`settlement_due <= datetime.now(VN_TZ)\` và \`status = 'PENDING_T2'\`.
-3. Cập nhật trạng thái thành \`SETTLED_AVAILABLE\`, cộng dồn khối lượng vào số lượng cổ phiếu khả dụng để bán.
+1. Triển khai tại \`backend/app/domains/simulation/application/t_plus_2_manager.py\`.
+2. Lập lịch định kỳ vào lúc 13:00 các ngày làm việc (Thứ 2 đến Thứ 6).
+3. Quét bảng \`EquitySettlementLedger\` tìm các row có \`settlement_due <= datetime.now(VN_TZ)\` và \`status = 'PENDING_T2'\`.
+4. Cập nhật trạng thái thành \`SETTLED_AVAILABLE\`, cộng dồn khối lượng vào số lượng cổ phiếu khả dụng để bán.
 
 ### Bước 5: Viết Module \`alpha_screener.py\`
-1. Viết hàm \`screen_weekly_momentum()\`: Lấy nến ngày, tính SMA20, kiểm tra nổ vol 200% và FVG.
-2. Viết hàm \`screen_monthly_canslim()\`: Tính RS Rating 60 ngày, phân nhóm ngành ICB.
-3. Viết hàm \`screen_quarterly_fundamental()\`: Gọi \`Finance.ratio()\` và \`Finance.income_statement()\`, tính điểm Piotroski F-Score.
+1. Triển khai tại \`backend/app/domains/simulation/application/alpha_screener.py\`.
+2. Viết hàm \`screen_weekly_momentum()\`: Lấy nến ngày, tính SMA20, kiểm tra nổ vol 200% và FVG.
+3. Viết hàm \`screen_monthly_canslim()\`: Tính RS Rating 60 ngày, phân nhóm ngành ICB.
+4. Viết hàm \`screen_quarterly_fundamental()\`: Gọi \`Finance.ratio()\` và \`Finance.income_statement()\`, tính điểm Piotroski F-Score.
 
 ### Bước 6: Khởi Tạo API Endpoints Cho Frontend
+Triển khai tại \`backend/app/domains/simulation/presentation/simulation_router.py\`:
 - \`POST /api/v1/simulation/orders\`: Đặt lệnh mua/bán ảo mới.
 - \`GET /api/v1/simulation/portfolio\`: Xem số dư, PnL, trạng thái ký quỹ.
 - \`GET /api/v1/simulation/positions\`: Xem danh sách vị thế đang mở.

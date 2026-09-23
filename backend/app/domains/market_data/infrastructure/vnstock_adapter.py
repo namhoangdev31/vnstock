@@ -27,6 +27,7 @@ from vnstock import (
 )
 
 from app.core.config import settings
+from app.domains.market_data.domain.exceptions import VnstockServiceError
 from app.domains.market_data.infrastructure.rate_limiter import (
     CircuitBreakerOpenError,
     RateLimiter,
@@ -37,10 +38,6 @@ from app.domains.market_data.infrastructure.vnstock_registry import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class VnstockServiceError(Exception):
-    """Ngoại lệ phát sinh khi tất cả các nguồn dữ liệu vnstock đều thất bại."""
 
 
 class VnstockService:
@@ -2027,3 +2024,5 @@ class VnstockService:
 
 # Khởi tạo thể hiện Singleton dùng chung toàn bộ ứng dụng
 vnstock_service = VnstockService()
+
+__all__ = ["VnstockService", "VnstockServiceError", "vnstock_service"]
