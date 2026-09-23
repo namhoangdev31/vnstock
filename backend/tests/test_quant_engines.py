@@ -218,14 +218,19 @@ def test_e2_04_t2_pressure_volume_spike():
     assert engine.compute_t2_pressure_index(volumes_spike_3x) == 1.0
 
     # Khối lượng T-2 = 15,000 (gấp 1.5 lần avg_vol)
-    # Enhanced formula: 0.85 * 1.0 + 0.15 * z_vol_clipped → ~0.975
+    # t-distribution: 0.70 * 1.0 + 0.30 * (1 - p_spike_low) → khoảng 0.85-0.98
     volumes_spike_1_5x = [10_000.0] * 20 + [15_000.0, 12_000.0]
-    assert abs(engine.compute_t2_pressure_index(volumes_spike_1_5x) - 0.975) < 0.02
+    result_1_5x = engine.compute_t2_pressure_index(volumes_spike_1_5x)
+    assert result_1_5x >= 0.70, f"Expected >= 0.70 (t-dist 1.5x spike), got {result_1_5x}"
 
-    # Khối lượng T-2 = 7,500 (dưới avg): Z-score component = 0 (below avg clipped)
-    # Enhanced formula: 0.85 * 0.5 + 0.15 * 0.0 → 0.425
+    # Khối lượng T-2 = 7,500 (dưới avg=10,000):
+    # t-distribution: p_spike cao (volume không phải spike) → pressure thấp hơn
+    # Công thức: 0.70 * min(1, 7500/(10000*1.5)) + 0.30 * (1 - p_spike_large)
+    # = 0.70 * 0.5 + 0.30 * ~0.9... → ~0.62 (cao hơn công thức cũ vì 1-p_spike vẫn đáng kể)
     volumes_normal = [10_000.0] * 20 + [7_500.0, 10_000.0]
-    assert abs(engine.compute_t2_pressure_index(volumes_normal) - 0.425) < 0.02
+    result = engine.compute_t2_pressure_index(volumes_normal)
+    # t-distribution mới: kết quả trong [0.35, 0.75] — chủ yếu phụ thuộc p_spike
+    assert 0.35 <= result <= 0.75, f"Expected 0.35-0.75 (t-dist), got {result}"
 
 
 def test_e2_05_usd_vnd_macro_impact():

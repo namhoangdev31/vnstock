@@ -5,7 +5,6 @@ các chỉ báo vĩ mô (tỷ giá USD/VND, vàng SJC) và mô hình hóa chu k�
 cùng áp lực bán xả hàng phiên chiều tại thị trường chứng khoán Việt Nam.
 """
 
-import math
 from collections.abc import Sequence
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -15,7 +14,11 @@ from sqlmodel import Session, col, select
 from app.core.enums import MacroIndicatorCode
 from app.core.models_base import VN_TZ
 from app.domains.quant.application.schemas import FlowLiquidityEngineResponse
-from app.domains.quant.domain.indicators import compute_exponential_smoothing
+from app.domains.quant.domain.indicators import (
+    compute_exponential_smoothing,
+    compute_t2_pressure_scipy,
+    normalize_flow_robust,
+)
 from app.domains.quant.domain.models import (
     InstitutionalFlow,
     MacroIndicator,
@@ -106,13 +109,8 @@ class FlowLiquidityEngine:
             return 0.0
 
         def _normalize_series(current_val: float, history_vals: list[float]) -> float:
-            if len(history_vals) >= 5:
-                min_v = min(history_vals)
-                max_v = max(history_vals)
-                if max_v > min_v:
-                    return 2.0 * (current_val - min_v) / (max_v - min_v) - 1.0
-            scale_denom = 1_000_000_000.0
-            return max(-1.0, min(1.0, current_val / scale_denom))
+            """Proxy → normalize_flow_robust() (RobustScaler, kháng outlier hơn Min-Max)."""
+            return normalize_flow_robust(current_val, history_vals)
 
         f_history: list[float] = []
         p_history: list[float] = []
@@ -203,39 +201,15 @@ class FlowLiquidityEngine:
     ) -> float:
         """Tính chỉ số áp lực bán phiên chiều T+2 (T+2 Pressure Index) trong dải [0.0, 1.0].
 
-        Công thức chuẩn theo TRD §2.2.4 với bổ sung Z-score volume:
-            Pressure_T2_base = min(1.0, Vol_T2 / (MA(Vol_20) * 1.5))
-            Z_vol            = (Vol_T2 - MA20) / (Std20 + eps)
-            Pressure_T2      = 0.7 * Pressure_T2_base + 0.3 * clip(Z_vol / 2, 0, 1)
+        Nâng cấp: dùng compute_t2_pressure_scipy() — t-distribution thay Normal assumption
+        (chính xác hơn khi window < 30 ngày, tránh false positive volume spike).
 
-        Kết hợp cả độ lớn tuyệt đối (MA-ratio) và độ bất ngờ (Z-score) để
-        phân biệt "volume cao nhưng bình thường" với "volume spike thực sự".
+        Công thức:
+            Pressure = 0.70 × min(1, Vol_T2 / (MA20 × 1.5))
+                     + 0.30 × (1 - p_spike)
+            p_spike = P(T > |Z_vol|; df=window-1)  ← t-distribution
         """
-        if len(daily_volumes) < 3:
-            return 0.0
-
-        vol_t2 = daily_volumes[-2]
-        window = daily_volumes[max(0, len(daily_volumes) - baseline_ma_window - 2) : -2]
-        if not window:
-            return 0.0
-
-        avg_vol = sum(window) / len(window)
-        if avg_vol <= 0:
-            return 0.0
-
-        pressure_base = vol_t2 / (avg_vol * 1.5)
-
-        if len(window) >= 5:
-            mean_w = sum(window) / len(window)
-            var_w = sum((v - mean_w) ** 2 for v in window) / len(window)
-            std_w = math.sqrt(var_w) if var_w > 1e-9 else avg_vol * 0.3
-            z_vol = (vol_t2 - mean_w) / (std_w + 1e-9)
-            pressure_z = max(0.0, min(1.0, z_vol / 2.0))
-            pressure = 0.85 * min(1.0, pressure_base) + 0.15 * pressure_z
-        else:
-            pressure = min(1.0, pressure_base)
-
-        return round(min(1.0, max(0.0, pressure)), 4)
+        return compute_t2_pressure_scipy(daily_volumes, baseline_ma_window)["pressure"]
 
     def compute_macro_sentiment(
         self,

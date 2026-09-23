@@ -33,7 +33,10 @@ from app.domains.quant.application.schemas import (
     EnsembleSignalResponse,
     EnsembleWeightsResponse,
 )
-from app.domains.quant.domain.indicators import compute_atr
+from app.domains.quant.domain.indicators import (
+    compute_atr,
+    compute_engine_correlation,
+)
 from app.domains.quant.domain.models import ForecastJournal
 
 # Bảng trọng số động theo chu kỳ phiên giao dịch chuẩn quy định tại TRD Phase 2
@@ -356,6 +359,12 @@ class EnsembleEngine:
             "engine3": e3_res.score,
         }
 
+        # Tính correlation giữa các engine (single-point → [score] cho mỗi engine)
+        # Với nhiều phiên tích lũy sẽ chính xác hơn; hiện tại dùng 1 điểm → corr = 0.0
+        engine_corr = compute_engine_correlation(
+            [e1_res.score], [e2_res.score], [e3_res.score]
+        )
+
         # 5. Lưu vết kiểm toán bắt buộc (RULE 3)
         journal_id = self.log_forecast_to_journal(
             symbol=request.symbol,
@@ -373,6 +382,7 @@ class EnsembleEngine:
                 "take_profit": take_profit,
                 "engine_disagreement": disagreement,
                 "regime": regime,
+                "engine_correlation": engine_corr,
             },
         )
 
