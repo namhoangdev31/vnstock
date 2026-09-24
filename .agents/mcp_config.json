@@ -10,9 +10,7 @@
     },
     "fetch": {
       "command": "uvx",
-      "args": [
-        "mcp-server-fetch"
-      ]
+      "args": ["mcp-server-fetch"]
     },
     "filesystem": {
       "command": "npx",
@@ -21,6 +19,10 @@
         "@modelcontextprotocol/server-filesystem",
         "/Volumes/developer101/code/vnstock"
       ]
+    },
+    "dembrandt": {
+      "command": "npx",
+      "args": ["-y", "--package", "dembrandt", "dembrandt-mcp"]
     }
   }
 }
