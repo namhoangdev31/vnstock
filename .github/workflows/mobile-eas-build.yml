@@ -1,17 +1,16 @@
-name: Mobile EAS Build (QA / Production)
+name: Mobile EAS Build
 
 on:
   workflow_dispatch:
     inputs:
-      environment:
+      profile:
         type: choice
-        description: 'Build Environment'
+        description: 'Build Profile (EAS)'
         required: true
-        default: 'staging'
+        default: 'preview'
         options:
-          - staging
-          - production
           - preview
+          - production
           - development
       platform:
         type: choice
@@ -21,49 +20,52 @@ on:
         options:
           - android
           - ios
-          - both
-      version:
-        type: string
-        description: 'Build version tag / message'
-        required: false
-        default: 'manual-build'
-  release:
-    types: [published]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+          - all
 
 jobs:
-  build:
-    name: EAS Cloud Build
+  eas-build:
+    name: Trigger EAS Cloud Build
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: apps/vnstock
 
     steps:
       - name: 🔐 Validate EXPO_TOKEN
         run: |
           if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
-            echo "::error::Secret EXPO_TOKEN is missing. Please add EXPO_TOKEN to repository secrets to trigger EAS builds."
+            echo "::error::Thiếu secret EXPO_TOKEN. Vui lòng thêm EXPO_TOKEN vào Settings > Secrets của repo."
             exit 1
           fi
 
-      - name: 📦 Checkout Code
+      - name: 📦 Checkout (Shallow)
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: ⚙️ Setup Node + PNPM (Cached)
-        uses: ./.github/actions/setup-node-pnpm-install
+      - name: 📦 Setup PNPM
+        uses: pnpm/action-setup@v4
         with:
-          working-directory: 'apps/vnstock'
+          run_install: false
 
-      - name: 🚀 Trigger EAS Cloud Build
-        uses: ./.github/actions/eas-build
+      - name: ⚡ Setup Node & Cache
+        uses: actions/setup-node@v4
         with:
-          APP_ENV: ${{ github.event_name == 'release' && 'staging' || inputs.environment }}
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.version }}
-          ANDROID: ${{ github.event_name == 'release' || inputs.platform == 'android' || inputs.platform == 'both' }}
-          IOS: ${{ inputs.platform == 'ios' || inputs.platform == 'both' }}
-          working-directory: 'apps/vnstock'
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: apps/vnstock/pnpm-lock.yaml
+
+      - name: 📥 Install Dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: 🚀 Setup Expo CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📱 Trigger EAS Cloud Build (--no-wait)
+        # Sử dụng cờ --no-wait để thoát ngay sau khi gửi lệnh, không treo máy ảo chờ build (tiết kiệm 100% phút)
+        run: |
+          npx eas-cli build --platform ${{ inputs.platform }} --profile ${{ inputs.profile }} --non-interactive --no-wait
