@@ -1,0 +1,78 @@
+name: Mobile Version Bump & GitHub Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        type: choice
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        options:
+          - patch
+          - minor
+          - major
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  bump-version:
+    name: Bump Version & Tag
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 🔍 Resolve GitHub Token
+        id: token
+        run: |
+          if [ -n "${{ secrets.GH_TOKEN }}" ]; then
+            echo "auth_token=${{ secrets.GH_TOKEN }}" >> $GITHUB_OUTPUT
+          else
+            echo "auth_token=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.token.outputs.auth_token }}
+
+      - name: 📝 Setup Git Config
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: ⚙️ Setup Node + PNPM
+        uses: ./.github/actions/setup-node-pnpm-install
+        with:
+          working-directory: 'apps/vnstock'
+
+      - name: 🏷️ Run Version Release
+        working-directory: apps/vnstock
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.auth_token }}
+          GITHUB_TOKEN: ${{ steps.token.outputs.auth_token }}
+        run: |
+          pnpm app-release ${{ github.event.inputs.release-type }}
+
+  create-release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🚀 Publish GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          generateReleaseNotes: true
+          draft: false

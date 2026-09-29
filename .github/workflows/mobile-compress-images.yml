@@ -1,0 +1,44 @@
+name: Mobile Compress Images
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'apps/vnstock/assets/**.jpg'
+      - 'apps/vnstock/assets/**.jpeg'
+      - 'apps/vnstock/assets/**.png'
+      - 'apps/vnstock/assets/**.webp'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compress:
+    name: Compress Mobile Assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🗜️ Compress Images
+        id: calibre
+        uses: calibreapp/image-actions@main
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          compressOnly: true
+          ignorePaths: 'node_modules/**,ios/**,android/**,frontend/**'
+
+      - name: 📝 Create Pull Request for Compressed Images
+        if: steps.calibre.outputs.markdown != ''
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: 'chore: auto-compress mobile assets'
+          branch-suffix: timestamp
+          commit-message: 'chore: compress mobile images'
+          body: ${{ steps.calibre.outputs.markdown }}

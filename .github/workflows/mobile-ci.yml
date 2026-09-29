@@ -1,0 +1,58 @@
+name: Mobile CI (Lint, Type-Check, Test)
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'apps/vnstock/**'
+      - '.github/workflows/mobile-ci.yml'
+      - '.github/actions/**'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'apps/vnstock/**'
+      - '.github/workflows/mobile-ci.yml'
+      - '.github/actions/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile-ci:
+    name: Mobile CI Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: ⚙️ Setup Node + PNPM (Cached)
+        uses: ./.github/actions/setup-node-pnpm-install
+        with:
+          working-directory: 'apps/vnstock'
+
+      - name: 🔍 ESLint & Code Formatting
+        working-directory: apps/vnstock
+        run: pnpm run lint
+
+      - name: 🏷️ TypeScript Type-Check
+        working-directory: apps/vnstock
+        run: pnpm run type-check
+
+      - name: 🧪 Unit Tests & Coverage
+        working-directory: apps/vnstock
+        run: pnpm run test:ci
+
+      - name: 🩺 Expo Doctor Check
+        # Chỉ chạy doctor khi có thay đổi package.json/lockfile hoặc khi trigger thủ công
+        if: |
+          github.event_name == 'workflow_dispatch' ||
+          contains(github.event.commits.*.modified, 'apps/vnstock/package.json') ||
+          contains(github.event.commits.*.modified, 'apps/vnstock/pnpm-lock.yaml')
+        working-directory: apps/vnstock
+        run: pnpm run doctor

@@ -1,0 +1,69 @@
+name: Mobile EAS Build (QA / Production)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: 'Build Environment'
+        required: true
+        default: 'staging'
+        options:
+          - staging
+          - production
+          - preview
+          - development
+      platform:
+        type: choice
+        description: 'Target Platform'
+        required: true
+        default: 'android'
+        options:
+          - android
+          - ios
+          - both
+      version:
+        type: string
+        description: 'Build version tag / message'
+        required: false
+        default: 'manual-build'
+  release:
+    types: [published]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: EAS Cloud Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: 🔐 Validate EXPO_TOKEN
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "::error::Secret EXPO_TOKEN is missing. Please add EXPO_TOKEN to repository secrets to trigger EAS builds."
+            exit 1
+          fi
+
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: ⚙️ Setup Node + PNPM (Cached)
+        uses: ./.github/actions/setup-node-pnpm-install
+        with:
+          working-directory: 'apps/vnstock'
+
+      - name: 🚀 Trigger EAS Cloud Build
+        uses: ./.github/actions/eas-build
+        with:
+          APP_ENV: ${{ github.event_name == 'release' && 'staging' || inputs.environment }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.version }}
+          ANDROID: ${{ github.event_name == 'release' || inputs.platform == 'android' || inputs.platform == 'both' }}
+          IOS: ${{ inputs.platform == 'ios' || inputs.platform == 'both' }}
+          working-directory: 'apps/vnstock'

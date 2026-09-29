@@ -1,0 +1,38 @@
+name: 'Setup JDK + Gradle + Generate APK'
+description: 'Sets up JDK, Gradle and generates Android APK'
+
+inputs:
+  APP_ENV:
+    description: 'APP_ENV (one of): development, staging, production'
+    required: true
+    default: staging
+  working-directory:
+    description: 'Working directory'
+    required: false
+    default: 'apps/vnstock'
+
+runs:
+  using: composite
+  steps:
+    - name: ☕ Set Up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: zulu
+        java-version: '17'
+
+    - name: 🐘 Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: 🤖 Generate Test APK
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        pnpm prebuild:${{ inputs.APP_ENV }}
+        cd android
+        chmod +x ./gradlew
+        ./gradlew assembleRelease --no-daemon
+        cd ..
+      env:
+        EXPO_NO_DOTENV: '1'
+        APP_ENV: ${{ inputs.APP_ENV }}
+        CI: 'true'
