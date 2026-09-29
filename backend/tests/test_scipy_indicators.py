@@ -1,5 +1,5 @@
 """Unit tests cho các hàm Phần 3 (scipy/scikit-learn) trong indicators.py."""
-import pytest
+
 from app.domains.quant.domain.indicators import (
     compute_basis_zscore_scipy,
     compute_engine_correlation,
@@ -91,8 +91,29 @@ class TestDetectSupportResistance:
         assert r["supports"] == [] and r["resistances"] == []
 
     def test_supports_below_current(self):
-        closes = [100, 95, 90, 95, 100, 95, 90, 95, 100, 95, 90, 95, 100,
-                  95, 90, 95, 100, 110, 120, 115, 120]
+        closes = [
+            100,
+            95,
+            90,
+            95,
+            100,
+            95,
+            90,
+            95,
+            100,
+            95,
+            90,
+            95,
+            100,
+            95,
+            90,
+            95,
+            100,
+            110,
+            120,
+            115,
+            120,
+        ]
         r = detect_support_resistance(closes, order=3)
         for s in r["supports"]:
             assert s < closes[-1]
@@ -207,9 +228,9 @@ class TestOptimizeEngineWeightsFromErrors:
 
     def test_lower_error_gets_higher_weight(self):
         r = optimize_engine_weights_from_errors(
-            [0.5, 0.4, 0.6],    # lỗi lớn
-            [0.3, 0.4, 0.35],   # lỗi trung bình
-            [0.01, 0.02, 0.01], # lỗi nhỏ
+            [0.5, 0.4, 0.6],  # lỗi lớn
+            [0.3, 0.4, 0.35],  # lỗi trung bình
+            [0.01, 0.02, 0.01],  # lỗi nhỏ
         )
         assert r["w3"] > r["w1"]
         assert r["w3"] > r["w2"]

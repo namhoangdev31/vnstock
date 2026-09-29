@@ -229,7 +229,9 @@ def test_e2_04_t2_pressure_volume_spike():
     # t-distribution: 0.70 * 1.0 + 0.30 * (1 - p_spike_low) → khoảng 0.85-0.98
     volumes_spike_1_5x = [10_000.0] * 20 + [15_000.0, 12_000.0]
     result_1_5x = engine.compute_t2_pressure_index(volumes_spike_1_5x)
-    assert result_1_5x >= 0.70, f"Expected >= 0.70 (t-dist 1.5x spike), got {result_1_5x}"
+    assert result_1_5x >= 0.70, (
+        f"Expected >= 0.70 (t-dist 1.5x spike), got {result_1_5x}"
+    )
 
     # Khối lượng T-2 = 7,500 (dưới avg=10,000):
     # t-distribution: p_spike cao (volume không phải spike) → pressure thấp hơn

@@ -96,9 +96,10 @@ class QuantMLEngine:
                     z = basis / adaptive_std
                     return round(basis, 2), round(max(-3.0, min(3.0, z)), 4)
 
-        result = compute_basis_zscore_scipy(futures_price, spot_index_price, historical_basis)
+        result = compute_basis_zscore_scipy(
+            futures_price, spot_index_price, historical_basis
+        )
         return float(result["basis"]), float(result["z_score"])
-
 
     def compute_volatilities(
         self,
