@@ -6,7 +6,7 @@ cùng áp lực bán xả hàng phiên chiều tại thị trường chứng kho
 """
 
 from collections.abc import Sequence
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Any
 
 from sqlmodel import Session, col, select
@@ -24,6 +24,7 @@ from app.domains.quant.domain.models import (
     MacroIndicator,
     MarketBreadth,
 )
+from app.domains.simulation.domain.settlement import SettlementService
 
 
 class FlowLiquidityEngine:
@@ -180,19 +181,15 @@ class FlowLiquidityEngine:
         return round(max(-1.0, min(1.0, mbi)), 4)
 
     def compute_t2_settlement_date(self, buy_date: date) -> date:
-        """Xác định ngày thanh toán bù trừ T+2 thị trường Việt Nam (bỏ qua cuối tuần).
+        """Xác định ngày thanh toán bù trừ T+2 thị trường Việt Nam.
 
         Cổ phiếu mua vào ngày T sẽ về tài khoản và được phép bán từ 13:00 ngày T+2.
+        Bỏ qua Thứ 7, Chủ Nhật và các ngày nghỉ lễ quốc gia (Tết Nguyên Đán, Quốc khánh 02/09,...)
+        thông qua bảng HolidayCalendar dùng chung SettlementService.
+
         Ví dụ: Mua ngày Thứ 6 -> Hàng về chiều Thứ 3 tuần sau (bỏ qua Thứ 7, Chủ Nhật).
         """
-        curr = buy_date
-        added_days = 0
-        while added_days < 2:
-            curr += timedelta(days=1)
-            # Thứ 2 = 0 ... Thứ 6 = 4, Thứ 7 = 5, Chủ Nhật = 6
-            if curr.weekday() < 5:
-                added_days += 1
-        return curr
+        return SettlementService.calculate_settlement_date(buy_date, cycle_days=2)
 
     def compute_t2_pressure_index(
         self,

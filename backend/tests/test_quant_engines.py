@@ -209,6 +209,14 @@ def test_e2_03_vietnamese_t2_settlement_calendar():
     assert t2_date == date(2026, 9, 22)
     assert t2_date.weekday() == 1  # Đúng là Thứ 3
 
+    # Giao dịch trước đợt nghỉ Tết 2026 phải bỏ qua ngày nghỉ và cuối tuần.
+    before_tet = date(2026, 2, 13)  # Thứ 6; nghỉ từ 14/02 đến 20/02
+    assert engine.compute_t2_settlement_date(before_tet) == date(2026, 2, 24)
+
+    # Giao dịch trước lễ Quốc khánh phải bỏ qua ngày 02/09 và 03/09.
+    before_national_day = date(2026, 9, 1)  # Thứ 3
+    assert engine.compute_t2_settlement_date(before_national_day) == date(2026, 9, 7)
+
 
 def test_e2_04_t2_pressure_volume_spike():
     """TEST-E2-04: Đột biến khối lượng ngày T-2 gấp 3 lần trung bình tạo chỉ số áp lực tiệm cận 1.0 (TRD §2.2.4)."""

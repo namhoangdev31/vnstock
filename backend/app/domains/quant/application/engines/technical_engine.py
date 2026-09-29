@@ -266,14 +266,12 @@ class TechnicalEngine:
     ) -> TechnicalEngineResponse:
         """Thực thi phân tích kỹ thuật và trả về kết quả TechnicalEngineResponse."""
         now = as_of or datetime.now(VN_TZ)
-
-        # Tự động nạp dữ liệu OHLCV từ DB nếu tham số chưa được truyền vào
         if (closes is None or not closes) and self.session is not None:
             db_bars = self.session.exec(
                 select(StockOHLCVDaily)
                 .where(StockOHLCVDaily.symbol == symbol)
                 .order_by(col(StockOHLCVDaily.trading_date).desc())
-                .limit(60)
+                .limit(200)
             ).all()
             if db_bars:
                 db_bars = list(reversed(db_bars))
