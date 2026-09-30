@@ -3,8 +3,8 @@
 from app.domains.quant.domain.indicators import (
     compute_adf_stationarity,
     compute_basis_zscore_scipy,
-    compute_garch_volatility,
     compute_engine_correlation,
+    compute_garch_volatility,
     compute_historical_volatility_v2,
     compute_linear_regression_slope_v2,
     compute_t2_pressure_scipy,
@@ -12,7 +12,9 @@ from app.domains.quant.domain.indicators import (
     detect_support_resistance,
     normalize_flow_robust,
     optimize_engine_weights_from_errors,
+    predict_atc_lgbm,
     simulate_monte_carlo_scipy,
+    simulate_t1_qmc_sobol,
 )
 
 
@@ -179,6 +181,32 @@ class TestDetectMarketRegimeGMM:
         assert r1["regime"] == r2["regime"]
 
 
+class TestAtcLightgbmPrediction:
+    def test_prediction_respects_price_limits(self):
+        for basis_zscore, imbalance in ((10.0, 1.0), (-10.0, -1.0)):
+            prediction = predict_atc_lgbm(
+                1300.0, basis_zscore, order_imbalance=imbalance
+            )
+            assert 1300.0 * 0.93 <= prediction["projected_price"] <= 1300.0 * 1.07
+
+    def test_negative_basis_imbalance_cascade_is_nonlinear(self):
+        baseline = predict_atc_lgbm(1300.0, 0.0, volatility=0.15)["expected_delta"]
+        basis_only = predict_atc_lgbm(1300.0, -2.5, volatility=0.15)["expected_delta"]
+        imbalance_only = predict_atc_lgbm(
+            1300.0, 0.0, order_imbalance=-0.8, volatility=0.15
+        )["expected_delta"]
+        combined = predict_atc_lgbm(
+            1300.0, -2.5, order_imbalance=-0.8, volatility=0.15
+        )["expected_delta"]
+        assert combined < basis_only + imbalance_only - baseline
+
+    def test_zero_price_returns_neutral_prediction(self):
+        prediction = predict_atc_lgbm(0.0, basis_zscore=2.0)
+        assert prediction["projected_price"] == 0.0
+        assert prediction["expected_delta"] == 0.0
+        assert prediction["model_type"] == "INVALID_INPUT"
+
+
 class TestBasisZscoreScipy:
     def test_normal_basis_with_history(self):
         hist = [2.0, -1.0, 3.0, 0.5, -2.0, 1.5, 0.0, -0.5, 2.5, 1.0]
@@ -195,6 +223,29 @@ class TestBasisZscoreScipy:
         r = compute_basis_zscore_scipy(1302.0, 1300.0)
         assert r["ci_lower"] is None
         assert abs(float(r["z_score"])) <= 3.0
+
+    def test_qmc_sobol_deterministic_keys_and_bounds(self):
+        r1 = simulate_t1_qmc_sobol(100.0, conditional_vol=0.25, n_paths=1024)
+        r2 = simulate_t1_qmc_sobol(100.0, conditional_vol=0.25, n_paths=1024)
+        keys = {"p10", "p50", "p90", "expected_price", "n_paths", "method"}
+        assert set(r1.keys()) == keys
+        assert r1 == r2
+        assert r1["method"] == "QMC_SOBOL_STUDENT_T"
+        assert r1["n_paths"] == 1024
+        assert 93.0 <= r1["p10"] <= 107.0
+        assert 93.0 <= r1["p50"] <= 107.0
+        assert 93.0 <= r1["p90"] <= 107.0
+        assert 93.0 <= r1["expected_price"] <= 107.0
+
+    def test_qmc_sobol_handles_zero_price(self):
+        r = simulate_t1_qmc_sobol(0.0, conditional_vol=0.2)
+        assert r["p10"] == 0.0 and r["expected_price"] == 0.0
+
+    def test_qmc_sobol_degrees_of_freedom(self):
+        r = simulate_t1_qmc_sobol(
+            100.0, conditional_vol=0.2, degrees_of_freedom=5.0, n_paths=1024
+        )
+        assert 93.0 <= r["p10"] <= 107.0
 
 
 class TestMonteCarloScipy:

@@ -14,6 +14,7 @@ from app.domains.quant.domain.indicators import (
     compute_rsi,
     compute_vwap,
     compute_zscore,
+    predict_atc_lgbm,
 )
 from app.domains.quant.domain.models import (
     ForecastJournal,
@@ -42,4 +43,5 @@ __all__ = [
     "compute_rsi",
     "compute_vwap",
     "compute_zscore",
+    "predict_atc_lgbm",
 ]

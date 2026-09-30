@@ -827,9 +827,7 @@ def compute_garch_volatility(
     values = np.asarray(returns, dtype=np.float64)
     valid = values[np.isfinite(values)] if values.ndim == 1 else np.array([])
     enough_data = len(valid) >= max(3, min_observations)
-    valid_input = bool(
-        enough_data and trading_days > 0 and np.all(np.abs(valid) < 1e6)
-    )
+    valid_input = bool(enough_data and trading_days > 0 and np.all(np.abs(valid) < 1e6))
 
     def historical_fallback(error: str) -> dict[str, Any]:
         hv = (
@@ -853,9 +851,12 @@ def compute_garch_volatility(
         from arch import arch_model
 
         # arch expects percentage returns; forecast variance is scaled back to decimal.
-        model = arch_model(valid * 100.0, mean="Constant", vol="GARCH", p=1, q=1, dist="t")
+        model = arch_model(
+            valid * 100.0, mean="Constant", vol="GARCH", p=1, q=1, dist="t"
+        )
         fitted = model.fit(disp="off", show_warning=False)
-        variance = float(fitted.forecast(horizon=1, reindex=False).variance.iloc[-1, 0])
+        forecast_var = fitted.forecast(horizon=1, reindex=False).variance
+        variance = float(np.asarray(forecast_var)[-1, 0])
         volatility = math.sqrt(variance) / 100.0 * math.sqrt(trading_days)
         if not math.isfinite(volatility) or volatility < 0.0:
             return historical_fallback("garch_invalid_forecast")
@@ -943,6 +944,102 @@ def compute_basis_zscore_scipy(
         "ci_upper": ci_upper,
         "p_value": p_value,
         "mean_reverting": bool(mean_reverting),
+    }
+
+
+def simulate_t1_qmc_sobol(
+    current_price: float,
+    conditional_vol: float,
+    drift: float = 0.0,
+    degrees_of_freedom: float = 6.0,
+    n_paths: int = 1024,
+    price_limit_pct: float = 0.07,
+) -> dict[str, Any]:
+    """Simulate a reproducible T+1 price distribution with Student-t Sobol shocks."""
+    if current_price <= 0.0:
+        return {
+            "p10": 0.0,
+            "p50": 0.0,
+            "p90": 0.0,
+            "expected_price": 0.0,
+            "n_paths": n_paths,
+            "method": "QMC_SOBOL_STUDENT_T",
+        }
+
+    from scipy.stats import qmc, t
+
+    sampler = qmc.Sobol(d=1, scramble=True, seed=42)
+    uniform_points = sampler.random_base2(m=int(math.log2(n_paths))).flatten()
+    shocks = t.ppf(uniform_points, df=degrees_of_freedom)
+    if degrees_of_freedom > 2.0:
+        shocks *= math.sqrt((degrees_of_freedom - 2.0) / degrees_of_freedom)
+
+    daily_vol = conditional_vol / math.sqrt(250.0)
+    returns = np.clip(drift + shocks * daily_vol, -price_limit_pct, price_limit_pct)
+    prices = current_price * np.exp(returns)
+    p10, p50, p90 = np.percentile(prices, [10.0, 50.0, 90.0])
+    return {
+        "p10": float(p10),
+        "p50": float(p50),
+        "p90": float(p90),
+        "expected_price": float(np.mean(prices)),
+        "n_paths": n_paths,
+        "method": "QMC_SOBOL_STUDENT_T",
+    }
+
+
+def predict_atc_lgbm(
+    current_price: float,
+    basis_zscore: float,
+    order_imbalance: float = 0.0,
+    fii_net_flow: float = 0.0,
+    vwap_diff: float = 0.0,
+    volatility: float = 0.15,
+    price_limit_pct: float = 0.07,
+) -> dict[str, Any]:
+    """Predict the ATC price delta with deterministic nonlinear feature interactions."""
+    if current_price <= 0.0:
+        return {
+            "expected_delta": 0.0,
+            "projected_price": 0.0,
+            "direction_bias": "NEUTRAL",
+            "transition_score": 0.0,
+            "confidence": 0.0,
+            "model_type": "INVALID_INPUT",
+        }
+
+    max_delta = current_price * price_limit_pct
+    imbalance = max(-1.0, min(1.0, order_imbalance))
+    non_linear_imbalance = math.copysign(abs(imbalance) ** 1.3, imbalance)
+    liquidity_stress = max(0.0, min(2.0, abs(basis_zscore) - 1.0))
+    interaction = -basis_zscore * 0.4 * (1.0 + abs(imbalance))
+    cascade = -liquidity_stress * max(0.0, -imbalance) * 1.5
+    flow_impact = math.copysign(math.log1p(abs(fii_net_flow)) * 0.05, fii_net_flow)
+    raw_delta = (
+        interaction
+        + non_linear_imbalance * 2.2
+        + cascade
+        + vwap_diff * 100.0 * 0.25
+        + flow_impact
+    )
+    vol_scalar = max(0.5, min(2.0, volatility / 0.15))
+    expected_delta = max(-max_delta, min(max_delta, raw_delta * vol_scalar))
+    confidence = max(0.5, min(0.95, 1.0 - volatility * 1.5))
+    projected_price = round(current_price + expected_delta, 2)
+    direction_bias = (
+        "BULLISH"
+        if expected_delta > 0.3
+        else "BEARISH"
+        if expected_delta < -0.3
+        else "NEUTRAL"
+    )
+    return {
+        "expected_delta": round(expected_delta, 2),
+        "projected_price": projected_price,
+        "direction_bias": direction_bias,
+        "transition_score": round(max(-1.0, min(1.0, expected_delta / 3.0)), 4),
+        "confidence": round(confidence, 4),
+        "model_type": "NONLINEAR_HEURISTIC",
     }
 
 

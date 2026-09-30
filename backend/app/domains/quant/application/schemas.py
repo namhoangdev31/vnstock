@@ -186,6 +186,7 @@ class QuantMLEngineResponse(SQLModel):
     parkinson_vol: float = 0.0
     session_phase: str = "CONTINUOUS"
     monte_carlo_targets: dict = Field(default_factory=dict)
+    qmc_targets: dict = Field(default_factory=dict)
     lr_trend_score: float = 0.0  # Linear regression slope [-1.0, +1.0]
     mc_max_drawdown_p50: float = 0.0  # Max drawdown percentile 50 intraday (%)
     basis_stationarity: dict = Field(default_factory=dict)

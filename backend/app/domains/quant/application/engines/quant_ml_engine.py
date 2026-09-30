@@ -23,7 +23,9 @@ from app.domains.quant.domain.indicators import (
     compute_historical_volatility_v2,
     compute_linear_regression_slope,
     compute_parkinson_volatility,
+    predict_atc_lgbm,
     simulate_monte_carlo_scipy,
+    simulate_t1_qmc_sobol,
 )
 
 _VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
@@ -139,6 +141,24 @@ class QuantMLEngine:
             n_steps=n_steps,
         )
 
+    def simulate_t1_qmc_sobol(
+        self,
+        current_price: float,
+        conditional_vol: float,
+        drift: float = 0.0,
+        degrees_of_freedom: float = 6.0,
+        n_paths: int = 1024,
+        price_limit_pct: float = 0.07,
+    ) -> dict[str, Any]:
+        return simulate_t1_qmc_sobol(
+            current_price=current_price,
+            conditional_vol=conditional_vol,
+            drift=drift,
+            degrees_of_freedom=degrees_of_freedom,
+            n_paths=n_paths,
+            price_limit_pct=price_limit_pct,
+        )
+
     def predict_ato_gap(
         self,
         current_price: float,
@@ -208,28 +228,19 @@ class QuantMLEngine:
         current_price: float,
         basis_zscore: float,
         order_imbalance: float = 0.0,
+        fii_net_flow: float = 0.0,
+        vwap_diff: float = 0.0,
+        volatility: float = 0.15,
     ) -> dict[str, Any]:
-        """Dự phóng mức dịch chuyển giá khớp cân bằng trong phiên khớp lệnh định kỳ đóng cửa ATC."""
-        convergence_delta = -basis_zscore * 0.5
-        imbalance_impact = order_imbalance * 1.5
-
-        expected_delta = convergence_delta + imbalance_impact
-        projected_close = round(current_price + expected_delta, 2)
-
-        direction_bias = (
-            "BULLISH"
-            if expected_delta > 0.3
-            else "BEARISH"
-            if expected_delta < -0.3
-            else "NEUTRAL"
+        """Dự phóng mức dịch chuyển giá khớp cân bằng trong phiên ATC bằng tương tác phi tuyến."""
+        return predict_atc_lgbm(
+            current_price=current_price,
+            basis_zscore=basis_zscore,
+            order_imbalance=order_imbalance,
+            fii_net_flow=fii_net_flow,
+            vwap_diff=vwap_diff,
+            volatility=volatility,
         )
-
-        return {
-            "projected_price": projected_close,
-            "expected_delta": round(expected_delta, 2),
-            "direction_bias": direction_bias,
-            "transition_score": round(max(-1.0, min(1.0, expected_delta / 3.0)), 4),
-        }
 
     def compute_composite_score(
         self,
@@ -300,9 +311,9 @@ class QuantMLEngine:
             else:
                 mc_volatility = hv
 
-        mc_targets = self.simulate_monte_carlo_t1(
+        qmc_targets = self.simulate_t1_qmc_sobol(
             current_price=futures_price,
-            volatility=mc_volatility,
+            conditional_vol=mc_volatility,
         )
 
         if phase in (SessionPhase.PRE_ATO, SessionPhase.ATO):
@@ -316,6 +327,7 @@ class QuantMLEngine:
             trans_pred = self.predict_atc_transition(
                 current_price=futures_price,
                 basis_zscore=basis_z,
+                volatility=mc_volatility,
             )
 
         trans_score = float(trans_pred.get("transition_score", 0.0))
@@ -349,8 +361,9 @@ class QuantMLEngine:
             historical_vol=hv,
             parkinson_vol=pv,
             session_phase=phase,
-            monte_carlo_targets=mc_targets,
+            monte_carlo_targets=qmc_targets,
+            qmc_targets=qmc_targets,
             lr_trend_score=lr_trend_score if lr_trend_score is not None else 0.0,
-            mc_max_drawdown_p50=mc_targets.get("mc_max_drawdown_p50", 0.0),
+            mc_max_drawdown_p50=float(qmc_targets.get("mc_max_drawdown_p50", 0.0)),
             basis_stationarity=adf_result,
         )

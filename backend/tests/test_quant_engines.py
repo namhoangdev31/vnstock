@@ -345,6 +345,49 @@ def test_e3_04_atc_transition_projection():
     assert "projected_price" in pred
     assert "expected_delta" in pred
     assert pred["expected_delta"] < 0.0  # Basis cao + áp lực bán kéo giá hội tụ xuống
+    assert "confidence" in pred
+    assert pred["model_type"] == "NONLINEAR_HEURISTIC"
+
+
+def test_lgbm_atc_prediction_bounds():
+    engine = QuantMLEngine()
+    for basis_zscore, imbalance in ((10.0, 1.0), (-10.0, -1.0)):
+        prediction = engine.predict_atc_transition(
+            1300.0, basis_zscore, order_imbalance=imbalance
+        )
+        assert 1300.0 * 0.93 <= prediction["projected_price"] <= 1300.0 * 1.07
+
+
+def test_lgbm_atc_non_linear_cascade():
+    engine = QuantMLEngine()
+    basis_only = engine.predict_atc_transition(1300.0, -2.5)["expected_delta"]
+    imbalance_only = engine.predict_atc_transition(1300.0, 0.0, order_imbalance=-0.8)[
+        "expected_delta"
+    ]
+    combined = engine.predict_atc_transition(1300.0, -2.5, order_imbalance=-0.8)[
+        "expected_delta"
+    ]
+    assert combined < basis_only + imbalance_only
+
+
+def test_lgbm_atc_zero_price_safety():
+    prediction = QuantMLEngine().predict_atc_transition(0.0, 2.0)
+    assert prediction["projected_price"] == 0.0
+    assert prediction["expected_delta"] == 0.0
+
+
+def test_e3_06_analyze_includes_atc_prediction():
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    result = QuantMLEngine().analyze(
+        symbol="VN30F1M",
+        futures_price=1300.0,
+        as_of=datetime(2026, 9, 30, 14, 20, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh")),
+    )
+    assert -1.0 <= result.score <= 1.0
+    assert result.symbol == "VN30F1M"
+    assert result.session_phase == "PRE_ATC"
 
 
 def test_e3_05_ato_opening_gap_classification():
@@ -380,6 +423,30 @@ def test_e3_05_ato_opening_gap_classification():
     )
     assert res_norm["gap_type"] == "NORMAL_GAP"
     assert res_norm["direction_bias"] == "NEUTRAL"
+
+
+def test_e3_06_qmc_sobol_engine_is_reproducible():
+    engine = QuantMLEngine()
+    first = engine.simulate_t1_qmc_sobol(
+        current_price=1300.0, conditional_vol=0.2, n_paths=1024
+    )
+    second = engine.simulate_t1_qmc_sobol(
+        current_price=1300.0, conditional_vol=0.2, n_paths=1024
+    )
+    assert first == second
+    assert first["p10"] <= first["p50"] <= first["p90"]
+    assert 1300.0 * 0.93 <= first["p10"]
+    assert first["p90"] <= 1300.0 * 1.07
+
+
+def test_e3_06_analyze_uses_qmc_sobol_targets():
+    engine = QuantMLEngine()
+    result = engine.analyze(symbol="VN30F1M", futures_price=1300.0)
+
+    assert result.qmc_targets["method"] == "QMC_SOBOL_STUDENT_T"
+    assert result.qmc_targets["n_paths"] == 1024
+    assert result.monte_carlo_targets == result.qmc_targets
+    assert result.mc_max_drawdown_p50 == 0.0
 
 
 def test_e3_06_monte_carlo_1000_distribution():
