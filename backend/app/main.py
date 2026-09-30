@@ -21,6 +21,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.core.config import settings
 from app.core.db import engine, init_db
+from app.domains.quant.application.daemon import quant_daemon_controller
 
 FRONTEND_DIR = Path(__file__).parent / "frontend"
 logger = logging.getLogger(__name__)
@@ -105,9 +106,11 @@ async def lifespan(_app: FastAPI):
         yield
         return
     migration_task = asyncio.create_task(asyncio.to_thread(_run_migrations_and_seed))
+    await quant_daemon_controller.start()
     try:
         yield
     finally:
+        await quant_daemon_controller.stop()
         if not migration_task.done():
             migration_task.cancel()
 

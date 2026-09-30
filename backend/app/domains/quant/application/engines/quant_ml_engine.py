@@ -9,12 +9,12 @@ import math
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from sqlmodel import Session
 
 from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
+from app.domains.quant.application.daemon.clock import VietnamMarketClock
 from app.domains.quant.application.schemas import QuantMLEngineResponse
 from app.domains.quant.domain.indicators import (
     compute_adf_stationarity,
@@ -28,8 +28,6 @@ from app.domains.quant.domain.indicators import (
     simulate_t1_qmc_sobol,
 )
 
-_VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
-
 
 class QuantMLEngine:
     """Động cơ Phân tích Định lượng Thống kê, Độ biến động và Chênh lệch Basis."""
@@ -40,37 +38,9 @@ class QuantMLEngine:
     def classify_session_phase(self, dt: datetime | None = None) -> str:
         """Phân loại trạng thái phiên giao dịch theo đồng hồ thị trường chứng khoán Việt Nam.
 
-        Lịch trình theo giờ Việt Nam (Asia/Ho_Chi_Minh):
-        - 08:30 - 08:45: PRE_ATO (Chuẩn bị trước phiên ATO)
-        - 08:45 - 09:00: ATO (Thị trường phái sinh mở cửa sớm 15 phút trước cơ sở)
-        - 09:00 - 11:30: MORNING_CONTINUOUS (Khớp lệnh liên tục buổi sáng)
-        - 11:30 - 13:00: MIDDAY_INTERMISSION (Nghỉ trưa)
-        - 13:00 - 14:15: AFTERNOON_CONTINUOUS (Khớp lệnh liên tục buổi chiều)
-        - 14:15 - 14:30: PRE_ATC (Chuẩn bị vào phiên khớp lệnh định kỳ đóng cửa)
-        - 14:30 - 14:45: ATC (Đợt khớp lệnh định kỳ đóng cửa)
-        - 14:45 - 08:30: POST_MARKET (Sau giờ giao dịch / Chạy mô phỏng qua đêm 24/7)
+        Delegate to VietnamMarketClock for consistency with daemon and holiday detection.
         """
-        now_utc = dt or datetime.now(VN_TZ)
-        vn_time = now_utc.astimezone(_VN_TZ)
-        time_minutes = vn_time.hour * 60 + vn_time.minute
-
-        # 08:30 = 510, 08:45 = 525, 09:00 = 540, 11:30 = 690, 13:00 = 780
-        # 14:15 = 855, 14:30 = 870, 14:45 = 885
-        if 510 <= time_minutes < 525:
-            return SessionPhase.PRE_ATO
-        if 525 <= time_minutes < 540:
-            return SessionPhase.ATO
-        if 540 <= time_minutes < 690:
-            return SessionPhase.MORNING_CONTINUOUS
-        if 690 <= time_minutes < 780:
-            return SessionPhase.MIDDAY_INTERMISSION
-        if 780 <= time_minutes < 855:
-            return SessionPhase.AFTERNOON_CONTINUOUS
-        if 855 <= time_minutes < 870:
-            return SessionPhase.PRE_ATC
-        if 870 <= time_minutes < 885:
-            return SessionPhase.ATC
-        return SessionPhase.POST_MARKET
+        return VietnamMarketClock.classify(dt)
 
     def compute_basis_zscore(
         self,

@@ -20,6 +20,7 @@ from app.domains.market_data.presentation.router import router as market_data_ro
 from app.domains.market_data.presentation.vnstock_router import (
     router as vnstock_router,
 )
+from app.domains.quant.presentation.daemon_router import router as daemon_router
 from app.domains.quant.presentation.forecast_router import router as forecast_router
 from app.domains.quant.presentation.quant_router import router as quant_router
 from app.domains.simulation.presentation.router import router as simulation_router
@@ -31,8 +32,9 @@ api_router.include_router(market_data_router)
 api_router.include_router(vnstock_router)
 api_router.include_router(fundamental_router)
 api_router.include_router(forecast_router)
-api_router.include_router(simulation_router)
 api_router.include_router(quant_router)
+api_router.include_router(daemon_router)
+api_router.include_router(simulation_router)
 
 if settings.FASTAPI_ENV == "development":
     api_router.include_router(private_router)

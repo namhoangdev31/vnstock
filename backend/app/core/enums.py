@@ -29,6 +29,7 @@ class SessionPhase(StrEnum):
     PRE_ATC = "PRE_ATC"
     ATC = "ATC"
     POST_MARKET = "POST_MARKET"
+    OVERNIGHT_SIMULATION = "OVERNIGHT_SIMULATION"
 
 
 class AnalyticsEngine(StrEnum):

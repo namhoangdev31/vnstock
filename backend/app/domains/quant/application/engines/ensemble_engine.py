@@ -49,6 +49,7 @@ DEFAULT_SCHEDULE: dict[str, dict[str, float]] = {
     SessionPhase.PRE_ATC: {"w1": 0.25, "w2": 0.25, "w3": 0.50},
     SessionPhase.ATC: {"w1": 0.15, "w2": 0.20, "w3": 0.65},
     SessionPhase.POST_MARKET: {"w1": 0.20, "w2": 0.35, "w3": 0.45},
+    SessionPhase.OVERNIGHT_SIMULATION: {"w1": 0.30, "w2": 0.40, "w3": 0.30},
 }
 
 

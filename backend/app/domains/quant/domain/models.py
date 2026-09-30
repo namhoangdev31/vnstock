@@ -186,3 +186,39 @@ class SignalLog(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
         index=True,
     )
+
+
+class DaemonSessionLog(AwareSQLModel, table=True):
+    """Bảng theo dõi daemon lifecycle: startup, heartbeat, phase transitions, errors."""
+
+    __tablename__ = "daemon_session_log"
+    __table_args__ = (
+        Index("ix_daemon_session_log_started_at", "started_at"),
+        Index("ix_daemon_session_log_status_phase", "status", "last_phase"),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    daemon_name: str = Field(default="quant-background-daemon", max_length=80, index=True)
+    instance_id: str = Field(max_length=80, index=True)
+
+    status: str = Field(default="RUNNING", max_length=20, index=True)
+    started_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    stopped_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+    last_heartbeat_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    last_phase: str | None = Field(default=None, max_length=40)
+    cycle_count: int = 0
+
+    failure_count: int = 0
+    last_error: str | None = Field(default=None, max_length=500)
+
+    metadata_info: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
