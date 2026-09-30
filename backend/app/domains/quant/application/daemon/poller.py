@@ -171,8 +171,8 @@ class MarketDataPoller:
             # Pre-market or intermission: history only
             result.history_bars = self._fetch_history(symbol, limit_history)
         elif phase in (SessionPhase.POST_MARKET, SessionPhase.OVERNIGHT_SIMULATION):
-            # Post-market/overnight: minimal polling for next-day analysis
-            result.history_bars = self._fetch_history(symbol, min(limit_history, 30))
+            # Overnight/post-market: dùng nến ngày (1D) để phân tích T+1
+            result.history_bars = self._fetch_history(symbol, limit_history, interval="1D")
 
         # Update last-known cache on every successful (non-error) poll.
         if not result.errors:
@@ -184,14 +184,22 @@ class MarketDataPoller:
     # Private fetch helpers — each uses _fetch_with_retry for TRD §4.1
     # ------------------------------------------------------------------
 
-    def _fetch_history(self, symbol: str, limit: int) -> list[Any]:
-        """Fetch historical bars via VnstockService with retry + rate-limit."""
+    def _fetch_history(self, symbol: str, limit: int, interval: str = "1m") -> list[Any]:
+        """Fetch historical bars via VnstockService with retry + rate-limit.
+
+        interval: '1m' cho giao dịch intraday, '1D' cho phân tích overnight/T+1.
+        """
         from app.domains.market_data.infrastructure.vnstock_adapter import (
             vnstock_service,
         )
 
         today: date = datetime.now(VN_TZ).date()
-        start: date = today - timedelta(days=max(limit * 2, 60))
+        if interval == "1D":
+            # Nến ngày: start đủ rộng để lấy `limit` ngày giao dịch (bù nghỉ lễ/cuối tuần)
+            start: date = today - timedelta(days=max(limit * 2, 180))
+        else:
+            # Nến phút: start trong ngày hôm nay là đủ
+            start = today - timedelta(days=max(limit * 2, 60))
 
         def _call() -> list[Any]:
             df = vnstock_service.fetch_price_history(
@@ -199,13 +207,13 @@ class MarketDataPoller:
                 start=start,
                 end=today,
                 count=limit,
-                interval="1m",
+                interval=interval,
             )
             if df is not None and not df.empty:
                 return df.to_dict("records")
             return []
 
-        result = _fetch_with_retry(_call, label=f"history:{symbol}")
+        result = _fetch_with_retry(_call, label=f"history:{symbol}:{interval}")
         return result if result is not None else []
 
     def _fetch_intraday(self, symbol: str, limit: int) -> list[Any]:
