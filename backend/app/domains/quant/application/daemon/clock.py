@@ -14,7 +14,7 @@ _VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 @dataclass(frozen=True)
 class MarketClockSnapshot:
     as_of: datetime
-    session_phase: str
+    session_phase: SessionPhase
     is_trading_window: bool
 
 
@@ -38,7 +38,7 @@ class VietnamMarketClock:
         )
 
     @staticmethod
-    def classify(dt: datetime) -> str:
+    def classify(dt: datetime) -> SessionPhase:
         vn_time = dt.astimezone(_VN_TZ)
 
         # Check for weekends and holidays first
@@ -61,4 +61,8 @@ class VietnamMarketClock:
             return SessionPhase.PRE_ATC
         if 870 <= time_minutes < 885:
             return SessionPhase.ATC
-        return SessionPhase.POST_MARKET
+        if 885 <= time_minutes < 1020:
+            return SessionPhase.POST_MARKET
+        if 1020 <= time_minutes <= 1440:
+            return SessionPhase.OVERNIGHT_SIMULATION
+        return SessionPhase.OVERNIGHT_SIMULATION

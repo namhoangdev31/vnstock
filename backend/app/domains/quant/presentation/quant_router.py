@@ -179,3 +179,94 @@ def update_ensemble_weights(
     engine = EnsembleEngine()
     engine.set_custom_weights_override(w1=payload.w1, w2=payload.w2, w3=payload.w3)
     return engine.get_weights_status()
+
+
+# ==============================================================================
+# BACKGROUND SESSION DAEMON ENDPOINTS
+# ==============================================================================
+
+
+@router.get(
+    "/daemon/status",
+    summary="Lấy trạng thái daemon background session",
+)
+def get_daemon_status(
+    current_user: CurrentUser,  # noqa: ARG001
+) -> dict[str, Any]:
+    """Trả về trạng thái hiện tại của QuantDaemonController bao gồm phase, circuit breaker, cycle count."""
+    from app.domains.quant.application.daemon import quant_daemon_controller
+
+    return quant_daemon_controller.status()
+
+
+@router.post(
+    "/daemon/start",
+    summary="Khởi động daemon background session",
+)
+async def start_daemon(
+    current_user: CurrentUser,  # noqa: ARG001
+) -> dict[str, str]:
+    """Khởi chạy QuantDaemonController với adaptive polling và phase-aware dispatch."""
+    from app.domains.quant.application.daemon import quant_daemon_controller
+
+    await quant_daemon_controller.start()
+    return {
+        "status": "started",
+        "instance_id": quant_daemon_controller.instance_id,
+    }
+
+
+@router.post(
+    "/daemon/stop",
+    summary="Dừng daemon background session",
+)
+async def stop_daemon(
+    current_user: CurrentUser,  # noqa: ARG001
+) -> dict[str, str]:
+    """Dừng QuantDaemonController một cách graceful và cập nhật DaemonSessionLog."""
+    from app.domains.quant.application.daemon import quant_daemon_controller
+
+    await quant_daemon_controller.stop()
+    return {
+        "status": "stopped",
+        "instance_id": quant_daemon_controller.instance_id,
+    }
+
+
+@router.post(
+    "/daemon/pause",
+    summary="Tạm dừng daemon background session",
+)
+def pause_daemon(
+    current_user: CurrentUser,  # noqa: ARG001
+) -> dict[str, Any]:
+    """Tạm dừng QuantDaemonController, giữ nguyên state và tiếp tục từ nơi dừng lại khi resume."""
+    from app.domains.quant.application.daemon import quant_daemon_controller
+
+    return quant_daemon_controller.pause()
+
+
+@router.post(
+    "/daemon/resume",
+    summary="Tiếp tục daemon background session sau khi pause",
+)
+def resume_daemon(
+    current_user: CurrentUser,  # noqa: ARG001
+) -> dict[str, Any]:
+    """Tiếp tục QuantDaemonController sau khi pause và reset circuit breaker nếu đang open."""
+    from app.domains.quant.application.daemon import quant_daemon_controller
+
+    return quant_daemon_controller.resume()
+
+
+@router.post(
+    "/daemon/trigger-once",
+    summary="Chạy daemon một lần duy nhất",
+)
+async def trigger_daemon_once(
+    current_user: CurrentUser,  # noqa: ARG001
+) -> dict[str, Any]:
+    """Thực hiện một chu kỳ poll-dispatch-cycle duy nhất và trả về kết quả."""
+    from app.domains.quant.application.daemon import quant_daemon_controller
+
+    return await quant_daemon_controller.trigger_once()

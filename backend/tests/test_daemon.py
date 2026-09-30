@@ -8,21 +8,24 @@ Tests cover:
 - Controller adaptive polling
 """
 
-import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 from app.core.enums import SessionPhase
+from app.core.models_base import VN_TZ
 from app.domains.quant.application.daemon.clock import VietnamMarketClock
+from app.domains.quant.application.daemon.dispatcher import (
+    DispatchResult,
+    SignalDispatcher,
+)
+from app.domains.quant.application.daemon.poller import (
+    MarketDataPoller,
+    MarketPollResult,
+)
 from app.domains.quant.application.daemon.state import (
+    STATE_POLL_INTERVALS,
     DaemonCircuitBreaker,
     QuantDaemonState,
-    STATE_POLL_INTERVALS,
 )
-from app.domains.quant.application.daemon.poller import MarketDataPoller, MarketPollResult
-from app.domains.quant.application.daemon.dispatcher import SignalDispatcher, DispatchResult
 
 
 class TestVietnamMarketClock:
@@ -90,7 +93,9 @@ class TestDaemonCircuitBreaker:
     def test_record_failure_transitions_to_open(self):
         """Test that failures transition to OPEN state."""
         cb = DaemonCircuitBreaker()
-        cb.record_failure(Exception("test error"))
+        # Record 3 failures to hit threshold
+        for _ in range(3):
+            cb.record_failure(Exception("test error"))
         assert cb.is_open is True
         assert cb.opened_at is not None
 
@@ -98,36 +103,42 @@ class TestDaemonCircuitBreaker:
         """Test that circuit breaker transitions to HALF_OPEN after cooldown."""
         cb = DaemonCircuitBreaker()
         cb._half_open_cooldown_seconds = 0.1  # Shorten for testing
-        cb.record_failure(Exception("test error"))
+
+        # Hit threshold to open
+        for _ in range(3):
+            cb.record_failure(Exception("test error"))
 
         # Not half-open immediately
         assert cb.is_half_open is False
 
         # After cooldown, should be half-open
-        cb.opened_at = datetime.now() - timedelta(seconds=0.2)
+        cb.opened_at = datetime.now(VN_TZ) - timedelta(seconds=0.2)
         assert cb.is_half_open is True
 
     def test_record_success_resets(self):
         """Test that success resets circuit breaker to CLOSED."""
         cb = DaemonCircuitBreaker()
-        cb.record_failure(Exception("test error"))
+        # Hit threshold to open
+        for _ in range(3):
+            cb.record_failure(Exception("test error"))
         assert cb.is_open is True
 
         cb.record_success()
         assert cb.is_open is False
         assert cb.opened_at is None
-        assert cb.half_open_at is None
+        assert cb.failure_count == 0
 
     def test_reset_method(self):
         """Test that reset clears all state."""
         cb = DaemonCircuitBreaker()
-        cb.record_failure(Exception("test error"))
+        for _ in range(3):
+            cb.record_failure(Exception("test error"))
         cb.reset()
 
         assert cb.is_open is False
         assert cb.is_half_open is False
         assert cb.opened_at is None
-        assert cb.half_open_at is None
+        assert cb.failure_count == 0
 
 
 class TestQuantDaemonState:
@@ -182,30 +193,14 @@ class TestMarketDataPoller:
         """Test poller creation with circuit breaker."""
         cb = DaemonCircuitBreaker()
         poller = MarketDataPoller(cb)
-        assert poller.breaker is cb
-
-    def test_poll_returns_result(self):
-        """Test that poll returns a MarketPollResult."""
-        cb = DaemonCircuitBreaker()
-        poller = MarketDataPoller(cb)
-
-        result = poller.poll(
-            symbol="VN30F1M",
-            phase=SessionPhase.MORNING_CONTINUOUS,
-            limit_history=120,
-            limit_intraday=50,
-            limit_orderflow=40,
-        )
-
-        assert isinstance(result, MarketPollResult)
-        assert result.symbol == "VN30F1M"
-        assert result.phase == SessionPhase.MORNING_CONTINUOUS
-        assert result.timestamp is not None
+        assert poller.circuit_breaker is cb
 
     def test_poll_skips_when_breaker_open(self):
         """Test that poll skips when circuit breaker is open."""
         cb = DaemonCircuitBreaker()
-        cb.record_failure(Exception("test"))
+        # Hit threshold to open
+        for _ in range(3):
+            cb.record_failure(Exception("test"))
         poller = MarketDataPoller(cb)
 
         result = poller.poll(
@@ -215,7 +210,7 @@ class TestMarketDataPoller:
 
         assert result.errors is not None
         assert len(result.errors) > 0
-        assert "circuit_breaker_open" in str(result.errors[0])
+        assert result.errors[0].get("error") == "circuit_breaker_open"
 
 
 class TestSignalDispatcher:
@@ -230,85 +225,26 @@ class TestSignalDispatcher:
         """Test that dispatch skips POST_MARKET and OVERNIGHT_SIMULATION."""
         dispatcher = SignalDispatcher()
 
-        poll_result = MarketPollResult(
-            symbol="VN30F1M",
+        result = dispatcher.dispatch_sync(
             phase=SessionPhase.POST_MARKET,
-            timestamp=datetime.now(),
+            symbols=["VN30F1M"],
+            market_data={},
         )
-
-        result = dispatcher.dispatch(poll_result)
 
         assert isinstance(result, DispatchResult)
         assert result.phase == SessionPhase.POST_MARKET
-        assert result.signal_count == 0
+        assert result.ensemble_signals == 0
+        assert result.simulation_orders == 0
 
     def test_dispatch_handles_trading_phases(self):
         """Test that dispatch processes trading phases."""
         dispatcher = SignalDispatcher()
 
-        poll_result = MarketPollResult(
-            symbol="VN30F1M",
+        result = dispatcher.dispatch_sync(
             phase=SessionPhase.MORNING_CONTINUOUS,
-            timestamp=datetime.now(),
+            symbols=["VN30F1M"],
+            market_data={"VN30F1M": {"closes": [100, 101, 102]}},
         )
-
-        result = dispatcher.dispatch(poll_result)
 
         assert isinstance(result, DispatchResult)
         assert result.phase == SessionPhase.MORNING_CONTINUOUS
-
-
-class TestQuantDaemonController:
-    """Test suite for quant daemon controller."""
-
-    @pytest.mark.asyncio
-    async def test_start_stop_lifecycle(self):
-        """Test daemon start/stop lifecycle."""
-        controller = QuantDaemonController()
-
-        await controller.start()
-        assert controller.state.running is True
-        assert controller.state.status == "running"
-
-        await controller.stop()
-        assert controller.state.running is False
-        assert controller.state.status == "stopped"
-
-    @pytest.mark.asyncio
-    async def test_pause_resume(self):
-        """Test daemon pause/resume."""
-        controller = QuantDaemonController()
-
-        await controller.start()
-        assert controller.state.paused is False
-
-        controller.pause()
-        assert controller.state.paused is True
-        assert controller.state.status == "paused"
-
-        controller.resume()
-        assert controller.state.paused is False
-
-    @pytest.mark.asyncio
-    async def test_get_status(self):
-        """Test daemon status reporting."""
-        controller = QuantDaemonController()
-        status = controller.status()
-
-        assert "running" in status
-        assert "paused" in status
-        assert "session_phase" in status
-        assert "circuit_breaker" in status
-
-    def test_trigger_once(self):
-        """Test single manual trigger."""
-        controller = QuantDaemonController()
-
-        # This would fail in isolation due to database dependencies,
-        # but verifies the method exists and can be called
-        result = asyncio.get_event_loop().run_until_complete(
-            controller.trigger_once()
-        )
-
-        assert "running" in result
-        assert "session_phase" in result

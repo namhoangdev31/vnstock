@@ -7,7 +7,6 @@ from typing import Any
 from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
 
-
 # Adaptive polling intervals per session phase (in seconds)
 STATE_POLL_INTERVALS: dict[SessionPhase, float] = {
     SessionPhase.PRE_ATO: 30.0,
@@ -27,7 +26,6 @@ class DaemonCircuitBreaker:
     failure_threshold: int = 3
     failure_count: int = 0
     opened_at: datetime | None = None
-    half_open_at: datetime | None = None
     last_error: str | None = None
     _half_open_cooldown_seconds: float = 60.0
 
@@ -37,16 +35,17 @@ class DaemonCircuitBreaker:
 
     @property
     def is_half_open(self) -> bool:
-        if self.half_open_at is None or self.opened_at is None:
+        if self.opened_at is None:
             return False
         now = datetime.now(VN_TZ)
-        # Half-open if cooldown has passed
-        return (now - self.half_open_at).total_seconds() >= self._half_open_cooldown_seconds
+        # Half-open if cooldown has passed since circuit opened
+        return (
+            now - self.opened_at
+        ).total_seconds() >= self._half_open_cooldown_seconds
 
     def record_success(self) -> None:
         self.failure_count = 0
         self.opened_at = None
-        self.half_open_at = None
         self.last_error = None
 
     def record_failure(self, exc: Exception) -> None:
@@ -55,11 +54,6 @@ class DaemonCircuitBreaker:
 
         if self.failure_count >= self.failure_threshold and not self.is_open:
             self.opened_at = datetime.now(VN_TZ)
-            # Start cooldown for half-open transition
-            self.half_open_at = datetime.now(VN_TZ)
-        elif self.is_open:
-            # If already open, reset cooldown
-            self.half_open_at = datetime.now(VN_TZ)
 
     def reset(self) -> None:
         self.record_success()
