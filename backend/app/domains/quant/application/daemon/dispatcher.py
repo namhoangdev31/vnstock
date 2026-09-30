@@ -11,7 +11,7 @@ from app.domains.quant.application.schemas import EnsembleSignalRequest
 
 if TYPE_CHECKING:
     from app.domains.quant.application.engines.ensemble_engine import EnsembleEngine
-    from app.domains.quant.application.engines.simulation_engine import SimulationEngine
+    from app.domains.simulation.application.engine import SimulationEngine
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class SignalDispatcher:
     def __init__(
         self,
         ensemble_engine: "EnsembleEngine | None" = None,
-        simulation_engine: "SimulationEngine | None" = None,
+        simulation_engine: "SimulationEngine | Any | None" = None,
     ):
         """Initialize dispatcher with engine references."""
         self.ensemble = ensemble_engine
@@ -61,6 +61,9 @@ class SignalDispatcher:
             timestamp=datetime.now(VN_TZ),
             phase=phase,
         )
+
+        if self.ensemble is None:
+            return result
 
         try:
             # Generate ensemble signals
@@ -91,37 +94,49 @@ class SignalDispatcher:
                         as_of=result.timestamp,
                     )
 
-                    if signal_resp and signal_resp.signal:
+                    signal_dir = getattr(
+                        signal_resp, "predicted_direction", None
+                    ) or getattr(signal_resp, "signal", None)
+                    if signal_resp and signal_dir and signal_dir != "NEUTRAL":
                         result.ensemble_signals += 1
 
                         # Forward to simulation engine for paper trading
-                        try:
-                            order_resp = self.simulation.simulate_order(
-                                symbol=symbol,
-                                signal=signal_resp.signal,
-                                phase=phase,
-                                timestamp=result.timestamp,
-                            )
-
-                            if order_resp:
-                                result.simulation_orders += 1
-
-                                # Journal the forecast (RULE 3: PERSISTENCE)
-                                if hasattr(self.simulation, "journal_forecast"):
-                                    self.simulation.journal_forecast(
+                        if self.simulation is not None:
+                            try:
+                                order_resp = None
+                                sim_fn = getattr(
+                                    self.simulation, "simulate_order", None
+                                )
+                                if callable(sim_fn):
+                                    order_resp = sim_fn(
                                         symbol=symbol,
-                                        signal=signal_resp.signal,
-                                        order_id=getattr(order_resp, "id", None),
+                                        signal=signal_dir,
                                         phase=phase,
+                                        timestamp=result.timestamp,
                                     )
-                                    result.forecast_journals += 1
 
-                        except Exception as e:
-                            result.errors[f"simulate:{symbol}"] = str(e)
-                            logger.warning(
-                                f"Simulation failed for {symbol}: {e}",
-                                extra={"symbol": symbol, "phase": phase.value},
-                            )
+                                if order_resp:
+                                    result.simulation_orders += 1
+
+                                    # Journal the forecast (RULE 3: PERSISTENCE)
+                                    journal_fn = getattr(
+                                        self.simulation, "journal_forecast", None
+                                    )
+                                    if callable(journal_fn):
+                                        journal_fn(
+                                            symbol=symbol,
+                                            signal=signal_dir,
+                                            order_id=getattr(order_resp, "id", None),
+                                            phase=phase,
+                                        )
+                                        result.forecast_journals += 1
+
+                            except Exception as e:
+                                result.errors[f"simulate:{symbol}"] = str(e)
+                                logger.warning(
+                                    f"Simulation failed for {symbol}: {e}",
+                                    extra={"symbol": symbol, "phase": phase.value},
+                                )
 
                 except Exception as e:
                     result.errors[f"ensemble:{symbol}"] = str(e)

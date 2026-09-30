@@ -205,7 +205,7 @@ def get_daemon_status(
 )
 async def start_daemon(
     current_user: CurrentUser,  # noqa: ARG001
-) -> dict[str, str]:
+) -> dict[str, str | None]:
     """Khởi chạy QuantDaemonController với adaptive polling và phase-aware dispatch."""
     from app.domains.quant.application.daemon import quant_daemon_controller
 
@@ -222,7 +222,7 @@ async def start_daemon(
 )
 async def stop_daemon(
     current_user: CurrentUser,  # noqa: ARG001
-) -> dict[str, str]:
+) -> dict[str, str | None]:
     """Dừng QuantDaemonController một cách graceful và cập nhật DaemonSessionLog."""
     from app.domains.quant.application.daemon import quant_daemon_controller
 

@@ -40,7 +40,8 @@ class QuantMLEngine:
 
         Delegate to VietnamMarketClock for consistency with daemon and holiday detection.
         """
-        return VietnamMarketClock.classify(dt)
+        target_dt = dt if dt is not None else datetime.now(VN_TZ)
+        return VietnamMarketClock.classify(target_dt)
 
     def compute_basis_zscore(
         self,

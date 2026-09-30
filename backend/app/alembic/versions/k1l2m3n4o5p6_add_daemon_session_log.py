@@ -7,8 +7,8 @@ Create Date: 2026-09-30 12:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel
 from sqlalchemy.dialects import postgresql
+from sqlmodel.sql.sqltypes import AutoString
 
 # revision identifiers, used by Alembic.
 revision = "k1l2m3n4o5p6"
@@ -21,16 +21,16 @@ def upgrade() -> None:
     op.create_table(
         "daemon_session_log",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("daemon_name", sqlmodel.sql.sqltypes.AutoString(length=80), nullable=False),
-        sa.Column("instance_id", sqlmodel.sql.sqltypes.AutoString(length=80), nullable=False),
-        sa.Column("status", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
+        sa.Column("daemon_name", AutoString(length=80), nullable=False),
+        sa.Column("instance_id", AutoString(length=80), nullable=False),
+        sa.Column("status", AutoString(length=20), nullable=False),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("stopped_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("last_heartbeat_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("last_phase", sqlmodel.sql.sqltypes.AutoString(length=40), nullable=True),
+        sa.Column("last_phase", AutoString(length=40), nullable=True),
         sa.Column("cycle_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("failure_count", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("last_error", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
+        sa.Column("last_error", AutoString(length=500), nullable=True),
         sa.Column("metadata_info", postgresql.JSONB(), nullable=True),
     )
 

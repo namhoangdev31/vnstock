@@ -198,7 +198,9 @@ class DaemonSessionLog(AwareSQLModel, table=True):
     )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    daemon_name: str = Field(default="quant-background-daemon", max_length=80, index=True)
+    daemon_name: str = Field(
+        default="quant-background-daemon", max_length=80, index=True
+    )
     instance_id: str = Field(max_length=80, index=True)
 
     status: str = Field(default="RUNNING", max_length=20, index=True)

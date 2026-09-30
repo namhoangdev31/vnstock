@@ -9,6 +9,7 @@ Tests cover:
 """
 
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
@@ -140,6 +141,57 @@ class TestDaemonCircuitBreaker:
         assert cb.opened_at is None
         assert cb.failure_count == 0
 
+    def test_half_open_to_closed_on_success(self):
+        """TEST-DAEMON-05: HALF_OPEN → CLOSED when record_success() is called.
+
+        Spec: after cooldown elapses the circuit enters HALF_OPEN.  A single
+        successful probe must fully close the circuit (opened_at=None,
+        failure_count=0, is_open=False, is_half_open=False).
+        """
+        cb = DaemonCircuitBreaker()
+        cb._half_open_cooldown_seconds = 0.1
+
+        # Drive circuit OPEN
+        for _ in range(3):
+            cb.record_failure(Exception("probe failed"))
+        assert cb.is_open is True
+
+        # Fast-forward past cooldown so it enters HALF_OPEN
+        cb.opened_at = datetime.now(VN_TZ) - timedelta(seconds=0.2)
+        assert cb.is_half_open is True, "precondition: should be HALF_OPEN now"
+
+        # One successful probe → CLOSED
+        cb.record_success()
+
+        assert cb.is_open is False, "circuit must be CLOSED after success"
+        assert cb.is_half_open is False, "circuit must not be HALF_OPEN after success"
+        assert cb.opened_at is None, "opened_at must be cleared"
+        assert cb.failure_count == 0, "failure_count must reset to 0"
+
+    def test_half_open_to_open_on_failure(self):
+        """TEST-DAEMON-05b: HALF_OPEN → OPEN when the probe cycle fails again.
+
+        If a failure is recorded while the circuit is HALF_OPEN, is_open stays
+        True (opened_at is refreshed / not cleared).
+        """
+        cb = DaemonCircuitBreaker()
+        cb._half_open_cooldown_seconds = 0.1
+
+        # Drive circuit OPEN
+        for _ in range(3):
+            cb.record_failure(Exception("initial failure"))
+
+        # Fast-forward past cooldown → HALF_OPEN
+        cb.opened_at = datetime.now(VN_TZ) - timedelta(seconds=0.2)
+        assert cb.is_half_open is True
+
+        # Another failure in the probe window
+        cb.record_failure(Exception("probe failure"))
+
+        # Circuit must remain OPEN (opened_at was already set before this call)
+        assert cb.is_open is True
+        assert cb.failure_count == 4, "failure_count increments on every record_failure"
+
 
 class TestQuantDaemonState:
     """Test suite for daemon state management."""
@@ -196,7 +248,7 @@ class TestMarketDataPoller:
         assert poller.circuit_breaker is cb
 
     def test_poll_skips_when_breaker_open(self):
-        """Test that poll skips when circuit breaker is open."""
+        """Test that poll returns CB-open error when circuit breaker is open and no cache."""
         cb = DaemonCircuitBreaker()
         # Hit threshold to open
         for _ in range(3):
@@ -248,3 +300,214 @@ class TestSignalDispatcher:
 
         assert isinstance(result, DispatchResult)
         assert result.phase == SessionPhase.MORNING_CONTINUOUS
+
+
+class TestPollerCacheFallback:
+    """TRD §4.2 — Last-known-data fallback when circuit breaker is OPEN."""
+
+    def test_open_cb_with_cache_returns_cached_data(self):
+        """CB OPEN + populated cache → from_cache=True with last known bars."""
+        cb = DaemonCircuitBreaker()
+        poller = MarketDataPoller(cb)
+
+        # Seed the internal cache directly (simulates a prior successful poll).
+        from datetime import datetime
+
+        fake_result = MarketPollResult(
+            symbol="VN30F1M",
+            phase=SessionPhase.MORNING_CONTINUOUS,
+            timestamp=datetime.now(VN_TZ),
+            history_bars=[{"close": 1300.0}],
+            intraday_bars=[{"vol": 5000}],
+            order_flow=[{"side": "buy"}],
+        )
+        poller._last_known["VN30F1M"] = fake_result
+
+        # Now open the circuit breaker.
+        for _ in range(3):
+            cb.record_failure(Exception("network error"))
+        assert cb.is_open
+
+        result = poller.poll(symbol="VN30F1M", phase=SessionPhase.AFTERNOON_CONTINUOUS)
+
+        assert result.from_cache is True
+        assert result.history_bars == [{"close": 1300.0}]
+        assert result.intraday_bars == [{"vol": 5000}]
+        assert result.order_flow == [{"side": "buy"}]
+        assert result.errors[0]["error"] == "circuit_breaker_open"
+
+    def test_open_cb_without_cache_returns_empty(self):
+        """CB OPEN + no cache → error flagged, empty lists, from_cache=False."""
+        cb = DaemonCircuitBreaker()
+        poller = MarketDataPoller(cb)
+
+        # Open CB immediately, no prior poll.
+        for _ in range(3):
+            cb.record_failure(Exception("error"))
+
+        result = poller.poll(symbol="VN30F1M", phase=SessionPhase.MORNING_CONTINUOUS)
+
+        assert result.from_cache is False
+        assert result.history_bars == []
+        assert result.errors[0]["error"] == "circuit_breaker_open"
+
+    def test_successful_poll_updates_cache(self):
+        """A successful poll (CB CLOSED, no API errors) must update _last_known."""
+        cb = DaemonCircuitBreaker()
+        poller = MarketDataPoller(cb)
+
+        # _fetch_history / etc. raise — we patch to return deterministic data.
+        with (
+            patch.object(poller, "_fetch_history", return_value=[{"close": 999.0}]),
+            patch.object(poller, "_fetch_intraday", return_value=[]),
+            patch.object(poller, "_fetch_order_flow", return_value=[]),
+        ):
+            result = poller.poll(symbol="FPT", phase=SessionPhase.MORNING_CONTINUOUS)
+
+        assert result.from_cache is False
+        assert "FPT" in poller._last_known
+        assert poller._last_known["FPT"].history_bars == [{"close": 999.0}]
+
+
+class TestDaemonSIGTERM:
+    """TEST-DAEMON-07: SIGTERM / SIGINT graceful shutdown.
+
+    Verifies that the _register_signal_handlers method wires up correctly
+    and that a simulated SIGTERM causes stop() to be invoked.
+    """
+
+    def test_register_signal_handlers_outside_loop_is_noop(self):
+        """TEST-DAEMON-07a: _register_signal_handlers is a no-op outside an event loop.
+
+        In a synchronous test context there is no running asyncio loop, so
+        the method must return without raising an exception.
+        """
+        from app.domains.quant.application.daemon import quant_daemon_controller
+
+        # Should not raise — the method guards against missing event loop.
+        quant_daemon_controller._register_signal_handlers()
+
+    def test_sigterm_triggers_stop_via_loop(self):
+        """TEST-DAEMON-07b: Within a running event loop, SIGTERM schedules stop().
+
+        Uses os.kill(getpid(), SIGTERM) to fire a real OS-level signal into the
+        running asyncio event loop so the registered handler is invoked without
+        relying on CPython-internal Handle._callback internals.
+        """
+        import asyncio
+        import os
+        import signal
+
+        from app.domains.quant.application.daemon.clock import VietnamMarketClock
+        from app.domains.quant.application.daemon.controller import DaemonController
+        from app.domains.quant.application.daemon.dispatcher import SignalDispatcher
+        from app.domains.quant.application.daemon.state import DaemonCircuitBreaker
+
+        async def run():
+            cb = DaemonCircuitBreaker()
+            poller = MarketDataPoller(cb)
+            ctrl = DaemonController(
+                clock=VietnamMarketClock(),
+                circuit_breaker=cb,
+                poller=poller,
+                dispatcher=SignalDispatcher(),
+            )
+
+            await ctrl.start()
+            assert ctrl.state.running is True
+
+            loop = asyncio.get_running_loop()
+            # Verify our handler was registered before firing the signal.
+            signal_handlers = getattr(loop, "_signal_handlers", {})
+            assert signal.SIGTERM in signal_handlers, (
+                "_register_signal_handlers must add SIGTERM to the running loop"
+            )
+
+            # Fire a real SIGTERM into this process. The asyncio loop will
+            # dispatch it to our registered handler on the next iteration.
+            os.kill(os.getpid(), signal.SIGTERM)
+
+            # Give the loop several cycles to process the signal and the
+            # stop() coroutine that the handler schedules.
+            for _ in range(5):
+                await asyncio.sleep(0)
+
+            # stop() should have been called by the signal handler.
+            assert ctrl.state.running is False
+            assert ctrl.state.status == "stopped"
+
+        asyncio.run(run())
+
+
+class TestDaemonStatusHTTP:
+    """TEST-DAEMON-08: /daemon/status HTTP response shape validation.
+
+    Verifies that the status endpoint returns the exact keys required by the
+    API contract without needing a real database or live daemon loop.
+    """
+
+    def test_status_response_contains_required_top_level_keys(self):
+        """TEST-DAEMON-08a: Top-level keys match QuantDaemonState.as_dict() contract."""
+        from app.domains.quant.application.daemon import quant_daemon_controller
+
+        payload = quant_daemon_controller.status()
+
+        required_keys = {
+            "running",
+            "paused",
+            "degraded",
+            "status",
+            "session_phase",
+            "last_started_at",
+            "last_stopped_at",
+            "last_run_at",
+            "last_success_at",
+            "last_error_at",
+            "last_error",
+            "circuit_breaker",
+        }
+        missing = required_keys - payload.keys()
+        assert not missing, f"Status response missing keys: {missing}"
+
+    def test_status_circuit_breaker_shape(self):
+        """TEST-DAEMON-08b: Nested circuit_breaker dict has correct sub-keys."""
+        from app.domains.quant.application.daemon import quant_daemon_controller
+
+        payload = quant_daemon_controller.status()
+        cb = payload["circuit_breaker"]
+
+        required_cb_keys = {
+            "is_open",
+            "failure_count",
+            "failure_threshold",
+            "opened_at",
+            "last_error",
+        }
+        missing = required_cb_keys - cb.keys()
+        assert not missing, f"circuit_breaker missing keys: {missing}"
+
+    def test_status_types_are_correct(self):
+        """TEST-DAEMON-08c: Boolean and string fields have correct Python types."""
+        from app.domains.quant.application.daemon import quant_daemon_controller
+
+        payload = quant_daemon_controller.status()
+
+        assert isinstance(payload["running"], bool)
+        assert isinstance(payload["paused"], bool)
+        assert isinstance(payload["degraded"], bool)
+        assert isinstance(payload["status"], str)
+        assert isinstance(payload["circuit_breaker"]["is_open"], bool)
+        assert isinstance(payload["circuit_breaker"]["failure_count"], int)
+
+    def test_status_stopped_daemon_defaults(self):
+        """TEST-DAEMON-08d: Stopped daemon reports expected default values."""
+        from app.domains.quant.application.daemon import quant_daemon_controller
+
+        # Controller is freshly initialised (not started) in test env
+        payload = quant_daemon_controller.status()
+
+        assert payload["running"] is False
+        assert payload["paused"] is False
+        assert payload["status"] == "stopped"
+        assert payload["circuit_breaker"]["is_open"] is False
+        assert payload["circuit_breaker"]["failure_count"] == 0

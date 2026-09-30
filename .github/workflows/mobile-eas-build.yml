@@ -33,8 +33,10 @@ jobs:
 
     steps:
       - name: 🔐 Validate EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets['EXPO_TOKEN'] }}
         run: |
-          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+          if [ -z "$EXPO_TOKEN" ]; then
             echo "::error::Thiếu secret EXPO_TOKEN. Vui lòng thêm EXPO_TOKEN vào Settings > Secrets của repo."
             exit 1
           fi
@@ -63,7 +65,7 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          token: ${{ secrets['EXPO_TOKEN'] }}
 
       - name: 📱 Trigger EAS Cloud Build (--no-wait)
         # Sử dụng cờ --no-wait để thoát ngay sau khi gửi lệnh, không treo máy ảo chờ build (tiết kiệm 100% phút)

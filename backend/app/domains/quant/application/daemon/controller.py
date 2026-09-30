@@ -2,6 +2,8 @@
 
 import asyncio
 import logging
+import random
+import signal
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -55,18 +57,75 @@ class DaemonController:
         self.metrics: list[DaemonCycleMetrics] = []
         self.state = QuantDaemonState()
         self._task: asyncio.Task | None = None
+        self.instance_id: str | None = None
 
-    async def start(self) -> None:
-        """Start the daemon in background."""
+    async def start(
+        self,
+        daemon_name: str = "quant-daemon",
+        symbols: list[str] | None = None,
+    ) -> None:
+        """Start the daemon as a background asyncio.Task.
+
+        Creates a persistent background task via asyncio.create_task so the
+        polling loop runs concurrently without blocking the calling coroutine.
+        Idempotent: calling start() while already running is a no-op.
+        """
         if self.state.running:
             return
 
+        started_at = datetime.now(VN_TZ)
+        self.instance_id = f"{daemon_name}-{int(started_at.timestamp())}"
         self.state.running = True
         self.state.paused = False
         self.state.status = "running"
-        self.state.last_started_at = datetime.now(VN_TZ)
+        self.state.last_started_at = started_at
 
-        logger.info("Daemon started")
+        # Spawn the main loop as a fire-and-forget background task.
+        # We pass db=None here — the run() loop handles the case gracefully
+        # by skipping DB persistence when no session is available (offline mode).
+        self._task = asyncio.create_task(
+            self.run(
+                db=None,  # type: ignore[arg-type]
+                symbols=symbols or ["VN30F1M"],
+                daemon_name=daemon_name,
+            ),
+            name=self.instance_id,
+        )
+        # TRD §6 — register OS signal handlers for graceful shutdown.
+        self._register_signal_handlers()
+        logger.info("Daemon started", extra={"instance_id": self.instance_id})
+
+    def _register_signal_handlers(self) -> None:
+        """Register SIGTERM / SIGINT handlers per TRD §6 Step 5.
+
+        Both signals trigger an orderly stop: the background asyncio.Task is
+        cancelled, the DaemonSessionLog is finalised, and the process exits
+        cleanly.  Handlers are only registered when an asyncio event loop is
+        running (i.e. inside a FastAPI lifespan / uvicorn worker).
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No running loop (e.g. during unit tests) — skip silently.
+            logger.debug("_register_signal_handlers: no running event loop, skipping")
+            return
+
+        def _handle_signal(sig: signal.Signals) -> None:
+            logger.warning(
+                f"Received {sig.name} — initiating graceful daemon shutdown",
+                extra={"signal": sig.name, "instance_id": self.instance_id},
+            )
+            # Schedule stop() as a coroutine on the running loop so it runs
+            # in the asyncio thread (signal handlers cannot be async).
+            loop.create_task(self.stop(), name="daemon-signal-stop")
+
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            try:
+                loop.add_signal_handler(sig, lambda s=sig: _handle_signal(s))
+                logger.debug(f"Registered {sig.name} handler")
+            except (NotImplementedError, OSError):
+                # Windows / environments that don't support add_signal_handler.
+                logger.debug(f"Cannot register {sig.name} handler on this platform")
 
     async def stop(self) -> None:
         """Stop the daemon."""
@@ -84,20 +143,22 @@ class DaemonController:
 
         logger.info("Daemon stopped")
 
-    def pause(self) -> None:
-        """Pause the daemon loop."""
+    def pause(self) -> dict[str, Any]:
+        """Pause the daemon loop and return current status."""
         if self.state.running:
             self.state.paused = True
             self.state.status = "paused"
             logger.info("Daemon paused")
+        return self.status()
 
-    def resume(self) -> None:
-        """Resume the daemon loop and reset circuit breaker."""
+    def resume(self) -> dict[str, Any]:
+        """Resume the daemon loop, reset circuit breaker, and return current status."""
         if self.state.running and self.state.paused:
             self.state.paused = False
             self.state.status = "running"
             self.circuit_breaker.reset()
             logger.info("Daemon resumed")
+        return self.status()
 
     def status(self) -> dict[str, Any]:
         """Get daemon operational status."""
@@ -137,7 +198,7 @@ class DaemonController:
 
     async def run(
         self,
-        db: AsyncSession,
+        db: AsyncSession | None,
         symbols: list[str],
         daemon_name: str = "quant-daemon",
         run_duration_seconds: float | None = None,
@@ -145,8 +206,14 @@ class DaemonController:
         """
         Run daemon until stopped or run_duration_seconds elapses.
 
+        Persists a DaemonSessionLog row to PostgreSQL at startup, updates the
+        heartbeat every cycle, and finalises the status on exit.  When *db* is
+        None (e.g. launched from start() without a request-scoped session) the
+        persistence layer is silently skipped so the daemon can still run in
+        memory-only mode.
+
         Args:
-            db: AsyncSession for persistence
+            db: AsyncSession for persistence (None → offline/no-persist mode)
             symbols: List of symbols to poll
             daemon_name: Name for logging/identification
             run_duration_seconds: Max runtime; None = run forever
@@ -154,7 +221,9 @@ class DaemonController:
         start_time = datetime.now(VN_TZ)
         cycle_count = 0
         failure_count = 0
-        instance_id = f"{daemon_name}-{int(start_time.timestamp())}"
+        # Reuse instance_id set by start(); fall back if run() called directly.
+        instance_id = self.instance_id or f"{daemon_name}-{int(start_time.timestamp())}"
+        self.instance_id = instance_id
 
         session_log = DaemonSessionLog(
             daemon_name=daemon_name,
@@ -162,6 +231,11 @@ class DaemonController:
             status="RUNNING",
             started_at=start_time,
         )
+
+        # Persist the initial session log row if a DB session is available.
+        if db is not None:
+            db.add(session_log)
+            await db.commit()
 
         logger.info(
             f"Daemon {daemon_name} started",
@@ -259,6 +333,11 @@ class DaemonController:
                     session_log.last_phase = phase.value
                     session_log.cycle_count = cycle_count
 
+                    # Persist heartbeat update to DB (every cycle).
+                    if db is not None:
+                        db.add(session_log)
+                        await db.commit()
+
                     # Reset failure count on success
                     failure_count = 0
                     self.circuit_breaker.record_success()
@@ -279,6 +358,16 @@ class DaemonController:
                         extra={"cycle": cycle_count, "failure_count": failure_count},
                     )
 
+                    # Persist failure state to DB.
+                    if db is not None:
+                        try:
+                            db.add(session_log)
+                            await db.commit()
+                        except Exception as db_err:
+                            logger.warning(
+                                f"Failed to persist session log on error: {db_err}"
+                            )
+
                     # Check circuit breaker
                     self.circuit_breaker.record_failure(e)
                     if self.circuit_breaker.is_open:
@@ -287,12 +376,12 @@ class DaemonController:
                             extra={"opened_at": self.circuit_breaker.opened_at},
                         )
 
-                    # Back off on error
-                    await asyncio.sleep(
-                        STATE_POLL_INTERVALS.get(
-                            SessionPhase.OVERNIGHT_SIMULATION, 60.0
-                        )
+                    # Jittered backoff on error (TRD §4.1)
+                    base_interval = STATE_POLL_INTERVALS.get(
+                        SessionPhase.OVERNIGHT_SIMULATION, 60.0
                     )
+                    jitter = random.uniform(0.0, base_interval * 0.2)
+                    await asyncio.sleep(base_interval + jitter)
 
         except asyncio.CancelledError:
             logger.info(f"Daemon {daemon_name} cancelled")
@@ -307,6 +396,14 @@ class DaemonController:
             session_log.stopped_at = datetime.now(VN_TZ)
             if session_log.status not in ("CANCELLED", "CRASHED"):
                 session_log.status = "STOPPED"
+
+            # Final DB flush — record the terminal state.
+            if db is not None:
+                try:
+                    db.add(session_log)
+                    await db.commit()
+                except Exception as db_err:
+                    logger.warning(f"Failed to persist final session log: {db_err}")
 
             self.state.running = False
             self.state.status = "stopped"
