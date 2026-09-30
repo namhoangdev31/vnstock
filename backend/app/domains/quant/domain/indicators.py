@@ -780,6 +780,95 @@ def detect_market_regime_gmm(
     }
 
 
+def compute_adf_stationarity(
+    basis_series: Sequence[float],
+    significance_level: float = 0.05,
+    min_observations: int = 20,
+) -> dict[str, Any]:
+    """Kiểm định ADF cho chuỗi basis; dữ liệu lỗi/thiếu luôn trả stationary=False."""
+    _fallback = {
+        "adf_statistic": None,
+        "p_value": 1.0,
+        "stationary": False,
+        "error": None,
+    }
+    if len(basis_series) < max(4, min_observations):
+        _fallback["error"] = "insufficient_data"
+        return _fallback
+
+    try:
+        series = np.asarray(basis_series, dtype=np.float64)
+        if not np.all(np.isfinite(series)) or float(np.ptp(series)) <= 1e-12:
+            _fallback["error"] = "invalid_or_constant_data"
+            return _fallback
+        from statsmodels.tsa.stattools import adfuller
+
+        statistic, p_value, *_ = adfuller(series, autolag="AIC")
+        if not math.isfinite(float(statistic)) or not math.isfinite(float(p_value)):
+            _fallback["error"] = "non_finite_test_result"
+            return _fallback
+        return {
+            "adf_statistic": float(statistic),
+            "p_value": float(p_value),
+            "stationary": bool(p_value < significance_level),
+            "error": None,
+        }
+    except Exception as exc:
+        _fallback["error"] = f"adf_failed: {type(exc).__name__}"
+        return _fallback
+
+
+def compute_garch_volatility(
+    returns: Sequence[float],
+    trading_days: int = 252,
+    min_observations: int = 30,
+) -> dict[str, Any]:
+    """Fit GARCH(1,1)-t; fallback có tường minh về HV annualized dạng decimal."""
+    values = np.asarray(returns, dtype=np.float64)
+    valid = values[np.isfinite(values)] if values.ndim == 1 else np.array([])
+    enough_data = len(valid) >= max(3, min_observations)
+    valid_input = bool(
+        enough_data and trading_days > 0 and np.all(np.abs(valid) < 1e6)
+    )
+
+    def historical_fallback(error: str) -> dict[str, Any]:
+        hv = (
+            float(np.std(valid, ddof=1) * np.sqrt(trading_days))
+            if len(valid) >= 2 and trading_days > 0
+            else 0.0
+        )
+        if not math.isfinite(hv):
+            hv = 0.0
+        return {
+            "volatility": hv,
+            "method": "historical_fallback",
+            "fallback": True,
+            "error": error,
+        }
+
+    if not valid_input:
+        return historical_fallback("invalid_or_insufficient_returns")
+
+    try:
+        from arch import arch_model
+
+        # arch expects percentage returns; forecast variance is scaled back to decimal.
+        model = arch_model(valid * 100.0, mean="Constant", vol="GARCH", p=1, q=1, dist="t")
+        fitted = model.fit(disp="off", show_warning=False)
+        variance = float(fitted.forecast(horizon=1, reindex=False).variance.iloc[-1, 0])
+        volatility = math.sqrt(variance) / 100.0 * math.sqrt(trading_days)
+        if not math.isfinite(volatility) or volatility < 0.0:
+            return historical_fallback("garch_invalid_forecast")
+        return {
+            "volatility": volatility,
+            "method": "garch_t",
+            "fallback": False,
+            "error": None,
+        }
+    except Exception as exc:
+        return historical_fallback(f"garch_fit_failed: {type(exc).__name__}")
+
+
 def compute_basis_zscore_scipy(
     futures_price: float,
     spot_index_price: float,

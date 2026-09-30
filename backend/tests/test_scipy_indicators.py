@@ -1,7 +1,9 @@
 """Unit tests cho các hàm Phần 3 (scipy/scikit-learn) trong indicators.py."""
 
 from app.domains.quant.domain.indicators import (
+    compute_adf_stationarity,
     compute_basis_zscore_scipy,
+    compute_garch_volatility,
     compute_engine_correlation,
     compute_historical_volatility_v2,
     compute_linear_regression_slope_v2,
@@ -12,6 +14,41 @@ from app.domains.quant.domain.indicators import (
     optimize_engine_weights_from_errors,
     simulate_monte_carlo_scipy,
 )
+
+
+class TestAdfStationarity:
+    def test_insufficient_series_fails_closed(self):
+        result = compute_adf_stationarity([0.1, -0.1])
+        assert result["stationary"] is False
+        assert result["error"] == "insufficient_data"
+
+    def test_stationary_series(self):
+        values = []
+        for i in range(60):
+            previous = values[-1] if values else 0.0
+            values.append(0.7 * previous + ((i % 5) - 2) * 0.1)
+        result = compute_adf_stationarity(values)
+        assert result["stationary"] is True
+        assert result["p_value"] < 0.05
+
+    def test_constant_series_fails_closed(self):
+        result = compute_adf_stationarity([1.0] * 30)
+        assert result["stationary"] is False
+
+
+class TestGarchVolatility:
+    def test_short_history_uses_historical_fallback(self):
+        result = compute_garch_volatility([0.01, -0.02, 0.01])
+        assert result["fallback"] is True
+        assert result["method"] == "historical_fallback"
+        assert result["volatility"] > 0.0
+
+    def test_garch_t_forecast_is_annualized_decimal(self):
+        returns = [0.001 * ((i % 7) - 3) for i in range(80)]
+        result = compute_garch_volatility(returns)
+        assert result["volatility"] >= 0.0
+        assert result["method"] in {"garch_t", "historical_fallback"}
+        assert result["volatility"] < 1.0
 
 
 class TestLinearRegressionSlopeV2:

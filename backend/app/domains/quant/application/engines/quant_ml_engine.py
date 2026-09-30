@@ -17,7 +17,9 @@ from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
 from app.domains.quant.application.schemas import QuantMLEngineResponse
 from app.domains.quant.domain.indicators import (
+    compute_adf_stationarity,
     compute_basis_zscore_scipy,
+    compute_garch_volatility,
     compute_historical_volatility_v2,
     compute_linear_regression_slope,
     compute_parkinson_volatility,
@@ -284,12 +286,23 @@ class QuantMLEngine:
 
         hv = 0.15
         pv = 0.15
+        mc_volatility = 0.15
         if closes and highs and lows:
             hv, pv = self.compute_volatilities(highs, lows, closes)
+            if len(closes) >= 2:
+                returns = [
+                    math.log(current / previous)
+                    for previous, current in zip(closes, closes[1:], strict=False)
+                    if previous > 0.0 and current > 0.0
+                ]
+                garch_result = compute_garch_volatility(returns)
+                mc_volatility = float(garch_result["volatility"])
+            else:
+                mc_volatility = hv
 
         mc_targets = self.simulate_monte_carlo_t1(
             current_price=futures_price,
-            volatility=max(hv, pv),
+            volatility=mc_volatility,
         )
 
         if phase in (SessionPhase.PRE_ATO, SessionPhase.ATO):
@@ -311,7 +324,21 @@ class QuantMLEngine:
         if closes and len(closes) >= 5:
             lr_trend_score = compute_linear_regression_slope(list(closes), window=10)
 
-        score = self.compute_composite_score(basis_z, trans_score, lr_trend_score)
+        adf_result = (
+            compute_adf_stationarity(historical_basis)
+            if historical_basis
+            else {
+                "adf_statistic": None,
+                "p_value": 1.0,
+                "stationary": False,
+                "error": "no_basis_history",
+            }
+        )
+        normalized_basis_z = 0.0 if not adf_result.get("stationary") else basis_z
+
+        score = self.compute_composite_score(
+            normalized_basis_z, trans_score, lr_trend_score
+        )
 
         return QuantMLEngineResponse(
             symbol=symbol,
@@ -325,4 +352,5 @@ class QuantMLEngine:
             monte_carlo_targets=mc_targets,
             lr_trend_score=lr_trend_score if lr_trend_score is not None else 0.0,
             mc_max_drawdown_p50=mc_targets.get("mc_max_drawdown_p50", 0.0),
+            basis_stationarity=adf_result,
         )
