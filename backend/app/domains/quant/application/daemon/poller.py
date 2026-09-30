@@ -16,7 +16,7 @@ import logging
 import random
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from app.core.enums import SessionPhase
@@ -190,11 +190,16 @@ class MarketDataPoller:
             vnstock_service,
         )
 
+        today: date = datetime.now(VN_TZ).date()
+        start: date = today - timedelta(days=max(limit * 2, 60))
+
         def _call() -> list[Any]:
             df = vnstock_service.fetch_price_history(
                 symbol=symbol,
-                interval="1D",
+                start=start,
+                end=today,
                 count=limit,
+                interval="1m",
             )
             if df is not None and not df.empty:
                 return df.to_dict("records")

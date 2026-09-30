@@ -10,6 +10,7 @@ Kiểm tra:
 - Xử lý ngoại lệ VnstockServiceError khi tất cả các nguồn thất bại
 """
 
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -260,9 +261,20 @@ def test_fetch_price_history_with_count(mock_quote_cls, service):
     )
     mock_quote_cls.return_value = mock_inst
 
-    df = service.fetch_price_history("VNM", count=50, interval="1D")
+    df = service.fetch_price_history(
+        "VNM",
+        start=date(2026, 9, 1),
+        end=date(2026, 9, 19),
+        count=50,
+        interval="1D",
+    )
     assert len(df) == 2
-    mock_inst.history.assert_called_once_with(interval="1D", count_back=50)
+    mock_inst.history.assert_called_once_with(
+        start="2026-09-01",
+        end="2026-09-19",
+        interval="1D",
+        count_back=50,
+    )
 
 
 @patch("app.domains.market_data.infrastructure.vnstock_adapter.Quote")

@@ -1178,40 +1178,37 @@ class VnstockService:
     def fetch_price_history(
         self,
         symbol: str,
-        start: date | None = None,
-        end: date | None = None,
-        interval: str = "1D",
-        count: int | None = None,
+        start: date,
+        end: date,
+        count: int,
+        interval: str = "1m",
     ) -> pd.DataFrame:
         """Tải dữ liệu nến lịch sử OHLCV của cổ phiếu hoặc phái sinh.
 
         Tham số:
             symbol: Mã chứng khoán (ví dụ: 'VNM', 'VN30F1M').
-            start: Ngày bắt đầu (tùy chọn).
-            end: Ngày kết thúc (tùy chọn).
+            start: Ngày bắt đầu.
+            end: Ngày kết thúc.
             interval: Khung thời gian nến ('1m', '5m', '15m', '1H', '1D', '1W').
-            count: Số lượng thanh nến gần nhất cần lấy (tùy chọn).
+            count: Số lượng thanh nến gần nhất cần lấy.
 
         Trả về:
             pd.DataFrame chứa các cột: time, open, high, low, close, volume.
         """
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_QUOTE)
-        start_str = start.strftime("%Y-%m-%d") if start else None
-        end_str = end.strftime("%Y-%m-%d") if end else None
+        start_str = start.strftime("%Y-%m-%d")
+        end_str = end.strftime("%Y-%m-%d")
 
         for src in valid_sources:
             try:
                 self._throttle(src)
                 q = Quote(symbol=symbol, source=src, show_log=False)
-                kwargs: dict[str, Any] = {"interval": interval}
-                if start_str:
-                    kwargs["start"] = start_str
-                if end_str:
-                    kwargs["end"] = end_str
-                if count is not None:
-                    kwargs["count_back"] = count
-
-                df = q.history(**kwargs)
+                df = q.history(
+                    start=start_str,
+                    end=end_str,
+                    interval=interval,
+                    count_back=count,
+                )
                 if df is not None and not df.empty:
                     self.record_success(src)
                     logger.info(
@@ -1397,15 +1394,22 @@ class VnstockService:
         if not df.empty:
             return df
 
-        # Fallback qua Quote thông thường
-        parsed_start = start if isinstance(start, date) or start is None else None
-        parsed_end = end if isinstance(end, date) or end is None else None
+        # Fallback qua Quote thông thường — đảm bảo start/end là date bắt buộc
+        from datetime import date as _date
+
+        def _parse_to_date(v: date | str | None) -> _date:
+            if isinstance(v, _date):
+                return v
+            if isinstance(v, str):
+                return _date.fromisoformat(v)
+            return _date.today()
+
         return self.fetch_price_history(
             symbol=symbol,
-            start=parsed_start,
-            end=parsed_end,
+            start=_parse_to_date(start),
+            end=_parse_to_date(end),
             interval=interval,
-            count=count,
+            count=count if count is not None else 100,
         )
 
     # -------------------------------------------------------------------------

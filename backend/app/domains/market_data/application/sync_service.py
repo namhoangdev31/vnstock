@@ -1326,7 +1326,7 @@ class DataSyncManager:
         target_end = end or date.today()
 
         def _task() -> int:
-            df = self.svc.fetch_price_history(symbol, start, target_end, interval="1D")
+            df = self.svc.fetch_price_history(symbol, start, target_end, count=3650, interval="1D")
             if df is None or df.empty:
                 return 0
 
