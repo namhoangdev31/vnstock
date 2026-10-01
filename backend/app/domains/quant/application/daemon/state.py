@@ -23,7 +23,7 @@ STATE_POLL_INTERVALS: dict[SessionPhase, float] = {
 
 @dataclass
 class DaemonCircuitBreaker:
-    failure_threshold: int = 3
+    failure_threshold: int = 5
     failure_count: int = 0
     opened_at: datetime | None = None
     last_error: str | None = None
