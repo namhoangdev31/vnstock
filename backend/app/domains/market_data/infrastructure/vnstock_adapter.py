@@ -9,6 +9,8 @@ Cung cấp giao diện nhất quán và hoàn chỉnh cho toàn bộ hệ sinh t
 """
 
 import logging
+import threading
+import time
 from collections.abc import Callable
 from datetime import date
 from typing import Any
@@ -55,6 +57,11 @@ class VnstockService:
     VALID_SOURCES_FINANCE = VnstockCapabilityRegistry.check_availability(
         "finance.income_statement"
     ).supported_sources or ["kbs", "vci"]
+
+    # In-memory quote cache (TTL 60s) to prevent duplicate calls on Community tier
+    _quote_cache: dict[str, tuple[float, pd.DataFrame]] = {}
+    _quote_cache_lock: threading.Lock = threading.Lock()
+    _QUOTE_CACHE_TTL: float = 60.0
 
     def __init__(
         self,
@@ -1477,11 +1484,23 @@ class VnstockService:
         )
 
     def fetch_market_equity_quote(self, symbol: str) -> pd.DataFrame:
-        """Lấy thông tin giá hiện tại (Bảng giá) của cổ phiếu qua Market.equity.quote."""
-        return self._execute_api_call(
+        """Lấy thông tin giá hiện tại (Bảng giá) của cổ phiếu qua Market.equity.quote (kèm TTL cache)."""
+        now = time.monotonic()
+        sym_clean = symbol.upper().strip()
+        with self._quote_cache_lock:
+            if sym_clean in self._quote_cache:
+                cached_time, cached_df = self._quote_cache[sym_clean]
+                if now - cached_time < self._QUOTE_CACHE_TTL:
+                    return cached_df.copy()
+
+        df = self._execute_api_call(
             lambda: Market().equity(symbol).quote(),
             err_msg=f"Lỗi tải bảng giá cổ phiếu {symbol} qua Market.equity.quote",
         )
+        if df is not None and not df.empty:
+            with self._quote_cache_lock:
+                self._quote_cache[sym_clean] = (now, df)
+        return df
 
     # -------------------------------------------------------------------------
     # Nhóm B: Lớp futures (Hợp đồng tương lai / Phái sinh)

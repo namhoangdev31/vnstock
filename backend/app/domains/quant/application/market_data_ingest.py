@@ -30,7 +30,7 @@ from app.domains.quant.domain.models import (
 logger = logging.getLogger(__name__)
 
 # Community tier: 60 req/min → keep below 50 req/min with safety margin
-_API_DELAY_S = 0.8  # live ingest: ~50 calls/min max
+_API_DELAY_S = 1.2  # live ingest: ~45 calls/min max for Community tier safety
 _BACKFILL_DELAY_S = 1.5  # backfill: ~40 calls/min — safe for 30-day history
 
 
@@ -206,6 +206,10 @@ def ingest_macro_indicators(
             except (ValueError, TypeError):
                 pass
 
+    if counts["sjc_buy"] == 0 and counts["sjc_sell"] == 0:
+        logger.info(
+            "[ingest] SJC gold feed unavailable (upstream 403 or timeout); existing DB indicators retained"
+        )
     session.commit()
     logger.info("[ingest] macro_indicator: %s for %s", counts, today)
     return counts

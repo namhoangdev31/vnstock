@@ -52,11 +52,14 @@ class Settings(BaseSettings):
     VNSTOCK_SOURCE: str = "VCI"
     VNSTOCK_FALLBACK_SOURCE: str = "KBS"
     VNSTOCK_TERTIARY_SOURCE: str = "MSN"
+    VNSTOCK_TIER: str = (
+        "community"  # 'community' (60 req/min) or 'sponsor' (180-600 req/min)
+    )
     VNSTOCK_REALTIME_CACHE_TTL: int = 5  # seconds
     VNSTOCK_METADATA_CACHE_TTL: int = 86400  # 24 hours
     # Minimum spacing between external vnstock requests (anti-ban, AGENTS §7.2).
-    # Spec mandates 0.2–0.5s; 0.3s is a safe default.
-    VNSTOCK_REQUEST_MIN_DELAY: float = 0.3
+    # On Community tier (60 req/min limit), 1.0s ensures safe spacing.
+    VNSTOCK_REQUEST_MIN_DELAY: float = 1.0
 
     # Cron & Background Scheduler config
     CRON_SECRET_KEY: str | None = None

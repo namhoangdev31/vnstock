@@ -9,17 +9,34 @@ from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
 
 # Adaptive polling intervals per session phase (in seconds)
-STATE_POLL_INTERVALS: dict[SessionPhase, float] = {
+# Calibrated for Community Tier (60 requests/minute max):
+# Each cycle polls 2 endpoints (VN30F1M + VN30 1m).
+# 3.0s interval = 20 cycles/min * 2 = 40 requests/min, leaving 20 req/min margin for other services.
+COMMUNITY_POLL_INTERVALS: dict[SessionPhase, float] = {
     SessionPhase.PRE_ATO: 30.0,
-    SessionPhase.ATO: 1.0,
-    SessionPhase.MORNING_CONTINUOUS: 1.0,
+    SessionPhase.ATO: 3.0,
+    SessionPhase.MORNING_CONTINUOUS: 3.0,
     SessionPhase.MIDDAY_INTERMISSION: 60.0,
-    SessionPhase.AFTERNOON_CONTINUOUS: 1.0,
-    SessionPhase.PRE_ATC: 0.5,
-    SessionPhase.ATC: 0.5,
+    SessionPhase.AFTERNOON_CONTINUOUS: 3.0,
+    SessionPhase.PRE_ATC: 2.0,
+    SessionPhase.ATC: 2.0,
     SessionPhase.POST_MARKET: 60.0,
     SessionPhase.OVERNIGHT_SIMULATION: 300.0,
 }
+
+SPONSOR_POLL_INTERVALS: dict[SessionPhase, float] = {
+    SessionPhase.PRE_ATO: 15.0,
+    SessionPhase.ATO: 1.0,
+    SessionPhase.MORNING_CONTINUOUS: 1.0,
+    SessionPhase.MIDDAY_INTERMISSION: 30.0,
+    SessionPhase.AFTERNOON_CONTINUOUS: 1.0,
+    SessionPhase.PRE_ATC: 0.5,
+    SessionPhase.ATC: 0.5,
+    SessionPhase.POST_MARKET: 30.0,
+    SessionPhase.OVERNIGHT_SIMULATION: 120.0,
+}
+
+STATE_POLL_INTERVALS: dict[SessionPhase, float] = COMMUNITY_POLL_INTERVALS
 
 
 @dataclass
