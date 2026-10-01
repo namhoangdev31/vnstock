@@ -9,7 +9,12 @@ Tests cover:
 """
 
 from datetime import datetime, timedelta
+from types import SimpleNamespace
+from typing import cast
 from unittest.mock import patch
+from uuid import uuid4
+
+import pytest
 
 from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
@@ -17,6 +22,13 @@ from app.domains.quant.application.daemon.clock import VietnamMarketClock
 from app.domains.quant.application.daemon.dispatcher import (
     DispatchResult,
     SignalDispatcher,
+)
+from app.domains.quant.application.daemon.event import (
+    AnalysisContext,
+    MarketDataEvent,
+)
+from app.domains.quant.application.daemon.orchestrator import (
+    PhaseAwareEngineOrchestrator,
 )
 from app.domains.quant.application.daemon.poller import (
     MarketDataPoller,
@@ -29,6 +41,7 @@ from app.domains.quant.application.daemon.state import (
     DaemonCircuitBreaker,
     QuantDaemonState,
 )
+from app.domains.quant.application.engines.ensemble_engine import EnsembleEngine
 
 
 class TestVietnamMarketClock:
@@ -265,6 +278,16 @@ class TestMarketDataPoller:
         assert len(result.errors) > 0
         assert result.errors[0].get("error") == "circuit_breaker_open"
 
+    def test_breaker_enters_half_open_after_cooldown(self):
+        """Cooldown expiry must allow a probe instead of serving cache forever."""
+        cb = DaemonCircuitBreaker(
+            opened_at=datetime.now(VN_TZ) - timedelta(seconds=61),
+            failure_count=5,
+        )
+
+        assert cb.is_half_open is True
+        assert cb.is_open is False
+
 
 class TestSignalDispatcher:
     """Test suite for signal dispatcher."""
@@ -301,6 +324,111 @@ class TestSignalDispatcher:
 
         assert isinstance(result, DispatchResult)
         assert result.phase == SessionPhase.MORNING_CONTINUOUS
+
+    @pytest.mark.anyio
+    async def test_dispatch_skips_forming_candle(self):
+        """Signals must use closed candles only to avoid repainting."""
+        now = datetime.now(VN_TZ)
+        context = AnalysisContext(
+            event=MarketDataEvent(
+                event_id="VN30F1M:1m:forming:candle",
+                symbol="VN30F1M",
+                asset_type="derivative",
+                interval="1m",
+                event_type="candle",
+                event_time=now,
+                received_at=now,
+                market_phase=SessionPhase.MORNING_CONTINUOUS,
+                is_closed=False,
+            ),
+            latest_bars=[],
+            intraday_flow=[],
+            market_snapshot={},
+            phase=SessionPhase.MORNING_CONTINUOUS,
+            as_of=now,
+            highs=[1305.0] * 20,
+            lows=[1295.0] * 20,
+            closes=[1300.0] * 20,
+            volumes=[1000.0] * 20,
+            entry_price=1300.0,
+            spot_price=1300.0,
+            is_valid=True,
+        )
+
+        result = await SignalDispatcher(
+            ensemble_engine=EnsembleEngine(session=None)
+        ).dispatch(
+            phase=SessionPhase.MORNING_CONTINUOUS,
+            symbols=["VN30F1M"],
+            market_data={"VN30F1M": {"context": context}},
+        )
+
+        assert result.skipped_signals == 1
+        assert result.forecast_journals == 0
+
+    @pytest.mark.anyio
+    async def test_dispatch_uses_place_order_for_configured_portfolio(self):
+        """A configured paper portfolio must receive LONG/SHORT signals."""
+
+        class PlaceOrderSimulation:
+            def __init__(self):
+                self.calls = []
+
+            def place_order(self, **kwargs):
+                self.calls.append(kwargs)
+                return object()
+
+        class ExecutableOrchestrator:
+            def orchestrate(self, context, session_id=None, cycle_id=None):
+                return SimpleNamespace(is_executable=True, skip_reason=None)
+
+        class LongEnsemble:
+            MODEL_VERSION = "test"
+
+            def generate_signal(self, **kwargs):
+                return SimpleNamespace(
+                    journal_id=uuid4(),
+                    predicted_direction="LONG",
+                    ensemble_score=0.8,
+                    confidence=0.8,
+                    entry_price=1300.0,
+                    stop_loss=1290.0,
+                    take_profit=1320.0,
+                    disclaimer="CẢNH BÁO RỦI RO (RULE 4)",
+                )
+
+        now = datetime.now(VN_TZ)
+        context = AnalysisContext(
+            event=None,
+            latest_bars=[],
+            intraday_flow=[],
+            market_snapshot={},
+            phase=SessionPhase.MORNING_CONTINUOUS,
+            as_of=now,
+            highs=[1305.0] * 20,
+            lows=[1295.0] * 20,
+            closes=[1300.0] * 20,
+            volumes=[1000.0] * 20,
+            entry_price=1300.0,
+            spot_price=1300.0,
+            is_valid=True,
+        )
+        simulation = PlaceOrderSimulation()
+        portfolio = object()
+        result = await SignalDispatcher(
+            ensemble_engine=LongEnsemble(),
+            simulation_engine=simulation,
+            orchestrator=cast(PhaseAwareEngineOrchestrator, ExecutableOrchestrator()),
+            default_portfolio=portfolio,
+        ).dispatch(
+            phase=SessionPhase.MORNING_CONTINUOUS,
+            symbols=["VN30F1M"],
+            market_data={"VN30F1M": {"context": context}},
+        )
+
+        assert result.simulation_orders == 1
+        assert simulation.calls[0]["portfolio"] is portfolio
+        assert simulation.calls[0]["side"] == "BUY"
 
 
 class TestPollerCacheFallback:
@@ -387,6 +515,15 @@ class TestDaemonSIGTERM:
 
         # Should not raise — the method guards against missing event loop.
         quant_daemon_controller._register_signal_handlers()
+
+    def test_global_controller_and_poller_share_circuit_breaker(self):
+        """Status/reset operations must observe the poller's breaker state."""
+        from app.domains.quant.application.daemon import quant_daemon_controller
+
+        assert (
+            quant_daemon_controller.circuit_breaker
+            is quant_daemon_controller.poller.circuit_breaker
+        )
 
     def test_sigterm_triggers_stop_via_loop(self):
         """TEST-DAEMON-07b: Within a running event loop, SIGTERM schedules stop().

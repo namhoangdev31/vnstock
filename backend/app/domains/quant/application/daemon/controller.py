@@ -275,7 +275,13 @@ class DaemonController:
         )
 
         try:
-            while self.state.running and not self.state.paused:
+            while self.state.running:
+                if self.state.paused:
+                    # Keep the task alive while paused so resume() can clear
+                    # the flag and continue the same daemon session.
+                    await asyncio.sleep(1.0)
+                    continue
+
                 if (
                     run_duration_seconds
                     and (datetime.now(VN_TZ) - start_time).total_seconds()

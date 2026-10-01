@@ -6,12 +6,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlmodel import Session, col, select
+from sqlmodel import Session
 
 from app.core.enums import (
-    ForecastDirection,
     ForecastHorizon,
-    ForecastStatus,
     OrderSide,
     SessionPhase,
 )
@@ -21,7 +19,6 @@ from app.domains.quant.application.daemon.orchestrator import (
     PhaseAwareEngineOrchestrator,
 )
 from app.domains.quant.application.schemas import EnsembleSignalRequest
-from app.domains.quant.domain.models import ForecastJournal
 
 if TYPE_CHECKING:
     pass
@@ -61,7 +58,7 @@ _UNSET = object()
 class SignalDispatcher:
     """
     Routes normalized market data to analytical engines, generates Ensemble decisions,
-    persists records idempotently to ForecastJournal, and executes paper-trades.
+    uses the Ensemble-owned ForecastJournal write and executes paper-trades.
     """
 
     def __init__(
@@ -70,9 +67,11 @@ class SignalDispatcher:
         simulation_engine: Any = _UNSET,
         orchestrator: PhaseAwareEngineOrchestrator | None = None,
         session: Session | None = None,
+        default_portfolio: Any = None,
     ) -> None:
         self._ensemble = ensemble_engine
         self._simulation = simulation_engine
+        self.default_portfolio = default_portfolio
         self.orchestrator = orchestrator or PhaseAwareEngineOrchestrator(
             session=session
         )
@@ -119,137 +118,40 @@ class SignalDispatcher:
     def simulation(self, val: Any) -> None:
         self._simulation = val
 
-    def _persist_journal(
+    @staticmethod
+    def _journal_key(
+        symbol: str, horizon: str, predicted_at: datetime
+    ) -> tuple[str, str, str]:
+        """Build the same idempotency key as ForecastJournal's unique index."""
+        if predicted_at.tzinfo is None:
+            predicted_at = predicted_at.replace(tzinfo=VN_TZ)
+        return symbol, horizon, predicted_at.isoformat()
+
+    def _track_journal_reference(
         self,
+        *,
         symbol: str,
         horizon: str,
         predicted_at: datetime,
-        entry_price: float,
-        predicted_direction: str,
-        predicted_score: float,
-        engine_weights: dict[str, float],
-        engine_scores: dict[str, float],
-        parameter_snapshot: dict[str, Any],
-        db_session: Session | None,
-        model_version: str,
+        journal_id: uuid.UUID,
         log_extra: dict[str, Any],
     ) -> tuple[uuid.UUID, bool]:
-        """
-        Idempotently persists forecast to ForecastJournal.
-
-        Returns (journal_id, is_duplicate).
-        """
-        # Ensure predicted_at has timezone
-        if predicted_at.tzinfo is None:
-            predicted_at = predicted_at.replace(tzinfo=VN_TZ)
-
-        pred_key = (symbol, horizon, predicted_at.isoformat())
-        active_db = db_session or self.session
-
-        if active_db is not None:
-            try:
-                # Query existing row by UniqueConstraint("symbol", "horizon", "predicted_at")
-                existing = active_db.exec(
-                    select(ForecastJournal).where(
-                        col(ForecastJournal.symbol) == symbol,
-                        col(ForecastJournal.horizon) == horizon,
-                        col(ForecastJournal.predicted_at) == predicted_at,
-                    )
-                ).first()
-
-                if existing:
-                    logger.info(
-                        "forecast_journal_duplicate: forecast already recorded for %s/%s at %s (id=%s)",
-                        symbol,
-                        horizon,
-                        predicted_at.isoformat(),
-                        existing.id,
-                        extra=log_extra,
-                    )
-                    return existing.id, True
-
-                mapped_direction = (
-                    ForecastDirection.BULLISH
-                    if predicted_direction in ("LONG", ForecastDirection.BULLISH)
-                    else ForecastDirection.BEARISH
-                    if predicted_direction in ("SHORT", ForecastDirection.BEARISH)
-                    else ForecastDirection.NEUTRAL
-                )
-
-                new_id = uuid.uuid4()
-                entry = ForecastJournal(
-                    id=new_id,
-                    symbol=symbol,
-                    horizon=horizon,
-                    predicted_at=predicted_at,
-                    predicted_value=entry_price,
-                    predicted_direction=mapped_direction,
-                    engine_weights=engine_weights,
-                    model_version=model_version,
-                    parameter_snapshot={
-                        **parameter_snapshot,
-                        "engine_scores": engine_scores,
-                        "predicted_score": predicted_score,
-                    },
-                    status=ForecastStatus.PENDING,
-                )
-                active_db.add(entry)
-                active_db.commit()
-                active_db.refresh(entry)
-
-                logger.info(
-                    "forecast_journal_written: persisted forecast %s for %s/%s (model=%s)",
-                    entry.id,
-                    symbol,
-                    horizon,
-                    model_version,
-                    extra=log_extra,
-                )
-                return entry.id, False
-            except Exception as e:
-                logger.error(
-                    "Database error while persisting forecast journal: %s",
-                    e,
-                    extra=log_extra,
-                    exc_info=True,
-                )
-                active_db.rollback()
-                # Fall back to in-memory tracking
-
-        # In-memory / offline mode
-        if pred_key in self.journal_ledger:
-            existing_id = self.journal_ledger[pred_key]["id"]
+        """Track the already-persisted Ensemble journal without writing again."""
+        key = self._journal_key(symbol, horizon, predicted_at)
+        existing = self.journal_ledger.get(key)
+        if existing is not None:
+            existing_id = existing["id"]
             logger.info(
-                "forecast_journal_duplicate (in-memory): forecast %s for %s/%s at %s",
-                existing_id,
+                "forecast_journal_duplicate: forecast already tracked for %s/%s at %s (id=%s)",
                 symbol,
                 horizon,
                 predicted_at.isoformat(),
+                existing_id,
                 extra=log_extra,
             )
             return existing_id, True
 
-        journal_id = uuid.uuid4()
-        self.journal_ledger[pred_key] = {
-            "id": journal_id,
-            "symbol": symbol,
-            "horizon": horizon,
-            "predicted_at": predicted_at,
-            "predicted_value": entry_price,
-            "predicted_direction": predicted_direction,
-            "engine_weights": engine_weights,
-            "engine_scores": engine_scores,
-            "parameter_snapshot": parameter_snapshot,
-            "model_version": model_version,
-            "status": "pending",
-        }
-        logger.info(
-            "forecast_journal_written (in-memory): recorded forecast %s for %s/%s",
-            journal_id,
-            symbol,
-            horizon,
-            extra=log_extra,
-        )
+        self.journal_ledger[key] = {"id": journal_id}
         return journal_id, False
 
     async def dispatch(
@@ -267,7 +169,7 @@ class SignalDispatcher:
         Guarantees:
         1. Non-trading phases (POST_MARKET, OVERNIGHT_SIMULATION without bars) safely skip.
         2. Insufficient or missing data triggers market_data_event_skipped.
-        3. All generated signals are persisted idempotently to ForecastJournal.
+        3. All generated signals are persisted idempotently by EnsembleEngine.
         4. Paper trading orders are strictly isolated from real broker endpoints.
         """
         now = datetime.now(VN_TZ)
@@ -371,6 +273,15 @@ class SignalDispatcher:
                     )
                     continue
 
+                if context.event is not None and not context.event.is_closed:
+                    result.skipped_signals += 1
+                    logger.info(
+                        "market_data_event_skipped: symbol=%s, reason=forming_candle",
+                        symbol,
+                        extra=log_extra,
+                    )
+                    continue
+
                 # Run phase-aware orchestrator to execute applicable engines
                 orch_result = self.orchestrator.orchestrate(
                     context, session_id=session_id, cycle_id=cycle_id
@@ -421,29 +332,13 @@ class SignalDispatcher:
                     extra=log_extra,
                 )
 
-                # Idempotent Forecast Journal recording
-                journal_id, is_duplicate = self._persist_journal(
+                # EnsembleEngine already wrote this journal entry. Dispatcher
+                # only tracks the returned id to report retries accurately.
+                journal_id, is_duplicate = self._track_journal_reference(
                     symbol=symbol,
                     horizon=horizon,
                     predicted_at=pred_time,
-                    entry_price=context.entry_price or 1300.0,
-                    predicted_direction=signal_resp.predicted_direction,
-                    predicted_score=signal_resp.ensemble_score,
-                    engine_weights=signal_resp.engine_weights,
-                    engine_scores=signal_resp.engine_scores,
-                    parameter_snapshot={
-                        "confidence": signal_resp.confidence,
-                        "stop_loss": signal_resp.stop_loss,
-                        "take_profit": signal_resp.take_profit,
-                        "source_event_id": event_id,
-                        "market_phase": phase.value,
-                        "from_cache": context.event.from_cache
-                        if context.event
-                        else False,
-                        "disclaimer": signal_resp.disclaimer,
-                    },
-                    db_session=db,
-                    model_version=signal_resp.model_version,
+                    journal_id=getattr(signal_resp, "journal_id", None) or uuid.uuid4(),
                     log_extra=log_extra,
                 )
 
@@ -483,25 +378,38 @@ class SignalDispatcher:
                                 )
                                 if order_resp:
                                     result.simulation_orders += 1
-                            elif hasattr(self.simulation, "place_order"):
-                                # If SimulationEngine is passed with an active portfolio
-                                user_portfolios = getattr(
-                                    self.simulation, "_default_portfolio", None
+                            else:
+                                place_order = getattr(
+                                    self.simulation, "place_order", None
                                 )
-                                if user_portfolios is not None:
+                                portfolio = (
+                                    self.default_portfolio
+                                    or getattr(
+                                        self.simulation, "default_portfolio", None
+                                    )
+                                    or getattr(
+                                        self.simulation, "_default_portfolio", None
+                                    )
+                                )
+                                if callable(place_order) and portfolio is not None:
                                     side = (
                                         OrderSide.BUY
                                         if signal_dir == "LONG"
                                         else OrderSide.SELL
                                     )
-                                    self.simulation.place_order(
-                                        portfolio=user_portfolios,
+                                    order_resp = place_order(
+                                        portfolio=portfolio,
                                         symbol=symbol,
                                         side=side,
                                         quantity=1,
                                         price=context.entry_price or 1300.0,
                                     )
-                                    result.simulation_orders += 1
+                                    if order_resp is not None:
+                                        result.simulation_orders += 1
+                                elif callable(place_order):
+                                    result.errors[f"simulate:{symbol}"] = (
+                                        "paper_portfolio_not_configured"
+                                    )
                         except Exception as sim_e:
                             result.errors[f"simulate:{symbol}"] = str(sim_e)
                             logger.warning(

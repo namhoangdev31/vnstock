@@ -31,7 +31,10 @@ class DaemonCircuitBreaker:
 
     @property
     def is_open(self) -> bool:
-        return self.opened_at is not None
+        # Once the cooldown expires the breaker is HALF_OPEN and must allow
+        # one probe request through. Treating HALF_OPEN as OPEN would keep the
+        # poller serving stale cache data forever.
+        return self.opened_at is not None and not self.is_half_open
 
     @property
     def is_half_open(self) -> bool:

@@ -14,7 +14,9 @@ Tests cover:
 11. Paper trading isolation and risk disclaimer verification (RULE 1, 2, 4)
 """
 
+import asyncio
 from datetime import datetime, timedelta
+from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -458,3 +460,31 @@ class TestDaemonControllerPipelineWiring:
         status_resumed = controller.resume()
         assert status_resumed["paused"] is False
         assert status_resumed["status"] == "running"
+
+    @pytest.mark.anyio
+    async def test_pause_keeps_background_task_alive_for_resume(self):
+        """Pausing must suspend cycles without terminating the daemon task."""
+
+        class IdlePoller:
+            def poll(self, symbol, phase):
+                return MarketPollResult(
+                    symbol=symbol, phase=phase, timestamp=datetime.now(VN_TZ)
+                )
+
+        controller = DaemonController(
+            clock=VietnamMarketClock(),
+            circuit_breaker=DaemonCircuitBreaker(),
+            poller=cast(MarketDataPoller, IdlePoller()),
+            dispatcher=SignalDispatcher(ensemble_engine=None),
+        )
+
+        await controller.start()
+        await asyncio.sleep(0.02)
+        controller.pause()
+        await asyncio.sleep(0.05)
+
+        assert controller._task is not None
+        assert controller._task.done() is False
+        assert controller.resume()["status"] == "running"
+
+        await controller.stop()

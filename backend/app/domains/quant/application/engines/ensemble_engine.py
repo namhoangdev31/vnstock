@@ -17,7 +17,8 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlmodel import Session
+from sqlalchemy.exc import IntegrityError
+from sqlmodel import Session, select
 
 from app.core.enums import (
     ForecastDirection,
@@ -248,6 +249,23 @@ class EnsembleEngine:
         parameter_snapshot: dict[str, Any],
     ) -> uuid.UUID:
         """Bắt buộc ghi nhận dự báo vào bảng sổ nhật ký ForecastJournal (Tuân thủ RULE 3)."""
+        if predicted_at.tzinfo is None:
+            predicted_at = predicted_at.replace(tzinfo=VN_TZ)
+
+        # EnsembleEngine is the single owner of journal writes.  The daemon
+        # dispatcher may call generate_signal more than once for the same
+        # market event, so make this write idempotent at the domain boundary.
+        if self.session is not None:
+            existing = self.session.exec(
+                select(ForecastJournal).where(
+                    ForecastJournal.symbol == symbol,
+                    ForecastJournal.horizon == horizon,
+                    ForecastJournal.predicted_at == predicted_at,
+                )
+            ).first()
+            if existing is not None:
+                return existing.id
+
         journal_id = uuid.uuid4()
         if self.session is not None:
             mapped_direction = (
@@ -274,8 +292,24 @@ class EnsembleEngine:
                 status=ForecastStatus.PENDING,
             )
             self.session.add(entry)
-            self.session.commit()
-            self.session.refresh(entry)
+            try:
+                self.session.commit()
+                self.session.refresh(entry)
+            except IntegrityError:
+                # Another worker may have inserted the same unique key after
+                # the read above. Reuse that row instead of surfacing a false
+                # pipeline failure.
+                self.session.rollback()
+                existing = self.session.exec(
+                    select(ForecastJournal).where(
+                        ForecastJournal.symbol == symbol,
+                        ForecastJournal.horizon == horizon,
+                        ForecastJournal.predicted_at == predicted_at,
+                    )
+                ).first()
+                if existing is None:
+                    raise
+                return existing.id
             return entry.id
         return journal_id
 

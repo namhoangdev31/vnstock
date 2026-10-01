@@ -41,11 +41,12 @@ from app.domains.quant.application.daemon.state import (
 QuantDaemonController = DaemonController
 
 default_orchestrator = PhaseAwareEngineOrchestrator(session=None)
+default_circuit_breaker = DaemonCircuitBreaker()
 
 quant_daemon_controller = DaemonController(
     clock=VietnamMarketClock(),
-    circuit_breaker=DaemonCircuitBreaker(),
-    poller=MarketDataPoller(circuit_breaker=DaemonCircuitBreaker()),
+    circuit_breaker=default_circuit_breaker,
+    poller=MarketDataPoller(circuit_breaker=default_circuit_breaker),
     dispatcher=SignalDispatcher(
         orchestrator=default_orchestrator,
     ),
