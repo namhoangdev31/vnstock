@@ -54,6 +54,9 @@ class MarketPollResult:
     metadata: dict[str, Any] = field(default_factory=dict)
     # Set to True when result was served from the last-known-data cache.
     from_cache: bool = False
+    # Market context: spot_price (VN30), institutional flows, breadth, macro.
+    # Populated by _fetch_market_snapshot() and passed into AnalysisContext.
+    market_snapshot: dict[str, Any] = field(default_factory=dict)
 
 
 def _jittered_backoff(attempt: int) -> float:
@@ -174,6 +177,7 @@ class MarketDataPoller:
         self,
         circuit_breaker: DaemonCircuitBreaker,
         cache_ttl_seconds: float | None = None,
+        session_factory: Any | None = None,
     ) -> None:
         self.circuit_breaker = circuit_breaker
         self.cache_ttl_seconds = float(
@@ -182,8 +186,13 @@ class MarketDataPoller:
             else cache_ttl_seconds
         )
         self._vnstock_service = None
+        self.session_factory = session_factory
         # TRD §4.2 — in-memory cache: last successful result per symbol.
         self._last_known: dict[str, MarketPollResult] = {}
+        # Cache for market snapshot — refreshed at most once per cycle (60s TTL).
+        self._snapshot_cache: dict[str, Any] | None = None
+        self._snapshot_cache_at: datetime | None = None
+        self._SNAPSHOT_TTL_S: float = 60.0
 
     def poll(
         self,
@@ -224,6 +233,7 @@ class MarketDataPoller:
                     history_bars=cached.history_bars,
                     intraday_bars=cached.intraday_bars,
                     order_flow=cached.order_flow,
+                    market_snapshot=cached.market_snapshot,
                     from_cache=True,
                     metadata={"cache_age_seconds": cache_age},
                     errors=[
@@ -265,6 +275,7 @@ class MarketDataPoller:
                         history_bars=cached.history_bars,
                         intraday_bars=cached.intraday_bars,
                         order_flow=cached.order_flow,
+                        market_snapshot=cached.market_snapshot,
                         from_cache=True,
                         metadata={"cache_age_seconds": cache_age},
                         errors=[{"error": "circuit_breaker_probe_in_progress"}],
@@ -301,6 +312,8 @@ class MarketDataPoller:
                 result.errors.append(
                     {"error": "orderflow_fetch_failed", "symbol": symbol}
                 )
+            # Fetch market snapshot (spot price, institutional flows, breadth, macro)
+            result.market_snapshot = self._fetch_market_snapshot(now)
         elif phase in (
             SessionPhase.PRE_ATO,
             SessionPhase.PRE_ATC,
@@ -312,6 +325,7 @@ class MarketDataPoller:
                 result.errors.append(
                     {"error": "history_fetch_failed", "symbol": symbol}
                 )
+            result.market_snapshot = self._fetch_market_snapshot(now)
         elif phase in (SessionPhase.POST_MARKET, SessionPhase.OVERNIGHT_SIMULATION):
             # Overnight/post-market: dùng nến ngày (1D) để phân tích T+1
             result.history_bars = self._fetch_history(
@@ -321,6 +335,7 @@ class MarketDataPoller:
                 result.errors.append(
                     {"error": "history_fetch_failed", "symbol": symbol}
                 )
+            result.market_snapshot = self._fetch_market_snapshot(now)
 
         # Update last-known cache on every successful (non-error) poll.
         if not result.errors:
@@ -402,3 +417,129 @@ class MarketDataPoller:
 
         result = _fetch_with_retry(_call, label=f"orderflow:{symbol}")
         return result
+
+    def _fetch_market_snapshot(self, as_of: datetime) -> dict[str, Any]:
+        """Fetch market context for Engine 2 and Engine 3.
+
+        Returns a dict with:
+          - spot_price: float — VN30 index price (for basis calculation in Engine 3)
+          - flows: list[dict] — InstitutionalFlow records from DB (Engine 2)
+          - breadth: dict | None — MarketBreadth record from DB (Engine 2)
+          - macro: list[dict] — MacroIndicator records from DB (Engine 2)
+
+        Uses a 60-second in-memory cache so that multiple symbols polled
+        within the same daemon cycle share the same snapshot (avoids N DB
+        round-trips per cycle).
+        """
+        # 60s in-memory cache — shared across all symbols in a cycle
+        if (
+            self._snapshot_cache is not None
+            and self._snapshot_cache_at is not None
+            and (as_of - self._snapshot_cache_at).total_seconds() < self._SNAPSHOT_TTL_S
+        ):
+            return self._snapshot_cache
+
+        snapshot: dict[str, Any] = {
+            "spot_price": 0.0,
+            "flows": [],
+            "breadth": None,
+            "macro": [],
+        }
+
+        # ---- Spot price: VN30 index last close ----
+        try:
+            from app.domains.market_data.infrastructure.vnstock_adapter import (
+                vnstock_service,
+            )
+
+            today = as_of.date()
+            from datetime import timedelta
+
+            start = today - timedelta(days=5)
+            # Use 1m history for VN30 index — gives latest intraday spot
+            df_spot = vnstock_service.fetch_price_history(
+                symbol="VN30",
+                start=start,
+                end=today,
+                count=5,
+                interval="1D",
+            )
+            if df_spot is not None and not df_spot.empty:
+                close_col = next(
+                    (c for c in ("close", "Close", "CLOSE") if c in df_spot.columns),
+                    None,
+                )
+                if close_col:
+                    snapshot["spot_price"] = float(df_spot[close_col].iloc[-1])
+        except Exception as exc:
+            logger.debug("[poller] VN30 spot fetch failed: %s", exc)
+
+        # ---- DB-sourced data: flows, breadth, macro ----
+        if self.session_factory is not None:
+            try:
+                from sqlmodel import col, select
+
+                from app.domains.quant.domain.models import (
+                    InstitutionalFlow,
+                    MacroIndicator,
+                    MarketBreadth,
+                )
+
+                with self.session_factory() as session:
+                    # Institutional flows: last 10 trading days for momentum calc
+                    flows = session.exec(
+                        select(InstitutionalFlow)
+                        .order_by(col(InstitutionalFlow.trading_date).desc())
+                        .limit(10)
+                    ).all()
+                    snapshot["flows"] = [
+                        {
+                            "trading_date": f.trading_date,
+                            "foreign_net_value": f.foreign_net_value,
+                            "prop_net_value": f.prop_net_value,
+                        }
+                        for f in flows
+                    ]
+
+                    # Market breadth: most recent record
+                    breadth = session.exec(
+                        select(MarketBreadth)
+                        .order_by(col(MarketBreadth.trading_date).desc())
+                        .limit(1)
+                    ).first()
+                    if breadth is not None:
+                        snapshot["breadth"] = {
+                            "advancers": breadth.advancers,
+                            "decliners": breadth.decliners,
+                            "unchanged": breadth.unchanged,
+                            "ceiling_count": breadth.ceiling_count,
+                            "floor_count": breadth.floor_count,
+                        }
+
+                    # Macro indicators: last 5 records (USD/VND + gold)
+                    macro = session.exec(
+                        select(MacroIndicator)
+                        .order_by(col(MacroIndicator.recorded_date).desc())
+                        .limit(5)
+                    ).all()
+                    snapshot["macro"] = [
+                        {
+                            "indicator_code": m.indicator_code,
+                            "value": m.value,
+                            "change_pct": m.change_pct,
+                        }
+                        for m in macro
+                    ]
+            except Exception as exc:
+                logger.warning("[poller] DB market snapshot fetch failed: %s", exc)
+
+        self._snapshot_cache = snapshot
+        self._snapshot_cache_at = as_of
+        logger.debug(
+            "[poller] Market snapshot refreshed: spot=%.2f flows=%d breadth=%s macro=%d",
+            snapshot["spot_price"],
+            len(snapshot["flows"]),
+            "yes" if snapshot["breadth"] else "no",
+            len(snapshot["macro"]),
+        )
+        return snapshot

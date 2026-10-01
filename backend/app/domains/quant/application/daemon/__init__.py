@@ -59,7 +59,10 @@ def _daemon_session_factory() -> Session:
 quant_daemon_controller = DaemonController(
     clock=VietnamMarketClock(),
     circuit_breaker=default_circuit_breaker,
-    poller=MarketDataPoller(circuit_breaker=default_circuit_breaker),
+    poller=MarketDataPoller(
+        circuit_breaker=default_circuit_breaker,
+        session_factory=_daemon_session_factory,
+    ),
     dispatcher=SignalDispatcher(
         orchestrator=default_orchestrator,
     ),

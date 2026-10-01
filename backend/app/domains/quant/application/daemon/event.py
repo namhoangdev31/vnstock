@@ -60,6 +60,7 @@ class AnalysisContext:
     order_flow: Any = None
     flows: list[Any] | None = None
     breadth: Any = None
+    macro: list[Any] | None = None
     skip_reason: str | None = None
     is_valid: bool = True
 
@@ -256,8 +257,12 @@ class MarketDataNormalizer:
             )
 
         entry_price = closes[-1] if closes else 0.0
-        snapshot = market_snapshot or {}
-        spot_price = float(snapshot.get("spot_price", entry_price))
+        # Merge snapshots: poll_result.market_snapshot (primary, freshly fetched)
+        # overrides the optional market_snapshot parameter (legacy/test injection).
+        snapshot = {**(poll_result.market_snapshot or {}), **(market_snapshot or {})}
+        # spot_price > 0 means VN30 index was fetched; otherwise fall back to entry_price
+        raw_spot = snapshot.get("spot_price", 0.0)
+        spot_price = float(raw_spot) if raw_spot else float(entry_price)
 
         # Check sufficiency: if from_cache=True and insufficient bars (< 15 bars)
         if from_cache and len(closes) < 15:
@@ -291,6 +296,7 @@ class MarketDataNormalizer:
             order_flow=df_order_flow,
             flows=snapshot.get("flows"),
             breadth=snapshot.get("breadth"),
+            macro=snapshot.get("macro"),
             skip_reason=skip_reason,
             is_valid=is_valid,
         )

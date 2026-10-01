@@ -255,28 +255,51 @@ class PhaseAwareEngineOrchestrator:
                 "engine_started: engine2 (FlowLiquidityEngine)", extra=log_extra
             )
             try:
+                # context.flows  → list of InstitutionalFlow dicts (from market_snapshot)
+                # context.breadth → MarketBreadth dict or None  (from market_snapshot)
+                # context.macro  → list of MacroIndicator dicts (from market_snapshot)
+                flows_list = context.flows or []
+                breadth_dict = (
+                    context.breadth if isinstance(context.breadth, dict) else None
+                )
+                macro_list = context.macro or []
+
                 e2_resp = self.engine2.analyze(
-                    flows=context.flows,
-                    breadth=context.breadth,
+                    flows=flows_list,
+                    breadth=breadth_dict,
+                    daily_volumes=context.volumes,
+                    macro_items=macro_list,
                     as_of=as_of,
                 )
+                missing_e2: list[str] = []
+                if not flows_list:
+                    missing_e2.append("institutional_flows_empty")
+                if breadth_dict is None:
+                    missing_e2.append("market_breadth_unavailable")
+                if not macro_list:
+                    missing_e2.append("macro_indicators_empty")
+
                 results["engine2"] = EngineExecutionResult(
                     engine_name="FlowLiquidityEngine",
                     version="v2.0.0",
                     status="COMPLETED",
                     score=e2_resp.score,
-                    confidence=0.6,
+                    confidence=0.6 if flows_list else 0.2,
                     metrics={
                         "institutional_momentum": e2_resp.institutional_momentum,
                         "market_breadth": e2_resp.market_breadth,
                         "t2_pressure": e2_resp.t2_pressure,
                         "macro_sentiment": e2_resp.macro_sentiment,
                     },
+                    missing_data=missing_e2,
                     response_obj=e2_resp,
                 )
                 logger.info(
-                    "engine_completed: engine2 score=%.4f",
+                    "engine_completed: engine2 score=%.4f (flows=%d, breadth=%s, macro=%d)",
                     e2_resp.score,
+                    len(flows_list),
+                    "yes" if breadth_dict else "no",
+                    len(macro_list),
                     extra=log_extra,
                 )
             except Exception as exc:
@@ -299,10 +322,21 @@ class PhaseAwareEngineOrchestrator:
         # Engine 3 runs across all phases (ATO gap, basis, QMC T+1)
         logger.info("engine_started: engine3 (QuantMLEngine)", extra=log_extra)
         try:
+            # spot_price > 0 means we have a real VN30 index price from the snapshot.
+            # If spot_price == 0.0 (fetch failed), use entry_price as fallback but
+            # note it in missing_data so basis will be ~0 (expected degraded mode).
+            spot = (
+                context.spot_price if context.spot_price > 0.0 else context.entry_price
+            )
+            futures = context.entry_price or spot or 1300.0
+            missing_e3: list[str] = []
+            if context.spot_price <= 0.0:
+                missing_e3.append("vn30_spot_price_unavailable_basis_degraded")
+
             e3_resp = self.engine3.analyze(
                 symbol=symbol,
-                futures_price=context.entry_price or 1300.0,
-                spot_index_price=context.spot_price or context.entry_price or 1300.0,
+                futures_price=futures,
+                spot_index_price=spot or 1300.0,
                 highs=context.highs,
                 lows=context.lows,
                 closes=context.closes,
@@ -313,18 +347,25 @@ class PhaseAwareEngineOrchestrator:
                 version="v2.0.0",
                 status="COMPLETED",
                 score=e3_resp.score,
-                confidence=0.7,
+                confidence=0.7 if not missing_e3 else 0.3,
                 metrics={
                     "basis_value": e3_resp.basis_value,
                     "basis_zscore": e3_resp.basis_zscore,
                     "historical_vol": e3_resp.historical_vol,
                     "lr_trend_score": e3_resp.lr_trend_score,
+                    "spot_price_used": spot,
+                    "futures_price_used": futures,
                 },
+                missing_data=missing_e3,
                 response_obj=e3_resp,
             )
             logger.info(
-                "engine_completed: engine3 score=%.4f",
+                "engine_completed: engine3 score=%.4f basis=%.2f z=%.4f (spot=%.2f futures=%.2f)",
                 e3_resp.score,
+                e3_resp.basis_value,
+                e3_resp.basis_zscore,
+                spot or 0.0,
+                futures,
                 extra=log_extra,
             )
         except Exception as exc:
