@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Any
 
+from app.core.config import settings
 from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
 from app.domains.quant.application.daemon.state import DaemonCircuitBreaker
@@ -46,9 +47,9 @@ class MarketPollResult:
     symbol: str
     phase: SessionPhase
     timestamp: datetime
-    history_bars: list[Any] = field(default_factory=list)
-    intraday_bars: list[Any] = field(default_factory=list)
-    order_flow: list[Any] = field(default_factory=list)
+    history_bars: list[Any] | None = field(default_factory=list)
+    intraday_bars: list[Any] | None = field(default_factory=list)
+    order_flow: list[Any] | None = field(default_factory=list)
     errors: list[dict[str, Any]] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     # Set to True when result was served from the last-known-data cache.
@@ -169,8 +170,17 @@ class MarketDataPoller:
     (last-known-data fallback when the circuit breaker is OPEN).
     """
 
-    def __init__(self, circuit_breaker: DaemonCircuitBreaker) -> None:
+    def __init__(
+        self,
+        circuit_breaker: DaemonCircuitBreaker,
+        cache_ttl_seconds: float | None = None,
+    ) -> None:
         self.circuit_breaker = circuit_breaker
+        self.cache_ttl_seconds = float(
+            settings.VNSTOCK_REALTIME_CACHE_TTL
+            if cache_ttl_seconds is None
+            else cache_ttl_seconds
+        )
         self._vnstock_service = None
         # TRD §4.2 — in-memory cache: last successful result per symbol.
         self._last_known: dict[str, MarketPollResult] = {}
@@ -190,10 +200,18 @@ class MarketDataPoller:
         """
         now = datetime.now(VN_TZ)
 
+        cached = self._last_known.get(symbol)
+        cache_age = (
+            (now - cached.timestamp).total_seconds() if cached is not None else None
+        )
+
         # TRD §4.2 — circuit breaker OPEN → return last known data
         if self.circuit_breaker.is_open:
-            cached = self._last_known.get(symbol)
-            if cached is not None:
+            if (
+                cached is not None
+                and cache_age is not None
+                and cache_age <= self.cache_ttl_seconds
+            ):
                 logger.info(
                     f"[poller] CB OPEN — serving last-known data for {symbol} "
                     f"(cached at {cached.timestamp.isoformat()})"
@@ -207,6 +225,7 @@ class MarketDataPoller:
                     intraday_bars=cached.intraday_bars,
                     order_flow=cached.order_flow,
                     from_cache=True,
+                    metadata={"cache_age_seconds": cache_age},
                     errors=[
                         {
                             "error": "circuit_breaker_open",
@@ -222,11 +241,40 @@ class MarketDataPoller:
                 timestamp=now,
                 errors=[
                     {
-                        "error": "circuit_breaker_open",
-                        "reason": "Circuit breaker is OPEN, no cached data available",
+                        "error": "cache_expired"
+                        if cached is not None
+                        else "circuit_breaker_open",
+                        "reason": "Circuit breaker is OPEN and no fresh cached data is available",
                     }
                 ],
             )
+
+        probe_started = False
+        if self.circuit_breaker.is_half_open:
+            probe_started = self.circuit_breaker.try_start_probe()
+            if not probe_started:
+                if (
+                    cached is not None
+                    and cache_age is not None
+                    and cache_age <= self.cache_ttl_seconds
+                ):
+                    return MarketPollResult(
+                        symbol=symbol,
+                        phase=phase,
+                        timestamp=now,
+                        history_bars=cached.history_bars,
+                        intraday_bars=cached.intraday_bars,
+                        order_flow=cached.order_flow,
+                        from_cache=True,
+                        metadata={"cache_age_seconds": cache_age},
+                        errors=[{"error": "circuit_breaker_probe_in_progress"}],
+                    )
+                return MarketPollResult(
+                    symbol=symbol,
+                    phase=phase,
+                    timestamp=now,
+                    errors=[{"error": "circuit_breaker_probe_in_progress"}],
+                )
 
         result = MarketPollResult(symbol=symbol, phase=phase, timestamp=now)
 
@@ -241,6 +289,18 @@ class MarketDataPoller:
             result.history_bars = self._fetch_history(symbol, limit_history)
             result.intraday_bars = self._fetch_intraday(symbol, limit_intraday)
             result.order_flow = self._fetch_order_flow(symbol, limit_orderflow)
+            if result.history_bars is None:
+                result.errors.append(
+                    {"error": "history_fetch_failed", "symbol": symbol}
+                )
+            if result.intraday_bars is None:
+                result.errors.append(
+                    {"error": "intraday_fetch_failed", "symbol": symbol}
+                )
+            if result.order_flow is None:
+                result.errors.append(
+                    {"error": "orderflow_fetch_failed", "symbol": symbol}
+                )
         elif phase in (
             SessionPhase.PRE_ATO,
             SessionPhase.PRE_ATC,
@@ -248,15 +308,26 @@ class MarketDataPoller:
         ):
             # Pre-market or intermission: history only
             result.history_bars = self._fetch_history(symbol, limit_history)
+            if result.history_bars is None:
+                result.errors.append(
+                    {"error": "history_fetch_failed", "symbol": symbol}
+                )
         elif phase in (SessionPhase.POST_MARKET, SessionPhase.OVERNIGHT_SIMULATION):
             # Overnight/post-market: dùng nến ngày (1D) để phân tích T+1
             result.history_bars = self._fetch_history(
                 symbol, limit_history, interval="1D"
             )
+            if result.history_bars is None:
+                result.errors.append(
+                    {"error": "history_fetch_failed", "symbol": symbol}
+                )
 
         # Update last-known cache on every successful (non-error) poll.
         if not result.errors:
             self._last_known[symbol] = result
+
+        if probe_started:
+            self.circuit_breaker.finish_probe(not result.errors)
 
         return result
 
@@ -266,7 +337,7 @@ class MarketDataPoller:
 
     def _fetch_history(
         self, symbol: str, limit: int, interval: str = "1m"
-    ) -> list[Any]:
+    ) -> list[Any] | None:
         """Fetch historical bars via VnstockService with retry + rate-limit.
 
         interval: '1m' cho giao dịch intraday, '1D' cho phân tích overnight/T+1.
@@ -296,9 +367,9 @@ class MarketDataPoller:
             return []
 
         result = _fetch_with_retry(_call, label=f"history:{symbol}:{interval}")
-        return result if result is not None else []
+        return result
 
-    def _fetch_intraday(self, symbol: str, limit: int) -> list[Any]:
+    def _fetch_intraday(self, symbol: str, limit: int) -> list[Any] | None:
         """Fetch intraday bars via VnstockService with retry + rate-limit."""
         from app.domains.market_data.infrastructure.vnstock_adapter import (
             vnstock_service,
@@ -315,9 +386,9 @@ class MarketDataPoller:
             return []
 
         result = _fetch_with_retry(_call, label=f"intraday:{symbol}")
-        return result if result is not None else []
+        return result
 
-    def _fetch_order_flow(self, symbol: str, limit: int) -> list[Any]:
+    def _fetch_order_flow(self, symbol: str, limit: int) -> list[Any] | None:
         """Fetch tick-level order flow (Aggressive Buy/Sell) via VnstockService."""
         from app.domains.market_data.infrastructure.vnstock_adapter import (
             vnstock_service,
@@ -330,4 +401,4 @@ class MarketDataPoller:
             return []
 
         result = _fetch_with_retry(_call, label=f"orderflow:{symbol}")
-        return result if result is not None else []
+        return result

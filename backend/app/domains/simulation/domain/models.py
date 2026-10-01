@@ -61,6 +61,9 @@ class Order(AwareSQLModel, table=True):
     """Bảng lưu trữ lệnh đặt mô phỏng (Paper Order)."""
 
     __tablename__ = "simulation_order"
+    __table_args__ = (
+        UniqueConstraint("portfolio_id", "source_signal_id", name="uq_order_signal"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     portfolio_id: uuid.UUID = Field(
@@ -80,6 +83,9 @@ class Order(AwareSQLModel, table=True):
     fee: float = 0.0
     tax: float = 0.0
     status: str = Field(default=OrderStatus.PENDING, max_length=10, index=True)
+    # Stable source id makes paper execution idempotent across daemon retries
+    # and multiple workers.  NULL remains valid for manually submitted orders.
+    source_signal_id: str | None = Field(default=None, max_length=100, index=True)
     reject_reason: str | None = Field(default=None, max_length=255)
     created_at: datetime = Field(
         default_factory=get_datetime_utc,

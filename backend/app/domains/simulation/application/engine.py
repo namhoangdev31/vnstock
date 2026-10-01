@@ -32,6 +32,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from app.core.enums import (
@@ -163,6 +164,7 @@ class SimulationEngine:
         price: float,
         order_type: str = OrderType.MARKET,
         stop_price: float | None = None,
+        source_signal_id: str | None = None,
     ) -> Order:
         """Validate and (for MARKET orders) fill a paper order immediately.
 
@@ -171,6 +173,16 @@ class SimulationEngine:
         - reducing more than the open quantity
         - insufficient buying power to open
         """
+        if source_signal_id is not None:
+            existing = self.session.exec(
+                select(Order).where(
+                    Order.portfolio_id == portfolio.id,
+                    Order.source_signal_id == source_signal_id,
+                )
+            ).first()
+            if existing is not None:
+                return existing
+
         side_norm = str(side).upper()
         if side_norm not in {s.value for s in OrderSide}:
             raise SimulationError(f"Invalid order side: {side}")
@@ -198,6 +210,7 @@ class SimulationEngine:
             stop_price=stop_price,
             quantity=quantity,
             status=OrderStatus.PENDING,
+            source_signal_id=source_signal_id,
         )
 
         if order_type == OrderType.MARKET:
@@ -212,7 +225,20 @@ class SimulationEngine:
                 return order
 
         self.session.add(order)
-        self.session.commit()
+        try:
+            self.session.commit()
+        except IntegrityError:
+            self.session.rollback()
+            if source_signal_id is not None:
+                existing = self.session.exec(
+                    select(Order).where(
+                        Order.portfolio_id == portfolio.id,
+                        Order.source_signal_id == source_signal_id,
+                    )
+                ).first()
+                if existing is not None:
+                    return existing
+            raise
         self.session.refresh(order)
 
         if order_type == OrderType.MARKET:

@@ -175,8 +175,36 @@ class SignalDispatcher:
         now = datetime.now(VN_TZ)
         result = DispatchResult(timestamp=now, phase=phase)
 
-        if self.ensemble is None:
+        ensemble = self.ensemble
+        if ensemble is None:
             return result
+
+        # The daemon owns a short-lived DB session per cycle.  Never reuse an
+        # engine bound to a previous request/session (or a closed connection).
+        if db is not None:
+            try:
+                from app.domains.quant.application.engines.ensemble_engine import (
+                    EnsembleEngine,
+                )
+
+                if getattr(ensemble, "session", None) is not db:
+                    ensemble = EnsembleEngine(session=db)
+            except Exception:
+                logger.exception("Unable to bind ensemble engine to cycle session")
+                return result
+
+        orchestrator = self.orchestrator
+        if db is not None and getattr(orchestrator, "session", None) is not db:
+            orchestrator = PhaseAwareEngineOrchestrator(session=db)
+
+        simulation = self.simulation
+        if db is not None and simulation is None and self._simulation is _UNSET:
+            try:
+                from app.domains.simulation.application.engine import SimulationEngine
+
+                simulation = SimulationEngine(session=db)
+            except Exception:
+                simulation = None
 
         for symbol in symbols:
             log_extra = {
@@ -184,7 +212,7 @@ class SignalDispatcher:
                 "cycle_id": cycle_id or 0,
                 "symbol": symbol,
                 "market_phase": phase.value,
-                "model_version": getattr(self.ensemble, "MODEL_VERSION", "v2.0.0"),
+                "model_version": getattr(ensemble, "MODEL_VERSION", "v2.0.0"),
             }
 
             try:
@@ -282,10 +310,27 @@ class SignalDispatcher:
                     )
                     continue
 
+                if getattr(context.event, "is_duplicate", False):
+                    result.duplicates_detected += 1
+                    result.skipped_signals += 1
+                    logger.info(
+                        "market_data_event_skipped: symbol=%s, reason=duplicate_event",
+                        symbol,
+                        extra=log_extra,
+                    )
+                    continue
+
                 # Run phase-aware orchestrator to execute applicable engines
-                orch_result = self.orchestrator.orchestrate(
-                    context, session_id=session_id, cycle_id=cycle_id
-                )
+                validate_context = getattr(orchestrator, "validate_context", None)
+                if callable(validate_context):
+                    orch_result = validate_context(
+                        context, session_id=session_id, cycle_id=cycle_id
+                    )
+                else:
+                    # Compatibility for injected test/dedicated orchestrators.
+                    orch_result = orchestrator.orchestrate(
+                        context, session_id=session_id, cycle_id=cycle_id
+                    )
 
                 if not orch_result.is_executable:
                     result.skipped_signals += 1
@@ -309,7 +354,7 @@ class SignalDispatcher:
                     pred_time = pred_time.replace(tzinfo=VN_TZ)
 
                 # Generate Ensemble Decision
-                signal_resp = self.ensemble.generate_signal(
+                signal_resp = ensemble.generate_signal(
                     request=request,
                     entry_price=context.entry_price or 1300.0,
                     spot_price=context.spot_price or context.entry_price or 1300.0,
@@ -366,9 +411,9 @@ class SignalDispatcher:
                     result.ensemble_signals += 1
 
                     # Isolated Paper Trading Simulation
-                    if self.simulation is not None:
+                    if simulation is not None and not is_duplicate:
                         try:
-                            sim_fn = getattr(self.simulation, "simulate_order", None)
+                            sim_fn = getattr(simulation, "simulate_order", None)
                             if callable(sim_fn):
                                 order_resp = sim_fn(
                                     symbol=symbol,
@@ -379,9 +424,7 @@ class SignalDispatcher:
                                 if order_resp:
                                     result.simulation_orders += 1
                             else:
-                                place_order = getattr(
-                                    self.simulation, "place_order", None
-                                )
+                                place_order = getattr(simulation, "place_order", None)
                                 portfolio = (
                                     self.default_portfolio
                                     or getattr(
@@ -403,6 +446,7 @@ class SignalDispatcher:
                                         side=side,
                                         quantity=1,
                                         price=context.entry_price or 1300.0,
+                                        source_signal_id=str(journal_id),
                                     )
                                     if order_resp is not None:
                                         result.simulation_orders += 1

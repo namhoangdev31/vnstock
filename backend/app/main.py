@@ -27,7 +27,7 @@ FRONTEND_DIR = Path(__file__).parent / "frontend"
 logger = logging.getLogger(__name__)
 
 
-def _run_migrations_and_seed() -> None:
+def _run_migrations_and_seed() -> bool:
     try:
         backend_dir = Path(__file__).parent.parent
         alembic_ini_path = backend_dir / "alembic.ini"
@@ -65,7 +65,7 @@ def _run_migrations_and_seed() -> None:
                         logger.warning(
                             f"[LIFESPAN] Alembic migration chưa thành công sau {max_retries} lần thử: {alembic_err}. Bỏ qua DB seed."
                         )
-                        return
+                        return False
         else:
             try:
                 from sqlmodel import SQLModel
@@ -87,7 +87,7 @@ def _run_migrations_and_seed() -> None:
                 logger.warning(
                     f"[LIFESPAN] SQLModel.metadata.create_all failed: {create_err}"
                 )
-                return
+                return False
 
         if migration_success:
             try:
@@ -96,8 +96,10 @@ def _run_migrations_and_seed() -> None:
                     logger.info("[LIFESPAN] Initial DB seed executed successfully.")
             except Exception as seed_err:
                 logger.warning(f"[LIFESPAN] Initial DB seed failed: {seed_err}")
+        return migration_success
     except Exception as e:
         logger.warning(f"[LIFESPAN] Unexpected error in background migration/seed: {e}")
+        return False
 
 
 @asynccontextmanager
@@ -119,11 +121,16 @@ async def lifespan(_app: FastAPI):
     except Exception as tier_err:
         logger.warning(f"[LIFESPAN] Failed to detect vnstock tier: {tier_err}")
 
-    await quant_daemon_controller.start()
+    migrations_ready = await migration_task
+    if migrations_ready:
+        await quant_daemon_controller.start()
+    else:
+        logger.error("[LIFESPAN] Daemon withheld because database setup failed")
     try:
         yield
     finally:
-        await quant_daemon_controller.stop()
+        if migrations_ready:
+            await quant_daemon_controller.stop()
         if not migration_task.done():
             migration_task.cancel()
 

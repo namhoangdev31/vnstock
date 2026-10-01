@@ -10,6 +10,9 @@ This package implements the background session daemon with:
 - Forecast journal logging with Brier Score evaluation
 """
 
+from sqlmodel import Session
+
+from app.core.db import engine
 from app.domains.quant.application.daemon.clock import VietnamMarketClock
 from app.domains.quant.application.daemon.controller import DaemonController
 from app.domains.quant.application.daemon.dispatcher import (
@@ -22,6 +25,7 @@ from app.domains.quant.application.daemon.event import (
     MarketDataEvent,
     MarketDataNormalizer,
 )
+from app.domains.quant.application.daemon.lease import PostgresAdvisoryLease
 from app.domains.quant.application.daemon.orchestrator import (
     EngineExecutionResult,
     OrchestratorResult,
@@ -42,6 +46,12 @@ QuantDaemonController = DaemonController
 
 default_orchestrator = PhaseAwareEngineOrchestrator(session=None)
 default_circuit_breaker = DaemonCircuitBreaker()
+default_lease = PostgresAdvisoryLease(engine, "vnstock.quant.daemon")
+
+
+def _daemon_session_factory() -> Session:
+    return Session(engine)
+
 
 quant_daemon_controller = DaemonController(
     clock=VietnamMarketClock(),
@@ -50,6 +60,8 @@ quant_daemon_controller = DaemonController(
     dispatcher=SignalDispatcher(
         orchestrator=default_orchestrator,
     ),
+    session_factory=_daemon_session_factory,
+    lease=default_lease,
 )
 
 __all__ = [

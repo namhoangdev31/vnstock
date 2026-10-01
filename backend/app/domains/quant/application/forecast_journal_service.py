@@ -16,7 +16,7 @@ Scoring is deterministic and side-effect free apart from the persisted score.
 
 import logging
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlmodel import Session, col, select
 
@@ -66,6 +66,16 @@ class ForecastJournalService:
             raise ForecastJournalError(
                 "predicted_at must be timezone-aware (VN_TZ) to anchor no-look-ahead"
             )
+        if predicted_at > datetime.now(VN_TZ) + timedelta(seconds=10):
+            raise ForecastJournalError(
+                "predicted_at cannot be in the future (look-ahead violation)"
+            )
+        if horizon not in {item.value for item in ForecastHorizon}:
+            raise ForecastJournalError(f"Unsupported forecast horizon: {horizon}")
+        if predicted_direction not in {item.value for item in ForecastDirection}:
+            raise ForecastJournalError(
+                f"Unsupported forecast direction: {predicted_direction}"
+            )
 
         entry = ForecastJournal(
             symbol=symbol,
@@ -110,25 +120,31 @@ class ForecastJournalService:
         entry = self.session.get(ForecastJournal, forecast_id)
         if entry is None:
             raise ForecastNotFoundError(f"Forecast {forecast_id} not found")
-        if entry.status == ForecastStatus.SCORED:
+        if entry.status != ForecastStatus.PENDING:
             raise ForecastJournalError(
-                f"Forecast {forecast_id} is already scored and cannot be re-resolved"
+                f"Forecast {forecast_id} is already {entry.status} and cannot be re-resolved"
+            )
+        real_dt = realized_at or datetime.now(VN_TZ)
+        if real_dt.tzinfo is None:
+            raise ForecastJournalError("realized_at must be timezone-aware")
+        pred_dt = entry.predicted_at
+        if pred_dt.tzinfo is None:
+            pred_dt = pred_dt.replace(tzinfo=real_dt.tzinfo)
+        if real_dt > datetime.now(VN_TZ) + timedelta(seconds=10):
+            raise ForecastJournalError(
+                "realized_at cannot be in the future (outcome not resolved yet)"
+            )
+        if real_dt < pred_dt:
+            raise ForecastJournalError(
+                "realized_at cannot precede predicted_at (look-ahead violation)"
             )
         if realized_at is not None:
-            pred_dt = entry.predicted_at
+            # Keep this branch explicit for readability in the audit path.
             real_dt = realized_at
-            if pred_dt.tzinfo is None and real_dt.tzinfo is not None:
-                pred_dt = pred_dt.replace(tzinfo=real_dt.tzinfo)
-            elif pred_dt.tzinfo is not None and real_dt.tzinfo is None:
-                real_dt = real_dt.replace(tzinfo=pred_dt.tzinfo)
-            if real_dt < pred_dt:
-                raise ForecastJournalError(
-                    "realized_at cannot precede predicted_at (look-ahead violation)"
-                )
 
         entry.actual_value = actual_value
         entry.actual_direction = actual_direction
-        entry.realized_at = realized_at or datetime.now(VN_TZ)
+        entry.realized_at = real_dt
         entry.status = ForecastStatus.RESOLVED
         entry.updated_at = datetime.now(VN_TZ)
         self.session.add(entry)

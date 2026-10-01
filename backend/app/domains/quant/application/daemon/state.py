@@ -1,5 +1,6 @@
 """State and circuit breaker primitives for the autonomous quant daemon."""
 
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -28,6 +29,10 @@ class DaemonCircuitBreaker:
     opened_at: datetime | None = None
     last_error: str | None = None
     _half_open_cooldown_seconds: float = 60.0
+    _probe_lock: threading.Lock = field(
+        default_factory=threading.Lock, init=False, repr=False
+    )
+    _probe_in_flight: bool = field(default=False, init=False, repr=False)
 
     @property
     def is_open(self) -> bool:
@@ -47,16 +52,34 @@ class DaemonCircuitBreaker:
         ).total_seconds() >= self._half_open_cooldown_seconds
 
     def record_success(self) -> None:
-        self.failure_count = 0
-        self.opened_at = None
-        self.last_error = None
+        with self._probe_lock:
+            self.failure_count = 0
+            self.opened_at = None
+            self.last_error = None
+            self._probe_in_flight = False
 
     def record_failure(self, exc: Exception) -> None:
-        self.failure_count += 1
-        self.last_error = str(exc)
+        with self._probe_lock:
+            self.failure_count += 1
+            self.last_error = str(exc)
+            self._probe_in_flight = False
+            if self.failure_count >= self.failure_threshold and not self.is_open:
+                self.opened_at = datetime.now(VN_TZ)
 
-        if self.failure_count >= self.failure_threshold and not self.is_open:
-            self.opened_at = datetime.now(VN_TZ)
+    def try_start_probe(self) -> bool:
+        """Allow at most one recovery request while HALF_OPEN."""
+        with self._probe_lock:
+            if not self.is_half_open or self._probe_in_flight:
+                return False
+            self._probe_in_flight = True
+            return True
+
+    def finish_probe(self, success: bool) -> None:
+        """Close the HALF_OPEN probe and transition the breaker accordingly."""
+        if success:
+            self.record_success()
+        else:
+            self.record_failure(RuntimeError("circuit breaker half-open probe failed"))
 
     def reset(self) -> None:
         self.record_success()
@@ -123,5 +146,6 @@ class QuantDaemonState:
                 "failure_threshold": breaker.failure_threshold,
                 "opened_at": breaker.opened_at,
                 "last_error": breaker.last_error,
+                "is_half_open": breaker.is_half_open,
             },
         }

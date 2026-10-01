@@ -351,3 +351,34 @@ class PhaseAwareEngineOrchestrator:
             is_executable=has_completed,
             skip_reason=None if has_completed else "All applicable engines failed",
         )
+
+    def validate_context(
+        self,
+        context: AnalysisContext,
+        session_id: str | None = None,
+        cycle_id: int | None = None,
+    ) -> OrchestratorResult:
+        """Validate dispatch eligibility without executing analytical engines.
+
+        The daemon's EnsembleEngine is the single engine execution path.  The
+        old dispatcher called ``orchestrate`` and then called Ensemble again,
+        which doubled API/CPU/DB work and could emit two different decisions.
+        Direct callers can still use ``orchestrate`` for the detailed engine
+        report; the daemon uses this gate before the one authoritative Ensemble
+        execution.
+        """
+        del session_id, cycle_id
+        if not context.is_valid:
+            return OrchestratorResult(
+                phase=context.phase,
+                as_of=context.as_of,
+                engine_results={},
+                is_executable=False,
+                skip_reason=context.skip_reason,
+            )
+        return OrchestratorResult(
+            phase=context.phase,
+            as_of=context.as_of,
+            engine_results={},
+            is_executable=True,
+        )

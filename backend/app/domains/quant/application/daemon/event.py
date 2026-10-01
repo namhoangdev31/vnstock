@@ -38,6 +38,7 @@ class MarketDataEvent:
     from_cache: bool = False
     market_phase: SessionPhase = SessionPhase.MORNING_CONTINUOUS
     is_closed: bool = True
+    is_duplicate: bool = False
 
 
 @dataclass
@@ -190,7 +191,12 @@ class MarketDataNormalizer:
         if valid_bars:
             last_bar = valid_bars[-1]
             last_bar_time = last_bar.get("time")
-            if isinstance(last_bar_time, datetime):
+            if isinstance(last_bar_time, str):
+                try:
+                    event_time = datetime.fromisoformat(last_bar_time)
+                except ValueError:
+                    event_time = now
+            elif isinstance(last_bar_time, datetime):
                 event_time = last_bar_time
             elif hasattr(last_bar_time, "to_pydatetime"):
                 event_time = last_bar_time.to_pydatetime()
@@ -246,6 +252,7 @@ class MarketDataNormalizer:
                 from_cache=from_cache,
                 market_phase=phase,
                 is_closed=is_closed,
+                is_duplicate=is_dup,
             )
 
         entry_price = closes[-1] if closes else 0.0

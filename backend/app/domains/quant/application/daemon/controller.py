@@ -4,17 +4,19 @@ import asyncio
 import logging
 import random
 import signal
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import Session
 
 from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
 from app.domains.quant.application.daemon.clock import VietnamMarketClock
 from app.domains.quant.application.daemon.dispatcher import SignalDispatcher
 from app.domains.quant.application.daemon.event import MarketDataNormalizer
+from app.domains.quant.application.daemon.lease import PostgresAdvisoryLease
 from app.domains.quant.application.daemon.poller import MarketDataPoller
 from app.domains.quant.application.daemon.state import (
     STATE_POLL_INTERVALS,
@@ -50,6 +52,8 @@ class DaemonController:
         poller: MarketDataPoller,
         dispatcher: SignalDispatcher,
         normalizer: MarketDataNormalizer | None = None,
+        session_factory: Callable[[], Session] | None = None,
+        lease: PostgresAdvisoryLease | None = None,
     ):
         """Initialize daemon with market clock, circuit breaker, engines, and normalizer."""
         self.clock = clock
@@ -61,6 +65,35 @@ class DaemonController:
         self.state = QuantDaemonState()
         self._task: asyncio.Task | None = None
         self.instance_id: str | None = None
+        self.session_factory = session_factory
+        self.lease = lease
+
+    def _persist_session_log(
+        self, session_log: DaemonSessionLog, create: bool = False
+    ) -> None:
+        """Persist one daemon heartbeat using a short-lived sync DB session."""
+        if self.session_factory is None:
+            return
+        with self.session_factory() as session:
+            if create:
+                session.add(session_log)
+            else:
+                stored = session.get(DaemonSessionLog, session_log.id)
+                if stored is None:
+                    return
+                for field_name in (
+                    "status",
+                    "stopped_at",
+                    "last_heartbeat_at",
+                    "last_phase",
+                    "cycle_count",
+                    "failure_count",
+                    "last_error",
+                    "metadata_info",
+                ):
+                    setattr(stored, field_name, getattr(session_log, field_name))
+                session.add(stored)
+            session.commit()
 
     async def start(
         self,
@@ -76,6 +109,13 @@ class DaemonController:
         if self.state.running:
             return
 
+        if self.lease is not None:
+            acquired = await asyncio.to_thread(self.lease.acquire)
+            if not acquired:
+                self.state.status = "standby"
+                logger.warning("Daemon start skipped: another worker owns the lease")
+                return
+
         started_at = datetime.now(VN_TZ)
         self.instance_id = f"{daemon_name}-{int(started_at.timestamp())}"
         self.state.running = True
@@ -84,11 +124,9 @@ class DaemonController:
         self.state.last_started_at = started_at
 
         # Spawn the main loop as a fire-and-forget background task.
-        # We pass db=None here — the run() loop handles the case gracefully
-        # by skipping DB persistence when no session is available (offline mode).
         self._task = asyncio.create_task(
             self.run(
-                db=None,  # type: ignore[arg-type]
+                db=None,
                 symbols=symbols or ["VN30F1M"],
                 daemon_name=daemon_name,
             ),
@@ -176,32 +214,17 @@ class DaemonController:
         phase = snapshot.session_phase
 
         try:
-            poll_result = self.poller.poll("VN30F1M", phase)
-            context = self.normalizer.normalize(poll_result, as_of=snapshot.as_of)
-            market_data = {
-                "VN30F1M": {
-                    "context": context,
-                    "entry_price": context.entry_price,
-                    "spot_price": context.spot_price,
-                    "highs": context.highs,
-                    "lows": context.lows,
-                    "closes": context.closes,
-                    "volumes": context.volumes,
-                    "order_flow": context.order_flow,
-                    "flows": context.flows,
-                    "breadth": context.breadth,
-                }
-            }
-            if context.event:
-                self.state.last_event_id = context.event.event_id
-
-            dispatch_result = await self.dispatcher.dispatch(
+            poll_errors, _, _, dispatch_result = await asyncio.to_thread(
+                self._poll_and_dispatch,
                 phase=phase,
                 symbols=["VN30F1M"],
-                market_data=market_data,
                 session_id=self.instance_id or "manual_trigger",
                 cycle_id=self.state.last_cycle_id + 1,
+                cycle_start=snapshot.as_of,
+                db=None,
             )
+            if poll_errors:
+                raise RuntimeError(str(poll_errors))
             self.state.last_run_at = datetime.now(VN_TZ)
             self.state.last_success_at = datetime.now(VN_TZ)
             self.state.last_error = None
@@ -224,9 +247,101 @@ class DaemonController:
 
         return self.status()
 
+    def _poll_and_dispatch(
+        self,
+        *,
+        phase: SessionPhase,
+        symbols: list[str],
+        session_id: str,
+        cycle_id: int,
+        cycle_start: datetime,
+        db: Session | None,
+    ) -> tuple[dict[str, Any], dict[str, Any], int, Any]:
+        """Run blocking adapters and sync DB work off the asyncio event loop."""
+        poll_errors: dict[str, Any] = {}
+        all_market_data: dict[str, Any] = {}
+        for symbol in symbols:
+            try:
+                poll_result = self.poller.poll(symbol, phase)
+                if poll_result.errors:
+                    poll_errors[symbol] = poll_result.errors
+                    error_type = (
+                        "circuit_breaker"
+                        if any(
+                            isinstance(error, dict)
+                            and error.get("error")
+                            in {
+                                "circuit_breaker_open",
+                                "circuit_breaker_probe_in_progress",
+                            }
+                            for error in poll_result.errors
+                        )
+                        else "api"
+                    )
+                    self.state.errors_by_type[error_type] = (
+                        self.state.errors_by_type.get(error_type, 0) + 1
+                    )
+
+                context = self.normalizer.normalize(
+                    poll_result=poll_result,
+                    as_of=cycle_start,
+                )
+                if not context.is_valid:
+                    self.state.errors_by_type["validation"] = (
+                        self.state.errors_by_type.get("validation", 0) + 1
+                    )
+                all_market_data[symbol] = {
+                    "context": context,
+                    "entry_price": context.entry_price,
+                    "spot_price": context.spot_price,
+                    "highs": context.highs,
+                    "lows": context.lows,
+                    "closes": context.closes,
+                    "volumes": context.volumes,
+                    "order_flow": context.order_flow,
+                    "flows": context.flows,
+                    "breadth": context.breadth,
+                }
+                if context.event:
+                    self.state.last_event_id = context.event.event_id
+            except SystemExit as exc:
+                poll_errors[symbol] = [f"rate-limit-sysexit: {exc}"]
+                self.state.errors_by_type["api"] = (
+                    self.state.errors_by_type.get("api", 0) + 1
+                )
+            except Exception as exc:
+                poll_errors[symbol] = [str(exc)]
+                self.state.errors_by_type["api"] = (
+                    self.state.errors_by_type.get("api", 0) + 1
+                )
+
+        cycle_db = db
+        owns_db = False
+        if cycle_db is None and self.session_factory is not None:
+            cycle_db = self.session_factory()
+            owns_db = True
+        try:
+            dispatch_result = self.dispatcher.dispatch_sync(
+                phase=phase,
+                symbols=symbols,
+                market_data=all_market_data,
+                session_id=session_id,
+                cycle_id=cycle_id,
+                db=cycle_db,
+            )
+        finally:
+            if owns_db and cycle_db is not None:
+                cycle_db.close()
+        return (
+            poll_errors,
+            all_market_data,
+            len(symbols) - len(poll_errors),
+            dispatch_result,
+        )
+
     async def run(
         self,
-        db: AsyncSession | None,
+        db: Session | None,
         symbols: list[str],
         daemon_name: str = "quant-daemon",
         run_duration_seconds: float | None = None,
@@ -260,10 +375,24 @@ class DaemonController:
             started_at=start_time,
         )
 
-        # Persist the initial session log row if a DB session is available.
-        if db is not None:
-            db.add(session_log)
-            await db.commit()
+        # A manually supplied session remains supported for tests/one-shot
+        # callers; the production daemon uses session_factory instead.
+        try:
+            if db is not None:
+                db.add(session_log)
+                db.commit()
+            elif self.session_factory is not None:
+                await asyncio.to_thread(self._persist_session_log, session_log, True)
+        except Exception as exc:
+            self.state.running = False
+            self.state.status = "crashed"
+            self.state.last_error = f"session_log_persist_failed: {exc}"
+            if self.lease is not None:
+                await asyncio.to_thread(self.lease.release)
+            logger.error(
+                "Daemon refused to run without durable session log", exc_info=True
+            )
+            return
 
         logger.info(
             f"Daemon {daemon_name} started",
@@ -307,83 +436,19 @@ class DaemonController:
                         extra={"cycle": cycle_count, "phase": phase.value},
                     )
 
-                    # Poll market data (single-symbol poll; aggregate for multi-symbol)
-                    poll_errors: dict[str, Any] = {}
-                    all_market_data: dict[str, Any] = {}
-                    for symbol in symbols:
-                        try:
-                            poll_result = self.poller.poll(symbol, phase)
-                            if poll_result.errors:
-                                poll_errors[symbol] = poll_result.errors
-                                if any(
-                                    isinstance(e, dict)
-                                    and e.get("error") == "circuit_breaker_open"
-                                    for e in poll_result.errors
-                                ):
-                                    self.state.errors_by_type["circuit_breaker"] = (
-                                        self.state.errors_by_type.get(
-                                            "circuit_breaker", 0
-                                        )
-                                        + 1
-                                    )
-                                else:
-                                    self.state.errors_by_type["api"] = (
-                                        self.state.errors_by_type.get("api", 0) + 1
-                                    )
-
-                            context = self.normalizer.normalize(
-                                poll_result=poll_result,
-                                as_of=cycle_start,
-                            )
-                            if not context.is_valid:
-                                self.state.errors_by_type["validation"] = (
-                                    self.state.errors_by_type.get("validation", 0) + 1
-                                )
-
-                            all_market_data[symbol] = {
-                                "context": context,
-                                "entry_price": context.entry_price,
-                                "spot_price": context.spot_price,
-                                "highs": context.highs,
-                                "lows": context.lows,
-                                "closes": context.closes,
-                                "volumes": context.volumes,
-                                "order_flow": context.order_flow,
-                                "flows": context.flows,
-                                "breadth": context.breadth,
-                            }
-                            if context.event:
-                                self.state.last_event_id = context.event.event_id
-
-                        except SystemExit as se:
-                            # vnai sys.exit() safety net — should already be
-                            # intercepted in poller, but guard here too.
-                            poll_errors[symbol] = [f"rate-limit-sysexit: {se}"]
-                            self.state.errors_by_type["api"] = (
-                                self.state.errors_by_type.get("api", 0) + 1
-                            )
-                            logger.warning(
-                                f"[daemon] SystemExit from poller for {symbol} — rate limit hit",
-                                extra={"symbol": symbol, "phase": phase.value},
-                            )
-                        except Exception as poll_exc:
-                            poll_errors[symbol] = [str(poll_exc)]
-                            self.state.errors_by_type["api"] = (
-                                self.state.errors_by_type.get("api", 0) + 1
-                            )
-                    polled_count = len([s for s in symbols if s not in poll_errors])
-
-                    # Dispatch signals and simulate orders
-                    sync_db = getattr(db, "sync_session", None) or (
-                        db if not hasattr(db, "sync_session") else None
-                    )
-                    dispatch_result = await self.dispatcher.dispatch(
+                    (
+                        poll_errors,
+                        all_market_data,
+                        polled_count,
+                        dispatch_result,
+                    ) = await asyncio.to_thread(
+                        self._poll_and_dispatch,
                         phase=phase,
                         symbols=symbols,
-                        market_data=all_market_data,
                         session_id=instance_id,
                         cycle_id=cycle_count,
-                        db=sync_db,
+                        cycle_start=cycle_start,
+                        db=db,
                     )
 
                     self.state.last_cycle_id = cycle_count
@@ -436,12 +501,35 @@ class DaemonController:
                     # Persist heartbeat update to DB (every cycle).
                     if db is not None:
                         db.add(session_log)
-                        await db.commit()
+                        db.commit()
+                    elif self.session_factory is not None:
+                        await asyncio.to_thread(self._persist_session_log, session_log)
 
                     # Reset failure count on success
-                    failure_count = 0
-                    self.circuit_breaker.record_success()
-                    self.state.last_success_at = datetime.now(VN_TZ)
+                    self.state.last_run_at = datetime.now(VN_TZ)
+                    cycle_has_errors = bool(poll_errors or dispatch_result.errors)
+                    if cycle_has_errors:
+                        failure_count += 1
+                        reason = ", ".join(
+                            list(poll_errors) + list(dispatch_result.errors)
+                        )
+                        self.state.degraded = True
+                        self.state.status = "degraded"
+                        self.state.last_degraded_reason = reason
+                        self.state.last_error = reason
+                        session_log.failure_count = failure_count
+                        session_log.last_error = reason[:500]
+                        self.circuit_breaker.record_failure(
+                            RuntimeError(f"daemon cycle degraded: {reason}")
+                        )
+                    else:
+                        failure_count = 0
+                        self.state.degraded = False
+                        self.state.status = "running"
+                        self.state.last_degraded_reason = None
+                        self.state.last_error = None
+                        self.circuit_breaker.record_success()
+                        self.state.last_success_at = datetime.now(VN_TZ)
 
                     await asyncio.sleep(next_interval)
 
@@ -462,7 +550,16 @@ class DaemonController:
                     if db is not None:
                         try:
                             db.add(session_log)
-                            await db.commit()
+                            db.commit()
+                        except Exception as db_err:
+                            logger.warning(
+                                f"Failed to persist session log on error: {db_err}"
+                            )
+                    elif self.session_factory is not None:
+                        try:
+                            await asyncio.to_thread(
+                                self._persist_session_log, session_log
+                            )
                         except Exception as db_err:
                             logger.warning(
                                 f"Failed to persist session log on error: {db_err}"
@@ -512,9 +609,17 @@ class DaemonController:
             if db is not None:
                 try:
                     db.add(session_log)
-                    await db.commit()
+                    db.commit()
                 except Exception as db_err:
                     logger.warning(f"Failed to persist final session log: {db_err}")
+            elif self.session_factory is not None:
+                try:
+                    await asyncio.to_thread(self._persist_session_log, session_log)
+                except Exception as db_err:
+                    logger.warning(f"Failed to persist final session log: {db_err}")
+
+            if self.lease is not None:
+                await asyncio.to_thread(self.lease.release)
 
             self.state.running = False
             self.state.status = "stopped"
