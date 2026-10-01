@@ -49,9 +49,11 @@ class VietnamMarketClock:
 
         if 510 <= time_minutes < 525:
             return SessionPhase.PRE_ATO
-        if 525 <= time_minutes < 540:
+        if 525 <= time_minutes < 555:
+            # 08:45–09:00: Derivatives pre-open/matching + 09:00–09:15: Equities ATO call auction
             return SessionPhase.ATO
-        if 540 <= time_minutes < 690:
+        if 555 <= time_minutes < 690:
+            # 09:15–11:30: Continuous trading
             return SessionPhase.MORNING_CONTINUOUS
         if 690 <= time_minutes < 780:
             return SessionPhase.MIDDAY_INTERMISSION

@@ -12,13 +12,15 @@ Nâng cấp ML:
 - Regime-Aware Weight Adjustment: điều chỉnh trọng số theo chế độ thị trường E1
 """
 
+import logging
+import math
 import statistics
 import uuid
 from datetime import datetime
 from typing import Any
 
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from app.core.enums import (
     ForecastDirection,
@@ -26,6 +28,7 @@ from app.core.enums import (
     SessionPhase,
 )
 from app.core.models_base import VN_TZ
+from app.domains.market_data.domain.models import StockOHLCVDaily
 from app.domains.quant.application.engines.flow_engine import FlowLiquidityEngine
 from app.domains.quant.application.engines.quant_ml_engine import QuantMLEngine
 from app.domains.quant.application.engines.technical_engine import TechnicalEngine
@@ -54,12 +57,18 @@ DEFAULT_SCHEDULE: dict[str, dict[str, float]] = {
 }
 
 
+logger = logging.getLogger(__name__)
+
+
 class EnsembleEngine:
     """Động cơ Hợp nhất Tín hiệu Quyết định và Quản trị Rủi ro."""
 
     MODEL_VERSION = "v2.0.0"
 
     def __init__(self, session: Session | None = None) -> None:
+        # NOTE: session should be short-lived. The daemon's dispatcher creates a
+        # fresh EnsembleEngine per cycle with the cycle's DB session. Long-lived
+        # instances (e.g. via singleton) risk DetachedInstanceError.
         self.session = session
         self.engine1 = TechnicalEngine(session)
         self.engine2 = FlowLiquidityEngine(session)
@@ -79,6 +88,9 @@ class EnsembleEngine:
         total = w1 + w2 + w3
 
         if total <= 1e-9:
+            logger.warning(
+                "normalize_weights: all engine weights are zero — falling back to uniform weights",
+            )
             return {"w1": 0.34, "w2": 0.33, "w3": 0.33}
 
         return {
@@ -316,8 +328,8 @@ class EnsembleEngine:
     def generate_signal(
         self,
         request: EnsembleSignalRequest,
-        entry_price: float = 1300.0,
-        spot_price: float = 1300.0,
+        entry_price: float = 0.0,
+        spot_price: float = 0.0,
         highs: list[float] | None = None,
         lows: list[float] | None = None,
         closes: list[float] | None = None,
@@ -329,6 +341,37 @@ class EnsembleEngine:
     ) -> EnsembleSignalResponse:
         """Kích hoạt 3 Engine, phối hợp trọng số động, tính SL/TP và lưu vết vào ForecastJournal."""
         now = as_of or datetime.now(VN_TZ)
+
+        # DB fallback for prices if omitted and session exists
+        if (entry_price <= 0.0 or spot_price <= 0.0) and self.session is not None:
+            if entry_price <= 0.0:
+                bar = self.session.exec(
+                    select(StockOHLCVDaily)
+                    .where(col(StockOHLCVDaily.symbol) == request.symbol)
+                    .order_by(col(StockOHLCVDaily.trading_date).desc())
+                    .limit(1)
+                ).first()
+                if bar is not None:
+                    entry_price = float(bar.close)
+            if spot_price <= 0.0:
+                spot_sym = (
+                    "VN30" if request.symbol.startswith("VN30") else request.symbol
+                )
+                bar_spot = self.session.exec(
+                    select(StockOHLCVDaily)
+                    .where(col(StockOHLCVDaily.symbol) == spot_sym)
+                    .order_by(col(StockOHLCVDaily.trading_date).desc())
+                    .limit(1)
+                ).first()
+                if bar_spot is not None:
+                    spot_price = float(bar_spot.close)
+                elif entry_price > 0.0:
+                    spot_price = entry_price
+
+        if entry_price <= 0.0 and closes:
+            entry_price = float(closes[-1])
+        if spot_price <= 0.0 and entry_price > 0.0:
+            spot_price = entry_price
 
         # 1. Chạy 3 Engine phân tích
         e1_res = self.engine1.analyze(
@@ -365,6 +408,16 @@ class EnsembleEngine:
             score_e3=e3_res.score,
             weights=weights,
         )
+
+        # Guard: NaN/inf propagation check
+        if not math.isfinite(final_score):
+            logger.error(
+                "Ensemble produced non-finite score (%.4f) for %s — forcing NEUTRAL",
+                final_score,
+                request.symbol,
+            )
+            final_score = 0.0
+            confidence = 0.0
 
         # 3. Phân loại xu hướng dự báo
         raw_direction = self.classify_direction(final_score)
@@ -429,7 +482,7 @@ class EnsembleEngine:
             predicted_direction=out_direction,
             ensemble_score=final_score,
             confidence=confidence,
-            entry_price=entry_price,
+            entry_price=entry_price if entry_price > 0.0 else None,
             stop_loss=stop_loss,
             take_profit=take_profit,
             engine_weights=weights,

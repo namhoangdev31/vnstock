@@ -66,7 +66,7 @@ class ForecastJournalService:
             raise ForecastJournalError(
                 "predicted_at must be timezone-aware (VN_TZ) to anchor no-look-ahead"
             )
-        if predicted_at > datetime.now(VN_TZ) + timedelta(seconds=10):
+        if predicted_at > datetime.now(VN_TZ) + timedelta(seconds=2):
             raise ForecastJournalError(
                 "predicted_at cannot be in the future (look-ahead violation)"
             )

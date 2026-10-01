@@ -39,7 +39,7 @@ def _safe_call(fn: Callable, label: str, delay: float = _API_DELAY_S) -> Any:
     time.sleep(delay)
     try:
         return fn()
-    except Exception as exc:  # noqa: BLE001
+    except (Exception, SystemExit) as exc:  # noqa: BLE001
         logger.warning("[ingest] %s failed: %s", label, exc)
         return None
 
@@ -238,7 +238,7 @@ def ingest_market_breadth(
     total_vol = 0
     total_val = 0.0
 
-    for sym in list(symbols)[:30]:
+    for sym in list(symbols):
         df_q = _safe_call(
             lambda s=sym: vnstock_service.fetch_market_equity_quote(s),
             f"breadth_quote:{sym}",

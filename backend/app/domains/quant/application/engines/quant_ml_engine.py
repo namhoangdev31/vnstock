@@ -5,15 +5,17 @@ mô hình hóa độ biến động (Historical Volatility & Parkinson Volatilit
 xác suất chuyển phiên và mô phỏng Monte Carlo đường đi giá T+1 giới hạn trong biên độ trần/sàn ±7%.
 """
 
+import logging
 import math
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 
-from sqlmodel import Session
+from sqlmodel import Session, col, select
 
 from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
+from app.domains.market_data.domain.models import StockOHLCVDaily
 from app.domains.quant.application.daemon.clock import VietnamMarketClock
 from app.domains.quant.application.schemas import QuantMLEngineResponse
 from app.domains.quant.domain.indicators import (
@@ -27,6 +29,8 @@ from app.domains.quant.domain.indicators import (
     simulate_monte_carlo_scipy,
     simulate_t1_qmc_sobol,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class QuantMLEngine:
@@ -59,6 +63,9 @@ class QuantMLEngine:
 
         Fallback ATR estimate giữ nguyên khi không có historical_basis.
         """
+        if spot_index_price <= 0.0:
+            return 0.0, 0.0
+
         if not historical_basis or len(historical_basis) < 2:
             if highs and lows and len(highs) >= 3 and len(lows) >= 3:
                 recent_ranges = [
@@ -246,8 +253,8 @@ class QuantMLEngine:
     def analyze(
         self,
         symbol: str = "VN30F1M",
-        futures_price: float = 1300.0,
-        spot_index_price: float = 1300.0,
+        futures_price: float = 0.0,
+        spot_index_price: float = 0.0,
         historical_basis: Sequence[float] | None = None,
         highs: Sequence[float] | None = None,
         lows: Sequence[float] | None = None,
@@ -257,6 +264,77 @@ class QuantMLEngine:
         """Thực thi toàn bộ tính toán định lượng của Engine 3 và trả về QuantMLEngineResponse."""
         now = as_of or datetime.now(VN_TZ)
         phase = self.classify_session_phase(now)
+
+        # 1. DB fallback for prices & bars if omitted and session exists
+        if (
+            futures_price <= 0.0 or spot_index_price <= 0.0
+        ) and self.session is not None:
+            if futures_price <= 0.0:
+                bar = self.session.exec(
+                    select(StockOHLCVDaily)
+                    .where(col(StockOHLCVDaily.symbol) == symbol)
+                    .order_by(col(StockOHLCVDaily.trading_date).desc())
+                    .limit(1)
+                ).first()
+                if bar is not None:
+                    futures_price = float(bar.close)
+            if spot_index_price <= 0.0:
+                spot_sym = "VN30" if symbol.startswith("VN30") else symbol
+                bar_spot = self.session.exec(
+                    select(StockOHLCVDaily)
+                    .where(col(StockOHLCVDaily.symbol) == spot_sym)
+                    .order_by(col(StockOHLCVDaily.trading_date).desc())
+                    .limit(1)
+                ).first()
+                if bar_spot is not None:
+                    spot_index_price = float(bar_spot.close)
+                elif futures_price > 0.0:
+                    spot_index_price = futures_price
+
+        if (closes is None or not closes) and self.session is not None:
+            db_bars = self.session.exec(
+                select(StockOHLCVDaily)
+                .where(col(StockOHLCVDaily.symbol) == symbol)
+                .order_by(col(StockOHLCVDaily.trading_date).desc())
+                .limit(60)
+            ).all()
+            if db_bars:
+                db_bars = list(reversed(db_bars))
+                highs = [b.high for b in db_bars]
+                lows = [b.low for b in db_bars]
+                closes = [b.close for b in db_bars]
+                if futures_price <= 0.0:
+                    futures_price = float(closes[-1])
+                if spot_index_price <= 0.0:
+                    spot_index_price = futures_price
+
+        if futures_price <= 0.0 and closes:
+            futures_price = float(closes[-1])
+        if spot_index_price <= 0.0 and futures_price > 0.0:
+            spot_index_price = futures_price
+
+        # Guard: reject non-positive or missing prices (RULE 3)
+        if futures_price <= 0.0 or spot_index_price <= 0.0:
+            logger.warning(
+                "QuantMLEngine.analyze: invalid prices futures=%.2f spot=%.2f — returning neutral",
+                futures_price,
+                spot_index_price,
+            )
+            return QuantMLEngineResponse(
+                symbol=symbol,
+                as_of=now,
+                score=0.0,
+                basis_value=0.0,
+                basis_zscore=0.0,
+                historical_vol=0.15,
+                parkinson_vol=0.15,
+                session_phase=phase,
+                monte_carlo_targets={},
+                qmc_targets={},
+                lr_trend_score=0.0,
+                mc_max_drawdown_p50=0.0,
+                basis_stationarity={"error": "invalid_price_data"},
+            )
 
         basis_val, basis_z = self.compute_basis_zscore(
             futures_price=futures_price,

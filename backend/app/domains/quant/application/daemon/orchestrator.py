@@ -328,15 +328,19 @@ class PhaseAwareEngineOrchestrator:
             spot = (
                 context.spot_price if context.spot_price > 0.0 else context.entry_price
             )
-            futures = context.entry_price or spot or 1300.0
+            futures = context.entry_price if context.entry_price > 0.0 else spot
             missing_e3: list[str] = []
             if context.spot_price <= 0.0:
                 missing_e3.append("vn30_spot_price_unavailable_basis_degraded")
+            if futures <= 0.0:
+                missing_e3.append("futures_price_zero_or_negative")
+            if spot is not None and spot <= 0.0:
+                missing_e3.append("spot_price_zero_or_negative")
 
             e3_resp = self.engine3.analyze(
                 symbol=symbol,
                 futures_price=futures,
-                spot_index_price=spot or 1300.0,
+                spot_index_price=spot if spot and spot > 0.0 else futures,
                 highs=context.highs,
                 lows=context.lows,
                 closes=context.closes,
@@ -384,13 +388,26 @@ class PhaseAwareEngineOrchestrator:
 
         # Determine if at least one engine completed successfully
         has_completed = any(r.status == "COMPLETED" for r in results.values())
+        if not has_completed:
+            failed_reasons = {
+                k: r.error for k, r in results.items() if r.status == "FAILED"
+            }
+            logger.critical(
+                "All engines failed for %s in phase %s. Reasons: %s",
+                symbol,
+                phase,
+                failed_reasons,
+                extra=log_extra,
+            )
 
         return OrchestratorResult(
             phase=phase,
             as_of=as_of,
             engine_results=results,
             is_executable=has_completed,
-            skip_reason=None if has_completed else "All applicable engines failed",
+            skip_reason=None
+            if has_completed
+            else f"All engines failed: {list(results.keys())}",
         )
 
     def validate_context(

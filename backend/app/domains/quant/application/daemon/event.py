@@ -146,8 +146,8 @@ class MarketDataNormalizer:
                     if bar_dt.tzinfo is None:
                         bar_dt = bar_dt.replace(tzinfo=VN_TZ)
 
-                    # Look-ahead bias check: future timestamps relative to as_of (with 10s leeway for clock drift)
-                    if bar_dt > now + timedelta(seconds=10):
+                    # Look-ahead bias check: future timestamps relative to as_of (with 2s leeway for clock drift)
+                    if bar_dt > now + timedelta(seconds=2):
                         logger.warning(
                             "Skipping future bar time %s exceeding as_of %s (Look-ahead guard)",
                             bar_dt,
@@ -262,7 +262,11 @@ class MarketDataNormalizer:
         snapshot = {**(poll_result.market_snapshot or {}), **(market_snapshot or {})}
         # spot_price > 0 means VN30 index was fetched; otherwise fall back to entry_price
         raw_spot = snapshot.get("spot_price", 0.0)
-        spot_price = float(raw_spot) if raw_spot else float(entry_price)
+        spot_price = (
+            float(raw_spot)
+            if raw_spot and float(raw_spot) > 0.0
+            else float(entry_price)
+        )
 
         # Check sufficiency: if from_cache=True and insufficient bars (< 15 bars)
         if from_cache and len(closes) < 15:

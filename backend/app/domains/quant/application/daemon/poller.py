@@ -95,7 +95,10 @@ def _parse_rate_limit_wait_s(exc: SystemExit) -> float | None:
 
 
 def _fetch_with_retry(fn, label: str) -> Any:
-    """Call *fn()* up to _MAX_RETRY_ATTEMPTS times with jittered backoff.
+    """Call *fn()* up to _MAX_RETRY_ATTEMPTS times with jittered backoff (sync).
+
+    NOTE: This function uses blocking time.sleep(). It MUST be called from
+    asyncio.to_thread() in an async context to avoid blocking the event loop.
 
     Returns the function result on success, or None after all attempts fail.
     A 250 ms inter-request delay is inserted *before* every attempt (including
@@ -221,9 +224,14 @@ class MarketDataPoller:
                 and cache_age is not None
                 and cache_age <= self.cache_ttl_seconds
             ):
+                stale_threshold_s = 300.0  # 5 minutes
+                is_stale = cache_age > stale_threshold_s
                 logger.info(
-                    f"[poller] CB OPEN — serving last-known data for {symbol} "
-                    f"(cached at {cached.timestamp.isoformat()})"
+                    "[poller] CB OPEN — serving %sdata for %s (cached at %s, age=%.0fs)",
+                    "STALE " if is_stale else "",
+                    symbol,
+                    cached.timestamp.isoformat(),
+                    cache_age,
                 )
                 # Return a copy tagged as from_cache so callers can act on it.
                 return MarketPollResult(
@@ -235,7 +243,11 @@ class MarketDataPoller:
                     order_flow=cached.order_flow,
                     market_snapshot=cached.market_snapshot,
                     from_cache=True,
-                    metadata={"cache_age_seconds": cache_age},
+                    metadata={
+                        "cache_age_seconds": cache_age,
+                        "_stale": is_stale,
+                        "_age_seconds": cache_age,
+                    },
                     errors=[
                         {
                             "error": "circuit_breaker_open",
@@ -461,8 +473,8 @@ class MarketDataPoller:
                 symbol="VN30",
                 start=start,
                 end=today,
-                count=5,
-                interval="1D",
+                count=3,
+                interval="1m",
             )
             if df_spot is not None and not df_spot.empty:
                 close_col = next(

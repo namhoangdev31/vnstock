@@ -16,8 +16,10 @@ Toàn bộ các endpoint đều được bảo vệ bằng JWT thông qua depend
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
+from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.domains.market_data.domain.models import StockOHLCVDaily
 from app.domains.quant.application.engines.ensemble_engine import EnsembleEngine
 from app.domains.quant.application.engines.flow_engine import FlowLiquidityEngine
 from app.domains.quant.application.engines.quant_ml_engine import QuantMLEngine
@@ -106,8 +108,15 @@ def get_atc_forecast(
     """Dự phóng độ dịch chuyển giá và thiên hướng khớp lệnh trong đợt đấu thầu đóng cửa ATC."""
     engine3 = QuantMLEngine(session=session)
     res = engine3.analyze(symbol=symbol.upper())
+    latest_bar = session.exec(
+        select(StockOHLCVDaily)
+        .where(col(StockOHLCVDaily.symbol) == symbol.upper())
+        .order_by(col(StockOHLCVDaily.trading_date).desc())
+        .limit(1)
+    ).first()
+    current_p = float(latest_bar.close) if latest_bar is not None else 0.0
     atc_pred = engine3.predict_atc_transition(
-        current_price=res.basis_value + 1300.0,
+        current_price=current_p,
         basis_zscore=res.basis_zscore,
     )
     return {

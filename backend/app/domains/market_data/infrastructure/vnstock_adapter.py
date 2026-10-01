@@ -220,9 +220,9 @@ class VnstockService:
                 return pd.DataFrame()
         except CircuitBreakerOpenError:
             logger.warning("Circuit breaker is OPEN for %s, skipping call", src)
-        except Exception:
+        except (Exception, SystemExit) as exc:
             self.record_failure(src)
-            logger.warning(err_msg, exc_info=True)
+            logger.warning("%s: %s", err_msg, exc)
         return pd.DataFrame()
 
     # =========================================================================

@@ -127,5 +127,17 @@ def test_aggregate_across_scored(session) -> None:  # noqa: F811
         svc.score(e.id)
     agg = svc.aggregate()
     assert agg["count"] == 3
-    assert agg["mae"] == pytest.approx(10.0)  # (10+10+10)/3
+    assert agg["mae"] == pytest.approx(10.0)
     assert agg["directional_accuracy"] == pytest.approx(2 / 3)
+
+
+def test_record_rejects_future_predicted_at_exceeding_leeway(session) -> None:  # noqa: F811
+    """Kiểm tra chặn look-ahead bias khi predicted_at vượt quá 2s vào tương lai."""
+    from datetime import datetime, timedelta
+
+    from app.core.models_base import VN_TZ
+
+    svc = ForecastJournalService(session)
+    future_time = datetime.now(VN_TZ) + timedelta(seconds=5)
+    with pytest.raises(ForecastJournalError, match="look-ahead violation"):
+        svc.record(symbol="FPT", predicted_at=future_time, model_version="v1")

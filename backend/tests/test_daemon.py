@@ -69,11 +69,19 @@ class TestVietnamMarketClock:
         assert phase == SessionPhase.PRE_ATO
 
     def test_classify_trading_day_ato(self):
-        """Test phase classification during ATO phase."""
-        # Tuesday, 2026-09-29, 08:50 (ATO: 08:45 - 09:00)
+        """Test phase classification during ATO phase (08:45 - 09:15)."""
+        # Tuesday, 2026-09-29, 08:50 (Derivatives ATO: 08:45 - 09:00)
         dt = datetime(2026, 9, 29, 8, 50, 0)
         phase = VietnamMarketClock.classify(dt)
         assert phase == SessionPhase.ATO
+
+        # Tuesday, 2026-09-29, 09:10 (Equities ATO call auction: 09:00 - 09:15)
+        dt_equities_ato = datetime(2026, 9, 29, 9, 10, 0)
+        assert VietnamMarketClock.classify(dt_equities_ato) == SessionPhase.ATO
+
+        # Tuesday, 2026-09-29, 09:20 (Continuous trading: 09:15+)
+        dt_cont = datetime(2026, 9, 29, 9, 20, 0)
+        assert VietnamMarketClock.classify(dt_cont) == SessionPhase.MORNING_CONTINUOUS
 
     def test_classify_trading_day_midday_intermission(self):
         """Test phase classification during midday break."""

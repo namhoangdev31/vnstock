@@ -81,7 +81,7 @@ def run_settlement_hook(
         from sqlmodel import col, select
 
         from app.core.enums import PositionStatus
-        from app.domains.simulation.domain.models import Position
+        from app.domains.simulation.domain.models import Portfolio, Position, Trade
 
         now = datetime.now(VN_TZ)
         today = now.date()
@@ -98,10 +98,43 @@ def run_settlement_hook(
 
             for pos in pending_positions:
                 try:
-                    # Mark as settled by setting status CLOSED at settlement time
+                    # 1. Fetch the owning portfolio
+                    portfolio = session.get(Portfolio, pos.portfolio_id)
+                    if portfolio is None:
+                        errors.append(f"position {pos.id}: portfolio not found")
+                        continue
+
+                    # 2. Calculate settlement proceeds
+                    settlement_price = (
+                        pos.current_price if pos.current_price > 0 else pos.entry_price
+                    )
+                    proceeds = abs(pos.quantity) * settlement_price
+
+                    # 3. Credit cash balance (sale proceeds or buy settlement completed)
+                    portfolio.cash_balance += proceeds
+                    portfolio.margin_used = max(
+                        0.0, portfolio.margin_used - pos.margin_required
+                    )
+                    portfolio.updated_at = now
+
+                    # 4. Create settlement trade record for audit trail
+                    settlement_trade = Trade(
+                        portfolio_id=portfolio.id,
+                        symbol=pos.symbol,
+                        side=pos.side,
+                        quantity=pos.quantity,
+                        price=settlement_price,
+                        realized_pnl=pos.realized_pnl,
+                        executed_at=now,
+                    )
+                    session.add(settlement_trade)
+
+                    # 5. Close position
                     pos.status = PositionStatus.CLOSED
                     pos.updated_at = now
                     session.add(pos)
+                    session.add(portfolio)
+
                     settled += 1
                 except Exception as exc:
                     errors.append(f"position {getattr(pos, 'id', '?')}: {exc}")
@@ -247,7 +280,7 @@ def run_equity_universe_refresh(
                     symbols = [
                         inst.canonical_code.split(":")[-1]
                         for inst in instruments
-                        if inst.asset_class == "EQUITY"
+                        if inst.instrument_type == "EQUITY"
                     ]
 
                 if symbols:
@@ -332,7 +365,7 @@ def run_market_data_ingest_hook(
         }
         logger.info("[hook] %s completed: %s", hook_name, result)
         return result
-    except Exception as exc:  # noqa: BLE001
+    except (Exception, SystemExit) as exc:  # noqa: BLE001
         logger.error("[hook] %s failed: %s", hook_name, exc, exc_info=True)
         return {"error": str(exc), "date": str(run_date)}
 

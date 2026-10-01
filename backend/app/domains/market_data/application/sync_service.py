@@ -296,6 +296,7 @@ class DataSyncManager:
             rows_synced = task_func()
             return self._finish_log(log, "success", rows_synced=rows_synced)
         except VnstockServiceError as exc:
+            self.session.rollback()
             return self._finish_log(log, "failed", error_message=str(exc))
         except Exception as exc:
             self.session.rollback()

@@ -177,14 +177,17 @@ class RateLimiter:
 
             elapsed = now - last_call
             remaining = self.min_delay - elapsed
-            if remaining > 0:
-                self._sleep(remaining)
-                slept = remaining
-            else:
-                slept = 0.0
 
+        # Release lock BEFORE sleeping to avoid blocking other threads
+        if remaining > 0:
+            self._sleep(remaining)
+            slept = remaining
+        else:
+            slept = 0.0
+
+        with self._lock:
             self._last_calls[provider_key] = self._clock()
-            return slept
+        return slept
 
     def record_success(self, provider: str, session: Session | None = None) -> None:
         """Ghi nhận yêu cầu thành công, reset bộ đếm lỗi và đóng mạch nếu đang HALF_OPEN."""

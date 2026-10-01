@@ -229,7 +229,12 @@ class SignalDispatcher:
                         symbol_data.get("entry_price")
                         or (closes[-1] if closes else 0.0)
                     )
-                    spot_p = float(symbol_data.get("spot_price") or entry_p)
+                    spot_p_raw = symbol_data.get("spot_price")
+                    spot_p = (
+                        float(spot_p_raw)
+                        if spot_p_raw and float(spot_p_raw) > 0.0
+                        else float(entry_p)
+                    )
 
                     # Create placeholder event
                     ev_time = now
@@ -354,10 +359,28 @@ class SignalDispatcher:
                     pred_time = pred_time.replace(tzinfo=VN_TZ)
 
                 # Generate Ensemble Decision
+                # Guard: skip signal when price data is missing (RULE 3)
+                if not context.entry_price or context.entry_price <= 0.0:
+                    result.skipped_signals += 1
+                    logger.warning(
+                        "signal_skipped_no_price: symbol=%s entry_price=%s spot_price=%s",
+                        symbol,
+                        context.entry_price,
+                        context.spot_price,
+                        extra=log_extra,
+                    )
+                    continue
+
+                effective_spot = (
+                    context.spot_price
+                    if context.spot_price and context.spot_price > 0.0
+                    else context.entry_price
+                )
+
                 signal_resp = ensemble.generate_signal(
                     request=request,
-                    entry_price=context.entry_price or 1300.0,
-                    spot_price=context.spot_price or context.entry_price or 1300.0,
+                    entry_price=context.entry_price,
+                    spot_price=effective_spot,
                     highs=context.highs,
                     lows=context.lows,
                     closes=context.closes,
@@ -445,7 +468,7 @@ class SignalDispatcher:
                                         symbol=symbol,
                                         side=side,
                                         quantity=1,
-                                        price=context.entry_price or 1300.0,
+                                        price=context.entry_price,
                                         source_signal_id=str(journal_id),
                                     )
                                     if order_resp is not None:

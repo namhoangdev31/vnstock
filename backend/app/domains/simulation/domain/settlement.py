@@ -25,8 +25,25 @@ VIETNAM_HOLIDAYS_FIXED: set[tuple[int, int]] = {
 }
 
 # Các ngày nghỉ lễ âm lịch / biến đổi theo năm (Tết Nguyên Đán, Giỗ Tổ Hùng Vương)
+# Source: Bộ LĐTB&XH annual announcements, Vietnamese Government Decree
 VIETNAM_SPECIAL_HOLIDAYS: set[date] = {
-    # Tết Nguyên Đán 2026 (dự kiến Bính Ngọ từ 28 Tết đến Mùng 6)
+    # ── Tết Nguyên Đán 2025 (Ất Tỵ) ──
+    date(2025, 1, 25),
+    date(2025, 1, 27),
+    date(2025, 1, 28),
+    date(2025, 1, 29),
+    date(2025, 1, 30),
+    date(2025, 1, 31),
+    date(2025, 2, 1),
+    date(2025, 2, 2),
+    date(2025, 2, 3),
+    # Giỗ Tổ Hùng Vương 2025 (10/3 Âm = 7/4/2025)
+    date(2025, 4, 7),
+    # Nghỉ lễ 30/4 - 1/5 2025
+    date(2025, 4, 30),
+    date(2025, 5, 1),
+    date(2025, 5, 2),
+    # ── Tết Nguyên Đán 2026 (Bính Ngọ) ──
     date(2026, 2, 14),
     date(2026, 2, 15),
     date(2026, 2, 16),
@@ -34,8 +51,64 @@ VIETNAM_SPECIAL_HOLIDAYS: set[date] = {
     date(2026, 2, 18),
     date(2026, 2, 19),
     date(2026, 2, 20),
-    # Nghỉ bù Quốc khánh 2026 (nếu có)
+    # Giỗ Tổ Hùng Vương 2026 (10/3 Âm = 27/3/2026)
+    date(2026, 3, 27),
+    # Nghỉ lễ 30/4 - 1/5 2026
+    date(2026, 4, 30),
+    date(2026, 5, 1),
+    # Quốc khánh 2/9 nghỉ kèm 3/9
+    date(2026, 9, 2),
     date(2026, 9, 3),
+    # ── Tết Nguyên Đán 2027 (Đinh Mùi) ──
+    date(2027, 2, 5),
+    date(2027, 2, 6),
+    date(2027, 2, 7),
+    date(2027, 2, 8),
+    date(2027, 2, 9),
+    date(2027, 2, 10),
+    date(2027, 2, 11),
+    # Giỗ Tổ Hùng Vương 2027 (10/3 Âm = 16/4/2027)
+    date(2027, 4, 16),
+    # Nghỉ lễ 30/4 - 1/5 2027
+    date(2027, 4, 30),
+    date(2027, 5, 1),
+    # Quốc khánh 2/9 nghỉ kèm 3/9
+    date(2027, 9, 2),
+    date(2027, 9, 3),
+    # ── Tết Nguyên Đán 2028 (Mậu Thân) ──
+    date(2028, 1, 25),
+    date(2028, 1, 26),
+    date(2028, 1, 27),
+    date(2028, 1, 28),
+    date(2028, 1, 29),
+    date(2028, 1, 30),
+    date(2028, 1, 31),
+    # Giỗ Tổ Hùng Vương 2028 (10/3 Âm = 4/4/2028)
+    date(2028, 4, 4),
+    # Nghỉ lễ 30/4 - 1/5 2028
+    date(2028, 4, 29),
+    date(2028, 4, 30),
+    date(2028, 5, 1),
+    # Quốc khánh
+    date(2028, 9, 1),
+    date(2028, 9, 2),
+    # ── Tết Nguyên Đán 2029 (Kỷ Dậu) ──
+    date(2029, 2, 12),
+    date(2029, 2, 13),
+    date(2029, 2, 14),
+    date(2029, 2, 15),
+    date(2029, 2, 16),
+    date(2029, 2, 17),
+    date(2029, 2, 18),
+    # Giỗ Tổ Hùng Vương 2029 (10/3 Âm = 24/4/2029)
+    date(2029, 4, 24),
+    # Nghỉ lễ 30/4 - 1/5 2029
+    date(2029, 4, 30),
+    date(2029, 5, 1),
+    # Quốc khánh
+    date(2029, 9, 1),
+    date(2029, 9, 2),
+    date(2029, 9, 3),
 }
 
 

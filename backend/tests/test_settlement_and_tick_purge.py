@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from sqlalchemy import create_engine
-from sqlmodel import Session, SQLModel
+from sqlmodel import Session, SQLModel, select
 
 from app.domains.market_data.domain.models import (
     StockOHLCVIntraday,
@@ -201,3 +201,100 @@ def test_safe_purge_gate_allows_deletion_when_aggregated(db_session: Session) ->
         force=False,
     )
     assert purged_count == 1
+
+
+def test_extended_holidays_2025_to_2029() -> None:
+    """Kiểm tra nhận diện ngày nghỉ lễ mở rộng giai đoạn 2025–2029."""
+    # 2025: Tết Ất Tỵ (29/1/2025) và Giỗ Tổ Hùng Vương (7/4/2025)
+    assert SettlementService.is_trading_day(date(2025, 1, 29)) is False
+    assert SettlementService.is_trading_day(date(2025, 4, 7)) is False
+
+    # 2027: Tết Đinh Mùi (5/2/2027 - 11/2/2027)
+    # Giao dịch ngày Thứ 4 03/02/2027:
+    # T+1 là Thứ 5 04/02/2027
+    # T+2 rơi vào Thứ 6 12/02/2027 (bỏ qua toàn bộ kỳ nghỉ Tết 5/2-11/2)
+    settled_2027 = SettlementService.calculate_settlement_date(
+        date(2027, 2, 3), cycle_days=2
+    )
+    assert settled_2027 == date(2027, 2, 12)
+
+    # 2028: Tết Mậu Thân (27/1/2028)
+    assert SettlementService.is_trading_day(date(2028, 1, 27)) is False
+
+    # 2029: Tết Kỷ Dậu (14/2/2029) và Giỗ Tổ (24/4/2029)
+    assert SettlementService.is_trading_day(date(2029, 2, 14)) is False
+    assert SettlementService.is_trading_day(date(2029, 4, 24)) is False
+
+
+def test_settlement_hook_credits_cash_and_creates_trade(db_session: Session) -> None:
+    """Kiểm tra hook thanh toán bù trừ T+2 cộng tiền mặt, giải phóng margin và ghi Trade log."""
+    import uuid
+    from contextlib import contextmanager
+
+    from app.core.enums import PositionSide, PositionStatus
+    from app.domains.quant.application.daemon.scheduled_hooks import (
+        run_settlement_hook,
+    )
+    from app.domains.simulation.domain.models import Portfolio, Position, Trade
+
+    # 1. Tạo Portfolio mô phỏng
+    portfolio = Portfolio(
+        user_id=uuid.uuid4(),
+        name="Settlement Test Portfolio",
+        initial_balance=10_000_000.0,
+        cash_balance=10_000_000.0,
+        margin_used=500_000.0,
+        equity=10_000_000.0,
+    )
+    db_session.add(portfolio)
+    db_session.commit()
+    db_session.refresh(portfolio)
+
+    # 2. Tạo Position OPEN có settlement_date đã đến hạn (T+2)
+    today = date(2026, 10, 1)
+    pos = Position(
+        portfolio_id=portfolio.id,
+        symbol="HPG",
+        side=PositionSide.LONG,
+        quantity=100,
+        entry_price=28000.0,
+        current_price=30000.0,
+        margin_required=500_000.0,
+        settlement_date=today,
+        status=PositionStatus.OPEN,
+    )
+    db_session.add(pos)
+    db_session.commit()
+    db_session.refresh(pos)
+
+    # 3. Tạo session_factory trả về db_session
+    @contextmanager
+    def mock_session_factory():
+        yield db_session
+
+    result = run_settlement_hook(
+        session_factory=mock_session_factory,
+        today=today,
+    )
+
+    assert result["settled"] == 1
+    assert len(result["errors"]) == 0
+
+    # 4. Kiểm tra Position chuyển sang CLOSED
+    db_session.refresh(pos)
+    assert pos.status == PositionStatus.CLOSED
+
+    # 5. Kiểm tra Portfolio được cộng tiền và giải phóng margin
+    db_session.refresh(portfolio)
+    expected_proceeds = 100 * 30000.0  # 3,000,000
+    assert portfolio.cash_balance == 10_000_000.0 + expected_proceeds
+    assert portfolio.margin_used == 0.0
+
+    # 6. Kiểm tra Trade record được tạo
+    trades = db_session.exec(
+        select(Trade).where(Trade.portfolio_id == portfolio.id)
+    ).all()
+    assert len(trades) == 1
+    assert trades[0].symbol == "HPG"
+    assert trades[0].quantity == 100
+    assert trades[0].price == 30000.0
