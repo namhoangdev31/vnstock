@@ -252,3 +252,29 @@ def test_api_forecast_journal_lifecycle(api_client: TestClient):
     )
     assert res_filtered.status_code == 200
     assert len(res_filtered.json()) >= 1
+
+
+def test_api_quant_daemon_endpoints(api_client: TestClient):
+    """Kiểm tra các API điều khiển Daemon /api/v1/quant/daemon/*."""
+    res_status = api_client.get(f"{settings.API_V1_STR}/quant/daemon/status")
+    assert res_status.status_code == 200
+    assert "status" in res_status.json()
+
+    res_pause = api_client.post(f"{settings.API_V1_STR}/quant/daemon/pause")
+    assert res_pause.status_code == 200
+
+    res_resume = api_client.post(f"{settings.API_V1_STR}/quant/daemon/resume")
+    assert res_resume.status_code == 200
+
+    res_trigger = api_client.post(f"{settings.API_V1_STR}/quant/daemon/trigger-cycle")
+    assert res_trigger.status_code == 200
+
+    res_start = api_client.post(f"{settings.API_V1_STR}/quant/daemon/start?force=true")
+    assert res_start.status_code == 200
+
+    res_break = api_client.post(f"{settings.API_V1_STR}/quant/daemon/break-lease")
+    assert res_break.status_code == 200
+
+    res_stop = api_client.post(f"{settings.API_V1_STR}/quant/daemon/stop")
+    assert res_stop.status_code == 200
+    assert res_stop.json()["running"] is False

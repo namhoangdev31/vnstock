@@ -128,21 +128,41 @@ class DaemonController:
         self,
         daemon_name: str = "quant-daemon",
         symbols: list[str] | None = None,
+        force: bool = False,
     ) -> None:
         """Start the daemon as a background asyncio.Task.
 
-        Creates a persistent background task via asyncio.create_task so the
-        polling loop runs concurrently without blocking the calling coroutine.
-        Idempotent: calling start() while already running is a no-op.
+        If another worker holds the advisory lease, enters standby mode with
+        a background supervisor that probes the lease and promotes to active
+        leader as soon as the other worker terminates (e.g. rolling deploy).
         """
-        if self.state.running:
+        if self.state.running and self.state.status == "running" and not force:
             return
 
+        if self._task and not self._task.done():
+            if force:
+                self._task.cancel()
+                try:
+                    await self._task
+                except asyncio.CancelledError:
+                    pass
+            elif self.state.status == "standby":
+                return
+
         if self.lease is not None:
-            acquired = await asyncio.to_thread(self.lease.acquire)
+            acquired = await asyncio.to_thread(self.lease.acquire, force=force)
             if not acquired:
+                self.state.running = True
                 self.state.status = "standby"
-                logger.warning("Daemon start skipped: another worker owns the lease")
+                logger.warning(
+                    f"Daemon {daemon_name} start deferred to STANDBY: another worker holds the lease. "
+                    "Starting background standby supervisor to monitor and auto-promote..."
+                )
+                self._task = asyncio.create_task(
+                    self._standby_loop(daemon_name=daemon_name, symbols=symbols),
+                    name=f"{daemon_name}-standby",
+                )
+                self._register_signal_handlers()
                 return
 
         started_at = datetime.now(VN_TZ)
@@ -164,6 +184,50 @@ class DaemonController:
         # TRD §6 — register OS signal handlers for graceful shutdown.
         self._register_signal_handlers()
         logger.info("Daemon started", extra={"instance_id": self.instance_id})
+
+    async def _standby_loop(
+        self,
+        daemon_name: str = "quant-daemon",
+        symbols: list[str] | None = None,
+        probe_interval: float = 5.0,
+    ) -> None:
+        """Standby supervisor task: periodically probes the advisory lease and
+
+        promotes from standby to active leader as soon as the lease becomes available.
+        """
+        logger.info(
+            f"Daemon {daemon_name} standby supervisor active (probing lease every {probe_interval}s)"
+        )
+        try:
+            while self.state.running and self.state.status == "standby":
+                await asyncio.sleep(probe_interval)
+                if not self.state.running:
+                    break
+                if self.lease is not None:
+                    acquired = await asyncio.to_thread(self.lease.acquire)
+                    if acquired:
+                        logger.info(
+                            f"Daemon {daemon_name} acquired advisory lease from standby! "
+                            "Promoting to active leader..."
+                        )
+                        started_at = datetime.now(VN_TZ)
+                        self.instance_id = (
+                            f"{daemon_name}-{int(started_at.timestamp())}"
+                        )
+                        self.state.status = "running"
+                        self.state.last_started_at = started_at
+                        await self.run(
+                            db=None,
+                            symbols=symbols or ["VN30F1M"],
+                            daemon_name=daemon_name,
+                        )
+                        break
+        except asyncio.CancelledError:
+            logger.info(f"Daemon {daemon_name} standby supervisor cancelled")
+        finally:
+            if self.state.status == "standby":
+                self.state.running = False
+                self.state.status = "stopped"
 
     def _register_signal_handlers(self) -> None:
         """Register SIGTERM / SIGINT handlers per TRD §6 Step 5.
@@ -193,9 +257,11 @@ class DaemonController:
             try:
                 loop.add_signal_handler(sig, lambda s=sig: _handle_signal(s))
                 logger.debug(f"Registered {sig.name} handler")
-            except (NotImplementedError, OSError):
-                # Windows / environments that don't support add_signal_handler.
-                logger.debug(f"Cannot register {sig.name} handler on this platform")
+            except (NotImplementedError, OSError, RuntimeError):
+                # Windows / non-main threads that don't support add_signal_handler.
+                logger.debug(
+                    f"Cannot register {sig.name} handler on this platform/thread"
+                )
 
     async def stop(self) -> None:
         """Stop the daemon."""
@@ -205,6 +271,9 @@ class DaemonController:
                 await self._task
             except asyncio.CancelledError:
                 pass
+
+        if self.lease is not None:
+            await asyncio.to_thread(self.lease.release)
 
         self.state.running = False
         self.state.paused = False

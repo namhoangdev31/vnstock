@@ -32,13 +32,20 @@ def resume_daemon(current_user: CurrentSuperuser) -> dict[str, Any]:  # noqa: AR
     "/trigger_once",
     summary="Trigger a single execution cycle off-schedule (alias)",
 )
+@router.post(
+    "/trigger-cycle",
+    summary="Trigger a single execution cycle off-schedule (kebab-case alias)",
+)
 async def trigger_daemon_cycle(current_user: CurrentSuperuser) -> dict[str, Any]:  # noqa: ARG001
     return await quant_daemon_controller.trigger_once()
 
 
 @router.post("/start", summary="Start daemon background worker task")
-async def start_daemon(current_user: CurrentSuperuser) -> dict[str, Any]:  # noqa: ARG001
-    await quant_daemon_controller.start()
+async def start_daemon(
+    current_user: CurrentSuperuser,  # noqa: ARG001
+    force: bool = False,
+) -> dict[str, Any]:
+    await quant_daemon_controller.start(force=force)
     return quant_daemon_controller.status()
 
 
@@ -46,3 +53,19 @@ async def start_daemon(current_user: CurrentSuperuser) -> dict[str, Any]:  # noq
 async def stop_daemon(current_user: CurrentSuperuser) -> dict[str, Any]:  # noqa: ARG001
     await quant_daemon_controller.stop()
     return quant_daemon_controller.status()
+
+
+@router.post(
+    "/break-lease",
+    summary="Break stale PostgreSQL advisory lease (superuser only)",
+)
+async def break_daemon_lease(current_user: CurrentSuperuser) -> dict[str, Any]:  # noqa: ARG001
+    import asyncio
+
+    if quant_daemon_controller.lease is not None:
+        broken = await asyncio.to_thread(quant_daemon_controller.lease.break_lease)
+        return {
+            "lease_broken": broken,
+            "status": quant_daemon_controller.status(),
+        }
+    return {"lease_broken": False, "status": quant_daemon_controller.status()}

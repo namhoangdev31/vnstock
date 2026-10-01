@@ -843,3 +843,68 @@ class TestDaemonSessionLogPersistence:
             row = db.get(DaemonSessionLog, session_log.id)
             assert row is not None
             assert row.cycle_count == 5
+
+    @pytest.mark.anyio
+    async def test_standby_supervisor_auto_promotes_when_lease_acquired(self):
+        """TEST-DAEMON-STANDBY-01: Standby supervisor probes lease and promotes to active."""
+        from unittest.mock import MagicMock
+
+        from app.domains.quant.application.daemon.clock import VietnamMarketClock
+        from app.domains.quant.application.daemon.controller import DaemonController
+        from app.domains.quant.application.daemon.dispatcher import SignalDispatcher
+        from app.domains.quant.application.daemon.poller import MarketDataPoller
+        from app.domains.quant.application.daemon.state import DaemonCircuitBreaker
+
+        cb = DaemonCircuitBreaker()
+        mock_lease = MagicMock()
+        # First attempt returns False (standby), second attempt returns True (promoted)
+        mock_lease.acquire.side_effect = [False, True]
+
+        controller = DaemonController(
+            clock=VietnamMarketClock(),
+            circuit_breaker=cb,
+            poller=MarketDataPoller(cb),
+            dispatcher=SignalDispatcher(),
+            lease=mock_lease,
+        )
+
+        with patch.object(controller, "run", return_value=None):
+            await controller.start()
+            assert controller.state.status == "standby"
+            assert controller.state.running is True
+
+            # Trigger supervisor check (with small sleep to allow probe_interval)
+            await controller._standby_loop(probe_interval=0.01)
+            assert controller.state.status == "running"
+
+            await controller.stop()
+            assert controller.state.status == "stopped"
+
+    @pytest.mark.anyio
+    async def test_start_with_force_triggers_force_acquire(self):
+        """TEST-DAEMON-STANDBY-02: start(force=True) passes force=True to lease."""
+        from unittest.mock import MagicMock
+
+        from app.domains.quant.application.daemon.clock import VietnamMarketClock
+        from app.domains.quant.application.daemon.controller import DaemonController
+        from app.domains.quant.application.daemon.dispatcher import SignalDispatcher
+        from app.domains.quant.application.daemon.poller import MarketDataPoller
+        from app.domains.quant.application.daemon.state import DaemonCircuitBreaker
+
+        cb = DaemonCircuitBreaker()
+        mock_lease = MagicMock()
+        mock_lease.acquire.return_value = True
+
+        controller = DaemonController(
+            clock=VietnamMarketClock(),
+            circuit_breaker=cb,
+            poller=MarketDataPoller(cb),
+            dispatcher=SignalDispatcher(),
+            lease=mock_lease,
+        )
+
+        with patch.object(controller, "run", return_value=None):
+            await controller.start(force=True)
+            mock_lease.acquire.assert_called_with(force=True)
+            assert controller.state.status == "running"
+            await controller.stop()
