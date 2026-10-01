@@ -5,6 +5,9 @@ dev = [
   "typer>=0.27.2,<1.0.0",
 ]
 
+[tool.ty.src]
+exclude = [".claude/**"]
+
 [tool.ty.environment]
 python = ".venv"
 python-version = "3.12"

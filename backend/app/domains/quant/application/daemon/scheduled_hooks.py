@@ -80,43 +80,34 @@ def run_settlement_hook(
     try:
         from sqlmodel import col, select
 
-        from app.domains.simulation.domain.models import PaperOrder
-        from app.domains.simulation.domain.settlement import (
-            SettlementService,
-            SettlementStatus,
-        )
+        from app.core.enums import PositionStatus
+        from app.domains.simulation.domain.models import Position
 
         now = datetime.now(VN_TZ)
+        today = now.date()
 
         with session_factory() as session:
-            # Find EQUITY paper orders in PENDING_SETTLEMENT status
-            pending_orders = session.exec(
-                select(PaperOrder).where(
-                    col(PaperOrder.settlement_status) == "PENDING_SETTLEMENT"
+            # Find EQUITY positions with settlement_date reached (T+2 settled)
+            pending_positions = session.exec(
+                select(Position).where(
+                    col(Position.status) == PositionStatus.OPEN,
+                    col(Position.settlement_date) <= today,
+                    col(Position.settlement_date).is_not(None),
                 )
             ).all()
 
-            for order in pending_orders:
+            for pos in pending_positions:
                 try:
-                    trade_time = order.filled_at or order.created_at
-                    if trade_time is None:
-                        continue
-
-                    # Only equity orders have T+2 settlement
-                    asset_type = getattr(order, "asset_type", "EQUITY")
-                    status = SettlementService.evaluate_settlement_status(
-                        trade_time=trade_time,
-                        current_time=now,
-                        asset_type=asset_type,
-                    )
-                    if status == SettlementStatus.SETTLED:
-                        order.settlement_status = "SETTLED"
-                        order.settled_at = now
-                        session.add(order)
-                        settled += 1
+                    # Mark as settled by setting status CLOSED at settlement time
+                    pos.status = PositionStatus.CLOSED
+                    pos.updated_at = now
+                    session.add(pos)
+                    settled += 1
                 except Exception as exc:
-                    errors.append(f"order {getattr(order, 'id', '?')}: {exc}")
-                    logger.warning("Settlement hook: error processing order: %s", exc)
+                    errors.append(f"position {getattr(pos, 'id', '?')}: {exc}")
+                    logger.warning(
+                        "Settlement hook: error processing position: %s", exc
+                    )
 
             if settled > 0:
                 session.commit()
@@ -291,6 +282,60 @@ _EQUITY_REFRESH_PHASES = {
     SessionPhase.OVERNIGHT_SIMULATION,
 }
 
+_INGEST_PHASES = {
+    SessionPhase.POST_MARKET,
+    SessionPhase.OVERNIGHT_SIMULATION,
+}
+
+
+# ---------------------------------------------------------------------------
+# Hook 4 — Market Data Ingestion (macro + breadth + flows)
+# ---------------------------------------------------------------------------
+
+
+def run_market_data_ingest_hook(
+    session_factory: Callable[[], Any] | None,
+    run_date: date,
+) -> dict[str, Any]:
+    """Nạp macro_indicator, market_breadth, institutional_flow vào DB.
+
+    Chạy 1 lần mỗi ngày trong POST_MARKET / OVERNIGHT_SIMULATION.
+    Idempotent — gọi nhiều lần cho cùng ngày là safe.
+    """
+    hook_name = "market_data_ingest"
+    if not _tracker.should_run(hook_name, run_date):
+        logger.debug("[hook] %s already ran for %s — skip", hook_name, run_date)
+        return {"skipped": True, "date": str(run_date)}
+
+    if session_factory is None:
+        logger.warning("[hook] %s: no session_factory — skip", hook_name)
+        return {"skipped": True, "reason": "no_session_factory"}
+
+    try:
+        from app.domains.quant.application.market_data_ingest import (
+            ingest_institutional_flows,
+            ingest_macro_indicators,
+            ingest_market_breadth,
+        )
+
+        with session_factory() as session:
+            macro_counts = ingest_macro_indicators(session, trading_date=run_date)
+            breadth_count = ingest_market_breadth(session, trading_date=run_date)
+            flow_count = ingest_institutional_flows(session, trading_date=run_date)
+
+        _tracker.mark_ran(hook_name, run_date)
+        result: dict[str, Any] = {
+            "date": str(run_date),
+            "macro": macro_counts,
+            "breadth": breadth_count,
+            "flows": flow_count,
+        }
+        logger.info("[hook] %s completed: %s", hook_name, result)
+        return result
+    except Exception as exc:  # noqa: BLE001
+        logger.error("[hook] %s failed: %s", hook_name, exc, exc_info=True)
+        return {"error": str(exc), "date": str(run_date)}
+
 
 def dispatch_phase_hooks(
     phase: SessionPhase,
@@ -304,7 +349,8 @@ def dispatch_phase_hooks(
     ``asyncio.to_thread()`` in the daemon's main loop, keeping blocking
     DB/API work off the event loop.
 
-    Returns combined summary: {"settlement": ..., "screener": ..., "equity_universe": ...}.
+    Returns combined summary: {"settlement": ..., "screener": ...,
+    "equity_universe": ..., "market_data_ingest": ...}.
     """
     run_date = today or datetime.now(VN_TZ).date()
     results: dict[str, Any] = {}
@@ -318,6 +364,11 @@ def dispatch_phase_hooks(
     if phase in _EQUITY_REFRESH_PHASES:
         results["equity_universe"] = run_equity_universe_refresh(
             session_factory, symbol_registry, run_date
+        )
+
+    if phase in _INGEST_PHASES:
+        results["market_data_ingest"] = run_market_data_ingest_hook(
+            session_factory, run_date
         )
 
     return results

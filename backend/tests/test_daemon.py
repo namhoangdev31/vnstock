@@ -1018,9 +1018,7 @@ class TestScheduledHooks:
             run_equity_universe_refresh,
         )
 
-        result = run_equity_universe_refresh(
-            session_factory=None, symbol_registry=None
-        )
+        result = run_equity_universe_refresh(session_factory=None, symbol_registry=None)
         assert result["skipped"] is True
 
     def test_dispatch_phase_hooks_settlement_fires_in_afternoon(self):
@@ -1029,7 +1027,6 @@ class TestScheduledHooks:
             _tracker,
             dispatch_phase_hooks,
         )
-        from datetime import date
 
         # Reset tracker so hook is eligible
         _tracker.reset()
@@ -1071,17 +1068,34 @@ class TestScheduledHooks:
         )
         assert "equity_universe" in result
 
-    def test_hook_idempotent_runs_only_once_per_day(self):
+    def test_dispatch_phase_hooks_market_data_ingest_fires_in_post_market(self):
         from app.core.enums import SessionPhase
         from app.domains.quant.application.daemon.scheduled_hooks import (
             _tracker,
             dispatch_phase_hooks,
         )
+
+        _tracker.reset()
+        result = dispatch_phase_hooks(
+            phase=SessionPhase.POST_MARKET,
+            session_factory=None,
+            symbol_registry=None,
+        )
+        assert "market_data_ingest" in result
+        assert result["market_data_ingest"]["skipped"] is True
+
+    def test_hook_idempotent_runs_only_once_per_day(self):
         from datetime import date
+
+        from app.core.enums import SessionPhase
+        from app.domains.quant.application.daemon.scheduled_hooks import (
+            _tracker,
+            dispatch_phase_hooks,
+        )
 
         _tracker.reset()
         today = date.today()
-        result1 = dispatch_phase_hooks(
+        dispatch_phase_hooks(
             phase=SessionPhase.POST_MARKET,
             session_factory=None,
             symbol_registry=None,
@@ -1095,6 +1109,7 @@ class TestScheduledHooks:
         )
         # Second call should be skipped
         assert result2["screener"]["skipped"] is True
+        assert result2["market_data_ingest"]["skipped"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -1106,9 +1121,11 @@ class TestDaemonControllerUsesRegistry:
     def test_trigger_once_uses_registry_symbols(self):
         """trigger_once should poll registry symbols, not hardcoded VN30F1M."""
         import asyncio
-        from unittest.mock import MagicMock, patch
+        from datetime import datetime
+        from unittest.mock import MagicMock
 
         from app.core.enums import SessionPhase
+        from app.core.models_base import VN_TZ
         from app.domains.quant.application.daemon import (
             DaemonController,
             SymbolRegistry,
@@ -1153,8 +1170,6 @@ class TestDaemonControllerUsesRegistry:
         clock = MagicMock(spec=VietnamMarketClock)
         snapshot = MagicMock()
         snapshot.session_phase = SessionPhase.MORNING_CONTINUOUS
-        from datetime import datetime
-        from app.core.models_base import VN_TZ
         snapshot.as_of = datetime.now(VN_TZ)
         clock.snapshot.return_value = snapshot
 
