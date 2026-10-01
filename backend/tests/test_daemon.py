@@ -94,8 +94,7 @@ class TestDaemonCircuitBreaker:
     def test_record_failure_transitions_to_open(self):
         """Test that failures transition to OPEN state."""
         cb = DaemonCircuitBreaker()
-        # Record 3 failures to hit threshold
-        for _ in range(3):
+        for _ in range(5):
             cb.record_failure(Exception("test error"))
         assert cb.is_open is True
         assert cb.opened_at is not None
@@ -106,7 +105,7 @@ class TestDaemonCircuitBreaker:
         cb._half_open_cooldown_seconds = 0.1  # Shorten for testing
 
         # Hit threshold to open
-        for _ in range(3):
+        for _ in range(5):
             cb.record_failure(Exception("test error"))
 
         # Not half-open immediately
@@ -119,8 +118,8 @@ class TestDaemonCircuitBreaker:
     def test_record_success_resets(self):
         """Test that success resets circuit breaker to CLOSED."""
         cb = DaemonCircuitBreaker()
-        # Hit threshold to open
-        for _ in range(3):
+        # Hit threshold to open (TRD §3.2: failure_threshold=5)
+        for _ in range(5):
             cb.record_failure(Exception("test error"))
         assert cb.is_open is True
 
@@ -132,7 +131,7 @@ class TestDaemonCircuitBreaker:
     def test_reset_method(self):
         """Test that reset clears all state."""
         cb = DaemonCircuitBreaker()
-        for _ in range(3):
+        for _ in range(5):
             cb.record_failure(Exception("test error"))
         cb.reset()
 
@@ -151,8 +150,8 @@ class TestDaemonCircuitBreaker:
         cb = DaemonCircuitBreaker()
         cb._half_open_cooldown_seconds = 0.1
 
-        # Drive circuit OPEN
-        for _ in range(3):
+        # Drive circuit OPEN (TRD §3.2: failure_threshold=5)
+        for _ in range(5):
             cb.record_failure(Exception("probe failed"))
         assert cb.is_open is True
 
@@ -177,8 +176,8 @@ class TestDaemonCircuitBreaker:
         cb = DaemonCircuitBreaker()
         cb._half_open_cooldown_seconds = 0.1
 
-        # Drive circuit OPEN
-        for _ in range(3):
+        # Drive circuit OPEN (TRD §3.2: failure_threshold=5)
+        for _ in range(5):
             cb.record_failure(Exception("initial failure"))
 
         # Fast-forward past cooldown → HALF_OPEN
@@ -190,7 +189,7 @@ class TestDaemonCircuitBreaker:
 
         # Circuit must remain OPEN (opened_at was already set before this call)
         assert cb.is_open is True
-        assert cb.failure_count == 4, "failure_count increments on every record_failure"
+        assert cb.failure_count == 6, "failure_count increments on every record_failure"
 
 
 class TestQuantDaemonState:
@@ -250,8 +249,8 @@ class TestMarketDataPoller:
     def test_poll_skips_when_breaker_open(self):
         """Test that poll returns CB-open error when circuit breaker is open and no cache."""
         cb = DaemonCircuitBreaker()
-        # Hit threshold to open
-        for _ in range(3):
+        # Hit threshold to open (TRD §3.2: failure_threshold=5)
+        for _ in range(5):
             cb.record_failure(Exception("test"))
         poller = MarketDataPoller(cb)
 
@@ -323,8 +322,8 @@ class TestPollerCacheFallback:
         )
         poller._last_known["VN30F1M"] = fake_result
 
-        # Now open the circuit breaker.
-        for _ in range(3):
+        # Now open the circuit breaker (TRD §3.2: failure_threshold=5).
+        for _ in range(5):
             cb.record_failure(Exception("network error"))
         assert cb.is_open
 
@@ -341,8 +340,8 @@ class TestPollerCacheFallback:
         cb = DaemonCircuitBreaker()
         poller = MarketDataPoller(cb)
 
-        # Open CB immediately, no prior poll.
-        for _ in range(3):
+        # Open CB immediately, no prior poll (TRD §3.2: failure_threshold=5).
+        for _ in range(5):
             cb.record_failure(Exception("error"))
 
         result = poller.poll(symbol="VN30F1M", phase=SessionPhase.MORNING_CONTINUOUS)

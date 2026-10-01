@@ -62,13 +62,32 @@ def _fetch_with_retry(fn, label: str) -> Any:
     Returns the function result on success, or None after all attempts fail.
     A 250 ms inter-request delay is inserted *before* every attempt (including
     the first) to comply with TRD §4.1 anti-ban policy.
+
+    NOTE: vnai raises RateLimitExceeded which triggers sys.exit() inside a
+    CleanErrorContext.__exit__, producing a SystemExit.  SystemExit is a
+    BaseException (not Exception), so we explicitly catch BaseException here
+    and convert it to a plain RuntimeError so the circuit breaker can handle
+    the failure without letting SystemExit propagate and kill the server.
     """
-    last_exc: Exception | None = None
+    last_exc: BaseException | None = None
     for attempt in range(_MAX_RETRY_ATTEMPTS):
         # Mandatory 250 ms rate-limit delay before every API request.
         time.sleep(_REQUEST_DELAY_S)
         try:
             return fn()
+        except SystemExit as exc:
+            # vnai calls sys.exit() on RateLimitExceeded — convert to a
+            # regular exception so the daemon can handle it gracefully.
+            rate_err = RuntimeError(
+                f"[rate-limit] vnstock API rate limit reached (sys.exit intercepted): {exc}"
+            )
+            last_exc = rate_err
+            sleep_s = _jittered_backoff(attempt)
+            logger.warning(
+                f"[poller] {label} attempt {attempt + 1}/{_MAX_RETRY_ATTEMPTS} "
+                f"rate-limited (sys.exit). Waiting {sleep_s:.2f}s before retry."
+            )
+            time.sleep(sleep_s)
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
             sleep_s = _jittered_backoff(attempt)

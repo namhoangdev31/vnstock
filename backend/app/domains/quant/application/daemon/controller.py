@@ -293,6 +293,14 @@ class DaemonController:
                                 "flows": None,
                                 "breadth": None,
                             }
+                        except SystemExit as se:
+                            # vnai sys.exit() safety net — should already be
+                            # intercepted in poller, but guard here too.
+                            poll_errors[symbol] = [f"rate-limit-sysexit: {se}"]
+                            logger.warning(
+                                f"[daemon] SystemExit from poller for {symbol} — rate limit hit",
+                                extra={"symbol": symbol, "phase": phase.value},
+                            )
                         except Exception as poll_exc:
                             poll_errors[symbol] = [str(poll_exc)]
                     polled_count = len([s for s in symbols if s not in poll_errors])
@@ -386,6 +394,17 @@ class DaemonController:
         except asyncio.CancelledError:
             logger.info(f"Daemon {daemon_name} cancelled")
             session_log.status = "CANCELLED"
+        except SystemExit as se:
+            # Catch sys.exit() that escapes poller — should not happen after
+            # the poller fix, but guard here to prevent uvicorn from dying.
+            logger.error(
+                f"Daemon {daemon_name} intercepted SystemExit (rate-limit): {se}",
+                exc_info=True,
+            )
+            session_log.status = "CRASHED"
+            session_log.last_error = f"SystemExit: {se}"
+            self.state.status = "crashed"
+            self.state.last_error = f"[rate-limit] {se}"
         except Exception as e:
             logger.error(f"Daemon {daemon_name} crashed: {e}", exc_info=True)
             session_log.status = "CRASHED"
