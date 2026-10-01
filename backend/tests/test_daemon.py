@@ -21,6 +21,8 @@ from app.domains.quant.application.daemon.dispatcher import (
 from app.domains.quant.application.daemon.poller import (
     MarketDataPoller,
     MarketPollResult,
+    _fetch_with_retry,
+    _parse_rate_limit_wait_s,
 )
 from app.domains.quant.application.daemon.state import (
     STATE_POLL_INTERVALS,
@@ -510,3 +512,85 @@ class TestDaemonStatusHTTP:
         assert payload["status"] == "stopped"
         assert payload["circuit_breaker"]["is_open"] is False
         assert payload["circuit_breaker"]["failure_count"] == 0
+
+
+class TestParseRateLimitWaitS:
+    """Unit tests for the vnai rate-limit hint parser."""
+
+    def test_parses_vietnamese_hint(self):
+        """TEST-POLLER-RL-01: Vietnamese 'Chờ X giây' is parsed correctly."""
+        exc = SystemExit("Chờ 22 giây để tiếp tục")
+        assert _parse_rate_limit_wait_s(exc) == 22.0
+
+    def test_parses_english_hint(self):
+        """TEST-POLLER-RL-02: English 'Wait X seconds' is parsed correctly."""
+        exc = SystemExit("Wait 45 seconds")
+        assert _parse_rate_limit_wait_s(exc) == 45.0
+
+    def test_parses_wait_to_retry_hint(self):
+        """TEST-POLLER-RL-03: 'Wait to retry' variant is parsed."""
+        exc = SystemExit("Wait to retry 30 seconds")
+        assert _parse_rate_limit_wait_s(exc) == 30.0
+
+    def test_returns_none_when_no_hint(self):
+        """TEST-POLLER-RL-04: Returns None when the message carries no wait hint."""
+        exc = SystemExit("Rate limit exceeded.")
+        assert _parse_rate_limit_wait_s(exc) is None
+
+    def test_returns_none_for_empty_args(self):
+        """TEST-POLLER-RL-05: Returns None for an exception with no args."""
+        exc = SystemExit()
+        assert _parse_rate_limit_wait_s(exc) is None
+
+
+class TestFetchWithRetrySmartBackoff:
+    """Integration tests for _fetch_with_retry smart rate-limit handling."""
+
+    def test_honours_vnai_hint_on_first_attempt_then_succeeds(self):
+        """TEST-POLLER-RL-06: Waits the hinted duration, then retries successfully."""
+        call_count = 0
+
+        def fn():
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise SystemExit("Chờ 1 giây để tiếp tục")
+            return "ok"
+
+        with patch("app.domains.quant.application.daemon.poller.time.sleep"):
+            result = _fetch_with_retry(fn, label="test")
+
+        assert result == "ok"
+        assert call_count == 2
+
+    def test_aborts_retries_when_hint_exceeds_max_inline_wait(self):
+        """TEST-POLLER-RL-07: Aborts immediately when hint > _MAX_INLINE_WAIT_S."""
+        call_count = 0
+
+        def fn():
+            nonlocal call_count
+            call_count += 1
+            raise SystemExit("Chờ 70 giây để tiếp tục")
+
+        with patch("app.domains.quant.application.daemon.poller.time.sleep"):
+            result = _fetch_with_retry(fn, label="test")
+
+        # Should have aborted after the first attempt (no further retries).
+        assert result is None
+        assert call_count == 1
+
+    def test_falls_back_to_jitter_when_no_hint(self):
+        """TEST-POLLER-RL-08: Falls back to jittered backoff when no hint present."""
+        call_count = 0
+
+        def fn():
+            nonlocal call_count
+            call_count += 1
+            raise SystemExit("Rate limit exceeded.")
+
+        with patch("app.domains.quant.application.daemon.poller.time.sleep"):
+            result = _fetch_with_retry(fn, label="test")
+
+        # All 3 attempts should run (no early abort).
+        assert result is None
+        assert call_count == 3

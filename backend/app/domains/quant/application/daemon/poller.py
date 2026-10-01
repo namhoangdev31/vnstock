@@ -5,6 +5,10 @@ TRD §4.1 — Rate-limiting & Retry:
   - Per-request retry with exponential + jitter backoff:
       t_sleep = min(10, 0.5 * 2^attempt + uniform(0, 1))
   - Maximum 3 retry attempts per fetch call.
+  - Smart rate-limit backoff: when vnai returns a rate-limit error with an
+    explicit "Chờ X giây" / "Wait X seconds" hint, use that duration directly
+    instead of the generic jitter backoff.  This avoids burning retries on
+    requests that are guaranteed to fail until the quota window resets.
 
 TRD §4.2 — Circuit Breaker Fallback:
   - When circuit breaker is OPEN, return the most recent cached result
@@ -14,6 +18,7 @@ TRD §4.2 — Circuit Breaker Fallback:
 
 import logging
 import random
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -56,6 +61,35 @@ def _jittered_backoff(attempt: int) -> float:
     return min(_RETRY_MAX_S, _RETRY_BASE_S * (2**attempt) + jitter)
 
 
+# Regex to extract the vnai-recommended wait duration from rate-limit messages.
+# vnai prints both Vietnamese ("Chờ X giây") and English ("Wait X seconds") hints.
+_RATE_LIMIT_WAIT_RE = re.compile(
+    r"(?:Ch[oờ\u1edd]+|Wait(?:\s+to\s+retry)?)\s+(\d+)\s*(?:gi[aâ]y|seconds?)",
+    re.IGNORECASE,
+)
+# Maximum wait we will honour in a single sleep inside _fetch_with_retry.
+# Waits longer than this are deferred to the circuit-breaker OPEN phase.
+_MAX_INLINE_WAIT_S: float = 65.0
+
+
+def _parse_rate_limit_wait_s(exc: SystemExit) -> float | None:
+    """Return the explicit wait seconds from a vnai rate-limit SystemExit, or None.
+
+    vnai prints the banner to stdout **and** embeds the wait duration in the
+    exception args.  We search both the str representation of the args and the
+    full rendered banner captured in the process stdout buffer (not accessible
+    here), so we rely on the args string only.
+    """
+    text = " ".join(str(a) for a in exc.args)
+    m = _RATE_LIMIT_WAIT_RE.search(text)
+    if m:
+        try:
+            return float(m.group(1))
+        except ValueError:
+            pass
+    return None
+
+
 def _fetch_with_retry(fn, label: str) -> Any:
     """Call *fn()* up to _MAX_RETRY_ATTEMPTS times with jittered backoff.
 
@@ -63,11 +97,17 @@ def _fetch_with_retry(fn, label: str) -> Any:
     A 250 ms inter-request delay is inserted *before* every attempt (including
     the first) to comply with TRD §4.1 anti-ban policy.
 
-    NOTE: vnai raises RateLimitExceeded which triggers sys.exit() inside a
-    CleanErrorContext.__exit__, producing a SystemExit.  SystemExit is a
-    BaseException (not Exception), so we explicitly catch BaseException here
-    and convert it to a plain RuntimeError so the circuit breaker can handle
-    the failure without letting SystemExit propagate and kill the server.
+    Rate-limit handling (smart backoff):
+      vnai raises RateLimitExceeded which triggers sys.exit() inside a
+      CleanErrorContext.__exit__, producing a SystemExit.  SystemExit is a
+      BaseException (not Exception), so we explicitly catch it here and convert
+      it to a plain RuntimeError so the circuit breaker can handle the failure
+      without letting SystemExit propagate and kill the server.
+
+      When vnai embeds an explicit wait hint ("Chờ X giây" / "Wait X seconds")
+      in the exception message, we honour it directly.  If the recommended wait
+      exceeds _MAX_INLINE_WAIT_S we give up immediately (the circuit breaker
+      will open and enforce the longer back-off).
     """
     last_exc: BaseException | None = None
     for attempt in range(_MAX_RETRY_ATTEMPTS):
@@ -82,11 +122,30 @@ def _fetch_with_retry(fn, label: str) -> Any:
                 f"[rate-limit] vnstock API rate limit reached (sys.exit intercepted): {exc}"
             )
             last_exc = rate_err
-            sleep_s = _jittered_backoff(attempt)
-            logger.warning(
-                f"[poller] {label} attempt {attempt + 1}/{_MAX_RETRY_ATTEMPTS} "
-                f"rate-limited (sys.exit). Waiting {sleep_s:.2f}s before retry."
-            )
+
+            # Use the explicit wait hint from vnai if available.
+            suggested_wait = _parse_rate_limit_wait_s(exc)
+            if suggested_wait is not None:
+                if suggested_wait > _MAX_INLINE_WAIT_S:
+                    # Wait too long to block here — abort retries immediately
+                    # and let the circuit breaker handle the recovery.
+                    logger.warning(
+                        f"[poller] {label} attempt {attempt + 1}/{_MAX_RETRY_ATTEMPTS} "
+                        f"rate-limited; vnai requests {suggested_wait:.0f}s wait "
+                        f"(> {_MAX_INLINE_WAIT_S:.0f}s limit) — aborting retries."
+                    )
+                    break
+                sleep_s = suggested_wait
+                logger.warning(
+                    f"[poller] {label} attempt {attempt + 1}/{_MAX_RETRY_ATTEMPTS} "
+                    f"rate-limited; honouring vnai hint: waiting {sleep_s:.0f}s before retry."
+                )
+            else:
+                sleep_s = _jittered_backoff(attempt)
+                logger.warning(
+                    f"[poller] {label} attempt {attempt + 1}/{_MAX_RETRY_ATTEMPTS} "
+                    f"rate-limited (sys.exit). Waiting {sleep_s:.2f}s before retry."
+                )
             time.sleep(sleep_s)
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
