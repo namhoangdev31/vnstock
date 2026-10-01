@@ -731,3 +731,115 @@ class TestFetchWithRetrySmartBackoff:
         # All 3 attempts should run (no early abort).
         assert result is None
         assert call_count == 3
+
+
+class TestDaemonSessionLogPersistence:
+    """Test suite for DaemonController session log persistence and detached instance safety."""
+
+    def test_persist_session_log_multi_cycle_safe_from_detached_instance_error(self):
+        """TEST-DAEMON-PERSIST-01: Multiple persistence cycles with session_factory
+
+        must never trigger DetachedInstanceError on session_log.
+        """
+        from sqlmodel import Session as SqlSession
+        from sqlmodel import SQLModel, create_engine
+
+        from app.domains.quant.application.daemon.controller import DaemonController
+        from app.domains.quant.domain.models import DaemonSessionLog
+
+        engine = create_engine("sqlite:///:memory:")
+        SQLModel.metadata.create_all(engine)
+
+        def session_factory() -> SqlSession:
+            return SqlSession(engine)
+
+        cb = DaemonCircuitBreaker()
+        controller = DaemonController(
+            clock=VietnamMarketClock(),
+            circuit_breaker=cb,
+            poller=MarketDataPoller(cb),
+            dispatcher=SignalDispatcher(),
+            session_factory=session_factory,
+        )
+        start_time = datetime.now(VN_TZ)
+        session_log = DaemonSessionLog(
+            daemon_name="test-daemon",
+            instance_id="test-inst-1",
+            status="RUNNING",
+            started_at=start_time,
+        )
+
+        # Cycle 0: Create
+        controller._persist_session_log(session_log, create=True)
+        assert session_log.id is not None
+        assert session_log.status == "RUNNING"
+
+        # Verify DB row
+        with session_factory() as s:
+            row = s.get(DaemonSessionLog, session_log.id)
+            assert row is not None
+            assert row.status == "RUNNING"
+            assert row.cycle_count == 0
+
+        # Cycle 1: Heartbeat update (mimicking what controller.run does)
+        session_log.last_heartbeat_at = datetime.now(VN_TZ)
+        session_log.last_phase = "MORNING_CONTINUOUS"
+        session_log.cycle_count = 1
+        controller._persist_session_log(session_log, create=False)
+
+        # Cycle 2: Another cycle
+        session_log.last_heartbeat_at = datetime.now(VN_TZ)
+        session_log.cycle_count = 2
+        controller._persist_session_log(session_log, create=False)
+
+        # Cycle 3: Error state
+        session_log.failure_count = 1
+        session_log.last_error = "Connection timeout"
+        controller._persist_session_log(session_log, create=False)
+
+        # Cycle 4: Terminal stop
+        session_log.stopped_at = datetime.now(VN_TZ)
+        session_log.status = "STOPPED"
+        controller._persist_session_log(session_log, create=False)
+
+        # Verify final state in DB
+        with session_factory() as s:
+            final_row = s.get(DaemonSessionLog, session_log.id)
+            assert final_row is not None
+            assert final_row.status == "STOPPED"
+            assert final_row.cycle_count == 2
+            assert final_row.failure_count == 1
+            assert final_row.last_error == "Connection timeout"
+            assert final_row.stopped_at is not None
+
+    def test_apply_session_log_persistence_with_direct_db_session(self):
+        """TEST-DAEMON-PERSIST-02: Direct db session usage does not detach session_log."""
+        from sqlmodel import Session as SqlSession
+        from sqlmodel import SQLModel, create_engine
+
+        from app.domains.quant.application.daemon.controller import DaemonController
+        from app.domains.quant.domain.models import DaemonSessionLog
+
+        engine = create_engine("sqlite:///:memory:")
+        SQLModel.metadata.create_all(engine)
+
+        with SqlSession(engine) as db:
+            session_log = DaemonSessionLog(
+                daemon_name="test-direct-db",
+                instance_id="test-inst-direct",
+                status="RUNNING",
+                started_at=datetime.now(VN_TZ),
+            )
+            DaemonController._apply_session_log_persistence(
+                db, session_log, create=True
+            )
+            assert session_log.id is not None
+
+            session_log.cycle_count = 5
+            DaemonController._apply_session_log_persistence(
+                db, session_log, create=False
+            )
+
+            row = db.get(DaemonSessionLog, session_log.id)
+            assert row is not None
+            assert row.cycle_count == 5

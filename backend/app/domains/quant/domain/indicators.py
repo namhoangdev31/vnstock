@@ -852,7 +852,13 @@ def compute_garch_volatility(
 
         # arch expects percentage returns; forecast variance is scaled back to decimal.
         model = arch_model(
-            valid * 100.0, mean="Constant", vol="GARCH", p=1, q=1, dist="t"
+            valid * 100.0,
+            mean="Constant",
+            vol="GARCH",
+            p=1,
+            q=1,
+            dist="t",
+            rescale=False,
         )
         fitted = model.fit(disp="off", show_warning=False)
         forecast_var = fitted.forecast(horizon=1, reindex=False).variance

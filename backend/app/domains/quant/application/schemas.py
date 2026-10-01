@@ -99,6 +99,8 @@ class ForecastJournalPublic(SQLModel):
     error: float | None = None
     score: float | None = None
     status: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class ForecastScoredPublic(SQLModel):

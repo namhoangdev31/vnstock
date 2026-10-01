@@ -59,6 +59,10 @@ class ForecastJournal(AwareSQLModel, table=True):
     error: float | None = None
     score: float | None = None
     status: ForecastStatus = Field(default=ForecastStatus.PENDING, index=True)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore

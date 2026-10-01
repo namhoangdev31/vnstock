@@ -68,19 +68,38 @@ class DaemonController:
         self.session_factory = session_factory
         self.lease = lease
 
-    def _persist_session_log(
-        self, session_log: DaemonSessionLog, create: bool = False
+    @staticmethod
+    def _apply_session_log_persistence(
+        session: Session, session_log: DaemonSessionLog, create: bool = False
     ) -> None:
-        """Persist one daemon heartbeat using a short-lived sync DB session."""
-        if self.session_factory is None:
+        """Safely apply session log changes to a database session without letting
+
+        the in-memory controller session_log become attached or expired.
+        """
+        s_dict = session_log.__dict__
+        log_id = s_dict.get("id") or getattr(session_log, "id", None)
+        if log_id is None:
             return
-        with self.session_factory() as session:
-            if create:
-                session.add(session_log)
-            else:
-                stored = session.get(DaemonSessionLog, session_log.id)
-                if stored is None:
-                    return
+
+        if create:
+            record = DaemonSessionLog(
+                id=log_id,
+                daemon_name=s_dict.get("daemon_name", "quant-background-daemon"),
+                instance_id=s_dict.get("instance_id", str(log_id)),
+                status=s_dict.get("status", "RUNNING"),
+                started_at=s_dict.get("started_at") or datetime.now(VN_TZ),
+                stopped_at=s_dict.get("stopped_at"),
+                last_heartbeat_at=s_dict.get("last_heartbeat_at"),
+                last_phase=s_dict.get("last_phase"),
+                cycle_count=s_dict.get("cycle_count", 0),
+                failure_count=s_dict.get("failure_count", 0),
+                last_error=s_dict.get("last_error"),
+                metadata_info=dict(s_dict.get("metadata_info") or {}),
+            )
+            session.add(record)
+        else:
+            stored = session.get(DaemonSessionLog, log_id)
+            if stored is not None:
                 for field_name in (
                     "status",
                     "stopped_at",
@@ -91,9 +110,19 @@ class DaemonController:
                     "last_error",
                     "metadata_info",
                 ):
-                    setattr(stored, field_name, getattr(session_log, field_name))
+                    if field_name in s_dict:
+                        setattr(stored, field_name, s_dict[field_name])
                 session.add(stored)
-            session.commit()
+        session.commit()
+
+    def _persist_session_log(
+        self, session_log: DaemonSessionLog, create: bool = False
+    ) -> None:
+        """Persist one daemon heartbeat using a short-lived sync DB session."""
+        if self.session_factory is None:
+            return
+        with self.session_factory() as session:
+            self._apply_session_log_persistence(session, session_log, create=create)
 
     async def start(
         self,
@@ -379,8 +408,7 @@ class DaemonController:
         # callers; the production daemon uses session_factory instead.
         try:
             if db is not None:
-                db.add(session_log)
-                db.commit()
+                self._apply_session_log_persistence(db, session_log, create=True)
             elif self.session_factory is not None:
                 await asyncio.to_thread(self._persist_session_log, session_log, True)
         except Exception as exc:
@@ -500,8 +528,9 @@ class DaemonController:
 
                     # Persist heartbeat update to DB (every cycle).
                     if db is not None:
-                        db.add(session_log)
-                        db.commit()
+                        self._apply_session_log_persistence(
+                            db, session_log, create=False
+                        )
                     elif self.session_factory is not None:
                         await asyncio.to_thread(self._persist_session_log, session_log)
 
@@ -549,8 +578,9 @@ class DaemonController:
                     # Persist failure state to DB.
                     if db is not None:
                         try:
-                            db.add(session_log)
-                            db.commit()
+                            self._apply_session_log_persistence(
+                                db, session_log, create=False
+                            )
                         except Exception as db_err:
                             logger.warning(
                                 f"Failed to persist session log on error: {db_err}"
@@ -608,8 +638,7 @@ class DaemonController:
             # Final DB flush — record the terminal state.
             if db is not None:
                 try:
-                    db.add(session_log)
-                    db.commit()
+                    self._apply_session_log_persistence(db, session_log, create=False)
                 except Exception as db_err:
                     logger.warning(f"Failed to persist final session log: {db_err}")
             elif self.session_factory is not None:

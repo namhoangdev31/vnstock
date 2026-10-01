@@ -75,6 +75,10 @@ def test_forecast_journal_instantiation() -> None:
     assert journal.status == ForecastStatus.PENDING
     assert journal.actual_value is None
     assert journal.score is None
+    assert journal.created_at is not None
+    assert journal.created_at.tzinfo is not None
+    assert journal.updated_at is not None
+    assert journal.updated_at.tzinfo is not None
 
 
 def test_simulation_models_instantiation() -> None:
