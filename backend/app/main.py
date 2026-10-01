@@ -106,6 +106,19 @@ async def lifespan(_app: FastAPI):
         yield
         return
     migration_task = asyncio.create_task(asyncio.to_thread(_run_migrations_and_seed))
+    try:
+        from app.domains.market_data.infrastructure.vnstock_adapter import (
+            VnstockService,
+        )
+
+        tier_info = VnstockService.get_tier_info()
+        logger.info(
+            f"[LIFESPAN] vnstock initialized (tier: {tier_info.get('tier')}, "
+            f"limits: {tier_info.get('limits')}, has_api_key: {tier_info.get('has_api_key')})"
+        )
+    except Exception as tier_err:
+        logger.warning(f"[LIFESPAN] Failed to detect vnstock tier: {tier_err}")
+
     await quant_daemon_controller.start()
     try:
         yield

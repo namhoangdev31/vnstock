@@ -450,3 +450,34 @@ def test_fetch_exchange_rate(mock_retail_cls, service):
     df = service.fetch_exchange_rate(date_str="2026-09-18")
     assert len(df) == 1
     assert df.iloc[0]["currency_code"] == "USD"
+
+
+def test_get_tier_info():
+    """Kiểm tra get_tier_info trả về cấu trúc hợp lệ."""
+    info = VnstockService.get_tier_info()
+    assert isinstance(info, dict)
+    assert "tier" in info
+    assert "limits" in info
+    assert "has_api_key" in info
+
+
+def test_config_sync_vnstock_credentials(monkeypatch):
+    """Kiểm tra Settings đồng bộ VNSTOCK_API_KEY sang os.environ."""
+    import os
+
+    from app.core.config import Settings
+
+    monkeypatch.delenv("VNSTOCK_API_KEY", raising=False)
+    monkeypatch.delenv("VNSTOCK_APIKEY", raising=False)
+    custom_settings = Settings(
+        _env_file=None,
+        SECRET_KEY="test-secret-key-12345678901234567890",
+        DATABASE_URL="postgresql://user:pass@localhost:5432/db",  # type: ignore[arg-type]
+        FIRST_SUPERUSER="admin@example.com",
+        FIRST_SUPERUSER_PASSWORD="test-password-123456",
+        PROJECT_NAME="TestApp",
+        VNSTOCK_APIKEY="dummy-key-abc",
+    )
+    assert custom_settings.VNSTOCK_API_KEY == "dummy-key-abc"
+    assert custom_settings.VNSTOCK_APIKEY == "dummy-key-abc"
+    assert os.environ.get("VNSTOCK_API_KEY") == "dummy-key-abc"

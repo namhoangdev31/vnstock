@@ -1,3 +1,4 @@
+import os
 import urllib.parse
 import warnings
 from typing import Literal, Self
@@ -46,6 +47,8 @@ class Settings(BaseSettings):
     DIRECT_URL: PostgresDsn | None = None
 
     # vnstock config
+    VNSTOCK_API_KEY: str | None = None
+    VNSTOCK_APIKEY: str | None = None
     VNSTOCK_SOURCE: str = "VCI"
     VNSTOCK_FALLBACK_SOURCE: str = "KBS"
     VNSTOCK_TERTIARY_SOURCE: str = "MSN"
@@ -160,6 +163,21 @@ class Settings(BaseSettings):
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )
 
+        return self
+
+    @model_validator(mode="after")
+    def _sync_vnstock_credentials(self) -> Self:
+        key = self.VNSTOCK_API_KEY or self.VNSTOCK_APIKEY
+        if key:
+            self.VNSTOCK_API_KEY = key
+            self.VNSTOCK_APIKEY = key
+            os.environ["VNSTOCK_API_KEY"] = key
+            try:
+                from vnai import setup_api_key
+
+                setup_api_key(key)
+            except Exception:
+                pass
         return self
 
 

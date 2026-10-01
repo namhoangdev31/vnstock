@@ -250,7 +250,9 @@ class MarketDataPoller:
             result.history_bars = self._fetch_history(symbol, limit_history)
         elif phase in (SessionPhase.POST_MARKET, SessionPhase.OVERNIGHT_SIMULATION):
             # Overnight/post-market: dùng nến ngày (1D) để phân tích T+1
-            result.history_bars = self._fetch_history(symbol, limit_history, interval="1D")
+            result.history_bars = self._fetch_history(
+                symbol, limit_history, interval="1D"
+            )
 
         # Update last-known cache on every successful (non-error) poll.
         if not result.errors:
@@ -262,7 +264,9 @@ class MarketDataPoller:
     # Private fetch helpers — each uses _fetch_with_retry for TRD §4.1
     # ------------------------------------------------------------------
 
-    def _fetch_history(self, symbol: str, limit: int, interval: str = "1m") -> list[Any]:
+    def _fetch_history(
+        self, symbol: str, limit: int, interval: str = "1m"
+    ) -> list[Any]:
         """Fetch historical bars via VnstockService with retry + rate-limit.
 
         interval: '1m' cho giao dịch intraday, '1D' cho phân tích overnight/T+1.

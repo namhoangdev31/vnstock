@@ -119,6 +119,29 @@ class VnstockService:
         """Kiểm tra chi tiết tính khả dụng và metadata nguồn cấp của tính năng."""
         return VnstockCapabilityRegistry.check_availability(capability_key)
 
+    @staticmethod
+    def get_tier_info() -> dict[str, Any]:
+        """Lấy thông tin tier bản quyền và hạn mức request hiện tại từ vnai/vnstock."""
+        try:
+            from vnai.beam.auth import Authenticator
+
+            auth = Authenticator()
+            tier = auth.get_tier()
+            limits = auth.get_limits(tier)
+            has_key = auth._has_api_key()
+            return {
+                "tier": tier,
+                "limits": limits,
+                "has_api_key": has_key,
+            }
+        except Exception as e:
+            return {
+                "tier": "unknown",
+                "limits": {},
+                "has_api_key": False,
+                "error": str(e),
+            }
+
     def _throttle(self, provider: str | None = None) -> None:
         """Kích hoạt độ trễ tối thiểu và kiểm tra circuit breaker theo từng provider."""
         src = (
