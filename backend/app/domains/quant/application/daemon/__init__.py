@@ -35,11 +35,13 @@ from app.domains.quant.application.daemon.poller import (
     MarketDataPoller,
     MarketPollResult,
 )
+from app.domains.quant.application.daemon.scheduled_hooks import dispatch_phase_hooks
 from app.domains.quant.application.daemon.state import (
     STATE_POLL_INTERVALS,
     DaemonCircuitBreaker,
     QuantDaemonState,
 )
+from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
 
 # Alias for backward compatibility
 QuantDaemonController = DaemonController
@@ -47,6 +49,7 @@ QuantDaemonController = DaemonController
 default_orchestrator = PhaseAwareEngineOrchestrator(session=None)
 default_circuit_breaker = DaemonCircuitBreaker()
 default_lease = PostgresAdvisoryLease(engine, "vnstock.quant.daemon")
+default_symbol_registry = SymbolRegistry()
 
 
 def _daemon_session_factory() -> Session:
@@ -62,6 +65,7 @@ quant_daemon_controller = DaemonController(
     ),
     session_factory=_daemon_session_factory,
     lease=default_lease,
+    symbol_registry=default_symbol_registry,
 )
 
 __all__ = [
@@ -80,7 +84,10 @@ __all__ = [
     "QuantDaemonState",
     "STATE_POLL_INTERVALS",
     "SignalDispatcher",
+    "SymbolRegistry",
     "VietnamMarketClock",
+    "default_symbol_registry",
+    "dispatch_phase_hooks",
     "map_phase_to_horizon",
     "quant_daemon_controller",
 ]

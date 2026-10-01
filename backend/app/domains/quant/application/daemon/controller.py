@@ -18,11 +18,13 @@ from app.domains.quant.application.daemon.dispatcher import SignalDispatcher
 from app.domains.quant.application.daemon.event import MarketDataNormalizer
 from app.domains.quant.application.daemon.lease import PostgresAdvisoryLease
 from app.domains.quant.application.daemon.poller import MarketDataPoller
+from app.domains.quant.application.daemon.scheduled_hooks import dispatch_phase_hooks
 from app.domains.quant.application.daemon.state import (
     STATE_POLL_INTERVALS,
     DaemonCircuitBreaker,
     QuantDaemonState,
 )
+from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
 from app.domains.quant.domain.models import DaemonSessionLog
 
 logger = logging.getLogger(__name__)
@@ -54,6 +56,7 @@ class DaemonController:
         normalizer: MarketDataNormalizer | None = None,
         session_factory: Callable[[], Session] | None = None,
         lease: PostgresAdvisoryLease | None = None,
+        symbol_registry: SymbolRegistry | None = None,
     ):
         """Initialize daemon with market clock, circuit breaker, engines, and normalizer."""
         self.clock = clock
@@ -67,6 +70,9 @@ class DaemonController:
         self.instance_id: str | None = None
         self.session_factory = session_factory
         self.lease = lease
+        # Symbol registry: manages active symbols across asset classes.
+        # Defaults to a new registry seeded with always-on symbols (VN30F1M).
+        self.symbol_registry: SymbolRegistry = symbol_registry or SymbolRegistry()
 
     @staticmethod
     def _apply_session_log_persistence(
@@ -172,18 +178,34 @@ class DaemonController:
         self.state.status = "running"
         self.state.last_started_at = started_at
 
+        # Determine symbols: caller-supplied list overrides registry.
+        # If no override, derive from the SymbolRegistry so all asset classes
+        # (derivatives + equities) are polled from the start.
+        effective_symbols = (
+            symbols
+            if symbols is not None
+            else self.symbol_registry.get_active_symbols()
+        )
+
         # Spawn the main loop as a fire-and-forget background task.
         self._task = asyncio.create_task(
             self.run(
                 db=None,
-                symbols=symbols or ["VN30F1M"],
+                symbols=effective_symbols,
                 daemon_name=daemon_name,
             ),
             name=self.instance_id,
         )
         # TRD §6 — register OS signal handlers for graceful shutdown.
         self._register_signal_handlers()
-        logger.info("Daemon started", extra={"instance_id": self.instance_id})
+        logger.info(
+            "Daemon started",
+            extra={
+                "instance_id": self.instance_id,
+                "symbols": effective_symbols,
+                "registry_summary": self.symbol_registry.summary(),
+            },
+        )
 
     async def _standby_loop(
         self,
@@ -216,9 +238,14 @@ class DaemonController:
                         )
                         self.state.status = "running"
                         self.state.last_started_at = started_at
+                        effective_symbols = (
+                            symbols
+                            if symbols is not None
+                            else self.symbol_registry.get_active_symbols()
+                        )
                         await self.run(
                             db=None,
-                            symbols=symbols or ["VN30F1M"],
+                            symbols=effective_symbols,
                             daemon_name=daemon_name,
                         )
                         break
@@ -310,12 +337,13 @@ class DaemonController:
         """Trigger a single execution cycle off-schedule."""
         snapshot = self.clock.snapshot()
         phase = snapshot.session_phase
+        symbols = self.symbol_registry.get_active_symbols()
 
         try:
             poll_errors, _, _, dispatch_result = await asyncio.to_thread(
                 self._poll_and_dispatch,
                 phase=phase,
-                symbols=["VN30F1M"],
+                symbols=symbols,
                 session_id=self.instance_id or "manual_trigger",
                 cycle_id=self.state.last_cycle_id + 1,
                 cycle_start=snapshot.as_of,
@@ -355,7 +383,13 @@ class DaemonController:
         cycle_start: datetime,
         db: Session | None,
     ) -> tuple[dict[str, Any], dict[str, Any], int, Any]:
-        """Run blocking adapters and sync DB work off the asyncio event loop."""
+        """Run blocking adapters and sync DB work off the asyncio event loop.
+
+        Performs three operations in order:
+        1. Poll market data for each active symbol (multi-asset: derivatives + equities).
+        2. Dispatch market data to Tri-Engine ensemble for signal generation.
+        3. Run phase-aware scheduled hooks (T+2 settlement, EOD screener, equity universe refresh).
+        """
         poll_errors: dict[str, Any] = {}
         all_market_data: dict[str, Any] = {}
         for symbol in symbols:
@@ -430,6 +464,31 @@ class DaemonController:
         finally:
             if owns_db and cycle_db is not None:
                 cycle_db.close()
+
+        # ---- Phase-aware scheduled hooks (T+2 settlement, EOD screener, equity refresh) ----
+        # These are idempotent: each runs at most once per trading day.
+        try:
+            hook_results = dispatch_phase_hooks(
+                phase=phase,
+                session_factory=self.session_factory,
+                symbol_registry=self.symbol_registry,
+            )
+            if hook_results:
+                logger.debug(
+                    "Scheduled hooks ran for phase %s: %s",
+                    phase.value,
+                    {k: v for k, v in hook_results.items() if not v.get("skipped")},
+                )
+                # Surface hook errors as daemon warnings (non-fatal).
+                for hook_name, result in hook_results.items():
+                    if result.get("errors"):
+                        self.state.errors_by_type[f"hook_{hook_name}"] = (
+                            self.state.errors_by_type.get(f"hook_{hook_name}", 0)
+                            + len(result["errors"])
+                        )
+        except Exception as hook_exc:
+            logger.warning("Scheduled hooks dispatch failed: %s", hook_exc)
+
         return (
             poll_errors,
             all_market_data,

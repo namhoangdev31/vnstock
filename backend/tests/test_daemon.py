@@ -908,3 +908,268 @@ class TestDaemonSessionLogPersistence:
             mock_lease.acquire.assert_called_with(force=True)
             assert controller.state.status == "running"
             await controller.stop()
+
+
+# ---------------------------------------------------------------------------
+# Tests: SymbolRegistry
+# ---------------------------------------------------------------------------
+
+
+class TestSymbolRegistry:
+    def test_bootstrap_has_vn30f1m(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry()
+        syms = reg.get_active_symbols()
+        assert "VN30F1M" in syms
+
+    def test_register_equity(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry()
+        reg.register("FPT", asset_class="EQUITY", source="user")
+        assert "FPT" in reg.get_equities()
+
+    def test_register_no_duplicate(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry()
+        reg.register("VNM", asset_class="EQUITY")
+        reg.register("VNM", asset_class="EQUITY")
+        assert reg.get_equities().count("VNM") == 1
+
+    def test_cannot_unregister_system_symbol(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry()
+        removed = reg.unregister("VN30F1M")
+        assert not removed
+        assert "VN30F1M" in reg.get_active_symbols()
+
+    def test_set_equity_universe_replaces_equities(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry()
+        reg.register("OLD_TICKER", asset_class="EQUITY", source="index")
+        reg.set_equity_universe(["FPT", "VNM", "HPG"], source="index")
+        equities = reg.get_equities()
+        assert "FPT" in equities
+        assert "OLD_TICKER" not in equities
+        # System symbol preserved
+        assert "VN30F1M" in reg.get_derivatives()
+
+    def test_max_symbols_cap(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry(max_symbols=3)
+        for i in range(10):
+            reg.register(f"SYM{i:03d}", asset_class="EQUITY", source="index")
+        assert len(reg.get_active_symbols()) <= 3
+
+    def test_get_derivatives_returns_vn30f1m(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry()
+        assert reg.get_derivatives() == ["VN30F1M"]
+
+    def test_priority_ordering(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry()
+        reg.register("LOW_PRI", asset_class="EQUITY", priority=5)
+        reg.register("HIGH_PRI", asset_class="EQUITY", priority=1)
+        equities = reg.get_equities()
+        assert equities.index("HIGH_PRI") < equities.index("LOW_PRI")
+
+    def test_summary_counts_by_class(self):
+        from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
+
+        reg = SymbolRegistry()
+        reg.register("FPT", asset_class="EQUITY")
+        summary = reg.summary()
+        assert summary.get("DERIVATIVE", 0) >= 1
+        assert summary.get("EQUITY", 0) >= 1
+
+
+# ---------------------------------------------------------------------------
+# Tests: ScheduledHooks
+# ---------------------------------------------------------------------------
+
+
+class TestScheduledHooks:
+    def test_screener_hook_skips_without_session_factory(self):
+        from app.domains.quant.application.daemon.scheduled_hooks import (
+            run_screener_snapshot_hook,
+        )
+
+        result = run_screener_snapshot_hook(session_factory=None)
+        assert result["skipped"] is True
+
+    def test_settlement_hook_skips_without_session_factory(self):
+        from app.domains.quant.application.daemon.scheduled_hooks import (
+            run_settlement_hook,
+        )
+
+        result = run_settlement_hook(session_factory=None)
+        assert result["skipped"] is True
+
+    def test_equity_refresh_skips_without_registry(self):
+        from app.domains.quant.application.daemon.scheduled_hooks import (
+            run_equity_universe_refresh,
+        )
+
+        result = run_equity_universe_refresh(
+            session_factory=None, symbol_registry=None
+        )
+        assert result["skipped"] is True
+
+    def test_dispatch_phase_hooks_settlement_fires_in_afternoon(self):
+        from app.core.enums import SessionPhase
+        from app.domains.quant.application.daemon.scheduled_hooks import (
+            _tracker,
+            dispatch_phase_hooks,
+        )
+        from datetime import date
+
+        # Reset tracker so hook is eligible
+        _tracker.reset()
+        result = dispatch_phase_hooks(
+            phase=SessionPhase.AFTERNOON_CONTINUOUS,
+            session_factory=None,
+            symbol_registry=None,
+        )
+        # settlement key should be present (even if skipped due to no session_factory)
+        assert "settlement" in result
+
+    def test_dispatch_phase_hooks_screener_fires_in_post_market(self):
+        from app.core.enums import SessionPhase
+        from app.domains.quant.application.daemon.scheduled_hooks import (
+            _tracker,
+            dispatch_phase_hooks,
+        )
+
+        _tracker.reset()
+        result = dispatch_phase_hooks(
+            phase=SessionPhase.POST_MARKET,
+            session_factory=None,
+            symbol_registry=None,
+        )
+        assert "screener" in result
+
+    def test_dispatch_phase_hooks_equity_refresh_fires_overnight(self):
+        from app.core.enums import SessionPhase
+        from app.domains.quant.application.daemon.scheduled_hooks import (
+            _tracker,
+            dispatch_phase_hooks,
+        )
+
+        _tracker.reset()
+        result = dispatch_phase_hooks(
+            phase=SessionPhase.OVERNIGHT_SIMULATION,
+            session_factory=None,
+            symbol_registry=None,
+        )
+        assert "equity_universe" in result
+
+    def test_hook_idempotent_runs_only_once_per_day(self):
+        from app.core.enums import SessionPhase
+        from app.domains.quant.application.daemon.scheduled_hooks import (
+            _tracker,
+            dispatch_phase_hooks,
+        )
+        from datetime import date
+
+        _tracker.reset()
+        today = date.today()
+        result1 = dispatch_phase_hooks(
+            phase=SessionPhase.POST_MARKET,
+            session_factory=None,
+            symbol_registry=None,
+            today=today,
+        )
+        result2 = dispatch_phase_hooks(
+            phase=SessionPhase.POST_MARKET,
+            session_factory=None,
+            symbol_registry=None,
+            today=today,
+        )
+        # Second call should be skipped
+        assert result2["screener"]["skipped"] is True
+
+
+# ---------------------------------------------------------------------------
+# Tests: DaemonController uses SymbolRegistry
+# ---------------------------------------------------------------------------
+
+
+class TestDaemonControllerUsesRegistry:
+    def test_trigger_once_uses_registry_symbols(self):
+        """trigger_once should poll registry symbols, not hardcoded VN30F1M."""
+        import asyncio
+        from unittest.mock import MagicMock, patch
+
+        from app.core.enums import SessionPhase
+        from app.domains.quant.application.daemon import (
+            DaemonController,
+            SymbolRegistry,
+        )
+        from app.domains.quant.application.daemon.clock import VietnamMarketClock
+        from app.domains.quant.application.daemon.state import DaemonCircuitBreaker
+
+        registry = SymbolRegistry()
+        registry.register("FPT", asset_class="EQUITY", source="user")
+
+        poller = MagicMock()
+        poll_result = MagicMock()
+        poll_result.errors = []
+        poller.poll.return_value = poll_result
+
+        dispatcher = MagicMock()
+        dispatch_result = MagicMock()
+        dispatch_result.forecast_journals = 0
+        dispatch_result.skipped_signals = 0
+        dispatch_result.duplicates_detected = 0
+        dispatch_result.errors = {}
+        dispatch_result.signals = []
+        dispatch_result.ensemble_signals = 0
+        dispatch_result.simulation_orders = 0
+        dispatcher.dispatch_sync.return_value = dispatch_result
+
+        normalizer = MagicMock()
+        ctx = MagicMock()
+        ctx.is_valid = True
+        ctx.event = None
+        ctx.entry_price = 1.0
+        ctx.spot_price = 1.0
+        ctx.highs = []
+        ctx.lows = []
+        ctx.closes = []
+        ctx.volumes = []
+        ctx.order_flow = None
+        ctx.flows = {}
+        ctx.breadth = {}
+        normalizer.normalize.return_value = ctx
+
+        clock = MagicMock(spec=VietnamMarketClock)
+        snapshot = MagicMock()
+        snapshot.session_phase = SessionPhase.MORNING_CONTINUOUS
+        from datetime import datetime
+        from app.core.models_base import VN_TZ
+        snapshot.as_of = datetime.now(VN_TZ)
+        clock.snapshot.return_value = snapshot
+
+        controller = DaemonController(
+            clock=clock,
+            circuit_breaker=DaemonCircuitBreaker(),
+            poller=poller,
+            dispatcher=dispatcher,
+            normalizer=normalizer,
+            symbol_registry=registry,
+        )
+
+        asyncio.run(controller.trigger_once())
+
+        # Should have polled both VN30F1M (derivative) and FPT (equity)
+        polled = [call.args[0] for call in poller.poll.call_args_list]
+        assert "VN30F1M" in polled
+        assert "FPT" in polled
