@@ -4,14 +4,33 @@ This package implements the background session daemon with:
 - 9-state FSM (PRE_ATO → ATO → MORNING_CONTINUOUS → ... → OVERNIGHT_SIMULATION)
 - Adaptive polling intervals (0.5s–300s per phase)
 - Circuit breaker with HALF_OPEN state and 60s cooldown
+- Market data normalization with idempotency and deduplication
+- Phase-aware engine orchestration with failure isolation
 - Signal dispatch to EnsembleEngine and SimulationEngine
 - Forecast journal logging with Brier Score evaluation
 """
 
 from app.domains.quant.application.daemon.clock import VietnamMarketClock
 from app.domains.quant.application.daemon.controller import DaemonController
-from app.domains.quant.application.daemon.dispatcher import SignalDispatcher
-from app.domains.quant.application.daemon.poller import MarketDataPoller
+from app.domains.quant.application.daemon.dispatcher import (
+    DispatchResult,
+    SignalDispatcher,
+    map_phase_to_horizon,
+)
+from app.domains.quant.application.daemon.event import (
+    AnalysisContext,
+    MarketDataEvent,
+    MarketDataNormalizer,
+)
+from app.domains.quant.application.daemon.orchestrator import (
+    EngineExecutionResult,
+    OrchestratorResult,
+    PhaseAwareEngineOrchestrator,
+)
+from app.domains.quant.application.daemon.poller import (
+    MarketDataPoller,
+    MarketPollResult,
+)
 from app.domains.quant.application.daemon.state import (
     STATE_POLL_INTERVALS,
     DaemonCircuitBreaker,
@@ -21,22 +40,34 @@ from app.domains.quant.application.daemon.state import (
 # Alias for backward compatibility
 QuantDaemonController = DaemonController
 
-# Singleton instance for API routers
+default_orchestrator = PhaseAwareEngineOrchestrator(session=None)
+
 quant_daemon_controller = DaemonController(
     clock=VietnamMarketClock(),
     circuit_breaker=DaemonCircuitBreaker(),
     poller=MarketDataPoller(circuit_breaker=DaemonCircuitBreaker()),
-    dispatcher=SignalDispatcher(ensemble_engine=None, simulation_engine=None),
+    dispatcher=SignalDispatcher(
+        orchestrator=default_orchestrator,
+    ),
 )
 
 __all__ = [
+    "AnalysisContext",
     "DaemonCircuitBreaker",
     "DaemonController",
+    "DispatchResult",
+    "EngineExecutionResult",
+    "MarketDataEvent",
+    "MarketDataNormalizer",
     "MarketDataPoller",
+    "MarketPollResult",
+    "OrchestratorResult",
+    "PhaseAwareEngineOrchestrator",
     "QuantDaemonController",
     "QuantDaemonState",
-    "SignalDispatcher",
     "STATE_POLL_INTERVALS",
+    "SignalDispatcher",
     "VietnamMarketClock",
+    "map_phase_to_horizon",
     "quant_daemon_controller",
 ]

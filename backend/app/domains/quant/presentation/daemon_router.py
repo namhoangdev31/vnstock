@@ -28,6 +28,10 @@ def resume_daemon(current_user: CurrentUser) -> dict[str, Any]:  # noqa: ARG001
 
 
 @router.post("/trigger", summary="Trigger a single execution cycle off-schedule")
+@router.post(
+    "/trigger_once",
+    summary="Trigger a single execution cycle off-schedule (alias)",
+)
 async def trigger_daemon_cycle(current_user: CurrentUser) -> dict[str, Any]:  # noqa: ARG001
     return await quant_daemon_controller.trigger_once()
 

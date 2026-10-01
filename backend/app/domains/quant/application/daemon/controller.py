@@ -14,6 +14,7 @@ from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
 from app.domains.quant.application.daemon.clock import VietnamMarketClock
 from app.domains.quant.application.daemon.dispatcher import SignalDispatcher
+from app.domains.quant.application.daemon.event import MarketDataNormalizer
 from app.domains.quant.application.daemon.poller import MarketDataPoller
 from app.domains.quant.application.daemon.state import (
     STATE_POLL_INTERVALS,
@@ -48,12 +49,14 @@ class DaemonController:
         circuit_breaker: DaemonCircuitBreaker,
         poller: MarketDataPoller,
         dispatcher: SignalDispatcher,
+        normalizer: MarketDataNormalizer | None = None,
     ):
-        """Initialize daemon with market clock, circuit breaker, and engines."""
+        """Initialize daemon with market clock, circuit breaker, engines, and normalizer."""
         self.clock = clock
         self.circuit_breaker = circuit_breaker
         self.poller = poller
         self.dispatcher = dispatcher
+        self.normalizer = normalizer or MarketDataNormalizer()
         self.metrics: list[DaemonCycleMetrics] = []
         self.state = QuantDaemonState()
         self._task: asyncio.Task | None = None
@@ -172,17 +175,42 @@ class DaemonController:
         snapshot = self.clock.snapshot()
         phase = snapshot.session_phase
 
-        # Run one cycle (non-persistent for manual trigger)
-        # In production, this would use db session
         try:
+            poll_result = self.poller.poll("VN30F1M", phase)
+            context = self.normalizer.normalize(poll_result, as_of=snapshot.as_of)
+            market_data = {
+                "VN30F1M": {
+                    "context": context,
+                    "entry_price": context.entry_price,
+                    "spot_price": context.spot_price,
+                    "highs": context.highs,
+                    "lows": context.lows,
+                    "closes": context.closes,
+                    "volumes": context.volumes,
+                    "order_flow": context.order_flow,
+                    "flows": context.flows,
+                    "breadth": context.breadth,
+                }
+            }
+            if context.event:
+                self.state.last_event_id = context.event.event_id
+
             dispatch_result = await self.dispatcher.dispatch(
                 phase=phase,
                 symbols=["VN30F1M"],
-                market_data={},
+                market_data=market_data,
+                session_id=self.instance_id or "manual_trigger",
+                cycle_id=self.state.last_cycle_id + 1,
             )
             self.state.last_run_at = datetime.now(VN_TZ)
             self.state.last_success_at = datetime.now(VN_TZ)
             self.state.last_error = None
+            self.state.forecasts_created_count += dispatch_result.forecast_journals
+            self.state.events_skipped_count += dispatch_result.skipped_signals
+            self.state.duplicates_detected_count += dispatch_result.duplicates_detected
+            if dispatch_result.signals:
+                self.state.last_forecast_id = dispatch_result.signals[-1]["journal_id"]
+
             logger.info(
                 f"Manual trigger executed: phase={phase.value}, "
                 f"signals={dispatch_result.ensemble_signals}, "
@@ -281,36 +309,94 @@ class DaemonController:
                             poll_result = self.poller.poll(symbol, phase)
                             if poll_result.errors:
                                 poll_errors[symbol] = poll_result.errors
-                            # Extract market data from poll result
+                                if any(
+                                    isinstance(e, dict)
+                                    and e.get("error") == "circuit_breaker_open"
+                                    for e in poll_result.errors
+                                ):
+                                    self.state.errors_by_type["circuit_breaker"] = (
+                                        self.state.errors_by_type.get(
+                                            "circuit_breaker", 0
+                                        )
+                                        + 1
+                                    )
+                                else:
+                                    self.state.errors_by_type["api"] = (
+                                        self.state.errors_by_type.get("api", 0) + 1
+                                    )
+
+                            context = self.normalizer.normalize(
+                                poll_result=poll_result,
+                                as_of=cycle_start,
+                            )
+                            if not context.is_valid:
+                                self.state.errors_by_type["validation"] = (
+                                    self.state.errors_by_type.get("validation", 0) + 1
+                                )
+
                             all_market_data[symbol] = {
-                                "entry_price": None,
-                                "spot_price": None,
-                                "highs": poll_result.history_bars,
-                                "lows": None,
-                                "closes": None,
-                                "volumes": None,
-                                "order_flow": poll_result.order_flow,
-                                "flows": None,
-                                "breadth": None,
+                                "context": context,
+                                "entry_price": context.entry_price,
+                                "spot_price": context.spot_price,
+                                "highs": context.highs,
+                                "lows": context.lows,
+                                "closes": context.closes,
+                                "volumes": context.volumes,
+                                "order_flow": context.order_flow,
+                                "flows": context.flows,
+                                "breadth": context.breadth,
                             }
+                            if context.event:
+                                self.state.last_event_id = context.event.event_id
+
                         except SystemExit as se:
                             # vnai sys.exit() safety net — should already be
                             # intercepted in poller, but guard here too.
                             poll_errors[symbol] = [f"rate-limit-sysexit: {se}"]
+                            self.state.errors_by_type["api"] = (
+                                self.state.errors_by_type.get("api", 0) + 1
+                            )
                             logger.warning(
                                 f"[daemon] SystemExit from poller for {symbol} — rate limit hit",
                                 extra={"symbol": symbol, "phase": phase.value},
                             )
                         except Exception as poll_exc:
                             poll_errors[symbol] = [str(poll_exc)]
+                            self.state.errors_by_type["api"] = (
+                                self.state.errors_by_type.get("api", 0) + 1
+                            )
                     polled_count = len([s for s in symbols if s not in poll_errors])
 
                     # Dispatch signals and simulate orders
+                    sync_db = getattr(db, "sync_session", None) or (
+                        db if not hasattr(db, "sync_session") else None
+                    )
                     dispatch_result = await self.dispatcher.dispatch(
                         phase=phase,
                         symbols=symbols,
                         market_data=all_market_data,
+                        session_id=instance_id,
+                        cycle_id=cycle_count,
+                        db=sync_db,
                     )
+
+                    self.state.last_cycle_id = cycle_count
+                    self.state.forecasts_created_count += (
+                        dispatch_result.forecast_journals
+                    )
+                    self.state.events_skipped_count += dispatch_result.skipped_signals
+                    self.state.duplicates_detected_count += (
+                        dispatch_result.duplicates_detected
+                    )
+                    if dispatch_result.errors:
+                        self.state.errors_by_type["engine"] = (
+                            self.state.errors_by_type.get("engine", 0)
+                            + len(dispatch_result.errors)
+                        )
+                    if dispatch_result.signals:
+                        self.state.last_forecast_id = dispatch_result.signals[-1][
+                            "journal_id"
+                        ]
 
                     cycle_duration = (
                         datetime.now(VN_TZ) - cycle_start

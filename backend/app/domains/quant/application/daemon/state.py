@@ -75,6 +75,21 @@ class QuantDaemonState:
     last_degraded_reason: str | None = None
     last_forecast_id: str | None = None
     last_snapshot: dict[str, Any] = field(default_factory=dict)
+    last_event_id: str | None = None
+    last_cycle_id: int = 0
+    engine_run_status: dict[str, str] = field(default_factory=dict)
+    forecasts_created_count: int = 0
+    events_skipped_count: int = 0
+    duplicates_detected_count: int = 0
+    errors_by_type: dict[str, int] = field(
+        default_factory=lambda: {
+            "validation": 0,
+            "api": 0,
+            "circuit_breaker": 0,
+            "engine": 0,
+            "db": 0,
+        }
+    )
 
     def as_dict(self, breaker: DaemonCircuitBreaker) -> dict[str, Any]:
         return {
@@ -92,6 +107,13 @@ class QuantDaemonState:
             "last_degraded_reason": self.last_degraded_reason,
             "last_forecast_id": self.last_forecast_id,
             "last_snapshot": self.last_snapshot,
+            "last_event_id": self.last_event_id,
+            "last_cycle_id": self.last_cycle_id,
+            "engine_run_status": self.engine_run_status,
+            "forecasts_created_count": self.forecasts_created_count,
+            "events_skipped_count": self.events_skipped_count,
+            "duplicates_detected_count": self.duplicates_detected_count,
+            "errors_by_type": self.errors_by_type,
             "circuit_breaker": {
                 "is_open": breaker.is_open,
                 "failure_count": breaker.failure_count,
