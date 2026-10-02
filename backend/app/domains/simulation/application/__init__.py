@@ -1,11 +1,38 @@
 """Simulation application layer exports."""
 
+from app.domains.simulation.application.alpha_screener import (
+    Criterion,
+    ScreenedTicker,
+    screen,
+)
 from app.domains.simulation.application.engine import (
     SimulationConfig,
     SimulationEngine,
     is_derivative,
 )
+from app.domains.simulation.application.margin_calculator import (
+    INITIAL_MARGIN_RATE,
+    MAINTENANCE_MARGIN_RATE,
+    STATUS_CALL_MARGIN,
+    STATUS_FORCE_LIQUIDATION,
+    STATUS_SAFE,
+    VN30F1M_MULTIPLIER,
+    calculate_required_margin,
+    calculate_unrealized_pnl,
+    check_margin_status,
+    compute_margin_ratio,
+    total_derivative_position_value,
+)
+from app.domains.simulation.application.order_matcher import (
+    SLIPPAGE_DERIVATIVE_PT,
+    SLIPPAGE_EQUITY_PCT,
+    match_pending_orders,
+)
 from app.domains.simulation.application.schemas import (
+    AlphaBasketsResponse,
+    AlphaCriteria,
+    AlphaTicker,
+    MarginStatusResponse,
     MarkToMarketRequest,
     OrderCreateRequest,
     OrderResponse,
@@ -14,10 +41,24 @@ from app.domains.simulation.application.schemas import (
     PortfoliosResponse,
     PositionCloseRequest,
     PositionResponse,
+    SettlementProcessResponse,
     TradeResponse,
+)
+from app.domains.simulation.application.t_plus_2_manager import (
+    available_quantity,
+    compute_settlement_due,
+    create_ledger_row,
+    process_due_settlements,
 )
 
 __all__ = [
+    "AlphaBasketsResponse",
+    "AlphaCriteria",
+    "AlphaTicker",
+    "Criterion",
+    "INITIAL_MARGIN_RATE",
+    "MAINTENANCE_MARGIN_RATE",
+    "MarginStatusResponse",
     "MarkToMarketRequest",
     "OrderCreateRequest",
     "OrderResponse",
@@ -26,8 +67,27 @@ __all__ = [
     "PortfoliosResponse",
     "PositionCloseRequest",
     "PositionResponse",
+    "STATUS_CALL_MARGIN",
+    "STATUS_FORCE_LIQUIDATION",
+    "STATUS_SAFE",
+    "SLIPPAGE_DERIVATIVE_PT",
+    "SLIPPAGE_EQUITY_PCT",
+    "ScreenedTicker",
+    "SettlementProcessResponse",
     "SimulationConfig",
     "SimulationEngine",
     "TradeResponse",
+    "VN30F1M_MULTIPLIER",
+    "available_quantity",
+    "calculate_required_margin",
+    "calculate_unrealized_pnl",
+    "check_margin_status",
+    "compute_margin_ratio",
+    "compute_settlement_due",
+    "create_ledger_row",
     "is_derivative",
+    "match_pending_orders",
+    "process_due_settlements",
+    "screen",
+    "total_derivative_position_value",
 ]

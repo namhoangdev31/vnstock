@@ -123,3 +123,44 @@ class TradeResponse(SQLModel):
     tax: float
     realized_pnl: float
     executed_at: datetime
+
+
+class MarginStatusResponse(SQLModel):
+    """Trạng thái ký quỹ và tỷ lệ an toàn danh mục (VSDC margin status)."""
+
+    equity: float
+    margin_used: float
+    margin_ratio: float | None = None
+    status: str  # SAFE, CALL_MARGIN, FORCE_LIQUIDATION
+
+
+class SettlementProcessResponse(SQLModel):
+    """Kết quả xử lý thanh toán bù trừ T+2."""
+
+    settled: int
+
+
+class AlphaCriteria(SQLModel):
+    """Tiêu chí đánh giá sàng lọc cổ phiếu."""
+
+    key: str
+    label: str
+    passed: bool
+    value: float | None = None
+    threshold: float | None = None
+
+
+class AlphaTicker(SQLModel):
+    """Cổ phiếu thỏa mãn tiêu chí sàng lọc theo chân trời đầu tư."""
+
+    symbol: str
+    horizon: str
+    alpha_score: float
+    criteria: list[AlphaCriteria]
+
+
+class AlphaBasketsResponse(SQLModel):
+    """Danh sách các rổ cổ phiếu gợi ý theo khung thời gian (Weekly, Monthly, Quarterly)."""
+
+    horizon: str
+    baskets: dict[str, list[AlphaTicker]]

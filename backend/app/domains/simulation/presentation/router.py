@@ -13,17 +13,31 @@ Endpoints:
 - POST   /simulation/orders                      place a paper order
 - POST   /simulation/orders/{id}/cancel          cancel a pending order
 - POST   /simulation/positions/{id}/close        close (part of) a position
+- GET    /simulation/portfolios/{id}/margin-status VSDC margin status and safety ratio
+- POST   /simulation/settlement/process          trigger T+2 settlements for due paper rows
+- GET    /simulation/alpha/baskets               multi-horizon equity alpha baskets
 """
 
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import Session, col, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.domains.simulation.application.engine import SimulationEngine
+from app.domains.simulation.application.alpha_screener import screen
+from app.domains.simulation.application.engine import SimulationEngine, is_derivative
+from app.domains.simulation.application.margin_calculator import (
+    STATUS_SAFE,
+    check_margin_status,
+    compute_margin_ratio,
+    total_derivative_position_value,
+)
 from app.domains.simulation.application.schemas import (
+    AlphaBasketsResponse,
+    AlphaCriteria,
+    AlphaTicker,
+    MarginStatusResponse,
     MarkToMarketRequest,
     OrderCreateRequest,
     OrderResponse,
@@ -32,7 +46,11 @@ from app.domains.simulation.application.schemas import (
     PortfoliosResponse,
     PositionCloseRequest,
     PositionResponse,
+    SettlementProcessResponse,
     TradeResponse,
+)
+from app.domains.simulation.application.t_plus_2_manager import (
+    process_due_settlements,
 )
 from app.domains.simulation.domain.exceptions import SimulationError
 from app.domains.simulation.domain.models import (
@@ -236,3 +254,103 @@ def list_orders(
         query = query.where(col(Order.portfolio_id).in_(ids))
     rows = session.exec(query.order_by(col(Order.created_at).desc()).limit(limit)).all()
     return [OrderResponse.model_validate(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Phase 4: Margin Status, T+2 Settlement, and Alpha Screener Endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/portfolios/{portfolio_id}/margin-status",
+    response_model=MarginStatusResponse,
+)
+def get_margin_status(
+    session: SessionDep,
+    current_user: CurrentUser,
+    portfolio_id: UUID,
+) -> Any:
+    """Trạng thái ký quỹ và tỷ lệ an toàn danh mục VSDC (RULE 1/2 paper only)."""
+    engine = _engine(session)
+    portfolio = _owned_portfolio(engine, portfolio_id, current_user.id)
+    positions = engine.open_positions(portfolio_id)
+    deriv_positions = [p for p in positions if is_derivative(p.symbol)]
+    total_position_value = total_derivative_position_value(deriv_positions)
+
+    if deriv_positions and total_position_value > 0:
+        margin_ratio = compute_margin_ratio(portfolio.equity, total_position_value)
+        status = check_margin_status(portfolio.equity, total_position_value)
+    else:
+        margin_ratio = None
+        status = STATUS_SAFE
+
+    return MarginStatusResponse(
+        equity=portfolio.equity,
+        margin_used=portfolio.margin_used,
+        margin_ratio=margin_ratio,
+        status=status,
+    )
+
+
+@router.post("/settlement/process", response_model=SettlementProcessResponse)
+def process_settlement_batch(
+    session: SessionDep,
+    _current_user: CurrentUser,
+) -> Any:
+    """Process due T+2 settlements across paper portfolios.
+
+    Unlocks pending equity buy shares at 13:00 on T+2 and credits deferred
+    equity sale cash to portfolio cash balance.
+    Note: Operates globally on all due paper settlements (RULE 1 & 2 paper-only).
+    """
+    settled_count = process_due_settlements(session)
+    return SettlementProcessResponse(settled=settled_count)
+
+
+@router.get("/alpha/baskets", response_model=AlphaBasketsResponse)
+def get_alpha_baskets(
+    session: SessionDep,
+    _current_user: CurrentUser,
+    horizon: str = Query(
+        default="all", description="weekly, monthly, quarterly, or all"
+    ),
+    record_journal: bool = Query(
+        default=False,
+        description="Whether to record screened tickers to ForecastJournal (RULE 3 audit ledger)",
+    ),
+) -> Any:
+    """Multi-horizon equity alpha screener baskets (RULE 1/2/4 simulation/research only)."""
+    if horizon not in ("all", "weekly", "monthly", "quarterly"):
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid horizon: '{horizon}'. Must be one of: all, weekly, monthly, quarterly",
+        )
+    try:
+        results = screen(session, horizon=horizon, record_journal=record_journal)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    baskets_dto: dict[str, list[AlphaTicker]] = {}
+    for h_key, tickers in results.items():
+        if horizon != "all" and h_key != horizon:
+            continue
+        baskets_dto[h_key] = [
+            AlphaTicker(
+                symbol=t.symbol,
+                horizon=t.horizon,
+                alpha_score=t.alpha_score,
+                criteria=[
+                    AlphaCriteria(
+                        key=c.key,
+                        label=c.label,
+                        passed=c.passed,
+                        value=c.value,
+                        threshold=c.threshold,
+                    )
+                    for c in t.criteria
+                ],
+            )
+            for t in tickers
+        ]
+
+    return AlphaBasketsResponse(horizon=horizon, baskets=baskets_dto)

@@ -16,7 +16,7 @@ Scoring is deterministic and side-effect free apart from the persisted score.
 
 import logging
 import math
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlmodel import Session, col, select
 
@@ -250,3 +250,99 @@ class ForecastJournalService:
                 .limit(limit)
             ).all()
         )
+
+    def resolve_and_score_due_forecasts(
+        self, *, as_of: date | None = None
+    ) -> dict[str, int]:
+        """Automatically resolve and score pending forecasts whose outcome date has arrived.
+
+        Follows RULE 3 / AGENTS §9.1:
+        - Never looks ahead: uses only StockOHLCVDaily bars on or before as_of.
+        - Calculates actual_value and actual_direction from realized market prices.
+        - Status transitions: PENDING -> RESOLVED -> SCORED.
+        """
+        from app.domains.market_data.domain.models import StockOHLCVDaily
+
+        as_of_date = as_of or datetime.now(VN_TZ).date()
+        pending_rows = self.pending(limit=200)
+
+        resolved_count = 0
+        skipped_count = 0
+
+        for entry in pending_rows:
+            pred_date = entry.predicted_at.date()
+
+            # Determine target resolution date based on horizon
+            if entry.horizon in (ForecastHorizon.ATC, ForecastHorizon.INTRADAY):
+                target_date = pred_date
+            elif entry.horizon == ForecastHorizon.T_PLUS_1:
+                target_date = pred_date + timedelta(days=1)
+            elif entry.horizon == ForecastHorizon.T_PLUS_2:
+                target_date = pred_date + timedelta(days=2)
+            elif entry.horizon == ForecastHorizon.WEEKLY:
+                target_date = pred_date + timedelta(days=7)
+            elif entry.horizon == ForecastHorizon.MONTHLY:
+                target_date = pred_date + timedelta(days=30)
+            elif entry.horizon == ForecastHorizon.QUARTERLY:
+                target_date = pred_date + timedelta(days=90)
+            else:
+                target_date = pred_date + timedelta(days=1)
+
+            if target_date > as_of_date:
+                skipped_count += 1
+                continue
+
+            bar = self.session.exec(
+                select(StockOHLCVDaily)
+                .where(StockOHLCVDaily.symbol == entry.symbol)
+                .where(col(StockOHLCVDaily.trading_date) >= target_date)
+                .where(col(StockOHLCVDaily.trading_date) <= as_of_date)
+                .order_by(col(StockOHLCVDaily.trading_date).asc())
+                .limit(1)
+            ).first()
+
+            if bar is None:
+                skipped_count += 1
+                continue
+
+            actual_value = bar.close
+            if entry.predicted_value is not None:
+                diff = actual_value - entry.predicted_value
+                if diff > 0:
+                    actual_dir = ForecastDirection.BULLISH
+                elif diff < 0:
+                    actual_dir = ForecastDirection.BEARISH
+                else:
+                    actual_dir = ForecastDirection.NEUTRAL
+            else:
+                actual_dir = (
+                    ForecastDirection.BULLISH
+                    if bar.close >= bar.open
+                    else ForecastDirection.BEARISH
+                )
+
+            realized_dt = datetime.combine(
+                bar.trading_date, datetime.min.time()
+            ).replace(hour=14, minute=45, tzinfo=VN_TZ)
+            now_vn = datetime.now(VN_TZ)
+            if realized_dt > now_vn:
+                realized_dt = now_vn
+
+            try:
+                self.resolve(
+                    entry.id,
+                    actual_value=actual_value,
+                    actual_direction=actual_dir,
+                    realized_at=realized_dt,
+                )
+                self.score(entry.id)
+                resolved_count += 1
+            except Exception as e:
+                logger.warning("Failed to auto-resolve forecast %s: %s", entry.id, e)
+                skipped_count += 1
+
+        return {
+            "resolved": resolved_count,
+            "skipped": skipped_count,
+            "pending_remaining": len(pending_rows) - resolved_count,
+        }

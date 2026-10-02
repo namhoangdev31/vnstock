@@ -23,13 +23,17 @@ collateral). Equity is conserved as::
 - Insufficient buying power / shares → the order is ``REJECTED`` and balances are
   left untouched (TEST-ISO-02).
 
-Phase 1 does not model position flipping (reducing beyond an open quantity),
-LIMIT/STOP fills, or a trading calendar; settlement_date is weekday-approximate.
+- LIMIT/STOP/partial fills: ``_fill(..., quantity=...)`` supports partial fills
+  with slippage (see order_matcher.py).
+- Sell-lock (D5): equity SELL is rejected unless settled-available quantity
+  (open LONG minus PENDING_T2 BUY ledger qty) covers the order.
+- Equity SELL proceeds credit cash only at settlement (T+2, 13:00 VN via
+  SettlementService); equity BUY creates a PENDING_T2 ledger row.
 """
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
@@ -45,6 +49,10 @@ from app.core.enums import (
     PositionStatus,
 )
 from app.core.models_base import VN_TZ
+from app.domains.simulation.application.t_plus_2_manager import (
+    available_quantity,
+    create_ledger_row,
+)
 from app.domains.simulation.domain.exceptions import SimulationError
 from app.domains.simulation.domain.models import (
     Order,
@@ -54,6 +62,7 @@ from app.domains.simulation.domain.models import (
     derivative_pnl,
     round_money,
 )
+from app.domains.simulation.domain.settlement import SettlementService
 
 logger = logging.getLogger(__name__)
 
@@ -82,19 +91,6 @@ class SimulationConfig:
 def is_derivative(symbol: str) -> bool:
     """True for VN30 index-futures contracts (T+0, 100k multiplier)."""
     return str(symbol).upper().startswith(_DERIVATIVE_PREFIXES)
-
-
-def _business_days_after(start: date, days: int) -> date:
-    """Add ``days`` weekdays to ``start`` (public holidays not excluded in P1)."""
-    if days <= 0:
-        return start
-    added = 0
-    cursor = start
-    while added < days:
-        cursor += timedelta(days=1)
-        if cursor.weekday() < 5:  # Mon–Fri
-            added += 1
-    return cursor
 
 
 class SimulationEngine:
@@ -298,6 +294,14 @@ class SimulationEngine:
 
         if kind == "reduce":
             assert position is not None
+            if not deriv:
+                # Sell-lock (D5): shares bought recently are unsellable until T+2.
+                available = available_quantity(self.session, portfolio.id, order.symbol)
+                if order.quantity > available:
+                    return (
+                        f"Cannot sell {order.quantity}; only {available} settled "
+                        f"available until T+2 settlement"
+                    )
             if order.quantity > position.quantity:
                 return (
                     f"Cannot reduce {order.quantity}; open position holds "
@@ -336,30 +340,60 @@ class SimulationEngine:
         fill_price: float,
         deriv: bool,
         intent: tuple[str, Position | None],
-    ) -> None:
+        quantity: int | None = None,
+        executed_at: datetime | None = None,
+    ) -> Trade | None:
+        """Execute a (possibly partial) fill on ``order``.
+
+        Returns the created ``Trade`` row. ``quantity=None`` fills the full
+        remaining amount (legacy MARKET path). Partial fills (quantity < order
+        remaining) keep the order ``PENDING`` until fully filled.
+        """
+        qty = order.quantity if quantity is None else quantity
+        if qty <= 0:
+            return None
+
         kind, position = intent
         mult = DERIVATIVE_MULTIPLIER if deriv else 1
-        notional = fill_price * order.quantity * mult
+        notional = fill_price * qty * mult
         fee = self._fee(notional, deriv)
+        prev_qty = order.filled_quantity
 
         if kind == "reduce":
             assert position is not None
             tax = 0.0 if deriv else round_money(notional * self.config.equity_tax_rate)
             realized = self._reduce_position(
-                portfolio, position, order.quantity, fill_price, mult, fee, tax, deriv
+                portfolio, position, qty, fill_price, mult, fee, tax, deriv
             )
         else:
             tax = 0.0  # opening buys incur no transfer tax
             realized = 0.0
             self._apply_open_fill(
-                portfolio, position, order, fill_price, mult, fee, tax, deriv
+                portfolio,
+                position,
+                order,
+                fill_price,
+                mult,
+                fee,
+                tax,
+                deriv,
+                quantity=qty,
             )
 
-        order.filled_quantity = order.quantity
-        order.filled_price = fill_price
-        order.fee = fee
-        order.tax = tax
-        order.status = OrderStatus.FILLED
+        order.filled_quantity = prev_qty + qty
+        # Weighted average fill price.
+        if prev_qty + qty > 0:
+            prev_total = (order.filled_price or 0.0) * prev_qty
+            order.filled_price = round(
+                (prev_total + fill_price * qty) / (prev_qty + qty), 4
+            )
+        order.fee = round_money((order.fee or 0.0) + fee)
+        order.tax = round_money((order.tax or 0.0) + tax)
+        order.status = (
+            OrderStatus.FILLED
+            if order.filled_quantity >= order.quantity
+            else OrderStatus.PENDING
+        )
         order.updated_at = datetime.now(VN_TZ)
         self.session.add(order)
 
@@ -368,7 +402,7 @@ class SimulationEngine:
             order_id=order.id,
             symbol=order.symbol,
             side=order.side,
-            quantity=order.quantity,
+            quantity=qty,
             price=fill_price,
             fee=fee,
             tax=tax,
@@ -382,6 +416,8 @@ class SimulationEngine:
         self.session.commit()
         self.session.refresh(order)
         self.session.refresh(portfolio)
+        self.session.refresh(trade)
+        return trade
 
     def _apply_open_fill(
         self,
@@ -393,9 +429,16 @@ class SimulationEngine:
         fee: float,
         tax: float,
         deriv: bool,
+        quantity: int | None = None,
     ) -> None:
-        """Create or increase a position; debit cash (and margin for derivatives)."""
-        notional = fill_price * order.quantity * mult
+        """Create or increase a position; debit cash (and margin for derivatives).
+
+        For equity BUY fills (non-deriv), sets ``Position.settlement_date`` to
+        T+2 via ``SettlementService`` (holiday-aware) and creates a
+        ``PENDING_T2`` ledger row for the fill quantity.
+        """
+        qty = order.quantity if quantity is None else quantity
+        notional = fill_price * qty * mult
         target_side = (
             PositionSide.LONG if order.side in _BULLISH_SIDES else PositionSide.SHORT
         )
@@ -416,13 +459,15 @@ class SimulationEngine:
             settlement = (
                 None
                 if deriv
-                else _business_days_after(date.today(), EQUITY_SETTLEMENT_DAYS)
+                else SettlementService.calculate_settlement_date(
+                    date.today(), cycle_days=EQUITY_SETTLEMENT_DAYS
+                )
             )
             position = Position(
                 portfolio_id=portfolio.id,
                 symbol=order.symbol,
                 side=target_side,
-                quantity=order.quantity,
+                quantity=qty,
                 entry_price=fill_price,
                 current_price=fill_price,
                 unrealized_pnl=0.0,
@@ -432,17 +477,50 @@ class SimulationEngine:
                 status=PositionStatus.OPEN,
             )
             self.session.add(position)
+
+            if not deriv:
+                # Create a PENDING_T2 BUY ledger row for this equity fill.
+                create_ledger_row(
+                    self.session,
+                    portfolio_id=portfolio.id,
+                    symbol=order.symbol,
+                    side=OrderSide.BUY.value,
+                    quantity=qty,
+                    price=fill_price,
+                    trade_dt=datetime.now(VN_TZ),
+                )
             return
 
         # Increase an existing same-direction position (average the entry).
-        new_qty = existing.quantity + order.quantity
+        new_qty = existing.quantity + qty
         existing.entry_price = round(
-            (existing.entry_price * existing.quantity + fill_price * order.quantity)
-            / new_qty,
+            (existing.entry_price * existing.quantity + fill_price * qty) / new_qty,
             4,
         )
         existing.quantity = new_qty
         existing.margin_required = round_money(existing.margin_required + margin_add)
+
+        if not deriv:
+            # New equity shares from this fill lock until T+2 settlement.
+            new_settlement = SettlementService.calculate_settlement_date(
+                date.today(), cycle_days=EQUITY_SETTLEMENT_DAYS
+            )
+            if (
+                existing.settlement_date is None
+                or new_settlement > existing.settlement_date
+            ):
+                existing.settlement_date = new_settlement
+
+            create_ledger_row(
+                self.session,
+                portfolio_id=portfolio.id,
+                symbol=order.symbol,
+                side=OrderSide.BUY.value,
+                quantity=qty,
+                price=fill_price,
+                trade_dt=datetime.now(VN_TZ),
+            )
+
         self._mark_position(existing, fill_price, mult)
         existing.updated_at = datetime.now(VN_TZ)
         self.session.add(existing)
@@ -472,7 +550,6 @@ class SimulationEngine:
             gross = (fill_price - position.entry_price) * quantity * sign
         realized = round_money(gross - fee - tax)
 
-        notional = fill_price * quantity * mult
         if deriv:
             released = round_money(
                 position.margin_required * (quantity / position.quantity)
@@ -483,9 +560,17 @@ class SimulationEngine:
                 portfolio.cash_balance + released + realized
             )
         else:
-            # Equity long close: proceeds land in cash; realized PnL is implicit.
-            portfolio.cash_balance = round_money(
-                portfolio.cash_balance + notional - fee - tax
+            # Equity close: sale cash is NOT credited immediately. A SELL ledger
+            # row is created and cash lands at 13:00 VN on T+2 via
+            # process_due_settlements (D4). Realized PnL stays on the position.
+            create_ledger_row(
+                self.session,
+                portfolio_id=portfolio.id,
+                symbol=position.symbol,
+                side=OrderSide.SELL.value,
+                quantity=quantity,
+                price=fill_price,
+                trade_dt=datetime.now(VN_TZ),
             )
 
         position.quantity -= quantity

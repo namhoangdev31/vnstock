@@ -337,6 +337,43 @@ class SignalDispatcher:
                         context, session_id=session_id, cycle_id=cycle_id
                     )
 
+                # Tick-driven paper order matcher for pending orders (Phase 4, RULE 1/2/3)
+                if db is not None and context.entry_price and context.entry_price > 0:
+                    try:
+                        from app.domains.simulation.application.order_matcher import (
+                            match_pending_orders,
+                        )
+
+                        vol = int(context.volumes[-1]) if context.volumes else 100
+                        atr14_val = None
+                        if (
+                            context.highs
+                            and context.lows
+                            and context.closes
+                            and len(context.closes) >= 15
+                        ):
+                            from app.domains.quant.domain.indicators import compute_atr
+
+                            atr14_val = compute_atr(
+                                context.highs, context.lows, context.closes, 14
+                            )
+                        matched = match_pending_orders(
+                            db,
+                            symbol,
+                            tick_price=context.entry_price,
+                            tick_volume=vol,
+                            tick_time=now,
+                            atr14=atr14_val,
+                        )
+                        if matched:
+                            result.simulation_orders += len(matched)
+                    except Exception as match_err:
+                        logger.debug(
+                            "Order matcher execution failed for %s: %s",
+                            symbol,
+                            match_err,
+                        )
+
                 if not orch_result.is_executable:
                     result.skipped_signals += 1
                     logger.info(

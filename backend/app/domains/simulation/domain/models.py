@@ -167,6 +167,46 @@ class Trade(AwareSQLModel, table=True):
     portfolio: Portfolio | None = Relationship(back_populates="trades")
 
 
+# Trạng thái ledger T+2 — chuẩn hóa domain name (RULE 2)
+SETTLEMENT_PENDING = "PENDING_T2"
+SETTLEMENT_AVAILABLE = "SETTLED_AVAILABLE"
+
+
+class EquitySettlementLedger(AwareSQLModel, table=True):
+    """Bảng theo dõi vòng đời thanh toán T+2 cho cổ phiếu trong tài khoản mô phỏng.
+
+    RULE 2: nằm trong schema simulation_*; không có trường nào chứa credential,
+    mật khẩu PIN, hoặc mã OTP (TEST-ISO-01).
+    """
+
+    __tablename__ = "simulation_equity_settlement"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    portfolio_id: uuid.UUID = Field(
+        foreign_key="simulation_portfolio.id",
+        nullable=False,
+        index=True,
+        ondelete="CASCADE",
+    )
+    symbol: str = Field(max_length=20, index=True)
+    side: str = Field(max_length=10)  # BUY/SELL — tên trường chuẩn domain
+    quantity: int
+    price: float
+    bought_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    settlement_due: datetime = Field(
+        sa_type=DateTime(timezone=True),  # type: ignore
+        index=True,
+    )
+    status: str = Field(default=SETTLEMENT_PENDING, max_length=20, index=True)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+
+
 def derivative_pnl(
     entry_price: float,
     exit_price: float,

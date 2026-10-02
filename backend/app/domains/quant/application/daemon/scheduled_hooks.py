@@ -370,6 +370,47 @@ def run_market_data_ingest_hook(
         return {"error": str(exc), "date": str(run_date)}
 
 
+# ---------------------------------------------------------------------------
+# Hook 5 — Forecast Resolution & Scoring (§9.1 Layer A Self-Learning)
+# ---------------------------------------------------------------------------
+
+
+def run_forecast_resolution_hook(
+    session_factory: Callable[[], Any] | None,
+    today: date | None = None,
+) -> dict[str, Any]:
+    """Auto-resolve and score pending forecasts against realized market prices.
+
+    Runs once per trading day during POST_MARKET (around 15:15+).
+    Idempotent.
+    """
+    run_date = today or datetime.now(VN_TZ).date()
+    hook_name = f"forecast_resolution_{run_date}"
+
+    if not _tracker.should_run(hook_name, run_date):
+        logger.debug("[hook] %s already ran for %s — skip", hook_name, run_date)
+        return {"resolved": 0, "skipped": True}
+
+    if session_factory is None:
+        return {"resolved": 0, "skipped": True, "reason": "no_session_factory"}
+
+    try:
+        from app.domains.quant.application.forecast_journal_service import (
+            ForecastJournalService,
+        )
+
+        with session_factory() as session:
+            svc = ForecastJournalService(session)
+            result = svc.resolve_and_score_due_forecasts(as_of=run_date)
+
+        _tracker.mark_ran(hook_name, run_date)
+        logger.info("[hook] %s completed: %s", hook_name, result)
+        return result
+    except Exception as exc:
+        logger.error("[hook] %s failed: %s", hook_name, exc, exc_info=True)
+        return {"error": str(exc), "skipped": False}
+
+
 def dispatch_phase_hooks(
     phase: SessionPhase,
     session_factory: Callable[[], Any] | None,
@@ -383,7 +424,7 @@ def dispatch_phase_hooks(
     DB/API work off the event loop.
 
     Returns combined summary: {"settlement": ..., "screener": ...,
-    "equity_universe": ..., "market_data_ingest": ...}.
+    "equity_universe": ..., "market_data_ingest": ..., "forecast_resolution": ...}.
     """
     run_date = today or datetime.now(VN_TZ).date()
     results: dict[str, Any] = {}
@@ -393,6 +434,9 @@ def dispatch_phase_hooks(
 
     if phase in _SCREENER_PHASES:
         results["screener"] = run_screener_snapshot_hook(session_factory, run_date)
+        results["forecast_resolution"] = run_forecast_resolution_hook(
+            session_factory, run_date
+        )
 
     if phase in _EQUITY_REFRESH_PHASES:
         results["equity_universe"] = run_equity_universe_refresh(

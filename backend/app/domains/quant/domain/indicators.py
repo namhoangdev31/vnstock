@@ -349,6 +349,18 @@ def detect_market_regime(
     return "TRENDING" if trend_strength > 0.25 else "RANGING"
 
 
+def compute_sma(values: Sequence[float | int], period: int = 20) -> float | None:
+    """Tính đường trung bình động đơn giản (Simple Moving Average).
+
+    SMA = sum(values[-period:]) / period
+    Trả về None nếu không đủ dữ liệu (len(values) < period).
+    """
+    if len(values) < period:
+        return None
+    window = values[-period:]
+    return round(float(sum(window)) / period, 2)
+
+
 def compute_roc(closes: Sequence[float], period: int = 10) -> float:
     """Tính Rate of Change (ROC) — xung lượng tương đối trong khoảng `period` phiên.
 
