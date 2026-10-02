@@ -60,6 +60,10 @@ def run_sync_daily_market_job(
                     time.sleep(delay_sec)
             except Exception as exc:
                 logger.warning("Lỗi đồng bộ nến ngày cho %s: %s", sym, exc)
+                try:
+                    mgr.session.rollback()
+                except Exception:
+                    pass
 
         # 2. Đồng bộ dòng tiền tổ chức (Khối ngoại, Tự doanh, Room ngoại)
         try:
@@ -70,6 +74,10 @@ def run_sync_daily_market_job(
             logs.append(flow_log)
         except Exception as exc:
             logger.warning("Lỗi đồng bộ dòng tiền tổ chức: %s", exc)
+            try:
+                mgr.session.rollback()
+            except Exception:
+                pass
 
         # 3. Tính toán và cập nhật Basis phái sinh (VN30F1M - VN30)
         try:
@@ -77,6 +85,10 @@ def run_sync_daily_market_job(
             mgr.compute_daily_derivative_basis(trading_date=None)
         except Exception as exc:
             logger.warning("Lỗi tính toán Basis phái sinh: %s", exc)
+            try:
+                mgr.session.rollback()
+            except Exception:
+                pass
 
         return logs
 

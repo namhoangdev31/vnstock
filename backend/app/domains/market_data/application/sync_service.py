@@ -240,9 +240,7 @@ class DataSyncManager:
         vnstock_svc: VnstockService | None = None,
     ) -> None:
         self.session = session
-        self.svc = vnstock_svc or VnstockService(db_session=session)
-        if getattr(self.svc, "db_session", None) is None:
-            self.svc.db_session = session
+        self.svc = vnstock_svc or VnstockService()
 
     @property
     def is_postgresql(self) -> bool:

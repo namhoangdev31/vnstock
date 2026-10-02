@@ -161,7 +161,7 @@ class VnstockService:
         # Kiểm tra circuit breaker trước khi request
         if hasattr(self._limiter, "is_available"):
             try:
-                if not self._limiter.is_available(src, session=self.db_session):
+                if not self._limiter.is_available(src):
                     raise CircuitBreakerOpenError(src)
             except CircuitBreakerOpenError:
                 raise
@@ -170,7 +170,7 @@ class VnstockService:
 
         if hasattr(self._limiter, "wait"):
             try:
-                self._limiter.wait(provider=src, session=self.db_session)
+                self._limiter.wait(provider=src)
             except TypeError:
                 self._limiter.wait()
 
@@ -184,7 +184,7 @@ class VnstockService:
         self.last_successful_source = src
         if hasattr(self._limiter, "record_success"):
             try:
-                self._limiter.record_success(provider=src, session=self.db_session)
+                self._limiter.record_success(provider=src)
             except Exception:
                 pass
 
@@ -197,7 +197,7 @@ class VnstockService:
         )
         if hasattr(self._limiter, "record_failure"):
             try:
-                self._limiter.record_failure(provider=src, session=self.db_session)
+                self._limiter.record_failure(provider=src)
             except Exception:
                 pass
 

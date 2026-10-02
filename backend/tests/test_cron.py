@@ -226,6 +226,58 @@ def test_run_sync_daily_market_job(session: Session) -> None:  # noqa: F811
         assert logs[0].status == "success"
 
 
+def test_sync_daily_market_session_isolation_and_rollback(session: Session) -> None:  # noqa: F811
+    """Kiểm tra DataSyncManager không làm ô nhiễm session toàn cục và rollback an toàn khi 1 mã lỗi."""
+    from app.cron.sync_daily_market import run_sync_daily_market_job
+    from app.domains.market_data.infrastructure.vnstock_adapter import vnstock_service
+
+    # 1. Khởi tạo DataSyncManager phải không làm biến đổi vnstock_service toàn cục
+    DataSyncManager(session=session, vnstock_svc=vnstock_service)
+    assert getattr(vnstock_service, "db_session", None) is None
+
+    # 2. Giả lập rổ có 2 mã: mã đầu tiên gây lỗi DB, mã thứ hai thành công
+    mock_svc = MagicMock()
+    mock_svc.source = "VCI"
+    mock_svc.fetch_group_symbols.return_value = ["VIB", "FPT"]
+
+    call_count = 0
+
+    def mock_incremental(symbols: list[str]) -> list[DataSyncLog]:
+        nonlocal call_count
+        call_count += 1
+        if "VIB" in symbols:
+            raise RuntimeError("Database error during VIB sync")
+        return [
+            DataSyncLog(
+                sync_type="daily",
+                symbol="FPT",
+                source="VCI",
+                status="success",
+                rows_synced=1,
+            )
+        ]
+
+    flow_log = DataSyncLog(
+        sync_type="institutional_flow",
+        source="VCI",
+        status="success",
+        rows_synced=2,
+    )
+
+    with (
+        patch("app.cron.sync_daily_market.vnstock_service", mock_svc),
+        patch.object(
+            DataSyncManager, "sync_daily_incremental", side_effect=mock_incremental
+        ),
+        patch.object(DataSyncManager, "sync_institutional_flow", return_value=flow_log),
+        patch.object(DataSyncManager, "compute_daily_derivative_basis", return_value=1),
+    ):
+        logs = run_sync_daily_market_job(session=session, delay_sec=0)
+        # Mã thứ 2 (FPT) và flow_log vẫn phải được thực thi thành công nhờ rollback kịp thời
+        assert any(log.symbol == "FPT" and log.status == "success" for log in logs)
+        assert any(log.sync_type == "institutional_flow" for log in logs)
+
+
 def test_cron_sync_daily_market_api_endpoint(api_client, monkeypatch) -> None:  # noqa: F811
     """Kiểm tra bảo mật và hoạt động của endpoint POST /api/v1/stock/cron/sync-daily-market."""
     monkeypatch.setattr(settings, "CRON_SECRET_KEY", "test-cron-secret-daily-999")

@@ -96,6 +96,10 @@ def run_sync_quarterly_financials_job(
                     time.sleep(delay_sec)
             except Exception as exc:
                 logger.warning("Lỗi đồng bộ dữ liệu toàn diện cho %s: %s", sym, exc)
+                try:
+                    mgr.session.rollback()
+                except Exception:
+                    pass
 
         return logs
 
