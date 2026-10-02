@@ -219,6 +219,11 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
 - **Type Safety**: Full TypeScript strict typing across pages, components, composables, and API client layer. No raw `any` types.
 - **Route Definitions & Layouts**: Nuxt file-based routing (`pages/`), with shared layouts (`layouts/default.vue`, `layouts/auth.vue`) and route middleware (`middleware/auth.global.ts`).
 - **State & Composables**: Built with Vue 3 `<script setup lang="ts">`, `@vueuse/core`, custom composables (`useAuth`, `useCustomToast`), and reactive stores.
+- **Strict UI Rules (Bắt Buộc Khi Viết UI)**:
+  1. **Bắt buộc dùng Token CSS (No Arbitrary Colors)**: Tất cả màu nền, màu chữ, viền đều phải dùng token chuẩn được định nghĩa tại `main.css` và `tailwind.config.ts` (ví dụ: `bg-aave-violet`, `text-aave-graphite`, `bg-aave-obsidian`, `text-aave-iron`, `bg-surface-canvas`, `var(--color-...)`). **Tuyệt đối không hardcode hex tùy tiện** như `bg-[#998eff]` hay `text-[#858387]`.
+  2. **Không dùng Gradient trong Code (Zero Gradients)**: Tuyệt đối không dùng gradient (`bg-gradient-to-...`, `linear-gradient(...)`). Tất cả bề mặt, thẻ card và nút bấm phải là các mảng màu phẳng (flat surface) có tính kỷ luật cao.
+  3. **Không dùng Emoji trong Văn Bản (Zero Emojis in Text)**: Tuyệt đối không dùng icon emoji (🚀, 📦, ⚡, 🛡️,...) trong văn bản hay tiêu đề. Thay vào đó, dùng component biểu tượng hệ thống `<UIcon>` hoặc typography chuẩn.
+  4. **Không viết Text dùng dấu ngoặc đơn "()" để giải thích**: Tuyệt đối không dùng dấu ngoặc đơn để chú thích thuật ngữ hay định dạng trong nhãn hiển thị (ví dụ KHÔNG viết `<span>Technical Requirements Document (Markdown Specification)</span>` hay `Mật khẩu (tối thiểu 8 ký tự)`). Nếu cần cung cấp thông tin giải thích bổ sung, **bắt buộc phải dùng tooltip** (ví dụ `<UTooltip text="...">` hoặc hint text riêng).
 - **Code Quality**: Every frontend change MUST pass `bun run lint`, `bun run typecheck`, and `bun run build` cleanly with 0 errors.
 
 ---

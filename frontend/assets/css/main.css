@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,19 +6,37 @@
 
 @layer base {
   :root {
-    --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --color-aave-violet: #998eff;
+    --color-obsidian: #221d1d;
+    --color-inkwell: #0f0f10;
+    --color-charcoal: #000000;
+    --color-iron: #636161;
+    --color-graphite: #858387;
+    --color-pewter: #8f8e8e;
+    --color-ash: #bcbbbb;
+    --color-bone: #f6f7f4;
+    --color-paper: #ffffff;
+
+    --surface-page-canvas: #ffffff;
+    --surface-lavender-wash: #ece6ff;
+    --surface-warm-card: #f6f7f4;
+    --surface-midnight: #221d1d;
+    --surface-abyss: #0f0f10;
+
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #07090e;
-    color: #e2e8f0;
+    background-color: var(--surface-abyss);
+    color: var(--color-paper);
     overflow-x: hidden;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    letter-spacing: -0.16px;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss07";
   }
 
-  /* Monospace figures for all financial numbers */
   .tabular-nums,
   .font-mono,
   table td,
@@ -27,45 +45,166 @@
   }
 }
 
-/* Custom Scrollbar for sleek trading desk UI */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #07090e;
+  background: var(--surface-abyss);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--color-obsidian);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--color-aave-violet);
 }
 
-/* Ambient glow & backdrop utilities */
-.terminal-glow-emerald {
-  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.15);
+.card-aave-dark {
+  background-color: var(--color-obsidian);
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
 }
 
-.terminal-card {
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.75) 0%, rgba(11, 15, 23, 0.85) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(12px);
+.card-aave-dark:hover {
+  border-color: rgba(153, 142, 255, 0.35);
 }
 
-.terminal-card:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.7), 0 0 15px -3px rgba(16, 185, 129, 0.1);
+.card-aave-light {
+  background-color: var(--color-paper);
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
 }
 
-.terminal-grid-bg {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+.btn-aave-violet {
+  background-color: var(--color-aave-violet);
+  color: var(--color-charcoal);
+  border-radius: 9999px;
+  padding: 14px 26px;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-aave-violet:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-aave-dark {
+  background-color: var(--color-inkwell);
+  color: var(--color-paper);
+  border-radius: 9999px;
+  padding: 14px 26px;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-aave-dark:hover {
+  background-color: var(--color-obsidian);
+  transform: translateY(-1px);
+}
+
+.btn-aave-white {
+  background-color: var(--color-paper);
+  color: var(--color-obsidian);
+  border-radius: 9999px;
+  padding: 14px 26px;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-aave-white:hover {
+  background-color: var(--color-bone);
+  transform: translateY(-1px);
+}
+
+.btn-aave-ghost-light {
+  background-color: transparent;
+  color: var(--color-obsidian);
+  border: 1px solid rgba(34, 29, 29, 0.25);
+  border-radius: 9999px;
+  padding: 14px 26px;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.16px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-aave-ghost-light:hover {
+  background-color: rgba(34, 29, 29, 0.04);
+  border-color: rgba(34, 29, 29, 0.5);
+}
+
+.btn-aave-ghost-dark {
+  background-color: transparent;
+  color: var(--color-paper);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  padding: 14px 26px;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.16px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-aave-ghost-dark:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-aave-outline-violet {
+  background-color: transparent;
+  color: var(--color-aave-violet);
+  border: 1px solid var(--color-aave-violet);
+  border-radius: 9999px;
+  padding: 14px 26px;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.16px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-aave-outline-violet:hover {
+  background-color: rgba(153, 142, 255, 0.1);
+}
+
+.nav-aave-shadow {
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 20px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
 }

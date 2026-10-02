@@ -42,17 +42,17 @@
         type="submit"
         block
         size="md"
-        color="emerald"
+        color="primary"
         :loading="isSubmitting"
         :disabled="passwordMismatch || !password"
-        class="mt-2 font-semibold shadow-lg shadow-emerald-500/20"
+        class="mt-2 font-medium !rounded-full !bg-aave-violet !text-aave-charcoal hover:brightness-105 active:scale-[0.99] transition-all"
       >
         Lưu mật khẩu mới
       </UButton>
     </form>
 
     <div class="mt-6 text-center text-xs text-slate-400">
-      <NuxtLink to="/login" class="text-emerald-400 font-semibold hover:underline">
+      <NuxtLink to="/login" class="text-aave-violet font-medium hover:underline">
         Quay lại đăng nhập
       </NuxtLink>
     </div>

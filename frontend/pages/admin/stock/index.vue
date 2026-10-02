@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-5">
-    <!-- Header Strip -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-[#090d16]/80 border border-white/[0.08] backdrop-blur-xl">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-abyss/80 border border-white/[0.08] backdrop-blur-xl">
       <div>
         <div class="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 mb-1">
           <span>MARKET UNIVERSE</span>
@@ -32,8 +32,7 @@
       </UButton>
     </div>
 
-    <!-- Filter & Search Toolbar -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-[#090d16]/60 border border-white/[0.06]">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-surface-abyss/60 border border-white/[0.06]">
       <div class="relative flex-1 w-full sm:max-w-md">
         <UInput
           v-model="search"
@@ -59,8 +58,7 @@
       </div>
     </div>
 
-    <!-- Stock Symbols Table Card -->
-    <div class="rounded-xl border border-white/[0.08] bg-[#090d16]/80 overflow-hidden shadow-2xl backdrop-blur-xl">
+    <div class="rounded-xl border border-white/[0.08] bg-surface-abyss/80 overflow-hidden shadow-2xl backdrop-blur-xl">
       <div class="p-3.5 border-b border-white/[0.06] flex items-center justify-between bg-white/[0.01]">
         <div class="flex items-center gap-2 text-xs font-mono text-slate-300">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -78,7 +76,7 @@
               <th class="py-3 px-4 w-28">Mã CK</th>
               <th class="py-3 px-4">Tên công ty</th>
               <th class="py-3 px-4 w-28 text-center">Sàn</th>
-              <th class="py-3 px-4 w-40">Ngành nghề (ICB)</th>
+              <th class="py-3 px-4 w-40"><div class="flex items-center gap-1"><span>Ngành nghề</span><UTooltip text="Industry Classification Benchmark"><UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" /></UTooltip></div></th>
               <th class="py-3 px-4 w-24">Loại</th>
               <th class="py-3 px-4 w-28 text-center">Trạng thái</th>
             </tr>
@@ -150,7 +148,6 @@
         </table>
       </div>
 
-      <!-- Pagination Footer -->
       <div v-if="total > limit" class="p-3.5 border-t border-white/[0.06] bg-white/[0.01] flex flex-col sm:flex-row items-center justify-between gap-3 font-mono">
         <p class="text-xs text-slate-400">
           Hiển thị {{ page * limit + 1 }} - {{ Math.min((page + 1) * limit, total) }} / {{ total }} mã
@@ -206,9 +203,9 @@ const isLoading = ref(false)
 
 const exchangeOptions = [
   { label: "Tất cả các sàn", value: "ALL" },
-  { label: "HOSE (Sở GDCK TP.HCM)", value: "HOSE" },
-  { label: "HNX (Sở GDCK Hà Nội)", value: "HNX" },
-  { label: "UPCOM (Thị trường đăng ký)", value: "UPCOM" },
+  { label: "Sàn HOSE", value: "HOSE" },
+  { label: "Sàn HNX", value: "HNX" },
+  { label: "Sàn UPCOM", value: "UPCOM" },
 ]
 
 const maxPages = computed(() => Math.ceil(total.value / limit) || 1)

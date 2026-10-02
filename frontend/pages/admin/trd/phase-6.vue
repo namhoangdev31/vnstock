@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs text-slate-400 font-mono mb-1">
@@ -25,7 +25,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="flex border-b border-slate-800 gap-4">
       <button
         v-for="tab in tabs"
@@ -40,19 +39,16 @@
       </button>
     </div>
 
-    <!-- Tab 1: Spec -->
     <div v-if="activeTab === 'spec'">
       <MarkdownViewer :content="phase6Markdown" filename="trd-phase-6-cockpit.md" />
     </div>
 
-    <!-- Tab 2: Test Matrix -->
     <div v-else-if="activeTab === 'tests'">
       <TestMatrix :tests="testCases" />
     </div>
 
-    <!-- Tab 3: Cockpit Preview -->
     <div v-else-if="activeTab === 'cockpit'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
+      <div class="p-6 rounded-2xl bg-surface-abyss border border-white/[0.08] shadow-2xl space-y-6">
         <div>
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <UIcon name="i-heroicons-computer-desktop" class="w-5 h-5 text-cyan-400" />
@@ -64,8 +60,8 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Live Depth & Basis -->
-          <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-4">
+
+          <div class="p-5 rounded-xl bg-surface-midnight border border-white/[0.06] space-y-4">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono text-[10px]">
                 Độ sâu sổ lệnh VN30F1M
@@ -75,9 +71,9 @@
 
             <div class="space-y-2 font-mono text-xs">
               <div class="flex justify-between py-1 border-b border-white/[0.06] text-slate-400 text-[11px]">
-                <span>Dư Mua (Bids)</span>
+                <span>Dư Mua</span>
                 <span>Giá Khớp</span>
-                <span>Dư Bán (Asks)</span>
+                <span>Dư Bán</span>
               </div>
               <div class="flex justify-between py-1 text-slate-300">
                 <span class="text-emerald-400 font-bold">120 @ 1,328.0</span>
@@ -97,17 +93,19 @@
             </div>
 
             <div class="pt-3 border-t border-white/[0.06] text-xs flex justify-between">
-              <span class="text-slate-400 font-mono text-[11px]">Basis Spread (F1M - VN30):</span>
-              <span class="font-mono font-bold text-emerald-400">+2.4 điểm</span>
+              <span class="text-slate-400 font-mono text-[11px]">Độ lệch Basis F1M - VN30:</span>
+              <span class="font-mono font-bold text-aave-violet">+2.4 điểm</span>
             </div>
           </div>
 
-          <!-- Multi-Horizon Alpha Baskets -->
-          <div class="lg:col-span-2 p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-4">
+          <div class="lg:col-span-2 p-5 rounded-xl bg-surface-midnight border border-white/[0.06] space-y-4">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono text-[10px]">
-                Rổ cổ phiếu Alpha Khuyến nghị (T+2 Compliant)
-              </span>
+              <div class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 font-mono text-[10px]">
+                <span>Rổ cổ phiếu Alpha Khuyến nghị</span>
+                <UTooltip text="Tuân thủ chuẩn T+2">
+                  <UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" />
+                </UTooltip>
+              </div>
               <div class="flex gap-1 text-xs">
                 <button
                   v-for="h in ['Tuần', 'Tháng', 'Quý']"
@@ -125,7 +123,7 @@
               <div
                 v-for="stock in alphaStocks"
                 :key="stock.ticker"
-                class="p-3 rounded-lg bg-[#090d16] border border-white/[0.08] space-y-1"
+                class="p-3 rounded-lg bg-surface-abyss border border-white/[0.08] space-y-1"
               >
                 <div class="flex justify-between items-center">
                   <span class="font-bold text-white text-sm">{{ stock.ticker }}</span>
@@ -162,12 +160,12 @@ const tabs: Array<{
 }> = [
   {
     id: "spec",
-    label: "Tài liệu đặc tả (TRD Spec)",
+    label: "Tài liệu đặc tả",
     icon: "i-heroicons-document-text",
   },
   {
     id: "tests",
-    label: "Ma trận kiểm thử (Test Matrix)",
+    label: "Ma trận kiểm thử",
     icon: "i-heroicons-check-badge",
   },
   {

@@ -1,5 +1,3 @@
-// Note: the `PrivateService` is only available when generating the client
-// for local environments
 import { PrivateService } from "../../client";
 import { client } from "../../client/client.gen";
 

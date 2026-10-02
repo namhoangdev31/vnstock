@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs text-slate-400 font-mono mb-1">
@@ -25,7 +25,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="flex border-b border-slate-800 gap-4">
       <button
         v-for="tab in tabs"
@@ -40,23 +39,23 @@
       </button>
     </div>
 
-    <!-- Tab 1: Spec -->
     <div v-if="activeTab === 'spec'">
       <MarkdownViewer :content="phase3Markdown" filename="trd-phase-3-daemon.md" />
     </div>
 
-    <!-- Tab 2: Test Matrix -->
     <div v-else-if="activeTab === 'tests'">
       <TestMatrix :tests="testCases" />
     </div>
 
-    <!-- Tab 3: Interactive Session Timeline -->
     <div v-else-if="activeTab === 'timeline'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
+      <div class="p-6 rounded-2xl bg-surface-abyss border border-white/[0.08] shadow-2xl space-y-6">
         <div>
           <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <UIcon name="i-heroicons-play-circle" class="w-5 h-5 text-indigo-400" />
-            Lộ trình Vòng lặp Phiên giao dịch (Session Schedule Protocol)
+            <UIcon name="i-heroicons-play-circle" class="w-5 h-5 text-aave-violet" />
+            <span>Lộ trình Vòng lặp Phiên giao dịch</span>
+            <UTooltip text="Session Schedule Protocol">
+              <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-aave-graphite cursor-help" />
+            </UTooltip>
           </h3>
           <p class="text-xs text-slate-400">
             Hệ thống vận hành không ngắt quãng 24/7 qua 7 phân đoạn phiên nghiêm ngặt của Sở Giao dịch Chứng khoán:
@@ -112,12 +111,12 @@ const tabs: Array<{
 }> = [
   {
     id: "spec",
-    label: "Tài liệu đặc tả (TRD Spec)",
+    label: "Tài liệu đặc tả",
     icon: "i-heroicons-document-text",
   },
   {
     id: "tests",
-    label: "Ma trận kiểm thử (Test Matrix)",
+    label: "Ma trận kiểm thử",
     icon: "i-heroicons-check-badge",
   },
   { id: "timeline", label: "Lộ trình phiên 24/7", icon: "i-heroicons-clock" },
@@ -132,7 +131,7 @@ const sessionPhases = [
       "Đồng bộ giá thanh toán ngày hôm trước, tính toán độ lệch Basis qua đêm, cập nhật các ngưỡng Pivot kháng cự/hỗ trợ.",
   },
   {
-    name: "ATO Call Auction (Phái sinh mở sớm)",
+    name: "ATO Call Auction",
     time: "08:45 - 09:00",
     status: "GAP_DETECTION",
     action:

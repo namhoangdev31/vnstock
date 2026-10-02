@@ -12,7 +12,8 @@
     "lint": "biome check app.vue nuxt.config.ts pages components composables layouts data",
     "generate-client": "openapi-ts",
     "test": "bunx playwright test",
-    "test:ui": "bunx playwright test --ui"
+    "test:ui": "bunx playwright test --ui",
+    "stripcomment": "bun ../scripts/strip-comments.ts ."
   },
   "dependencies": {
     "@nuxt/ui": "^2.22.3",

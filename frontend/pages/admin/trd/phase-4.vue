@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs text-slate-400 font-mono mb-1">
@@ -25,7 +25,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="flex border-b border-slate-800 gap-4">
       <button
         v-for="tab in tabs"
@@ -40,19 +39,16 @@
       </button>
     </div>
 
-    <!-- Tab 1: Spec -->
     <div v-if="activeTab === 'spec'">
       <MarkdownViewer :content="phase4Markdown" filename="trd-phase-4-paper-trading.md" />
     </div>
 
-    <!-- Tab 2: Test Matrix -->
     <div v-else-if="activeTab === 'tests'">
       <TestMatrix :tests="testCases" />
     </div>
 
-    <!-- Tab 3: Interactive Paper Trading & T+2 Simulator -->
     <div v-else-if="activeTab === 'simulator'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
+      <div class="p-6 rounded-2xl bg-surface-abyss border border-white/[0.08] shadow-2xl space-y-6">
         <div>
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <UIcon name="i-heroicons-calculator" class="w-5 h-5 text-amber-400" />
@@ -63,15 +59,14 @@
           </p>
         </div>
 
-        <!-- Simulation Input Form -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 rounded-xl bg-[#0d1322] border border-white/[0.06]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 rounded-xl bg-surface-midnight border border-white/[0.06]">
           <div>
             <label class="block text-xs text-slate-400 mb-1">Vị thế đặt</label>
             <div class="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 class="py-1.5 text-xs font-bold rounded-md transition-all font-mono"
-                :class="side === 'LONG' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-[#090d16] text-slate-400 border border-white/[0.08]'"
+                :class="side === 'LONG' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30' : 'bg-surface-abyss text-slate-400 border border-white/[0.08]'"
                 @click="side = 'LONG'"
               >
                 LONG (MUA)
@@ -79,7 +74,7 @@
               <button
                 type="button"
                 class="py-1.5 text-xs font-bold rounded-md transition-all font-mono"
-                :class="side === 'SHORT' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'bg-[#090d16] text-slate-400 border border-white/[0.08]'"
+                :class="side === 'SHORT' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30' : 'bg-surface-abyss text-slate-400 border border-white/[0.08]'"
                 @click="side = 'SHORT'"
               >
                 SHORT (BÁN)
@@ -93,28 +88,27 @@
           </div>
 
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Giá vào lệnh (Entry Price)</label>
+            <label class="block text-xs text-slate-400 mb-1">Giá vào lệnh</label>
             <UInput v-model.number="entryPrice" type="number" step="0.1" size="sm" class="w-full font-mono" />
           </div>
 
           <div>
-            <label class="block text-xs text-slate-400 mb-1">Giá thị trường hiện tại (Current)</label>
+            <label class="block text-xs text-slate-400 mb-1">Giá thị trường hiện tại</label>
             <UInput v-model.number="currentPrice" type="number" step="0.1" size="sm" class="w-full font-mono" />
           </div>
         </div>
 
-        <!-- PnL & Margin Metric Banner -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-1">
-            <span class="text-xs text-slate-400 uppercase tracking-wider font-mono text-[10px]">Ký quỹ ban đầu (IM)</span>
+          <div class="p-5 rounded-xl bg-surface-midnight border border-white/[0.06] space-y-1">
+            <div class="flex items-center gap-1"><span class="text-xs text-slate-400 uppercase tracking-wider font-mono text-[10px]">Ký quỹ ban đầu</span><UTooltip text="Initial Margin"><UIcon name="i-heroicons-information-circle" class="w-3 h-3 text-aave-graphite cursor-help" /></UTooltip></div>
             <div class="text-2xl font-bold font-mono text-white">
               {{ (requiredMargin / 1e6).toFixed(1) }} <span class="text-xs font-normal text-slate-400">triệu VND</span>
             </div>
             <p class="text-[11px] text-slate-400 font-mono">17% * Giá * Số HĐ * 100,000</p>
           </div>
 
-          <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-1">
-            <span class="text-xs text-slate-400 uppercase tracking-wider font-mono text-[10px]">Lãi / Lỗ vị thế (Unrealized PnL)</span>
+          <div class="p-5 rounded-xl bg-surface-midnight border border-white/[0.06] space-y-1">
+            <div class="flex items-center gap-1"><span class="text-xs text-slate-400 uppercase tracking-wider font-mono text-[10px]">Lãi / Lỗ vị thế</span><UTooltip text="Unrealized PnL"><UIcon name="i-heroicons-information-circle" class="w-3 h-3 text-aave-graphite cursor-help" /></UTooltip></div>
             <div class="text-2xl font-bold font-mono" :class="pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'">
               {{ pnl >= 0 ? '+' : '' }}{{ (pnl / 1e6).toFixed(2) }} <span class="text-xs font-normal text-slate-400">triệu VND</span>
             </div>
@@ -123,7 +117,7 @@
             </p>
           </div>
 
-          <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-1">
+          <div class="p-5 rounded-xl bg-surface-midnight border border-white/[0.06] space-y-1">
             <span class="text-xs text-slate-400 uppercase tracking-wider font-mono text-[10px]">Trạng thái an toàn tài khoản</span>
             <div class="text-2xl font-bold font-mono text-emerald-400 flex items-center gap-2">
               <UIcon name="i-heroicons-shield-check" class="w-6 h-6" />
@@ -133,23 +127,22 @@
           </div>
         </div>
 
-        <!-- T+2 Settlement Cycle Simulator -->
-        <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-3">
+        <div class="p-5 rounded-xl bg-surface-midnight border border-white/[0.06] space-y-3">
           <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <UIcon name="i-heroicons-clock" class="w-4 h-4 text-amber-400" />
             Chu kỳ thanh toán cổ phiếu cơ sở T+2
           </h4>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div class="p-3 rounded-lg bg-[#090d16] border border-white/[0.08] space-y-1">
-              <span class="font-bold text-amber-400 font-mono">Ngày T+0 (Khớp lệnh)</span>
-              <p class="text-slate-400">Tiền mua bị phong tỏa, cổ phiếu ở trạng thái "Chờ về" (Pending delivery). Không được bán.</p>
+            <div class="p-3 rounded-lg bg-surface-abyss border border-white/[0.08] space-y-1">
+              <span class="font-bold text-amber-400 font-mono">Ngày T+0 - Khớp lệnh</span>
+              <p class="text-slate-400">Tiền mua bị phong tỏa, cổ phiếu ở trạng thái chờ về. Không được bán.</p>
             </div>
-            <div class="p-3 rounded-lg bg-[#090d16] border border-white/[0.08] space-y-1">
-              <span class="font-bold text-slate-300 font-mono">Ngày T+1 (Lưu ký VSDC)</span>
+            <div class="p-3 rounded-lg bg-surface-abyss border border-white/[0.08] space-y-1">
+              <span class="font-bold text-slate-300 font-mono">Ngày T+1 - Lưu ký VSDC</span>
               <p class="text-slate-400">Đối chiếu và bù trừ song phương tại Trung tâm lưu ký VSDC. Cổ phiếu tiếp tục đóng băng.</p>
             </div>
-            <div class="p-3 rounded-lg bg-[#090d16] border border-white/[0.08] space-y-1">
-              <span class="font-bold text-emerald-400 font-mono">Ngày T+2 (Khả dụng)</span>
+            <div class="p-3 rounded-lg bg-surface-abyss border border-white/[0.08] space-y-1">
+              <span class="font-bold text-emerald-400 font-mono">Ngày T+2 - Khả dụng</span>
               <p class="text-slate-400">Vào lúc 13:00 chiều T+2, cổ phiếu về tài khoản và có thể thực hiện lệnh BÁN ngay trong phiên chiều.</p>
             </div>
           </div>
@@ -174,12 +167,12 @@ const tabs: Array<{
 }> = [
   {
     id: "spec",
-    label: "Tài liệu đặc tả (TRD Spec)",
+    label: "Tài liệu đặc tả",
     icon: "i-heroicons-document-text",
   },
   {
     id: "tests",
-    label: "Ma trận kiểm thử (Test Matrix)",
+    label: "Ma trận kiểm thử",
     icon: "i-heroicons-check-badge",
   },
   {

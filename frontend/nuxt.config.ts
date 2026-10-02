@@ -1,11 +1,10 @@
 import path from "node:path"
 
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: false },
   telemetry: false,
-  ssr: false, // SPA mode for seamless FastAPI static hosting & client-side rendering
+  ssr: false,
   modules: ["@nuxt/ui", "@vueuse/nuxt"],
   css: ["~/assets/css/main.css"],
   app: {

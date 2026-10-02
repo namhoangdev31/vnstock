@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-slate-500 mb-1">
@@ -46,9 +46,8 @@
       </div>
     </div>
 
-    <!-- Users Table Card -->
-    <div class="rounded-xl border border-white/[0.08] bg-[#090d16] overflow-hidden shadow-2xl">
-      <div class="p-3.5 bg-[#0b101c] border-b border-white/[0.06] flex items-center justify-between">
+    <div class="rounded-xl border border-white/[0.08] bg-surface-abyss overflow-hidden shadow-2xl">
+      <div class="p-3.5 bg-surface-abyss border-b border-white/[0.06] flex items-center justify-between">
         <div class="flex items-center gap-2 font-mono text-xs text-slate-300">
           <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
           <span>DANH SÁCH NGƯỜI DÙNG HỆ THỐNG</span>
@@ -63,11 +62,11 @@
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-[#070a11] text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-white/[0.06]">
+          <thead class="bg-surface-abyss text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-white/[0.06]">
             <tr>
               <th class="py-3 px-4">HỌ VÀ TÊN</th>
               <th class="py-3 px-4">ĐỊA CHỈ EMAIL</th>
-              <th class="py-3 px-4 w-32 text-center">VAI TRÒ (ROLE)</th>
+              <th class="py-3 px-4 w-32 text-center">VAI TRÒ</th>
               <th class="py-3 px-4 w-32 text-center">TRẠNG THÁI</th>
               <th class="py-3 px-4 w-28 text-right">THAO TÁC</th>
             </tr>
@@ -152,9 +151,8 @@
       </div>
     </div>
 
-    <!-- Add / Edit User Modal -->
     <UModal v-model="modalOpen">
-      <div class="p-6 bg-[#090d16] text-slate-100 rounded-xl border border-white/[0.1] space-y-4 shadow-2xl">
+      <div class="p-6 bg-surface-abyss text-slate-100 rounded-xl border border-white/[0.1] space-y-4 shadow-2xl">
         <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
           <h3 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
             <UIcon :name="isEditing ? 'i-heroicons-pencil-square' : 'i-heroicons-user-plus'" class="w-4 h-4 text-amber-400" />
@@ -192,12 +190,12 @@
           <div class="space-y-2 pt-2 border-t border-white/[0.06]">
             <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
               <input v-model="form.is_superuser" type="checkbox" class="rounded accent-amber-500 bg-slate-900 border-slate-700">
-              <span class="font-mono">Quyền Quản trị viên (Superuser Flag)</span>
+              <div class="flex items-center gap-1.5"><span class="font-mono">Quyền Quản trị viên</span><UTooltip text="Superuser Flag"><UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" /></UTooltip></div>
             </label>
 
             <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
               <input v-model="form.is_active" type="checkbox" class="rounded accent-emerald-500 bg-slate-900 border-slate-700">
-              <span class="font-mono">Kích hoạt tài khoản (Active Status)</span>
+              <div class="flex items-center gap-1.5"><span class="font-mono">Kích hoạt tài khoản</span><UTooltip text="Active Status"><UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" /></UTooltip></div>
             </label>
           </div>
 
@@ -213,9 +211,8 @@
       </div>
     </UModal>
 
-    <!-- Delete Confirmation Modal -->
     <UModal v-model="deleteModalOpen">
-      <div class="p-6 bg-[#090d16] text-slate-100 rounded-xl border border-rose-500/20 space-y-4 shadow-2xl">
+      <div class="p-6 bg-surface-abyss text-slate-100 rounded-xl border border-rose-500/20 space-y-4 shadow-2xl">
         <h3 class="text-sm font-bold text-rose-400 flex items-center gap-2 font-mono">
           <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 text-rose-400" />
           XÁC NHẬN XÓA TÀI KHOẢN

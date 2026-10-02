@@ -78,7 +78,7 @@ export interface MarginStatusResponse {
 	equity: number;
 	margin_used: number;
 	margin_ratio: number | null;
-	status: string; // SAFE, CALL_MARGIN, FORCE_LIQUIDATION
+	status: string;
 }
 
 export interface SettlementProcessResponse {
@@ -182,8 +182,6 @@ export class StockService {
 		});
 		return res.data;
 	}
-
-	// --- Phase 4 Simulation & Portfolio Endpoints ---
 
 	public static async listPortfolios(): Promise<PortfoliosResponse> {
 		const res = await client.get<PortfoliosResponse, unknown, true>({

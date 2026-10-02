@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs font-mono text-slate-500 mb-1">
@@ -46,9 +46,8 @@
       </div>
     </div>
 
-    <!-- Items Table Card -->
-    <div class="rounded-xl border border-white/[0.08] bg-[#090d16] overflow-hidden shadow-2xl">
-      <div class="p-3.5 bg-[#0b101c] border-b border-white/[0.06] flex items-center justify-between">
+    <div class="rounded-xl border border-white/[0.08] bg-surface-abyss overflow-hidden shadow-2xl">
+      <div class="p-3.5 bg-surface-abyss border-b border-white/[0.06] flex items-center justify-between">
         <div class="flex items-center gap-2 font-mono text-xs text-slate-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span>BẢNG DANH MỤC THỰC THỂ</span>
@@ -63,10 +62,10 @@
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-[#070a11] text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-white/[0.06]">
+          <thead class="bg-surface-abyss text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-white/[0.06]">
             <tr>
-              <th class="py-3 px-4 w-48">MÃ ĐỊNH DANH (UUID)</th>
-              <th class="py-3 px-4">TIÊU ĐỀ (TITLE)</th>
+              <th class="py-3 px-4 w-48"><div class="flex items-center gap-1"><span>MÃ ĐỊNH DANH</span><UTooltip text="UUID"><UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" /></UTooltip></div></th>
+              <th class="py-3 px-4">TIÊU ĐỀ</th>
               <th class="py-3 px-4">MÔ TẢ CHI TIẾT</th>
               <th class="py-3 px-4 w-28 text-right">THAO TÁC</th>
             </tr>
@@ -127,9 +126,8 @@
       </div>
     </div>
 
-    <!-- Add / Edit Modal -->
     <UModal v-model="modalOpen">
-      <div class="p-6 bg-[#090d16] text-slate-100 rounded-xl border border-white/[0.1] space-y-4 shadow-2xl">
+      <div class="p-6 bg-surface-abyss text-slate-100 rounded-xl border border-white/[0.1] space-y-4 shadow-2xl">
         <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
           <h3 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
             <UIcon :name="isEditing ? 'i-heroicons-pencil-square' : 'i-heroicons-plus-circle'" class="w-4 h-4 text-emerald-400" />
@@ -140,12 +138,12 @@
 
         <form class="space-y-4" @submit.prevent="saveItem">
           <div>
-            <label class="block text-xs font-mono text-slate-300 mb-1.5">Tiêu đề (Title) *</label>
+            <label class="block text-xs font-mono text-slate-300 mb-1.5">Tiêu đề *</label>
             <UInput v-model="form.title" placeholder="Nhập tiêu đề item" required size="md" class="w-full font-mono text-xs" />
           </div>
 
           <div>
-            <label class="block text-xs font-mono text-slate-300 mb-1.5">Mô tả (Description)</label>
+            <label class="block text-xs font-mono text-slate-300 mb-1.5">Mô tả</label>
             <UTextarea v-model="form.description" placeholder="Nhập mô tả chi tiết danh mục..." :rows="3" class="w-full text-xs" />
           </div>
 
@@ -161,9 +159,8 @@
       </div>
     </UModal>
 
-    <!-- Delete Confirmation Modal -->
     <UModal v-model="deleteModalOpen">
-      <div class="p-6 bg-[#090d16] text-slate-100 rounded-xl border border-rose-500/20 space-y-4 shadow-2xl">
+      <div class="p-6 bg-surface-abyss text-slate-100 rounded-xl border border-rose-500/20 space-y-4 shadow-2xl">
         <h3 class="text-sm font-bold text-rose-400 flex items-center gap-2 font-mono">
           <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 text-rose-400" />
           XÁC NHẬN XÓA ITEM

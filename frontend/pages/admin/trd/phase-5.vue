@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs text-slate-400 font-mono mb-1">
@@ -25,7 +25,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="flex border-b border-slate-800 gap-4">
       <button
         v-for="tab in tabs"
@@ -40,19 +39,16 @@
       </button>
     </div>
 
-    <!-- Tab 1: Spec -->
     <div v-if="activeTab === 'spec'">
       <MarkdownViewer :content="phase5Markdown" filename="trd-phase-5-forecast-journal.md" />
     </div>
 
-    <!-- Tab 2: Test Matrix -->
     <div v-else-if="activeTab === 'tests'">
       <TestMatrix :tests="testCases" />
     </div>
 
-    <!-- Tab 3: Interactive Ledger Simulator -->
     <div v-else-if="activeTab === 'ledger'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
+      <div class="p-6 rounded-2xl bg-surface-abyss border border-white/[0.08] shadow-2xl space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -74,17 +70,16 @@
           </button>
         </div>
 
-        <!-- Ledger Table -->
-        <div class="overflow-x-auto rounded-xl border border-white/[0.06] bg-[#070a11]">
+        <div class="overflow-x-auto rounded-xl border border-white/[0.06] bg-surface-abyss">
           <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-[#0b101c] text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/[0.06]">
+            <thead class="bg-surface-abyss text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/[0.06]">
               <tr>
                 <th class="py-3 px-4">Mã / Tài sản</th>
-                <th class="py-3 px-4">Khung (Horizon)</th>
+                <th class="py-3 px-4">Khung thời gian</th>
                 <th class="py-3 px-4">Thời điểm dự báo</th>
                 <th class="py-3 px-4">Kỳ vọng / Xu hướng</th>
-                <th class="py-3 px-4">Thực tế (Actual)</th>
-                <th class="py-3 px-4">Sai số (MAE)</th>
+                <th class="py-3 px-4">Giá thực tế</th>
+                <th class="py-3 px-4"><div class="flex items-center gap-1"><span>Sai số</span><UTooltip text="Mean Absolute Error"><UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" /></UTooltip></div></th>
                 <th class="py-3 px-4 text-center">Trạng thái</th>
               </tr>
             </thead>
@@ -123,8 +118,7 @@
           </table>
         </div>
 
-        <!-- Autonomous Auto-Promote & Circuit Breaker Explanation -->
-        <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-2 text-xs">
+        <div class="p-5 rounded-xl bg-surface-midnight border border-white/[0.06] space-y-2 text-xs">
           <h4 class="font-bold text-white flex items-center gap-1.5 font-mono">
             <UIcon name="i-heroicons-arrow-path-rounded-square" class="w-4 h-4 text-rose-400" />
             CƠ CHẾ TỰ HỌC TỰ ĐỘNG (AUTONOMOUS AUTO-PROMOTE & CIRCUIT BREAKER)
@@ -154,12 +148,12 @@ const tabs: Array<{
 }> = [
   {
     id: "spec",
-    label: "Tài liệu đặc tả (TRD Spec)",
+    label: "Tài liệu đặc tả",
     icon: "i-heroicons-document-text",
   },
   {
     id: "tests",
-    label: "Ma trận kiểm thử (Test Matrix)",
+    label: "Ma trận kiểm thử",
     icon: "i-heroicons-check-badge",
   },
   {

@@ -620,6 +620,15 @@ function cloneWithProxy(obj, overrides) {
 }
 const cachedEventHandler = defineCachedEventHandler;
 
+const defineAppConfig = (config) => config;
+
+const appConfig0 = defineAppConfig({
+  ui: {
+    primary: "violet",
+    gray: "neutral"
+  }
+});
+
 const inlineAppConfig = {
   "nuxt": {},
   "icon": {
@@ -837,15 +846,15 @@ const inlineAppConfig = {
       "fuchsia",
       "pink",
       "rose",
+      "aave",
+      "surface",
       "primary"
     ],
     "strategy": "merge"
   }
 };
 
-
-
-const appConfig = defuFn(inlineAppConfig);
+const appConfig = defuFn(appConfig0, inlineAppConfig);
 
 function getEnv(key, opts) {
   const envKey = snakeCase(key).toUpperCase();
@@ -888,7 +897,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "ba32c8ff-6f3e-4ec3-9186-eaed7cad59f0",
+    "buildId": "5067c2e8-a0c5-4644-a5df-dd02242e34b0",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },

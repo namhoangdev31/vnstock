@@ -23,7 +23,7 @@
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <label class="block text-xs font-medium text-slate-300">Mật khẩu</label>
-          <NuxtLink to="/recover-password" class="text-xs text-emerald-400 hover:underline">
+          <NuxtLink to="/recover-password" class="text-xs text-aave-violet hover:underline">
             Quên mật khẩu?
           </NuxtLink>
         </div>
@@ -53,9 +53,9 @@
         type="submit"
         block
         size="md"
-        color="emerald"
+        color="primary"
         :loading="isLoading"
-        class="mt-2 font-semibold shadow-lg shadow-emerald-500/20"
+        class="mt-2 font-medium !rounded-full !bg-aave-violet !text-aave-charcoal hover:brightness-105 active:scale-[0.99] transition-all"
       >
         Đăng nhập
       </UButton>
@@ -63,7 +63,7 @@
 
     <div class="mt-6 text-center text-xs text-slate-400">
       Chưa có tài khoản?
-      <NuxtLink to="/signup" class="text-emerald-400 font-semibold hover:underline ml-1">
+      <NuxtLink to="/signup" class="text-aave-violet font-medium hover:underline ml-1">
         Đăng ký ngay
       </NuxtLink>
     </div>
@@ -94,8 +94,6 @@ const handleLogin = async () => {
       username: form.username,
       password: form.password,
     })
-  } catch {
-    // Error handled inside useAuth toast
-  }
+  } catch {}
 }
 </script>

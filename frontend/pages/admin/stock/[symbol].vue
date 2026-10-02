@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
-    <!-- Header Strip with Back Button -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-[#090d16]/80 border border-white/[0.08] backdrop-blur-xl">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-abyss/80 border border-white/[0.08] backdrop-blur-xl">
       <div class="flex items-center gap-3.5">
         <NuxtLink
           to="/admin/stock"
@@ -28,7 +28,6 @@
         </div>
       </div>
 
-      <!-- Last Price Display -->
       <div v-if="lastPrice" class="sm:text-right font-mono">
         <div class="text-2xl sm:text-3xl font-bold text-emerald-400">
           {{ lastPrice.close.toLocaleString('vi-VN') }} <span class="text-xs font-normal text-slate-400">VND</span>
@@ -39,24 +38,25 @@
       </div>
     </div>
 
-    <!-- Interactive Price Chart Card -->
-    <div class="rounded-2xl border border-white/[0.08] bg-[#090d16]/90 p-5 shadow-2xl space-y-4 backdrop-blur-xl">
+    <div class="rounded-2xl border border-white/[0.08] bg-surface-abyss/90 p-5 shadow-2xl space-y-4 backdrop-blur-xl">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-3 font-mono">
           <div class="flex items-center gap-1.5 text-xs font-bold text-white uppercase tracking-wider">
-            <span class="w-2 h-2 rounded-full bg-emerald-400" />
-            Biểu Đồ Lịch Sử Giá & Khối Lượng (OHLCV)
+            <span class="w-2 h-2 rounded-full bg-aave-violet" />
+            <span>Biểu Đồ Lịch Sử Giá & Khối Lượng</span>
+            <UTooltip text="Dữ liệu nến OHLCV">
+              <UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" />
+            </UTooltip>
           </div>
           <span v-if="hoveredBar" class="text-[11px] text-slate-300 hidden md:inline">
-            O: <span class="text-white">{{ hoveredBar.open.toLocaleString() }}</span> | 
-            H: <span class="text-emerald-400">{{ hoveredBar.high.toLocaleString() }}</span> | 
-            L: <span class="text-rose-400">{{ hoveredBar.low.toLocaleString() }}</span> | 
-            C: <span class="text-emerald-400">{{ hoveredBar.close.toLocaleString() }}</span> | 
+            O: <span class="text-white">{{ hoveredBar.open.toLocaleString() }}</span> |
+            H: <span class="text-emerald-400">{{ hoveredBar.high.toLocaleString() }}</span> |
+            L: <span class="text-rose-400">{{ hoveredBar.low.toLocaleString() }}</span> |
+            C: <span class="text-emerald-400">{{ hoveredBar.close.toLocaleString() }}</span> |
             V: <span class="text-slate-200">{{ hoveredBar.volume.toLocaleString() }}</span>
           </span>
         </div>
 
-        <!-- Date Range Filter Buttons -->
         <div class="flex items-center gap-1 bg-white/[0.02] p-1 rounded-lg border border-white/[0.08] self-start sm:self-auto font-mono">
           <button
             v-for="range in ['1W', '1M', '3M', '6M', '1Y', '3Y']"
@@ -71,9 +71,8 @@
         </div>
       </div>
 
-      <!-- Canvas Chart Container -->
       <div
-        class="relative w-full h-84 rounded-xl bg-[#06080d] border border-white/[0.06] overflow-hidden flex items-center justify-center cursor-crosshair"
+        class="relative w-full h-84 rounded-xl bg-surface-abyss border border-white/[0.06] overflow-hidden flex items-center justify-center cursor-crosshair"
         @mousemove="onChartMouseMove"
         @mouseleave="onChartMouseLeave"
       >
@@ -92,7 +91,6 @@
       </div>
     </div>
 
-    <!-- Tabs: Overview & Financials -->
     <div class="space-y-4">
       <div class="flex border-b border-white/[0.08] gap-6 font-mono text-xs">
         <button
@@ -115,10 +113,9 @@
         </button>
       </div>
 
-      <!-- Tab Content: Overview -->
       <div v-if="activeTab === 'overview'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Company Info Card -->
-        <div class="p-5 rounded-2xl border border-white/[0.08] bg-[#090d16]/80 space-y-3.5 shadow-xl">
+
+        <div class="p-5 rounded-2xl border border-white/[0.08] bg-surface-abyss/80 space-y-3.5 shadow-xl">
           <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center gap-1.5">
             <UIcon name="i-heroicons-identification" class="w-4 h-4 text-emerald-400" />
             Thông Tin Niêm Yết
@@ -155,8 +152,7 @@
           </div>
         </div>
 
-        <!-- Valuation & Share Structure -->
-        <div class="p-5 rounded-2xl border border-white/[0.08] bg-[#090d16]/80 space-y-3.5 shadow-xl">
+        <div class="p-5 rounded-2xl border border-white/[0.08] bg-surface-abyss/80 space-y-3.5 shadow-xl">
           <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center gap-1.5">
             <UIcon name="i-heroicons-calculator" class="w-4 h-4 text-emerald-400" />
             Cấu Trúc Vốn & Quy Mô
@@ -187,8 +183,7 @@
           </div>
         </div>
 
-        <!-- Description -->
-        <div v-if="overview?.description" class="md:col-span-2 p-5 rounded-2xl border border-white/[0.08] bg-[#090d16]/80 space-y-2 shadow-xl">
+        <div v-if="overview?.description" class="md:col-span-2 p-5 rounded-2xl border border-white/[0.08] bg-surface-abyss/80 space-y-2 shadow-xl">
           <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
             Giới Thiệu Doanh Nghiệp
           </h3>
@@ -198,8 +193,7 @@
         </div>
       </div>
 
-      <!-- Tab Content: Financials -->
-      <div v-else-if="activeTab === 'financials'" class="p-5 rounded-2xl border border-white/[0.08] bg-[#090d16]/80 space-y-4 shadow-xl">
+      <div v-else-if="activeTab === 'financials'" class="p-5 rounded-2xl border border-white/[0.08] bg-surface-abyss/80 space-y-4 shadow-xl">
         <div class="flex items-center justify-between border-b border-white/[0.06] pb-3">
           <div>
             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
@@ -332,11 +326,9 @@ const renderChart = () => {
   const volumes = ohlcvData.value.map((d: OHLCVRecord) => d.volume)
   const maxVol = Math.max(...volumes) || 1
 
-  // Deep dark background
-  ctx.fillStyle = "#06080d"
+  ctx.fillStyle = "rgba(15, 15, 16, 1)"
   ctx.fillRect(0, 0, w, h)
 
-  // Subtle grid lines
   ctx.strokeStyle = "rgba(255, 255, 255, 0.05)"
   ctx.lineWidth = 1
   const gridLines = 5
@@ -347,9 +339,8 @@ const renderChart = () => {
     ctx.lineTo(w - padding.right, y)
     ctx.stroke()
 
-    // Price labels on right axis
     const price = maxPrice - (i / gridLines) * priceRange
-    ctx.fillStyle = "#64748b"
+    ctx.fillStyle = "rgba(133, 131, 135, 1)"
     ctx.font = "10px JetBrains Mono, monospace"
     ctx.textAlign = "left"
     ctx.fillText(
@@ -359,7 +350,6 @@ const renderChart = () => {
     )
   }
 
-  // Volume Bars (bottom 25% height)
   const volHeight = chartH * 0.22
   ohlcvData.value.forEach((d: OHLCVRecord, i: number) => {
     const x = padding.left + (i / (ohlcvData.value.length - 1 || 1)) * chartW
@@ -367,20 +357,12 @@ const renderChart = () => {
     const barH = (d.volume / maxVol) * volHeight
     const barY = h - padding.bottom - barH
     ctx.fillStyle =
-      d.close >= d.open ? "rgba(16, 185, 129, 0.25)" : "rgba(244, 63, 94, 0.25)"
+      d.close >= d.open
+        ? "rgba(153, 142, 255, 0.35)"
+        : "rgba(133, 131, 135, 0.25)"
     ctx.fillRect(x - barW / 2, barY, barW, barH)
   })
 
-  // Area gradient under price line
-  const gradient = ctx.createLinearGradient(
-    0,
-    padding.top,
-    0,
-    h - padding.bottom,
-  )
-  gradient.addColorStop(0, "rgba(16, 185, 129, 0.22)")
-  gradient.addColorStop(1, "rgba(16, 185, 129, 0.0)")
-
   ctx.beginPath()
   ohlcvData.value.forEach((d: OHLCVRecord, i: number) => {
     const x = padding.left + (i / (ohlcvData.value.length - 1 || 1)) * chartW
@@ -388,27 +370,11 @@ const renderChart = () => {
     if (i === 0) ctx.moveTo(x, y)
     else ctx.lineTo(x, y)
   })
-  const lastX = padding.left + chartW
-  ctx.lineTo(lastX, h - padding.bottom)
-  ctx.lineTo(padding.left, h - padding.bottom)
-  ctx.closePath()
-  ctx.fillStyle = gradient
-  ctx.fill()
-
-  // Stroke price line
-  ctx.beginPath()
-  ohlcvData.value.forEach((d: OHLCVRecord, i: number) => {
-    const x = padding.left + (i / (ohlcvData.value.length - 1 || 1)) * chartW
-    const y = padding.top + ((maxPrice - d.close) / priceRange) * chartH
-    if (i === 0) ctx.moveTo(x, y)
-    else ctx.lineTo(x, y)
-  })
-  ctx.strokeStyle = "#10b981"
+  ctx.strokeStyle = "rgba(153, 142, 255, 1)"
   ctx.lineWidth = 1.75
   ctx.stroke()
 
-  // Date labels along X axis
-  ctx.fillStyle = "#64748b"
+  ctx.fillStyle = "rgba(133, 131, 135, 1)"
   ctx.font = "10px JetBrains Mono, monospace"
   ctx.textAlign = "center"
   const labelCount = Math.min(6, ohlcvData.value.length)
@@ -417,11 +383,10 @@ const renderChart = () => {
       (i / (labelCount - 1 || 1)) * (ohlcvData.value.length - 1),
     )
     const x = padding.left + (idx / (ohlcvData.value.length - 1 || 1)) * chartW
-    const dateStr = ohlcvData.value[idx].trading_date.slice(5) // MM-DD
+    const dateStr = ohlcvData.value[idx].trading_date.slice(5)
     ctx.fillText(dateStr, x, h - 10)
   }
 
-  // Crosshair & Tooltip Overlay
   if (mousePos.value && hoveredBar.value) {
     const { x } = mousePos.value
     const clampedX = Math.max(padding.left, Math.min(x, w - padding.right))
@@ -432,25 +397,22 @@ const renderChart = () => {
     ctx.lineWidth = 0.75
     ctx.setLineDash([3, 3])
 
-    // Vertical line
     ctx.beginPath()
     ctx.moveTo(clampedX, padding.top)
     ctx.lineTo(clampedX, h - padding.bottom)
     ctx.stroke()
 
-    // Horizontal line
     ctx.beginPath()
     ctx.moveTo(padding.left, barY)
     ctx.lineTo(w - padding.right, barY)
     ctx.stroke()
     ctx.setLineDash([])
 
-    // Coordinate point dot
     ctx.beginPath()
     ctx.arc(clampedX, barY, 4, 0, Math.PI * 2)
-    ctx.fillStyle = "#10b981"
+    ctx.fillStyle = "rgba(153, 142, 255, 1)"
     ctx.fill()
-    ctx.strokeStyle = "#ffffff"
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
     ctx.lineWidth = 1.5
     ctx.stroke()
   }

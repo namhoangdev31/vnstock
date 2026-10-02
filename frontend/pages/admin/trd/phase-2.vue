@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 text-xs text-slate-400 font-mono mb-1">
@@ -25,7 +25,6 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="flex border-b border-slate-800 gap-4">
       <button
         v-for="tab in tabs"
@@ -40,19 +39,16 @@
       </button>
     </div>
 
-    <!-- Tab 1: Spec -->
     <div v-if="activeTab === 'spec'">
       <MarkdownViewer :content="phase2Markdown" filename="trd-phase-2-tri-engine.md" />
     </div>
 
-    <!-- Tab 2: Test Matrix -->
     <div v-else-if="activeTab === 'tests'">
       <TestMatrix :tests="testCases" />
     </div>
 
-    <!-- Tab 3: Interactive Tri-Engine Simulator -->
     <div v-else-if="activeTab === 'simulator'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
+      <div class="p-6 rounded-2xl bg-surface-abyss border border-white/[0.08] shadow-2xl space-y-6">
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -73,7 +69,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- Engine 1 -->
+
           <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-4">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Engine 1: Technical</span>
@@ -82,7 +78,7 @@
             <div class="space-y-3">
               <div>
                 <label class="text-[11px] text-slate-400 flex justify-between">
-                  <span>Trọng số (Weight)</span>
+                  <span>Trọng số</span>
                   <span class="font-mono text-emerald-400">{{ w1 }}</span>
                 </label>
                 <input
@@ -96,7 +92,7 @@
               </div>
               <div>
                 <label class="text-[11px] text-slate-400 flex justify-between">
-                  <span>Điểm tín hiệu (-100 đến +100)</span>
+                  <div class="flex items-center gap-1"><span>Điểm tín hiệu</span><UTooltip text="Thang đo -100 đến +100"><UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" /></UTooltip></div>
                   <span class="font-mono font-bold" :class="s1 >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ s1 }}</span>
                 </label>
                 <input
@@ -114,7 +110,6 @@
             </p>
           </div>
 
-          <!-- Engine 2 -->
           <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-4">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-blue-400">Engine 2: Flow & Liquidity</span>
@@ -123,7 +118,7 @@
             <div class="space-y-3">
               <div>
                 <label class="text-[11px] text-slate-400 flex justify-between">
-                  <span>Trọng số (Weight)</span>
+                  <span>Trọng số</span>
                   <span class="font-mono text-blue-400">{{ w2 }}</span>
                 </label>
                 <input
@@ -137,7 +132,7 @@
               </div>
               <div>
                 <label class="text-[11px] text-slate-400 flex justify-between">
-                  <span>Điểm tín hiệu (-100 đến +100)</span>
+                  <div class="flex items-center gap-1"><span>Điểm tín hiệu</span><UTooltip text="Thang đo -100 đến +100"><UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" /></UTooltip></div>
                   <span class="font-mono font-bold" :class="s2 >= 0 ? 'text-blue-400' : 'text-rose-400'">{{ s2 }}</span>
                 </label>
                 <input
@@ -155,7 +150,6 @@
             </p>
           </div>
 
-          <!-- Engine 3 -->
           <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-4">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold uppercase tracking-wider text-purple-400">Engine 3: Quant ML</span>
@@ -164,7 +158,7 @@
             <div class="space-y-3">
               <div>
                 <label class="text-[11px] text-slate-400 flex justify-between">
-                  <span>Trọng số (Weight)</span>
+                  <span>Trọng số</span>
                   <span class="font-mono text-purple-400">{{ w3 }}</span>
                 </label>
                 <input
@@ -178,7 +172,7 @@
               </div>
               <div>
                 <label class="text-[11px] text-slate-400 flex justify-between">
-                  <span>Điểm tín hiệu (-100 đến +100)</span>
+                  <div class="flex items-center gap-1"><span>Điểm tín hiệu</span><UTooltip text="Thang đo -100 đến +100"><UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" /></UTooltip></div>
                   <span class="font-mono font-bold" :class="s3 >= 0 ? 'text-purple-400' : 'text-rose-400'">{{ s3 }}</span>
                 </label>
                 <input
@@ -197,7 +191,6 @@
           </div>
         </div>
 
-        <!-- Ensemble Result Banner -->
         <div class="p-6 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4" :class="ensembleBannerClass">
           <div class="space-y-1">
             <span class="text-[11px] uppercase tracking-wider font-mono font-bold text-slate-400">
@@ -239,12 +232,12 @@ const tabs: Array<{
 }> = [
   {
     id: "spec",
-    label: "Tài liệu đặc tả (TRD Spec)",
+    label: "Tài liệu đặc tả",
     icon: "i-heroicons-document-text",
   },
   {
     id: "tests",
-    label: "Ma trận kiểm thử (Test Matrix)",
+    label: "Ma trận kiểm thử",
     icon: "i-heroicons-check-badge",
   },
   {
@@ -254,7 +247,6 @@ const tabs: Array<{
   },
 ]
 
-// Simulator state
 const w1 = ref(0.4)
 const s1 = ref(45)
 const w2 = ref(0.35)
@@ -295,7 +287,7 @@ const finalSignalClass = computed(() => {
 const ensembleBannerClass = computed(() => {
   if (finalScore.value >= 25) return "bg-emerald-500/10 border-emerald-500/30"
   if (finalScore.value <= -25) return "bg-rose-500/10 border-rose-500/30"
-  return "bg-[#0d1322] border-white/[0.08]"
+  return "bg-surface-midnight border-white/[0.08]"
 })
 
 const testCases = [

@@ -1,42 +1,36 @@
 <template>
-  <div class="flex min-h-screen bg-[#07090e] text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
-    <!-- Desktop Sidebar -->
+  <div class="flex min-h-screen bg-aave-inkwell text-aave-paper font-sans selection:bg-aave-violet selection:text-aave-charcoal">
+
     <aside
-      class="hidden lg:flex flex-col w-64 shrink-0 border-r border-white/[0.06] bg-[#090d16]/95 backdrop-blur-xl z-20"
+      class="hidden lg:flex flex-col w-64 shrink-0 border-r border-white/[0.06] bg-aave-obsidian z-20"
     >
-      <!-- Sidebar Header -->
+
       <div class="h-16 flex items-center justify-between px-5 border-b border-white/[0.06]">
-        <div class="flex items-center gap-3">
-          <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-mono font-bold text-white text-xs shadow-md shadow-emerald-500/20 ring-1 ring-white/10">
-            VN
-          </div>
-          <div class="flex flex-col">
-            <span class="font-bold tracking-tight text-xs text-white flex items-center gap-1.5 font-mono">
-              VNSTOCK
-              <span class="text-[9px] uppercase font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PRO</span>
-            </span>
-            <span class="text-[10px] text-slate-400 font-mono tracking-tight">Quantitative & Analytics</span>
-          </div>
-        </div>
+        <NuxtLink to="/admin" class="flex flex-col group">
+          <span class="font-medium tracking-[-0.3px] text-sm text-white flex items-center gap-1.5 font-sans group-hover:text-aave-violet transition-colors">
+            VNSTOCK
+            <span class="text-[9px] uppercase font-mono font-bold px-1.5 py-0.2 rounded-full bg-aave-violet/15 text-aave-violet border border-aave-violet/30">PRO</span>
+          </span>
+          <span class="text-[10px] text-aave-graphite font-mono tracking-tight mt-0.5">Quantitative & Analytics</span>
+        </NuxtLink>
 
         <span class="flex h-2 w-2 relative">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-aave-violet opacity-75" />
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-aave-violet" />
         </span>
       </div>
 
-      <!-- Navigation Links -->
       <div class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        <!-- Main Section -->
+
         <div>
-          <div class="px-3 mb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-500">
+          <div class="px-3 mb-2 text-[10px] font-mono font-medium uppercase tracking-wider text-aave-graphite">
             01 // Tổng quan
           </div>
           <nav class="space-y-1">
             <NuxtLink
               to="/admin"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all group"
-              :class="route.path === '/admin' ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group"
+              :class="route.path === '/admin' ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
             >
               <UIcon name="i-heroicons-squares-2x2" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
               <span>Dashboard Cockpit</span>
@@ -44,8 +38,8 @@
 
             <NuxtLink
               to="/admin/stock"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all group"
-              :class="route.path.startsWith('/admin/stock') ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group"
+              :class="route.path.startsWith('/admin/stock') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
             >
               <UIcon name="i-heroicons-chart-bar" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
               <span>Thị trường cổ phiếu</span>
@@ -53,8 +47,8 @@
 
             <NuxtLink
               to="/admin/items"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all group"
-              :class="route.path.startsWith('/admin/items') ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group"
+              :class="route.path.startsWith('/admin/items') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
             >
               <UIcon name="i-heroicons-archive-box" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
               <span>Danh mục Items</span>
@@ -63,30 +57,29 @@
             <NuxtLink
               to="/"
               target="_blank"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all group text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]"
             >
-              <UIcon name="i-heroicons-globe-alt" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-teal-400" />
+              <UIcon name="i-heroicons-globe-alt" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-aave-violet" />
               <div class="flex items-center justify-between w-full">
                 <span>Landing Page</span>
-                <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3 h-3 text-slate-500" />
+                <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3 h-3 text-aave-graphite" />
               </div>
             </NuxtLink>
           </nav>
         </div>
 
-        <!-- TRD Blueprints Section -->
         <div>
-          <div class="px-3 mb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+          <div class="px-3 mb-2 text-[10px] font-mono font-medium uppercase tracking-wider text-aave-graphite flex items-center justify-between">
             <span>02 // Đặc tả TRD</span>
-            <span class="text-[9px] text-emerald-400 font-mono">6 Phases</span>
+            <span class="text-[9px] text-aave-violet font-mono">6 Phases</span>
           </div>
           <nav class="space-y-1">
             <NuxtLink
               v-for="phase in trdPhases"
               :key="phase.path"
               :to="phase.path"
-              class="flex items-center gap-2.5 px-3 py-1.5 text-xs rounded-lg transition-all"
-              :class="route.path === phase.path ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              class="flex items-center gap-2.5 px-3 py-1.5 text-xs rounded-xl transition-all"
+              :class="route.path === phase.path ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
             >
               <UIcon :name="phase.icon" class="w-3.5 h-3.5 shrink-0 opacity-80" />
               <span class="truncate">{{ phase.title }}</span>
@@ -94,16 +87,15 @@
           </nav>
         </div>
 
-        <!-- Admin Section -->
         <div v-if="user?.is_superuser">
-          <div class="px-3 mb-2 text-[10px] font-mono font-semibold uppercase tracking-wider text-amber-500/80">
+          <div class="px-3 mb-2 text-[10px] font-mono font-medium uppercase tracking-wider text-aave-violet/80">
             03 // Quản trị hệ thống
           </div>
           <nav class="space-y-1">
             <NuxtLink
               to="/admin/users"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all"
-              :class="route.path.startsWith('/admin/users') ? 'bg-amber-500/10 text-amber-300 border-l-2 border-amber-400 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all"
+              :class="route.path.startsWith('/admin/users') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
             >
               <UIcon name="i-heroicons-shield-check" class="w-4 h-4 shrink-0" />
               <span>Quản lý người dùng</span>
@@ -112,30 +104,29 @@
         </div>
       </div>
 
-      <!-- User Profile in Sidebar Footer -->
-      <div class="p-3 border-t border-white/[0.06] bg-[#07090e]/60">
-        <div class="flex items-center gap-3 p-2 rounded-lg bg-white/[0.02] border border-white/[0.06]">
-          <div class="h-8 w-8 rounded-md bg-slate-800 flex items-center justify-center font-mono font-bold text-xs text-slate-200 ring-1 ring-white/10 uppercase">
+      <div class="p-3 border-t border-white/[0.06] bg-surface-midnight">
+        <div class="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+          <div class="h-8 w-8 rounded-full bg-aave-violet flex items-center justify-center font-mono font-bold text-xs text-aave-charcoal uppercase">
             {{ userInitials }}
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-xs font-semibold text-slate-200 truncate">
+            <p class="text-xs font-medium text-white truncate">
               {{ user?.full_name || user?.email?.split('@')[0] || 'Nhà định lượng' }}
             </p>
-            <p class="text-[10px] text-slate-500 truncate font-mono">
+            <p class="text-[10px] text-aave-graphite truncate font-mono">
               {{ user?.is_superuser ? 'Superuser' : 'Quant Analyst' }}
             </p>
           </div>
           <NuxtLink
             to="/admin/settings"
             title="Cài đặt tài khoản"
-            class="p-1.5 text-slate-400 hover:text-slate-200 rounded-md hover:bg-white/[0.05] transition-colors"
+            class="p-1.5 text-aave-graphite hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors"
           >
             <UIcon name="i-heroicons-cog-6-tooth" class="w-4 h-4" />
           </NuxtLink>
           <button
             title="Đăng xuất"
-            class="p-1.5 text-slate-400 hover:text-rose-400 rounded-md hover:bg-white/[0.05] transition-colors"
+            class="p-1.5 text-aave-graphite hover:text-rose-400 rounded-lg hover:bg-white/[0.05] transition-colors"
             @click="logout"
           >
             <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4" />
@@ -144,17 +135,17 @@
       </div>
     </aside>
 
-    <!-- Mobile Sidebar Drawer -->
     <USlideover v-model="mobileOpen">
-      <div class="p-4 flex-1 flex flex-col justify-between bg-[#090d16] text-slate-100 h-full">
+      <div class="p-4 flex-1 flex flex-col justify-between bg-aave-obsidian text-white h-full">
         <div>
           <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
-            <div class="flex items-center gap-2">
-              <div class="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center font-mono font-bold text-white text-xs">
-                VN
-              </div>
-              <span class="font-bold text-slate-100 font-mono text-sm">VNSTOCK QUANTS</span>
-            </div>
+            <NuxtLink to="/admin" class="flex flex-col" @click="mobileOpen = false">
+              <span class="font-medium text-white font-sans text-sm tracking-tight flex items-center gap-1.5">
+                VNSTOCK QUANTS
+                <span class="text-[9px] uppercase font-mono font-bold px-1.5 py-0.2 rounded-full bg-aave-violet/15 text-aave-violet border border-aave-violet/30">PRO</span>
+              </span>
+              <span class="text-[10px] text-aave-graphite font-mono">QUANT DESK 24/7</span>
+            </NuxtLink>
             <UButton
               color="gray"
               variant="ghost"
@@ -166,8 +157,8 @@
           <div class="mt-4 space-y-4">
             <NuxtLink
               to="/admin"
-              class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
-              :class="route.path === '/admin' ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
+              class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs"
+              :class="route.path === '/admin' ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-squares-2x2" class="w-4 h-4" />
@@ -176,8 +167,8 @@
 
             <NuxtLink
               to="/admin/stock"
-              class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
-              :class="route.path.startsWith('/admin/stock') ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
+              class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs"
+              :class="route.path.startsWith('/admin/stock') ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-chart-bar" class="w-4 h-4" />
@@ -186,8 +177,8 @@
 
             <NuxtLink
               to="/admin/items"
-              class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
-              :class="route.path.startsWith('/admin/items') ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
+              class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs"
+              :class="route.path.startsWith('/admin/items') ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-archive-box" class="w-4 h-4" />
@@ -196,7 +187,7 @@
 
             <NuxtLink
               to="/"
-              class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-teal-400 hover:text-teal-300"
+              class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs text-aave-violet hover:text-aave-violet"
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-globe-alt" class="w-4 h-4" />
@@ -204,13 +195,13 @@
             </NuxtLink>
 
             <div class="pt-2 border-t border-white/[0.06]">
-              <p class="text-[10px] uppercase text-slate-500 font-mono font-semibold mb-2">Đặc tả TRD 6 Phases</p>
+              <p class="text-[10px] uppercase text-aave-graphite font-mono font-medium mb-2">Đặc tả TRD 6 Phases</p>
               <NuxtLink
                 v-for="phase in trdPhases"
                 :key="phase.path"
                 :to="phase.path"
-                class="flex items-center gap-2.5 px-3 py-1.5 text-xs rounded-lg"
-                :class="route.path === phase.path ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-400'"
+                class="flex items-center gap-2.5 px-3 py-1.5 text-xs rounded-xl"
+                :class="route.path === phase.path ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
                 @click="mobileOpen = false"
               >
                 <UIcon :name="phase.icon" class="w-3.5 h-3.5" />
@@ -221,7 +212,7 @@
         </div>
 
         <div class="pt-4 border-t border-white/[0.06] flex justify-between items-center">
-          <NuxtLink to="/admin/settings" class="text-xs text-slate-400 hover:text-slate-200" @click="mobileOpen = false">
+          <NuxtLink to="/admin/settings" class="text-xs text-aave-graphite hover:text-white" @click="mobileOpen = false">
             Cài đặt tài khoản
           </NuxtLink>
           <button class="text-xs text-rose-400 hover:underline" @click="logout">
@@ -231,87 +222,80 @@
       </div>
     </USlideover>
 
-    <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-w-0">
-      <!-- Top Institutional Trading Desk Header -->
-      <header class="h-14 shrink-0 border-b border-white/[0.06] bg-[#07090e]/85 backdrop-blur-xl px-4 lg:px-8 flex items-center justify-between sticky top-0 z-30">
+
+      <header class="h-14 shrink-0 border-b border-white/[0.06] bg-aave-inkwell/85 backdrop-blur-xl px-4 lg:px-8 flex items-center justify-between sticky top-0 z-30">
         <div class="flex items-center gap-4">
           <button
-            class="lg:hidden p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-white/[0.05]"
+            class="lg:hidden p-1.5 text-aave-graphite hover:text-white rounded-lg hover:bg-white/[0.05]"
             @click="mobileOpen = true"
           >
             <UIcon name="i-heroicons-bars-3" class="w-5 h-5" />
           </button>
 
-          <!-- Market Session Telemetry Status -->
           <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/[0.02] border border-white/[0.06]">
-              <span class="h-2 w-2 rounded-full" :class="sessionStatus.active ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'" />
-              <span class="text-[11px] font-mono font-bold tracking-tight text-white uppercase">{{ sessionStatus.label }}</span>
-              <span class="text-[10px] font-mono text-slate-400">VN_TZ {{ currentTime }}</span>
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-aave-obsidian border border-white/[0.06]">
+              <span class="h-2 w-2 rounded-full" :class="sessionStatus.active ? 'bg-aave-violet animate-pulse' : 'bg-aave-graphite'" />
+              <span class="text-[11px] font-mono font-medium tracking-tight text-white uppercase">{{ sessionStatus.label }}</span>
+              <span class="text-[10px] font-mono text-aave-graphite">VN_TZ {{ currentTime }}</span>
             </div>
 
-            <!-- VN30F1M Basis Badge -->
-            <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/[0.02] border border-white/[0.06]">
-              <span class="text-[11px] font-mono text-slate-400">VN30F1M:</span>
-              <span class="text-[11px] font-mono font-bold text-emerald-400">1,318.50</span>
-              <span class="text-[10px] font-mono px-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">Basis: -2.30</span>
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-aave-obsidian border border-white/[0.06]">
+              <span class="text-[11px] font-mono text-aave-graphite">VN30F1M:</span>
+              <span class="text-[11px] font-mono font-bold text-white">1,318.50</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-aave-violet/15 text-aave-violet">Basis: -2.30</span>
             </div>
           </div>
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- Sandbox Isolation Guarantee Tag -->
-          <div class="hidden xl:flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+
+          <div class="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-aave-violet/10 text-aave-violet border border-aave-violet/20">
             <UIcon name="i-heroicons-shield-check" class="w-3.5 h-3.5" />
             <span>SANDBOX 100% ISOLATED</span>
           </div>
 
-          <!-- Quick Stock Lookup -->
           <NuxtLink
             to="/admin/stock"
-            class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono text-slate-300 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] transition-colors border border-white/[0.08]"
+            class="hidden md:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono text-aave-graphite hover:text-white rounded-full bg-aave-obsidian hover:bg-white/[0.05] transition-colors border border-white/[0.06]"
           >
-            <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-slate-400" />
+            <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-aave-graphite" />
             <span>Tra cứu mã CK</span>
-            <kbd class="px-1.5 py-0.5 text-[9px] rounded bg-white/[0.06] text-slate-400 border border-white/[0.1] font-mono">Ctrl+K</kbd>
+            <kbd class="px-1.5 py-0.5 text-[9px] rounded-full bg-white/[0.06] text-aave-graphite font-mono">Ctrl+K</kbd>
           </NuxtLink>
 
-          <!-- Current User Badge -->
           <NuxtLink
             to="/admin/settings"
-            class="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-lg bg-white/[0.02] border border-white/[0.08] hover:bg-white/[0.05] transition-colors"
+            class="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-aave-obsidian border border-white/[0.06] hover:bg-white/[0.05] transition-colors"
           >
-            <div class="w-6 h-6 rounded bg-emerald-600/80 text-white font-mono font-bold text-[10px] flex items-center justify-center ring-1 ring-white/10">
+            <div class="w-6 h-6 rounded-full bg-aave-violet text-aave-charcoal font-mono font-bold text-[10px] flex items-center justify-center">
               {{ userInitials }}
             </div>
-            <span class="text-xs font-medium text-slate-300 max-w-[120px] truncate hidden sm:inline">
+            <span class="text-xs font-medium text-white max-w-[120px] truncate hidden sm:inline">
               {{ user?.full_name || user?.email?.split('@')[0] || 'Tài khoản' }}
             </span>
           </NuxtLink>
         </div>
       </header>
 
-      <!-- Page Content -->
-      <main class="flex-1 p-4 lg:p-6 overflow-y-auto">
-        <div class="mx-auto max-w-[1400px]">
+      <main class="flex-1 p-4 lg:p-8 overflow-y-auto">
+        <div class="mx-auto max-w-[1200px]">
           <slot />
         </div>
       </main>
 
-      <!-- Institutional Footer -->
-      <footer class="border-t border-white/[0.06] bg-[#07090e]/90 px-6 py-3.5 text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-2 text-[11px] text-slate-400">
-          <UIcon name="i-heroicons-lock-closed" class="w-3.5 h-3.5 text-slate-400 shrink-0" />
+      <footer class="border-t border-white/[0.06] bg-aave-inkwell px-6 py-4 text-xs text-aave-graphite flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-[11px] text-aave-graphite">
+          <UIcon name="i-heroicons-lock-closed" class="w-3.5 h-3.5 text-aave-graphite shrink-0" />
           <span>Vnstock Quantitative Research & Simulation Engine (Tuân thủ T+2 & Khớp lệnh ATO/ATC). Dữ liệu phục vụ nghiên cứu & mô phỏng.</span>
         </div>
         <div class="flex items-center gap-3 text-[11px] font-mono shrink-0">
-          <span class="flex items-center gap-1.5 text-emerald-400">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span class="flex items-center gap-1.5 text-aave-violet">
+            <span class="w-1.5 h-1.5 rounded-full bg-aave-violet" />
             TELEMETRY 24/7 ACTIVE
           </span>
-          <span class="text-slate-500">|</span>
-          <span class="text-slate-400">NUXT 3 + FASTAPI DDD</span>
+          <span class="text-aave-iron">|</span>
+          <span class="text-aave-graphite">AAVE DUAL-MOOD ARCHITECTURE</span>
         </div>
       </footer>
     </div>
@@ -333,10 +317,9 @@ const userInitials = computed(() => {
   if (user.value?.email) {
     return user.value.email.slice(0, 2).toUpperCase()
   }
-  return "VN"
+  return "U"
 })
 
-// Clock and market session tracker
 const currentTime = ref("")
 const sessionStatus = computed(() => {
   const now = new Date()

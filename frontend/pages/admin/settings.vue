@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6 max-w-4xl">
-    <!-- Header -->
+
     <div>
       <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
         <UIcon name="i-heroicons-cog-6-tooth" class="w-7 h-7 text-emerald-400" />
@@ -11,7 +11,6 @@
       </p>
     </div>
 
-    <!-- Tabs Navigation -->
     <div class="flex border-b border-slate-800 gap-4">
       <button
         type="button"
@@ -42,8 +41,7 @@
       </button>
     </div>
 
-    <!-- Tab 1: Profile Information -->
-    <div v-if="activeTab === 'profile'" class="p-6 rounded-2xl bg-[#090d16]/80 border border-white/[0.08] shadow-xl space-y-4">
+    <div v-if="activeTab === 'profile'" class="p-6 rounded-2xl bg-surface-abyss/80 border border-white/[0.08] shadow-xl space-y-4">
       <div>
         <h3 class="text-sm font-bold text-white font-mono">Thông tin cơ bản</h3>
         <p class="text-xs text-slate-400">Cập nhật họ tên và địa chỉ email đăng nhập</p>
@@ -68,8 +66,7 @@
       </form>
     </div>
 
-    <!-- Tab 2: Change Password -->
-    <div v-else-if="activeTab === 'password'" class="p-6 rounded-2xl bg-[#090d16]/80 border border-white/[0.08] shadow-xl space-y-4">
+    <div v-else-if="activeTab === 'password'" class="p-6 rounded-2xl bg-surface-abyss/80 border border-white/[0.08] shadow-xl space-y-4">
       <div>
         <h3 class="text-sm font-bold text-white font-mono">Đổi mật khẩu</h3>
         <p class="text-xs text-slate-400">Đảm bảo mật khẩu mới có ít nhất 8 ký tự và độ phức tạp cao</p>
@@ -129,8 +126,7 @@
       </form>
     </div>
 
-    <!-- Tab 3: Danger Zone -->
-    <div v-else-if="activeTab === 'danger'" class="p-6 rounded-2xl bg-[#090d16]/80 border border-rose-500/20 shadow-xl space-y-4">
+    <div v-else-if="activeTab === 'danger'" class="p-6 rounded-2xl bg-surface-abyss/80 border border-rose-500/20 shadow-xl space-y-4">
       <div>
         <h3 class="text-sm font-bold text-rose-400 flex items-center gap-2 font-mono">
           <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-rose-400" />
@@ -147,9 +143,8 @@
         </UButton>
       </div>
 
-      <!-- Delete Account Confirmation Modal -->
       <UModal v-model="deleteAccountModal">
-        <div class="p-6 bg-[#090d16] text-slate-100 rounded-2xl border border-white/[0.08] space-y-4">
+        <div class="p-6 bg-surface-abyss text-slate-100 rounded-2xl border border-white/[0.08] space-y-4">
           <h3 class="text-base font-bold text-rose-400 font-mono">Bạn có chắc chắn muốn xóa tài khoản?</h3>
           <p class="text-xs text-slate-300">
             Hành động này sẽ hủy kích hoạt tài khoản của bạn ngay lập tức. Bạn sẽ bị đăng xuất và không thể truy cập lại.

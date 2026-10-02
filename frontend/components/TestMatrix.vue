@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4 font-mono">
-    <!-- Search & Filter Bar -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl bg-[#090d16]/80 border border-white/[0.08] shadow-lg">
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl bg-surface-abyss/80 border border-white/[0.08] shadow-lg">
       <div class="flex items-center gap-3 w-full sm:w-auto">
         <div class="relative flex-1 sm:w-72">
           <UInput
@@ -15,7 +15,7 @@
 
         <select
           v-model="selectedGroup"
-          class="bg-[#06080d] border border-white/[0.1] rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+          class="bg-surface-abyss border border-white/[0.1] rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
         >
           <option value="ALL">Tất cả nhóm ({{ tests.length }})</option>
           <option v-for="grp in groups" :key="grp" :value="grp">
@@ -34,16 +34,15 @@
       </div>
     </div>
 
-    <!-- Table of Tests -->
-    <div class="rounded-xl border border-white/[0.08] bg-[#090d16]/80 overflow-hidden shadow-xl">
+    <div class="rounded-xl border border-white/[0.08] bg-surface-abyss/80 overflow-hidden shadow-xl">
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead class="bg-white/[0.02] text-slate-400 uppercase font-mono text-[10px] border-b border-white/[0.06] tracking-wider">
             <tr>
               <th class="py-3 px-4 w-28">Mã Test</th>
               <th class="py-3 px-4 w-44">Phân nhóm</th>
-              <th class="py-3 px-4 font-sans">Kịch bản kiểm thử (Scenario)</th>
-              <th class="py-3 px-4 font-sans">Kết quả kỳ vọng (Expectation)</th>
+              <th class="py-3 px-4 font-sans">Kịch bản kiểm thử</th>
+              <th class="py-3 px-4 font-sans">Kết quả kỳ vọng</th>
               <th class="py-3 px-4 w-24 text-center">Trạng thái</th>
             </tr>
           </thead>
