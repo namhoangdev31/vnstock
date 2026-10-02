@@ -1,0 +1,23 @@
+Read these first, in order:
+
+1. ai/start_task.md
+2. ai/context.md
+3. ai/project_map.json
+4. the nearest real files in the target feature/module
+
+Follow ai/context.md as the source of truth for project conventions.
+Use ai/start_task.md as the required workflow before making changes.
+
+Before creating or changing code:
+- inspect nearby real code to confirm current structure and patterns
+- reuse existing implementations before introducing anything new
+- follow the active layering (Backend: FastAPI + SQLModel + PostgreSQL, Frontend: React + Vite + TanStack Router)
+- follow strict constraints (zero real-money execution, simulation isolation, 0 lint/type errors)
+- keep changes minimal and consistent with the local module
+- update routes/models/tests/project map when required
+
+If the task touches market data, derivatives, signals, or simulation:
+- inspect vnstock adapters, ForecastJournal, paper trading models, and engine jobs before editing
+
+Task:
+...

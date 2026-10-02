@@ -1,0 +1,281 @@
+{
+  "project_metadata": {
+    "name": "vnstock",
+    "description": "Continuous 24/7 Quantitative Research, Predictive Analytics & Simulation Engine for Vietnamese Financial Market",
+    "language": "Python 3.11+ / TypeScript",
+    "frameworks": ["FastAPI", "SQLModel", "PostgreSQL", "React 18", "Vite", "TanStack Router", "TailwindCSS"],
+    "last_updated": "2026-10-02"
+  },
+  "architecture_metadata": {
+    "backend": {
+      "framework": "FastAPI + SQLModel + Alembic",
+      "architecture": "Domain-Driven Design (DDD) with Clean Architecture layers (presentation, application, domain, infrastructure)",
+      "database": "PostgreSQL",
+      "package_manager": "uv",
+      "entrypoints": [
+        "backend/app/main.py",
+        "backend/app/api/main.py",
+        "backend/app/worker.py",
+        "backend/app/initial_data.py"
+      ],
+      "key_directories": [
+        "backend/app/api",
+        "backend/app/core",
+        "backend/app/domains",
+        "backend/app/cron",
+        "backend/app/cli",
+        "backend/app/alembic"
+      ]
+    },
+    "frontend": {
+      "framework": "React + Vite + TanStack Router",
+      "styling": "TailwindCSS + Shadcn UI",
+      "package_manager": "bun / npm",
+      "entrypoints": [
+        "frontend/src/main.tsx",
+        "frontend/src/routeTree.gen.ts"
+      ],
+      "key_directories": [
+        "frontend/src/routes",
+        "frontend/src/components",
+        "frontend/src/client",
+        "frontend/src/hooks",
+        "frontend/src/lib"
+      ]
+    },
+    "core_engines": {
+      "engine_1": "Technical & Price-Action Engine (1m/5m/15m OHLCV, intraday tick matching flow)",
+      "engine_2": "Liquidity, Flow & T+2 Cash Flow Engine (Foreign flow, proprietary flow, FX USD/VND, Gold, T+2 settlement model)",
+      "engine_3": "Quantitative ML & Basis Spread Engine (VN30F1M vs VN30 basis spread, Volatility forecasting, ForecastJournal audit)"
+    }
+  },
+  "module_hierarchy": {
+    "backend": {
+      "app/main.py": "FastAPI application entrypoint, CORS middleware, lifespan events, openapi configuration",
+      "app/worker.py": "Celery/background task worker entrypoint",
+      "app/utils.py": "Utility functions for password reset emails and system helpers",
+      "app/initial_data.py": "Initial DB seeds and first superuser setup",
+      "app/api": {
+        "deps.py": "FastAPI dependency injection (get_db session, get_current_user, get_current_active_superuser)",
+        "main.py": "API v1 router aggregator mapping domain routers",
+        "private_router.py": "Protected administrative and internal management endpoints",
+        "system_router.py": "System health check, versioning, and status routes"
+      },
+      "app/core": {
+        "config.py": "Pydantic Settings reading environment variables (.env, DB connection strings, SECRET_KEY)",
+        "db.py": "SQLModel database engine, session local creation, init_db function",
+        "security.py": "JWT access token creation, verification, and passlib password hashing context"
+      },
+      "app/cron": {
+        "scheduler.py": "APScheduler background cron job runner initialization",
+        "sync_symbols.py": "Cron entry for symbol universe synchronization",
+        "sync_daily_market.py": "Cron entry for daily OHLCV market data backfill",
+        "sync_quarterly_financials.py": "Cron entry for quarterly financial statements ingestion",
+        "purge_ticks.py": "Cron entry for tick data retention and old log pruning"
+      },
+      "app/cli": {
+        "stock_sync.py": "Command-line script for manual market sync triggers"
+      },
+      "app/domains/market_data": {
+        "application/price_service.py": "High-level service fetching OHLCV bars, tick history, real-time prices",
+        "application/symbol_service.py": "Service managing symbol listings, VN30 components, ICB industry groups",
+        "application/sync_service.py": "Orchestrates backfilling and incremental sync from vnstock adapters",
+        "application/sync_constants.py": "Sync interval definitions, backfill date limits, default symbols",
+        "application/schemas.py": "Pydantic request/response schemas for price queries and symbol lookup",
+        "application/jobs/purge_ticks_job.py": "Job logic for purging old tick data beyond retention window",
+        "application/jobs/sync_daily_market_job.py": "Job logic for daily historical price sync",
+        "application/jobs/sync_symbols_job.py": "Job logic for syncing full ticker catalog",
+        "domain/asset_master.py": "Domain logic for asset categorization (Equities, VN30F1M Futures, Indices)",
+        "domain/models.py": "SQLModel tables: StockOHLCVDaily, StockOHLCVIntraday, StockTick, StockSymbol",
+        "domain/rate_limit.py": "Domain definitions for API rate limiting policies",
+        "domain/exceptions.py": "Domain-specific exceptions for market data (SymbolNotFound, DataUnavailable)",
+        "infrastructure/vnstock_adapter.py": "Primary integration layer invoking python `vnstock` v4 libraries",
+        "infrastructure/vnstock_registry.py": "Registry managing active vnstock adapter instances",
+        "infrastructure/tick_storage.py": "Optimized tick storage and aggregation handlers",
+        "infrastructure/rate_limiter.py": "Token bucket / delay rate limiter preventing IP bans",
+        "presentation/price_router.py": "Endpoints GET /api/v1/market-data/prices, /history, /ticks",
+        "presentation/symbol_router.py": "Endpoints GET /api/v1/market-data/symbols, /groups",
+        "presentation/sync_router.py": "Endpoints POST /api/v1/market-data/sync/trigger",
+        "presentation/vnstock_router.py": "Endpoints surfacing raw vnstock adapter diagnostic checks",
+        "presentation/router.py": "Aggregated router for market data domain"
+      },
+      "app/domains/fundamental": {
+        "application/corporate_service.py": "Service querying company profiles, shareholders, officers, subsidiaries",
+        "application/screener_service.py": "Fundamental screener filtering stocks by ROE, ROIC, P/E, P/B, Debt/Equity",
+        "application/revision_service.py": "Service tracking earnings revision and financial metric changes",
+        "application/schemas.py": "DTOs for corporate profile, financial statements, valuation ratios",
+        "application/jobs/sync_quarterly_financials_job.py": "Job ingesting income statement, balance sheet, cash flow",
+        "domain/models.py": "SQLModel tables: FinancialStatement, CompanyOverview, FinancialRatio",
+        "domain/exceptions.py": "Domain exceptions for missing financial statements",
+        "presentation/corporate_router.py": "Endpoints GET /api/v1/fundamental/company/{symbol}",
+        "presentation/screener_router.py": "Endpoints POST /api/v1/fundamental/screener",
+        "presentation/revision_router.py": "Endpoints GET /api/v1/fundamental/revisions",
+        "presentation/router.py": "Aggregated router for fundamental domain"
+      },
+      "app/domains/quant": {
+        "application/forecast_journal_service.py": "Service recording predictions, back-filling actuals, scoring MAE/accuracy",
+        "application/market_data_ingest.py": "Ingests tick/OHLCV data into live quants feature buffers",
+        "application/quant_sync_service.py": "Syncs quantitative feature stores and baseline indicators",
+        "application/schemas.py": "Schemas for ForecastJournalEntry, EngineSignals, VolatilityForecast",
+        "application/engines/technical_engine.py": "Engine 1: Multi-timeframe RSI, MACD, VWAP, Order Flow Buy/Sell Delta",
+        "application/engines/flow_engine.py": "Engine 2: Foreign net flow, proprietary desks flow, USD/VND, Gold, T+2 flow",
+        "application/engines/quant_ml_engine.py": "Engine 3: VN30F1M vs VN30 Basis spread, GARCH/HV Volatility, Probabilistic outcome",
+        "application/engines/ensemble_engine.py": "Ensemble decision layer combining Engine 1 + Engine 2 + Engine 3",
+        "application/daemon/clock.py": "Market session state clock (ATO, Continuous, Intermission, Pre-ATC, ATC, Post-Market)",
+        "application/daemon/controller.py": "24/7 autonomous quant calculation daemon controller",
+        "application/daemon/dispatcher.py": "Event dispatcher broadcasting signal triggers to subscribers",
+        "application/daemon/event.py": "Quant daemon event definitions",
+        "application/daemon/lease.py": "Distributed daemon leader lock/lease management",
+        "application/daemon/orchestrator.py": "Main daemon loop managing 24/7 background tasks and real-time computation",
+        "application/daemon/poller.py": "Poller checking live order book & intraday matching ticks",
+        "application/daemon/scheduled_hooks.py": "Hook callbacks triggered at ATO/ATC transitions",
+        "application/daemon/state.py": "In-memory state buffer holding active session features",
+        "application/daemon/symbol_registry.py": "Monitored tickers registry for quant daemon",
+        "domain/indicators.py": "Pure technical and statistical indicator calculation functions",
+        "domain/models.py": "SQLModel tables: ForecastJournal, QuantSignal, VolatilityModelRecord",
+        "domain/exceptions.py": "Exceptions for forecast scoring or daemon state errors",
+        "presentation/forecast_router.py": "Endpoints GET/POST /api/v1/quant/forecasts (Forecast Ledger audit)",
+        "presentation/daemon_router.py": "Endpoints GET/POST /api/v1/quant/daemon/status, /start, /stop",
+        "presentation/quant_router.py": "Endpoints GET /api/v1/quant/signals, /basis, /volatility",
+        "presentation/router.py": "Aggregated router for quant domain"
+      },
+      "app/domains/simulation": {
+        "application/engine.py": "Main simulation engine executing paper trade orders and updating paper portfolios",
+        "application/order_matcher.py": "Matches virtual limit/market orders against real intraday tick/OHLCV execution",
+        "application/margin_calculator.py": "Derivatives initial margin, maintenance margin, and leverage check",
+        "application/t_plus_2_manager.py": "Enforces Vietnamese stock T+2 settlement for paper share/cash balance",
+        "application/alpha_screener.py": "Filters high-alpha stock baskets for paper portfolio rebalancing",
+        "application/schemas.py": "Schemas for PaperOrderCreate, PaperPortfolioSummary, SimulationPosition",
+        "domain/models.py": "SQLModel tables: PaperPortfolio, PaperOrder, PaperPosition, SimulationSession",
+        "domain/settlement.py": "Domain logic for T+2 settlement schedule calculation",
+        "domain/exceptions.py": "Simulation exceptions (InsufficientVirtualBalance, MarginCallExceeded)",
+        "presentation/router.py": "Endpoints /api/v1/simulation/orders, /portfolios, /positions, /pnl"
+      },
+      "app/domains/identity": {
+        "application/crud.py": "CRUD database operations for User and Item entities",
+        "application/schemas.py": "Schemas for UserCreate, UserUpdate, UserPublic, Token, ItemCreate",
+        "domain/models.py": "SQLModel tables: User, Item",
+        "presentation/auth_router.py": "Endpoints POST /api/v1/login/access-token, /password-recovery",
+        "presentation/users_router.py": "Endpoints GET/POST/PATCH /api/v1/users, /users/me",
+        "presentation/items_router.py": "Endpoints GET/POST/PATCH/DELETE /api/v1/items",
+        "presentation/router.py": "Aggregated router for identity domain"
+      }
+    },
+    "frontend": {
+      "src/routes": {
+        "__root.tsx": "Root route wrapper providing TanStack Router context & Toast providers",
+        "login.tsx": "User authentication sign-in screen",
+        "signup.tsx": "User registration screen",
+        "recover-password.tsx": "Password recovery email request screen",
+        "reset-password.tsx": "Password reset confirmation screen",
+        "_layout.tsx": "App shell layout with dynamic sidebar, navigation header, and main container",
+        "_layout/index.tsx": "Dashboard overview screen with real-time indices, top movers & engine summary",
+        "_layout/stock.tsx": "Market data terminal overview page",
+        "_layout/stock/$symbol.tsx": "Individual stock detail page (OHLCV chart, order book, fundamental ratios)",
+        "_layout/admin.tsx": "Administrator panel for managing system users",
+        "_layout/settings.tsx": "User profile, password change, and appearance settings page",
+        "_layout/items.tsx": "Sample items management view",
+        "_layout/trd/phase-1.tsx": "TRD Spec Phase 1 Interactive View: Technical & Price-Action Engine",
+        "_layout/trd/phase-2.tsx": "TRD Spec Phase 2 Interactive View: Flow, Macro & T+2 Cash Flow Engine",
+        "_layout/trd/phase-3.tsx": "TRD Spec Phase 3 Interactive View: Quantitative ML & Basis Spread Engine",
+        "_layout/trd/phase-4.tsx": "TRD Spec Phase 4 Interactive View: Full Session Derivatives VN30F1M Protocol",
+        "_layout/trd/phase-5.tsx": "TRD Spec Phase 5 Interactive View: Multi-Horizon Equity Portfolios",
+        "_layout/trd/phase-6.tsx": "TRD Spec Phase 6 Interactive View: Forecast Journal & Learning Loop",
+        "_layout/trd/-phase1SpecContent.ts": "Phase 1 TRD specification Markdown content & data definitions",
+        "_layout/trd/-phase2SpecContent.ts": "Phase 2 TRD specification Markdown content & data definitions",
+        "_layout/trd/-phase3SpecContent.ts": "Phase 3 TRD specification Markdown content & data definitions",
+        "_layout/trd/-phase4SpecContent.ts": "Phase 4 TRD specification Markdown content & data definitions",
+        "_layout/trd/-phase5SpecContent.ts": "Phase 5 TRD specification Markdown content & data definitions",
+        "_layout/trd/-phase6SpecContent.ts": "Phase 6 TRD specification Markdown content & data definitions"
+      },
+      "src/components": {
+        "Admin": {
+          "AddUser.tsx": "Modal dialog component for adding new system users",
+          "EditUser.tsx": "Modal dialog component for editing user roles and profile",
+          "DeleteUser.tsx": "Confirmation dialog for user deletion",
+          "UserActionsMenu.tsx": "Row action menu dropdown in user table",
+          "columns.tsx": "TanStack Table column definitions for user listing"
+        },
+        "Items": {
+          "AddItem.tsx": "Modal dialog for adding new items",
+          "EditItem.tsx": "Modal dialog for updating items",
+          "DeleteItem.tsx": "Modal dialog for deleting items",
+          "ItemActionsMenu.tsx": "Action dropdown for item table rows",
+          "columns.tsx": "TanStack Table column definitions for items"
+        },
+        "UserSettings": {
+          "UserInformation.tsx": "User profile info form component",
+          "ChangePassword.tsx": "Password update form component",
+          "DeleteAccount.tsx": "Account deactivation section",
+          "DeleteConfirmation.tsx": "Confirmation modal for self-account deletion"
+        },
+        "Sidebar": {
+          "AppSidebar.tsx": "Main collapsable application sidebar component",
+          "Main.tsx": "Primary navigation links section (Dashboard, Market, TRD, Settings)",
+          "User.tsx": "User avatar and profile menu at sidebar bottom"
+        },
+        "Pending": {
+          "PendingUsers.tsx": "Skeleton loader for user management page",
+          "PendingItems.tsx": "Skeleton loader for items list page"
+        },
+        "Common": {
+          "Appearance.tsx": "Dark/light mode theme toggle component",
+          "AuthLayout.tsx": "Container wrapper for authentication pages",
+          "DataTable.tsx": "Reusable TanStack Table wrapper component",
+          "Logo.tsx": "vnstock platform branding logo component",
+          "NotFound.tsx": "404 page not found fall-through route component",
+          "ErrorComponent.tsx": "Unhandled error display fallback component",
+          "Footer.tsx": "Dashboard footer component with disclaimer text"
+        },
+        "ui": {
+          "alert.tsx": "Shadcn alert banner component",
+          "avatar.tsx": "Shadcn user avatar component",
+          "badge.tsx": "Shadcn badge tag component",
+          "button.tsx": "Shadcn primary & secondary button component",
+          "card.tsx": "Shadcn content card container component",
+          "checkbox.tsx": "Shadcn checkbox input component",
+          "dialog.tsx": "Shadcn modal dialog component",
+          "dropdown-menu.tsx": "Shadcn contextual dropdown menu component",
+          "form.tsx": "React Hook Form integration wrapper",
+          "input.tsx": "Shadcn standard text input component",
+          "label.tsx": "Shadcn form field label component",
+          "loading-button.tsx": "Button component with embedded spinner for async actions",
+          "password-input.tsx": "Password input with show/hide toggle eye icon",
+          "select.tsx": "Shadcn select dropdown component",
+          "separator.tsx": "Shadcn visual divider rule component",
+          "sheet.tsx": "Shadcn slide-out drawer panel component",
+          "sidebar.tsx": "Shadcn responsive sidebar infrastructure",
+          "skeleton.tsx": "Shadcn loading state skeleton placeholder",
+          "sonner.tsx": "Sonner toast notification provider",
+          "table.tsx": "Shadcn HTML table wrapper styling components",
+          "tabs.tsx": "Shadcn multi-tab view component",
+          "tooltip.tsx": "Shadcn mouse hover tooltip overlay component"
+        }
+      },
+      "src/client": {
+        "sdk.gen.ts": "Generated TypeScript SDK for all FastAPI endpoints",
+        "types.gen.ts": "Generated TypeScript type interfaces matching SQLModel/Pydantic schemas",
+        "stockService.ts": "Market data API client service wrapper",
+        "client/": "Low-level OpenAPI fetch/axios request handlers and serializers",
+        "core/": "Core HTTP helpers for query parameters, auth headers, and Server-Sent Events"
+      },
+      "src/hooks": {
+        "useAuth.ts": "Authentication state hook (login, logout, token refresh, current user)",
+        "useCustomToast.ts": "Toast notification helper hook",
+        "useCopyToClipboard.ts": "Utility hook for copying text to system clipboard",
+        "useMobile.ts": "Hook detecting mobile screen breakpoint"
+      },
+      "src/lib": {
+        "utils.ts": "Utility function for merging Tailwind CSS classes (cn helper)"
+      }
+    },
+    "root_files": {
+      "AGENTS.md": "Master project charter, 3-engine specification, zero-tolerance prohibitions, vnstock v4 library mapping",
+      "pyproject.toml": "Python workspace configuration, dependencies, ruff, mypy settings",
+      "package.json": "Frontend & root scripts (dev, build, lint, format)",
+      "compose.yml": "Docker compose multi-container definition (PostgreSQL, FastAPI backend, Vite frontend)",
+      "compose.override.yml": "Local development Docker overrides",
+      "compose.deploy.yml": "Production Docker deployment settings"
+    }
+  }
+}
