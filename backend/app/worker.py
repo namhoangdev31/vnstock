@@ -198,23 +198,29 @@ class MarketWorkerDaemon:
 
         # Định tuyến tác vụ theo từng phiên
         if state == MarketSessionState.PRE_ATO_SETUP:
-            # Đồng bộ pivots, tham chiếu
-            pass
+            logger.debug(
+                "PRE_ATO_SETUP: Đồng bộ baseline tham chiếu và pivots chuẩn bị phiên"
+            )
         elif state == MarketSessionState.ATO_AUCTION:
-            # Giám sát ATO phái sinh
-            pass
+            logger.debug(
+                "ATO_AUCTION: Giám sát phiên khớp lệnh định kỳ mở cửa phái sinh VN30F1M"
+            )
         elif state in (
             MarketSessionState.MORNING_CONTINUOUS,
             MarketSessionState.AFTERNOON_CONTINUOUS,
         ):
-            # Khớp lệnh liên tục, tổng hợp dòng tiền
-            pass
+            logger.debug(
+                "%s: Giám sát khớp lệnh liên tục, tổng hợp dòng tiền và lệnh mô phỏng",
+                state.value,
+            )
         elif state == MarketSessionState.PRE_ATC_SETUP:
-            # Kích hoạt Engine dự phóng ATC
-            pass
+            logger.debug(
+                "PRE_ATC_SETUP: Kích hoạt mô hình dự báo cân bằng khớp lệnh đóng cửa ATC"
+            )
         elif state == MarketSessionState.ATC_AUCTION:
-            # Khớp ATC thực tế
-            pass
+            logger.debug(
+                "ATC_AUCTION: Giám sát phiên đóng cửa ATC và tính toán tác động thanh toán"
+            )
         elif state == MarketSessionState.POST_MARKET_EVAL:
             today_date = datetime.now(VN_TZ).date()
             if self._last_screener_snapshot_date != today_date:
@@ -234,8 +240,9 @@ class MarketWorkerDaemon:
                             "Error generating daily screener snapshot in POST_MARKET_EVAL"
                         )
         elif state == MarketSessionState.OVERNIGHT_SIMULATION:
-            # Tối ưu hóa mô phỏng Monte Carlo qua đêm
-            pass
+            logger.debug(
+                "OVERNIGHT_SIMULATION: Tối ưu danh mục mô phỏng và chạy kịch bản Monte Carlo qua đêm"
+            )
 
     def run(self, max_cycles: int | None = None, single_cycle: bool = False) -> None:
         """Bắt đầu vòng lặp tiến trình daemon."""

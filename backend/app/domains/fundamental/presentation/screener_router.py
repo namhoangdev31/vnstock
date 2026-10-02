@@ -53,7 +53,7 @@ def screen_stocks(
     year: int | None = Query(default=None, description="Năm tài chính"),
     quarter: int | None = Query(default=None, description="Quý tài chính (1-4)"),
     skip: int = 0,
-    limit: int = 50,
+    limit: int = Query(default=50, ge=1, le=1000),
     cursor_roe: float | None = Query(
         default=None, description="Con trỏ ROE cho Keyset Pagination"
     ),

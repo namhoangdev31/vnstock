@@ -1,5 +1,7 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  Activity,
   BookOpen,
   Briefcase,
   Check,
@@ -9,6 +11,7 @@ import {
   Download,
   FileCode,
   Layers,
+  RefreshCw,
   Search,
   ShieldAlert,
   TrendingUp,
@@ -17,6 +20,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { StockService } from "@/client/stockService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -295,42 +299,108 @@ const testCases: TestCase[] = [
 
 const apiEndpoints = [
   {
-    method: "POST",
-    path: "/api/v1/simulation/orders",
-    desc: "Gửi lệnh đặt mô phỏng mới (Hỗ trợ LO, MP, ATO, ATC, STOP_LOSS)",
-    auth: "JWT (CurrentUser)",
-  },
-  {
     method: "GET",
-    path: "/api/v1/simulation/portfolio",
-    desc: "Lấy tổng quan tài khoản mô phỏng: số dư tiền, ký quỹ đã khóa, PnL",
-    auth: "JWT (CurrentUser)",
-  },
-  {
-    method: "GET",
-    path: "/api/v1/simulation/positions",
-    desc: "Lấy danh sách các vị thế phái sinh và cổ phiếu đang nắm giữ",
-    auth: "JWT (CurrentUser)",
-  },
-  {
-    method: "DELETE",
-    path: "/api/v1/simulation/orders/{order_id}",
-    desc: "Hủy một lệnh đang ở trạng thái PENDING trong sổ lệnh ảo",
+    path: "/api/v1/simulation/portfolios/{id}/margin-status",
+    desc: "Trạng thái ký quỹ VSDC và tỷ lệ an toàn danh mục phái sinh",
     auth: "JWT (CurrentUser)",
   },
   {
     method: "GET",
     path: "/api/v1/simulation/alpha/baskets",
-    desc: "Truy vấn danh mục cổ phiếu khuyến nghị theo Tuần / Tháng / Quý",
+    desc: "Rổ cổ phiếu Alpha đa khung thời gian (Weekly / Monthly / Quarterly)",
+    auth: "JWT (CurrentUser)",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/simulation/settlement/process",
+    desc: "Kích hoạt giải toả chu kỳ thanh toán bù trừ T+2 cơ sở",
+    auth: "JWT (CurrentUser)",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/simulation/portfolios/{id}/orders",
+    desc: "Gửi lệnh đặt mô phỏng mới (Hỗ trợ LIMIT, MARKET, STOP_LOSS, Trailing Stop)",
+    auth: "JWT (CurrentUser)",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/simulation/portfolios",
+    desc: "Lấy danh sách các tài khoản paper trading của người dùng",
+    auth: "JWT (CurrentUser)",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/simulation/portfolios/{id}/positions",
+    desc: "Lấy danh sách các vị thế phái sinh và cổ phiếu đang mở trong danh mục",
+    auth: "JWT (CurrentUser)",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/simulation/orders/{order_id}/cancel",
+    desc: "Hủy một lệnh đang ở trạng thái PENDING trong sổ lệnh ảo",
     auth: "JWT (CurrentUser)",
   },
 ];
 
 export function Phase4TRDPage() {
+  const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const [testSearch, setTestSearch] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [selectedHorizon, setSelectedHorizon] = useState<string>("all");
+
+  // Query: User paper portfolios
+  const { data: portfoliosData, isLoading: loadingPortfolios } = useQuery({
+    queryKey: ["simulation-portfolios"],
+    queryFn: () => StockService.listPortfolios(),
+  });
+
+  const portfolios = portfoliosData?.data ?? [];
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>("");
+  const activePortfolioId = selectedPortfolioId || (portfolios[0]?.id ?? "");
+
+  // Query: Margin Status for selected portfolio
+  const {
+    data: marginData,
+    isLoading: loadingMargin,
+    refetch: refetchMargin,
+  } = useQuery({
+    queryKey: ["simulation-margin-status", activePortfolioId],
+    queryFn: () =>
+      StockService.getMarginStatus({
+        path: { portfolio_id: activePortfolioId },
+      }),
+    enabled: !!activePortfolioId,
+  });
+
+  // Query: Alpha Baskets
+  const {
+    data: alphaData,
+    isLoading: loadingAlpha,
+    refetch: refetchAlpha,
+  } = useQuery({
+    queryKey: ["simulation-alpha-baskets", selectedHorizon],
+    queryFn: () =>
+      StockService.getAlphaBaskets({
+        query: { horizon: selectedHorizon },
+      }),
+  });
+
+  // Mutation: T+2 Settlement Trigger
+  const settlementMutation = useMutation({
+    mutationFn: () => StockService.processSettlement(),
+    onSuccess: (res) => {
+      toast.success(
+        `Xử lý giải toả T+2 thành công! Đã giải toả: ${res.settled} lệnh / khoản mục.`,
+      );
+      queryClient.invalidateQueries({ queryKey: ["simulation-portfolios"] });
+      queryClient.invalidateQueries({ queryKey: ["simulation-margin-status"] });
+    },
+    onError: (err: any) => {
+      toast.error(`Lỗi khi giải toả T+2: ${err?.message || "Thao tác thất bại"}`);
+    },
+  });
 
   const handleCopyMarkdown = async () => {
     try {
@@ -527,6 +597,34 @@ export function Phase4TRDPage() {
                   <p className="text-xs text-muted-foreground">Daemon tự động chuyển status = SETTLED_AVAILABLE. Cổ phiếu chính thức có thể đặt lệnh Bán.</p>
                 </div>
               </div>
+
+              {/* Live T+2 Settlement Trigger */}
+              <div className="mt-6 border-t pt-4 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-emerald-500" />
+                    Kích Hoạt Giải Toả Bù Trừ T+2 Trực Tiếp (Live API)
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    POST <code>/api/v1/simulation/settlement/process</code> — Quét toàn bộ cổ phiếu và tiền bán chờ về đã đến hạn T+2 (sau 13:00) để chuyển trạng thái khả dụng.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => settlementMutation.mutate()}
+                  disabled={settlementMutation.isPending}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${settlementMutation.isPending ? "animate-spin" : ""}`}
+                  />
+                  <span>
+                    {settlementMutation.isPending
+                      ? "Đang giải toả..."
+                      : "Thực Hiện Giải Toả T+2 Ngay"}
+                  </span>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -559,6 +657,113 @@ export function Phase4TRDPage() {
                   <p className="text-2xl font-bold text-rose-600 font-mono">&lt; 10%</p>
                   <p className="text-xs text-muted-foreground mt-1">Tự động kích hoạt lệnh thị trường MP đóng toàn bộ vị thế ảo để bảo toàn vốn.</p>
                 </div>
+              </div>
+
+              {/* Live Margin Status Section */}
+              <div className="mt-6 border-t pt-6 flex flex-col gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-semibold flex items-center gap-2">
+                      <Wallet className="h-4 w-4 text-emerald-500" />
+                      Theo Dõi Ký Quỹ VSDC Trực Tiếp (Live API)
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      GET <code>/api/v1/simulation/portfolios/{`{id}`}/margin-status</code> — Trực tiếp từ tài khoản Paper Trading.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refetchMargin()}
+                      disabled={loadingMargin || !activePortfolioId}
+                      className="gap-1.5"
+                    >
+                      <RefreshCw
+                        className={`h-3.5 w-3.5 ${loadingMargin ? "animate-spin" : ""}`}
+                      />
+                      <span>Làm mới</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {loadingPortfolios ? (
+                  <div className="text-sm text-muted-foreground py-4">Đang tải danh sách tài khoản...</div>
+                ) : portfolios.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+                    Chưa có danh mục Paper Trading nào. Hãy tạo danh mục trước tại API <code>/api/v1/simulation/portfolios</code> để xem trạng thái ký quỹ.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {/* Portfolio Selector */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-medium text-muted-foreground">Chọn danh mục:</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {portfolios.map((p) => (
+                          <Button
+                            key={p.id}
+                            variant={activePortfolioId === p.id ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedPortfolioId(p.id)}
+                            className="h-7 text-xs font-mono"
+                          >
+                            {p.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Live Margin Display */}
+                    {loadingMargin ? (
+                      <div className="text-sm text-muted-foreground py-2">Đang tải dữ liệu ký quỹ...</div>
+                    ) : marginData ? (
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-muted/20 border rounded-lg p-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Tài sản ròng (Equity)</span>
+                          <span className="text-lg font-bold font-mono text-foreground">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(marginData.equity)}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Ký quỹ đã sử dụng (Margin Used)</span>
+                          <span className="text-lg font-bold font-mono text-emerald-600">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(marginData.margin_used)}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Tỷ lệ ký quỹ (Margin Ratio)</span>
+                          <span className="text-lg font-bold font-mono">
+                            {marginData.margin_ratio !== null
+                              ? `${(marginData.margin_ratio * 100).toFixed(2)}%`
+                              : "N/A (Chưa mở vị thế)"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Trạng thái rủi ro</span>
+                          <div>
+                            <Badge
+                              className={
+                                marginData.status === "SAFE"
+                                  ? "bg-emerald-600 text-white"
+                                  : marginData.status === "CALL_MARGIN"
+                                  ? "bg-amber-600 text-white"
+                                  : "bg-rose-600 text-white"
+                              }
+                            >
+                              {marginData.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -606,6 +811,110 @@ export function Phase4TRDPage() {
                     <li>P/E thấp hơn trung bình 3 năm</li>
                   </ul>
                 </div>
+              </div>
+
+              {/* Live Alpha Baskets Section */}
+              <div className="mt-6 border-t pt-6 flex flex-col gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-semibold flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-amber-500" />
+                      Dữ Liệu Rổ Cổ Phiếu Alpha Trực Tiếp (Live API)
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      GET <code>/api/v1/simulation/alpha/baskets?horizon={selectedHorizon}</code> — Bộ lọc Screener đa chân trời từ cơ sở dữ liệu thật.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center bg-muted/60 p-0.5 rounded-md border text-xs">
+                      {(["all", "weekly", "monthly", "quarterly"] as const).map((h) => (
+                        <Button
+                          key={h}
+                          variant={selectedHorizon === h ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setSelectedHorizon(h)}
+                          className="h-6 text-xs px-2.5 capitalize"
+                        >
+                          {h}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refetchAlpha()}
+                      disabled={loadingAlpha}
+                      className="gap-1.5"
+                    >
+                      <RefreshCw
+                        className={`h-3.5 w-3.5 ${loadingAlpha ? "animate-spin" : ""}`}
+                      />
+                      <span>Làm mới</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {loadingAlpha ? (
+                  <div className="text-sm text-muted-foreground py-4">Đang lọc cổ phiếu alpha...</div>
+                ) : alphaData?.baskets ? (
+                  <div className="flex flex-col gap-6">
+                    {Object.entries(alphaData.baskets).map(([horizonKey, tickers]) => (
+                      <div key={horizonKey} className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={
+                              horizonKey === "weekly"
+                                ? "bg-amber-600 text-white capitalize"
+                                : horizonKey === "monthly"
+                                ? "bg-indigo-600 text-white capitalize"
+                                : "bg-purple-600 text-white capitalize"
+                            }
+                          >
+                            {horizonKey} Basket ({tickers.length} mã)
+                          </Badge>
+                        </div>
+                        {tickers.length === 0 ? (
+                          <div className="text-xs text-muted-foreground py-2 border rounded-md p-3 bg-muted/10">
+                            Không có mã nào thỏa mãn điều kiện sàng lọc chân trời {horizonKey}.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {tickers.map((t) => (
+                              <div
+                                key={t.symbol}
+                                className="border rounded-lg p-3 bg-muted/10 flex flex-col gap-2 hover:border-primary/40 transition-colors"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-base font-mono text-foreground">
+                                    {t.symbol}
+                                  </span>
+                                  <Badge variant="outline" className="font-mono text-xs">
+                                    Alpha: {t.alpha_score.toFixed(2)}
+                                  </Badge>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {t.criteria.map((c) => (
+                                    <Badge
+                                      key={c.key}
+                                      variant={c.passed ? "secondary" : "outline"}
+                                      className={`text-[10px] ${
+                                        c.passed
+                                          ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                                          : "text-muted-foreground opacity-60"
+                                      }`}
+                                    >
+                                      {c.label}: {c.value !== null && c.value !== undefined ? c.value : "N/A"}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </CardContent>
           </Card>

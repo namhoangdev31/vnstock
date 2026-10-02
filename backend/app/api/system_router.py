@@ -2,8 +2,9 @@
 
 from fastapi import APIRouter, Depends
 from pydantic.networks import EmailStr
+from sqlmodel import select
 
-from app.api.deps import get_current_active_superuser
+from app.api.deps import SessionDep, get_current_active_superuser
 from app.domains.identity.application.schemas import Message
 from app.utils import generate_test_email, send_email
 
@@ -27,6 +28,7 @@ def test_email(email_to: EmailStr) -> Message:
 
 
 @router.get("/health-check/")
-async def health_check() -> bool:
-    """Health check endpoint for container probes."""
+def health_check(session: SessionDep) -> bool:
+    """Health check endpoint for container probes and database connectivity."""
+    session.exec(select(1))
     return True

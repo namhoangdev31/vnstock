@@ -85,8 +85,8 @@ def run_purge_ticks_job(
                 db_sess.add(sync_log)
                 db_sess.commit()
                 db_sess.refresh(sync_log)
-            except Exception:
-                pass
+            except Exception as log_err:
+                logger.debug("Failed to record failure log in purge_ticks: %s", log_err)
             return sync_log
 
     if session is not None:

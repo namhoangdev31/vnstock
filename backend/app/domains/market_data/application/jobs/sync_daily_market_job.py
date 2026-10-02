@@ -62,8 +62,8 @@ def run_sync_daily_market_job(
                 logger.warning("Lỗi đồng bộ nến ngày cho %s: %s", sym, exc)
                 try:
                     mgr.session.rollback()
-                except Exception:
-                    pass
+                except Exception as rollback_err:
+                    logger.debug("Rollback failed for %s: %s", sym, rollback_err)
 
         # 2. Đồng bộ dòng tiền tổ chức (Khối ngoại, Tự doanh, Room ngoại)
         try:
@@ -76,8 +76,8 @@ def run_sync_daily_market_job(
             logger.warning("Lỗi đồng bộ dòng tiền tổ chức: %s", exc)
             try:
                 mgr.session.rollback()
-            except Exception:
-                pass
+            except Exception as rollback_err:
+                logger.debug("Rollback failed for institutional flow: %s", rollback_err)
 
         # 3. Tính toán và cập nhật Basis phái sinh (VN30F1M - VN30)
         try:
@@ -87,8 +87,8 @@ def run_sync_daily_market_job(
             logger.warning("Lỗi tính toán Basis phái sinh: %s", exc)
             try:
                 mgr.session.rollback()
-            except Exception:
-                pass
+            except Exception as rollback_err:
+                logger.debug("Rollback failed for derivative basis: %s", rollback_err)
 
         return logs
 

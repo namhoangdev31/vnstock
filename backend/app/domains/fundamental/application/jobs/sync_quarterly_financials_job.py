@@ -98,8 +98,8 @@ def run_sync_quarterly_financials_job(
                 logger.warning("Lỗi đồng bộ dữ liệu toàn diện cho %s: %s", sym, exc)
                 try:
                     mgr.session.rollback()
-                except Exception:
-                    pass
+                except Exception as rollback_err:
+                    logger.debug("Rollback failed for %s: %s", sym, rollback_err)
 
         return logs
 

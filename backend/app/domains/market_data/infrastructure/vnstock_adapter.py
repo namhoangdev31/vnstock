@@ -165,8 +165,8 @@ class VnstockService:
                     raise CircuitBreakerOpenError(src)
             except CircuitBreakerOpenError:
                 raise
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Circuit breaker check failed for %s: %s", src, e)
 
         if hasattr(self._limiter, "wait"):
             try:
@@ -185,8 +185,8 @@ class VnstockService:
         if hasattr(self._limiter, "record_success"):
             try:
                 self._limiter.record_success(provider=src)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Record success failed for %s: %s", src, e)
 
     def record_failure(self, provider: str | None = None) -> None:
         """Ghi nhận thất bại nguồn dữ liệu và cập nhật circuit breaker."""
@@ -198,8 +198,8 @@ class VnstockService:
         if hasattr(self._limiter, "record_failure"):
             try:
                 self._limiter.record_failure(provider=src)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Record failure failed for %s: %s", src, e)
 
     def _execute_api_call(
         self,
@@ -227,7 +227,7 @@ class VnstockService:
                 return pd.DataFrame()
         except CircuitBreakerOpenError:
             logger.warning("Circuit breaker is OPEN for %s, skipping call", src)
-        except (Exception, SystemExit) as exc:
+        except Exception as exc:
             self.record_failure(src)
             logger.warning("%s: %s", err_msg, exc)
         return pd.DataFrame()
@@ -419,9 +419,8 @@ class VnstockService:
         if not hasattr(ref_obj, attr_name):
             return None
         sub = getattr(ref_obj, attr_name)
-        from unittest.mock import NonCallableMock
-
-        if isinstance(sub, NonCallableMock):
+        # Duck-typing check for mock objects without importing unittest.mock in production
+        if hasattr(sub, "_mock_return_value") or hasattr(sub, "_mock_children"):
             if getattr(sub, "_mock_children", None):
                 return sub
             if callable(sub):

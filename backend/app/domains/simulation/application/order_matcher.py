@@ -91,10 +91,14 @@ def match_pending_orders(
     ).all()
 
     trades: list[Trade] = []
+    remaining_tick_vol = max(tick_volume, 0)
 
     for order in orders:
+        if remaining_tick_vol <= 0:
+            break
+
         remaining = order.quantity - order.filled_quantity
-        fill_qty = min(remaining, max(tick_volume, 0))
+        fill_qty = min(remaining, remaining_tick_vol)
         if fill_qty <= 0:
             continue
 
@@ -148,18 +152,29 @@ def match_pending_orders(
             session.add(order)
             continue
 
+        intent = engine._classify(portfolio.id, order.symbol, order.side)
+        reject_reason = engine._precheck(
+            portfolio, order, deriv=is_deriv, intent=intent
+        )
+        if reject_reason is not None:
+            order.status = OrderStatus.REJECTED
+            order.reject_reason = f"Precheck failed at execution: {reject_reason}"[:255]
+            session.add(order)
+            continue
+
         try:
             trade = engine._fill(
                 order,
                 portfolio,
                 fill_price=fill_price,
                 deriv=is_deriv,
-                intent=engine._classify(portfolio.id, order.symbol, order.side),
+                intent=intent,
                 quantity=fill_qty,
                 executed_at=tick_time,
             )
             if trade is not None:
                 trades.append(trade)
+                remaining_tick_vol -= fill_qty
         except SimulationError as exc:
             order.status = OrderStatus.REJECTED
             order.reject_reason = str(exc)

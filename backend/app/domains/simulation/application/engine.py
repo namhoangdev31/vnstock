@@ -209,16 +209,15 @@ class SimulationEngine:
             source_signal_id=source_signal_id,
         )
 
-        if order_type == OrderType.MARKET:
-            reject_reason = self._precheck(portfolio, order, deriv=deriv, intent=intent)
-            if reject_reason is not None:
-                order.status = OrderStatus.REJECTED
-                order.reject_reason = reject_reason[:255]
-                self.session.add(order)
-                self.session.commit()
-                self.session.refresh(order)
-                logger.info("Rejected order for %s: %s", symbol, reject_reason)
-                return order
+        reject_reason = self._precheck(portfolio, order, deriv=deriv, intent=intent)
+        if reject_reason is not None:
+            order.status = OrderStatus.REJECTED
+            order.reject_reason = reject_reason[:255]
+            self.session.add(order)
+            self.session.commit()
+            self.session.refresh(order)
+            logger.info("Rejected order for %s: %s", symbol, reject_reason)
+            return order
 
         self.session.add(order)
         try:

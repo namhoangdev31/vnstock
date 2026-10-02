@@ -1,3 +1,4 @@
+import logging
 import os
 import urllib.parse
 import warnings
@@ -12,6 +13,8 @@ from pydantic import (
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 VALID_PSYCOPG_PARAMS: set[str] = {
     "connect_timeout",
@@ -63,7 +66,12 @@ class Settings(BaseSettings):
 
     # Cron & Background Scheduler config
     CRON_SECRET_KEY: str | None = None
+    CRON_SECRET: str | None = None
     ENABLE_INPROCESS_CRON: bool = False
+
+    # Database connection pool settings
+    DB_POOL_SIZE: int = 20
+    DB_MAX_OVERFLOW: int = 10
 
     @classmethod
     def _validate_and_normalize_postgres_url(
@@ -160,8 +168,15 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _enforce_non_default_secrets(self) -> Self:
         self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
-        for host in self.DATABASE_URL.hosts():
-            self._check_default_secret("DATABASE_URL password", host["password"])
+        if hasattr(self.DATABASE_URL, "hosts"):
+            for host in self.DATABASE_URL.hosts():
+                pwd = (
+                    host.get("password")
+                    if isinstance(host, dict)
+                    else getattr(host, "password", None)
+                )
+                if pwd:
+                    self._check_default_secret("DATABASE_URL password", pwd)
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )
@@ -179,8 +194,8 @@ class Settings(BaseSettings):
                 from vnai import setup_api_key
 
                 setup_api_key(key)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("Không thể thiết lập khóa vnstock: %s", exc)
         return self
 
 

@@ -6,13 +6,16 @@ import pandas as pd
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
-from app.main import app
 
 
 @patch(
     "app.domains.market_data.presentation.vnstock_router.vnstock_service.fetch_symbols_by_exchange"
 )
-def test_get_vnstock_symbols(mock_fetch_symbols):
+def test_get_vnstock_symbols(
+    mock_fetch_symbols,
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+):
     """Kiểm tra endpoint GET /api/v1/vnstock trả về danh sách {symbol, organ_name, exchange}."""
     mock_fetch_symbols.return_value = pd.DataFrame(
         {
@@ -21,8 +24,9 @@ def test_get_vnstock_symbols(mock_fetch_symbols):
             "exchange": ["HOSE", "HNX"],
         }
     )
-    client = TestClient(app)
-    response = client.get(f"{settings.API_V1_STR}/vnstock")
+    response = client.get(
+        f"{settings.API_V1_STR}/vnstock", headers=superuser_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -37,7 +41,11 @@ def test_get_vnstock_symbols(mock_fetch_symbols):
 @patch(
     "app.domains.market_data.presentation.vnstock_router.vnstock_service.fetch_symbols_by_exchange"
 )
-def test_get_vnstock_symbols_filter_exchange(mock_fetch_symbols):
+def test_get_vnstock_symbols_filter_exchange(
+    mock_fetch_symbols,
+    client: TestClient,
+    superuser_token_headers: dict[str, str],
+):
     """Kiểm tra endpoint GET /api/v1/vnstock?exchange=HOSE có lọc theo sàn."""
     mock_fetch_symbols.return_value = pd.DataFrame(
         {
@@ -46,8 +54,10 @@ def test_get_vnstock_symbols_filter_exchange(mock_fetch_symbols):
             "exchange": ["HOSE"],
         }
     )
-    client = TestClient(app)
-    response = client.get(f"{settings.API_V1_STR}/vnstock?exchange=HOSE")
+    response = client.get(
+        f"{settings.API_V1_STR}/vnstock?exchange=HOSE",
+        headers=superuser_token_headers,
+    )
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
@@ -56,10 +66,13 @@ def test_get_vnstock_symbols_filter_exchange(mock_fetch_symbols):
     mock_fetch_symbols.assert_called_once_with(exchange="HOSE")
 
 
-def test_get_vnstock_sources():
+def test_get_vnstock_sources(
+    client: TestClient, superuser_token_headers: dict[str, str]
+):
     """Kiểm tra endpoint GET /api/v1/vnstock/sources trả về danh sách nguồn dữ liệu."""
-    client = TestClient(app)
-    response = client.get(f"{settings.API_V1_STR}/vnstock/sources")
+    response = client.get(
+        f"{settings.API_V1_STR}/vnstock/sources", headers=superuser_token_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)

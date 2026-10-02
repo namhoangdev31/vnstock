@@ -182,8 +182,8 @@ def test_vnstock_service_circuit_breaker_integration():
 
     # Gọi _throttle cho KBS (khả dụng) -> thành công
     service._throttle("kbs")
-    mock_limiter.wait.assert_called_with(provider="kbs", session=None)
+    mock_limiter.wait.assert_called_with(provider="kbs")
 
     # Ghi nhận thất bại cho KBS
     service.record_failure("kbs")
-    mock_limiter.record_failure.assert_called_with(provider="kbs", session=None)
+    mock_limiter.record_failure.assert_called_with(provider="kbs")

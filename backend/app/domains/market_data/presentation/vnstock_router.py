@@ -6,8 +6,9 @@ import logging
 from typing import Any
 
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.api.deps import get_current_user
 from app.domains.market_data.application.schemas import VnstockSymbolResponse
 from app.domains.market_data.infrastructure.vnstock_adapter import vnstock_service
 from app.domains.market_data.infrastructure.vnstock_registry import (
@@ -16,10 +17,15 @@ from app.domains.market_data.infrastructure.vnstock_registry import (
     VnstockCapabilityRegistry,
 )
 
-router = APIRouter(prefix="/vnstock", tags=["vnstock"])
+router = APIRouter(
+    prefix="/vnstock",
+    tags=["vnstock"],
+    dependencies=[Depends(get_current_user)],
+)
 logger = logging.getLogger(__name__)
 
 
+@router.get("", response_model=list[VnstockSymbolResponse], include_in_schema=False)
 @router.get("/", response_model=list[VnstockSymbolResponse])
 def get_vnstock(
     exchange: str | None = Query(

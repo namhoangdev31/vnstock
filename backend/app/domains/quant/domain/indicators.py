@@ -1332,7 +1332,11 @@ def optimize_engine_weights_from_errors(
     inv3 = 1.0 / mae3
     total = inv1 + inv2 + inv3
 
-    if total < 1e-9:
+    if (
+        not math.isfinite(total)
+        or total <= 1e-9
+        or not all(math.isfinite(x) for x in (inv1, inv2, inv3))
+    ):
         return {"w1": 0.3333, "w2": 0.3333, "w3": 0.3334}
 
     return {

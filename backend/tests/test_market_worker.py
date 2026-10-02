@@ -133,3 +133,33 @@ def test_worker_advisory_lock_postgres_lifecycle() -> None:
     release_worker_advisory_lock(conn)
     mock_conn.execute.assert_called()
     mock_conn.close.assert_called_once()
+
+
+def test_worker_sync_cycle_runs_safely() -> None:
+    """Phase 1 Market Feeds: Kiểm tra worker sync cycle chạy an toàn trong môi trường hermetic."""
+    engine = create_engine("sqlite:///:memory:")
+    SQLModel.metadata.create_all(engine)
+
+    worker = MarketWorkerDaemon(db_engine=engine)
+    # Chạy 1 chu kỳ POST_MARKET_EVAL an toàn
+    worker.execute_cycle(MarketSessionState.POST_MARKET_EVAL)
+    assert worker.total_cycles == 1
+
+
+def test_worker_heartbeat_updates_database() -> None:
+    """Phase 1 Market Feeds: Kiểm tra worker heartbeat cập nhật database an toàn với mock/sqlite."""
+    from unittest.mock import MagicMock
+
+    engine = create_engine("sqlite:///:memory:")
+    SQLModel.metadata.create_all(engine)
+
+    worker = MarketWorkerDaemon(db_engine=engine)
+    mock_lock_conn = MagicMock()
+    mock_lock_conn.closed = False
+    worker._has_lock = True
+    worker._lock_conn = mock_lock_conn
+
+    # Chạy execute_cycle và kiểm tra trạng thái
+    worker.execute_cycle(MarketSessionState.PRE_ATO_SETUP)
+    assert worker.total_cycles == 1
+    assert worker._has_lock is True

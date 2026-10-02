@@ -74,6 +74,53 @@ export interface FinancialReportsResponse {
   data: FinancialReportItem[]
 }
 
+export interface MarginStatusResponse {
+  equity: number
+  margin_used: number
+  margin_ratio: number | null
+  status: string // SAFE, CALL_MARGIN, FORCE_LIQUIDATION
+}
+
+export interface SettlementProcessResponse {
+  settled: number
+}
+
+export interface AlphaCriteria {
+  key: string
+  label: string
+  passed: boolean
+  value?: number | null
+  threshold?: number | null
+}
+
+export interface AlphaTicker {
+  symbol: string
+  horizon: string
+  alpha_score: number
+  criteria: AlphaCriteria[]
+}
+
+export interface AlphaBasketsResponse {
+  horizon: string
+  baskets: Record<string, AlphaTicker[]>
+}
+
+export interface PortfolioItem {
+  id: string
+  name: string
+  initial_balance: number
+  cash_balance: number
+  equity: number
+  margin_used: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PortfoliosResponse {
+  data: PortfolioItem[]
+  count: number
+}
+
 export class StockService {
   public static async listSymbols(options?: {
     query?: {
@@ -132,6 +179,45 @@ export class StockService {
       url: `/api/v1/stock/${options.path.symbol}/financials`,
       security: [{ scheme: "bearer", type: "http" }],
       query: options.query,
+    })
+    return res.data
+  }
+
+  // --- Phase 4 Simulation & Portfolio Endpoints ---
+
+  public static async listPortfolios(): Promise<PortfoliosResponse> {
+    const res = await client.get<PortfoliosResponse, unknown, true>({
+      url: "/api/v1/simulation/portfolios",
+      security: [{ scheme: "bearer", type: "http" }],
+    })
+    return res.data
+  }
+
+  public static async getMarginStatus(options: {
+    path: { portfolio_id: string }
+  }): Promise<MarginStatusResponse> {
+    const res = await client.get<MarginStatusResponse, unknown, true>({
+      url: `/api/v1/simulation/portfolios/${options.path.portfolio_id}/margin-status`,
+      security: [{ scheme: "bearer", type: "http" }],
+    })
+    return res.data
+  }
+
+  public static async processSettlement(): Promise<SettlementProcessResponse> {
+    const res = await client.post<SettlementProcessResponse, unknown, true>({
+      url: "/api/v1/simulation/settlement/process",
+      security: [{ scheme: "bearer", type: "http" }],
+    })
+    return res.data
+  }
+
+  public static async getAlphaBaskets(options?: {
+    query?: { horizon?: string; record_journal?: boolean }
+  }): Promise<AlphaBasketsResponse> {
+    const res = await client.get<AlphaBasketsResponse, unknown, true>({
+      url: "/api/v1/simulation/alpha/baskets",
+      security: [{ scheme: "bearer", type: "http" }],
+      query: options?.query,
     })
     return res.data
   }

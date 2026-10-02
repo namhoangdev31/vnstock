@@ -108,8 +108,9 @@ def generate_password_reset_token(email: str) -> str:
     now = datetime.now(VN_TZ)
     expires = now + delta
     exp = expires.timestamp()
+    nbf = (now - timedelta(seconds=10)).timestamp()
     encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email},
+        {"exp": exp, "nbf": nbf, "sub": email},
         settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )

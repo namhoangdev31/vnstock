@@ -169,23 +169,11 @@ def test_cron_sync_symbols_api_endpoint(api_client, monkeypatch) -> None:  # noq
         assert data["status"] == "success"
         assert data["rows_synced"] == 15
 
-    # 4. Gọi kèm secret đúng qua Query param
-    with patch.object(DataSyncManager, "sync_symbols") as mock_sync:
-        mock_log = DataSyncLog(
-            sync_type="symbols",
-            source="VCI",
-            status="success",
-            rows_synced=10,
-        )
-        mock_sync.return_value = mock_log
-
-        resp_query = api_client.post(
-            "/api/v1/stock/cron/sync-symbols?secret_key=test-cron-secret-12345"
-        )
-        assert resp_query.status_code == 200
-        data = resp_query.json()
-        assert data["status"] == "success"
-        assert data["rows_synced"] == 10
+    # 4. Gọi kèm secret qua Query param -> Bị từ chối 403 (không chấp nhận secret qua query param)
+    resp_query = api_client.post(
+        "/api/v1/stock/cron/sync-symbols?secret_key=test-cron-secret-12345"
+    )
+    assert resp_query.status_code == 403
 
 
 def test_start_scheduler_task_flag() -> None:
@@ -317,20 +305,11 @@ def test_cron_sync_daily_market_api_endpoint(api_client, monkeypatch) -> None:  
         assert data[0]["symbol"] == "VNINDEX"
         assert data[0]["status"] == "success"
 
-    # 4. Gọi kèm secret đúng qua Query param
-    with patch(
-        "app.domains.market_data.presentation.sync_router.run_sync_daily_market_job",
-        return_value=[mock_log],
-    ):
-        resp_query = api_client.post(
-            "/api/v1/stock/cron/sync-daily-market?secret_key=test-cron-secret-daily-999"
-        )
-
-        assert resp_query.status_code == 200
-        data = resp_query.json()
-        assert isinstance(data, list)
-        assert len(data) == 1
-        assert data[0]["symbol"] == "VNINDEX"
+    # 4. Gọi qua Query param không kèm Header -> Bị từ chối 403 (không chấp nhận secret qua query param)
+    resp_query = api_client.post(
+        "/api/v1/stock/cron/sync-daily-market?secret_key=test-cron-secret-daily-999"
+    )
+    assert resp_query.status_code == 403
 
 
 def test_run_sync_quarterly_financials_job(session: Session) -> None:  # noqa: F811

@@ -15,6 +15,7 @@ from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
+from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 from starlette.middleware.cors import CORSMiddleware
 
@@ -169,7 +170,7 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 if FRONTEND_DIR.is_dir():
-    app.frontend("/", directory=FRONTEND_DIR)
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 else:
 
     @app.get("/", include_in_schema=False)

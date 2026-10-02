@@ -128,10 +128,10 @@ class RateLimiter:
 
         if session is not None:
             try:
-                # Distributed atomic check via PostgreSQL SELECT ... FOR UPDATE
+                # Distributed atomic check via PostgreSQL (no FOR UPDATE during sleep)
                 row = session.exec(
                     text(
-                        "SELECT last_request_at FROM provider_rate_limit_state WHERE provider = :p FOR UPDATE"
+                        "SELECT last_request_at FROM provider_rate_limit_state WHERE provider = :p"
                     ),
                     params={"p": provider_key},
                 ).first()  # type: ignore

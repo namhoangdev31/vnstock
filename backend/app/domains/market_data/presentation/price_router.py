@@ -85,7 +85,7 @@ def list_covered_warrants(
     current_user: CurrentUser,  # noqa: ARG001
     underlying_symbol: str | None = None,
     skip: int = 0,
-    limit: int = 100,
+    limit: int = Query(default=100, ge=1, le=1000),
 ) -> Any:
     """Danh sách các chứng quyền có bảo đảm kèm bộ lọc theo mã cổ phiếu cơ sở."""
     return PriceService.list_covered_warrants(
@@ -103,7 +103,7 @@ def list_bonds(
     bond_type: str | None = None,
     issuer_symbol: str | None = None,
     skip: int = 0,
-    limit: int = 100,
+    limit: int = Query(default=100, ge=1, le=1000),
 ) -> Any:
     """Danh sách trái phiếu doanh nghiệp & trái phiếu chính phủ kèm bộ lọc."""
     return PriceService.list_bonds(

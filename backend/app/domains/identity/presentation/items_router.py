@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import col, func, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.domains.identity.application import crud
 from app.domains.identity.application.schemas import (
     ItemCreate,
     ItemPublic,
@@ -67,11 +68,7 @@ def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> Any:
     """Create new item."""
-    item = Item.model_validate(item_in, update={"owner_id": current_user.id})
-    session.add(item)
-    session.commit()
-    session.refresh(item)
-    return item
+    return crud.create_item(session=session, item_in=item_in, owner_id=current_user.id)
 
 
 @router.put("/{id}", response_model=ItemPublic)
@@ -88,12 +85,7 @@ def update_item(
         raise HTTPException(status_code=404, detail="Item not found")
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    update_dict = item_in.model_dump(exclude_unset=True)
-    item.sqlmodel_update(update_dict)
-    session.add(item)
-    session.commit()
-    session.refresh(item)
-    return item
+    return crud.update_item(session=session, db_item=item, item_in=item_in)
 
 
 @router.delete("/{id}")
@@ -106,6 +98,5 @@ def delete_item(
         raise HTTPException(status_code=404, detail="Item not found")
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    session.delete(item)
-    session.commit()
+    crud.delete_item(session=session, db_item=item)
     return Message(message="Item deleted successfully")

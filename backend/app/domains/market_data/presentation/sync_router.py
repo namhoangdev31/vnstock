@@ -7,6 +7,7 @@ và nhật ký kiểm toán đồng bộ dữ liệu.
 
 from __future__ import annotations
 
+import secrets
 from datetime import date
 from typing import Annotated, Any
 
@@ -169,13 +170,15 @@ def trigger_batch_sync(
 def cron_sync_symbols(
     session: SessionDep,
     x_cron_secret: Annotated[str | None, Header(alias="X-Cron-Secret")] = None,
-    secret_key: str | None = Query(default=None),
 ) -> Any:
     """Kích hoạt đồng bộ danh mục mã qua Cronjob (GitHub Actions hoặc Scheduled Webhook)."""
-    valid_secret = settings.CRON_SECRET_KEY or settings.SECRET_KEY
-    provided_secret = x_cron_secret or secret_key
+    valid_secret = (
+        getattr(settings, "CRON_SECRET", None)
+        or settings.CRON_SECRET_KEY
+        or settings.SECRET_KEY
+    )
 
-    if not provided_secret or provided_secret != valid_secret:
+    if not x_cron_secret or not secrets.compare_digest(x_cron_secret, valid_secret):
         raise HTTPException(
             status_code=403,
             detail="Mã bảo mật Cron (X-Cron-Secret) không hợp lệ",
@@ -190,13 +193,15 @@ def cron_sync_symbols(
 def cron_sync_daily_market(
     session: SessionDep,
     x_cron_secret: Annotated[str | None, Header(alias="X-Cron-Secret")] = None,
-    secret_key: str | None = Query(default=None),
 ) -> Any:
     """Kích hoạt đồng bộ nến ngày cho các chỉ số và rổ VN30 sau phiên ATC (15:15)."""
-    valid_secret = settings.CRON_SECRET_KEY or settings.SECRET_KEY
-    provided_secret = x_cron_secret or secret_key
+    valid_secret = (
+        getattr(settings, "CRON_SECRET", None)
+        or settings.CRON_SECRET_KEY
+        or settings.SECRET_KEY
+    )
 
-    if not provided_secret or provided_secret != valid_secret:
+    if not x_cron_secret or not secrets.compare_digest(x_cron_secret, valid_secret):
         raise HTTPException(
             status_code=403,
             detail="Mã bảo mật Cron (X-Cron-Secret) không hợp lệ",
@@ -210,16 +215,18 @@ def cron_sync_daily_market(
 def cron_sync_quarterly_financials(
     session: SessionDep,
     x_cron_secret: Annotated[str | None, Header(alias="X-Cron-Secret")] = None,
-    secret_key: str | None = Query(default=None),
     group: str = Query(
         default="VN30", description="Nhóm chỉ số cần đồng bộ (VN30, VN100,...)"
     ),
 ) -> Any:
     """Kích hoạt đồng bộ báo cáo tài chính & chỉ số quý cho rổ chỉ số (VN30 mặc định)."""
-    valid_secret = settings.CRON_SECRET_KEY or settings.SECRET_KEY
-    provided_secret = x_cron_secret or secret_key
+    valid_secret = (
+        getattr(settings, "CRON_SECRET", None)
+        or settings.CRON_SECRET_KEY
+        or settings.SECRET_KEY
+    )
 
-    if not provided_secret or provided_secret != valid_secret:
+    if not x_cron_secret or not secrets.compare_digest(x_cron_secret, valid_secret):
         raise HTTPException(
             status_code=403,
             detail="Mã bảo mật Cron (X-Cron-Secret) không hợp lệ",
@@ -233,7 +240,6 @@ def cron_sync_quarterly_financials(
 def cron_purge_ticks(
     session: SessionDep,
     x_cron_secret: Annotated[str | None, Header(alias="X-Cron-Secret")] = None,
-    secret_key: str | None = Query(default=None),
     retention_days: int = Query(
         default=30, ge=1, le=365, description="Số ngày lưu trữ tick (mặc định 30 ngày)"
     ),
@@ -242,10 +248,13 @@ def cron_purge_ticks(
     ),
 ) -> Any:
     """Kích hoạt dọn dẹp tick cũ hơn retention_days ngày qua Safe Purge Gate."""
-    valid_secret = settings.CRON_SECRET_KEY or settings.SECRET_KEY
-    provided_secret = x_cron_secret or secret_key
+    valid_secret = (
+        getattr(settings, "CRON_SECRET", None)
+        or settings.CRON_SECRET_KEY
+        or settings.SECRET_KEY
+    )
 
-    if not provided_secret or provided_secret != valid_secret:
+    if not x_cron_secret or not secrets.compare_digest(x_cron_secret, valid_secret):
         raise HTTPException(
             status_code=403,
             detail="Mã bảo mật Cron (X-Cron-Secret) không hợp lệ",
