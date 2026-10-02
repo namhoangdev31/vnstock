@@ -3,7 +3,7 @@
     "name": "vnstock",
     "description": "Continuous 24/7 Quantitative Research, Predictive Analytics & Simulation Engine for Vietnamese Financial Market",
     "language": "Python 3.11+ / TypeScript",
-    "frameworks": ["FastAPI", "SQLModel", "PostgreSQL", "React 18", "Vite", "TanStack Router", "TailwindCSS"],
+    "frameworks": ["FastAPI", "SQLModel", "PostgreSQL", "Nuxt 3", "Vue 3", "@nuxt/ui", "TailwindCSS"],
     "last_updated": "2026-10-02"
   },
   "architecture_metadata": {
@@ -28,19 +28,22 @@
       ]
     },
     "frontend": {
-      "framework": "React + Vite + TanStack Router",
-      "styling": "TailwindCSS + Shadcn UI",
+      "framework": "Nuxt 3 + Vue 3 Composition API",
+      "styling": "@nuxt/ui + TailwindCSS",
       "package_manager": "bun / npm",
       "entrypoints": [
-        "frontend/src/main.tsx",
-        "frontend/src/routeTree.gen.ts"
+        "frontend/app.vue",
+        "frontend/nuxt.config.ts"
       ],
       "key_directories": [
-        "frontend/src/routes",
-        "frontend/src/components",
-        "frontend/src/client",
-        "frontend/src/hooks",
-        "frontend/src/lib"
+        "frontend/pages",
+        "frontend/layouts",
+        "frontend/components",
+        "frontend/composables",
+        "frontend/client",
+        "frontend/middleware",
+        "frontend/plugins",
+        "frontend/data"
       ]
     },
     "core_engines": {
@@ -162,111 +165,57 @@
       }
     },
     "frontend": {
-      "src/routes": {
-        "__root.tsx": "Root route wrapper providing TanStack Router context & Toast providers",
-        "login.tsx": "User authentication sign-in screen",
-        "signup.tsx": "User registration screen",
-        "recover-password.tsx": "Password recovery email request screen",
-        "reset-password.tsx": "Password reset confirmation screen",
-        "_layout.tsx": "App shell layout with dynamic sidebar, navigation header, and main container",
-        "_layout/index.tsx": "Dashboard overview screen with real-time indices, top movers & engine summary",
-        "_layout/stock.tsx": "Market data terminal overview page",
-        "_layout/stock/$symbol.tsx": "Individual stock detail page (OHLCV chart, order book, fundamental ratios)",
-        "_layout/admin.tsx": "Administrator panel for managing system users",
-        "_layout/settings.tsx": "User profile, password change, and appearance settings page",
-        "_layout/items.tsx": "Sample items management view",
-        "_layout/trd/phase-1.tsx": "TRD Spec Phase 1 Interactive View: Technical & Price-Action Engine",
-        "_layout/trd/phase-2.tsx": "TRD Spec Phase 2 Interactive View: Flow, Macro & T+2 Cash Flow Engine",
-        "_layout/trd/phase-3.tsx": "TRD Spec Phase 3 Interactive View: Quantitative ML & Basis Spread Engine",
-        "_layout/trd/phase-4.tsx": "TRD Spec Phase 4 Interactive View: Full Session Derivatives VN30F1M Protocol",
-        "_layout/trd/phase-5.tsx": "TRD Spec Phase 5 Interactive View: Multi-Horizon Equity Portfolios",
-        "_layout/trd/phase-6.tsx": "TRD Spec Phase 6 Interactive View: Forecast Journal & Learning Loop",
-        "_layout/trd/-phase1SpecContent.ts": "Phase 1 TRD specification Markdown content & data definitions",
-        "_layout/trd/-phase2SpecContent.ts": "Phase 2 TRD specification Markdown content & data definitions",
-        "_layout/trd/-phase3SpecContent.ts": "Phase 3 TRD specification Markdown content & data definitions",
-        "_layout/trd/-phase4SpecContent.ts": "Phase 4 TRD specification Markdown content & data definitions",
-        "_layout/trd/-phase5SpecContent.ts": "Phase 5 TRD specification Markdown content & data definitions",
-        "_layout/trd/-phase6SpecContent.ts": "Phase 6 TRD specification Markdown content & data definitions"
+      "app.vue": "Root Nuxt application component with NuxtLayout, NuxtPage, and UNotifications provider",
+      "nuxt.config.ts": "Nuxt 3 configuration: ssr: false, @nuxt/ui, @vueuse/nuxt, nitro publicDir to backend",
+      "layouts": {
+        "default.vue": "App shell layout with dynamic sidebar, active route indicators, user menu, and disclaimer footer",
+        "auth.vue": "Auth container wrapper with centered card branding"
       },
-      "src/components": {
-        "Admin": {
-          "AddUser.tsx": "Modal dialog component for adding new system users",
-          "EditUser.tsx": "Modal dialog component for editing user roles and profile",
-          "DeleteUser.tsx": "Confirmation dialog for user deletion",
-          "UserActionsMenu.tsx": "Row action menu dropdown in user table",
-          "columns.tsx": "TanStack Table column definitions for user listing"
-        },
-        "Items": {
-          "AddItem.tsx": "Modal dialog for adding new items",
-          "EditItem.tsx": "Modal dialog for updating items",
-          "DeleteItem.tsx": "Modal dialog for deleting items",
-          "ItemActionsMenu.tsx": "Action dropdown for item table rows",
-          "columns.tsx": "TanStack Table column definitions for items"
-        },
-        "UserSettings": {
-          "UserInformation.tsx": "User profile info form component",
-          "ChangePassword.tsx": "Password update form component",
-          "DeleteAccount.tsx": "Account deactivation section",
-          "DeleteConfirmation.tsx": "Confirmation modal for self-account deletion"
-        },
-        "Sidebar": {
-          "AppSidebar.tsx": "Main collapsable application sidebar component",
-          "Main.tsx": "Primary navigation links section (Dashboard, Market, TRD, Settings)",
-          "User.tsx": "User avatar and profile menu at sidebar bottom"
-        },
-        "Pending": {
-          "PendingUsers.tsx": "Skeleton loader for user management page",
-          "PendingItems.tsx": "Skeleton loader for items list page"
-        },
-        "Common": {
-          "Appearance.tsx": "Dark/light mode theme toggle component",
-          "AuthLayout.tsx": "Container wrapper for authentication pages",
-          "DataTable.tsx": "Reusable TanStack Table wrapper component",
-          "Logo.tsx": "vnstock platform branding logo component",
-          "NotFound.tsx": "404 page not found fall-through route component",
-          "ErrorComponent.tsx": "Unhandled error display fallback component",
-          "Footer.tsx": "Dashboard footer component with disclaimer text"
-        },
-        "ui": {
-          "alert.tsx": "Shadcn alert banner component",
-          "avatar.tsx": "Shadcn user avatar component",
-          "badge.tsx": "Shadcn badge tag component",
-          "button.tsx": "Shadcn primary & secondary button component",
-          "card.tsx": "Shadcn content card container component",
-          "checkbox.tsx": "Shadcn checkbox input component",
-          "dialog.tsx": "Shadcn modal dialog component",
-          "dropdown-menu.tsx": "Shadcn contextual dropdown menu component",
-          "form.tsx": "React Hook Form integration wrapper",
-          "input.tsx": "Shadcn standard text input component",
-          "label.tsx": "Shadcn form field label component",
-          "loading-button.tsx": "Button component with embedded spinner for async actions",
-          "password-input.tsx": "Password input with show/hide toggle eye icon",
-          "select.tsx": "Shadcn select dropdown component",
-          "separator.tsx": "Shadcn visual divider rule component",
-          "sheet.tsx": "Shadcn slide-out drawer panel component",
-          "sidebar.tsx": "Shadcn responsive sidebar infrastructure",
-          "skeleton.tsx": "Shadcn loading state skeleton placeholder",
-          "sonner.tsx": "Sonner toast notification provider",
-          "table.tsx": "Shadcn HTML table wrapper styling components",
-          "tabs.tsx": "Shadcn multi-tab view component",
-          "tooltip.tsx": "Shadcn mouse hover tooltip overlay component"
-        }
+      "middleware": {
+        "auth.global.ts": "Global navigation guard checking access_token in localStorage and route authentication requirements"
       },
-      "src/client": {
+      "plugins": {
+        "api.client.ts": "Nuxt client plugin injecting JWT auth token into generated client configuration"
+      },
+      "composables": {
+        "useAuth.ts": "Authentication state and actions (login, signup, logout, fetchCurrentUser)",
+        "useCustomToast.ts": "Custom toast notifications wrapper around Nuxt UI useToast"
+      },
+      "pages": {
+        "index.vue": "Dashboard overview screen with real-time indices, top movers & Tri-Engine status",
+        "login.vue": "User authentication sign-in screen",
+        "signup.vue": "User registration screen",
+        "recover-password.vue": "Password recovery email request screen",
+        "reset-password.vue": "Password reset confirmation screen",
+        "stock/index.vue": "Market data terminal overview page with pagination and exchange filtering",
+        "stock/[symbol].vue": "Stock detail view with high-DPI Canvas OHLCV chart, financial statements, and ratios",
+        "admin.vue": "Administrator panel for managing system users (add/edit/delete/toggle superuser)",
+        "settings.vue": "User profile settings, password update, and danger zone account deletion",
+        "items.vue": "Items management CRUD view with modals",
+        "trd/phase-1.vue": "TRD Spec Phase 1: Technical & Price-Action Engine specification and test matrix",
+        "trd/phase-2.vue": "TRD Spec Phase 2: Flow, Macro & T+2 Cash Flow Engine with interactive simulator",
+        "trd/phase-3.vue": "TRD Spec Phase 3: 24/7 Autonomous Daemon timeline & session phases",
+        "trd/phase-4.vue": "TRD Spec Phase 4: Full Session Derivatives VN30F1M Protocol & margin/PnL simulator",
+        "trd/phase-5.vue": "TRD Spec Phase 5: Forecast Journal ledger & self-learning loop scoring",
+        "trd/phase-6.vue": "TRD Spec Phase 6: Cockpit preview with real-time telemetry and alpha basket rotation"
+      },
+      "components": {
+        "MarkdownViewer.vue": "Rich Markdown document viewer with syntax rendering, copy and download actions",
+        "TestMatrix.vue": "Interactive test matrix with search, group filter, and PASS/PENDING statistics"
+      },
+      "client": {
         "sdk.gen.ts": "Generated TypeScript SDK for all FastAPI endpoints",
         "types.gen.ts": "Generated TypeScript type interfaces matching SQLModel/Pydantic schemas",
         "stockService.ts": "Market data API client service wrapper",
-        "client/": "Low-level OpenAPI fetch/axios request handlers and serializers",
-        "core/": "Core HTTP helpers for query parameters, auth headers, and Server-Sent Events"
+        "client.gen.ts": "OpenAPI fetch/axios request handlers and configuration"
       },
-      "src/hooks": {
-        "useAuth.ts": "Authentication state hook (login, logout, token refresh, current user)",
-        "useCustomToast.ts": "Toast notification helper hook",
-        "useCopyToClipboard.ts": "Utility hook for copying text to system clipboard",
-        "useMobile.ts": "Hook detecting mobile screen breakpoint"
-      },
-      "src/lib": {
-        "utils.ts": "Utility function for merging Tailwind CSS classes (cn helper)"
+      "data/trd": {
+        "phase1SpecContent.ts": "Phase 1 TRD specification Markdown content & data definitions",
+        "phase2SpecContent.ts": "Phase 2 TRD specification Markdown content & data definitions",
+        "phase3SpecContent.ts": "Phase 3 TRD specification Markdown content & data definitions",
+        "phase4SpecContent.ts": "Phase 4 TRD specification Markdown content & data definitions",
+        "phase5SpecContent.ts": "Phase 5 TRD specification Markdown content & data definitions",
+        "phase6SpecContent.ts": "Phase 6 TRD specification Markdown content & data definitions"
       }
     },
     "root_files": {

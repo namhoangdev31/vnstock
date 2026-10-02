@@ -215,10 +215,11 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
 - **Code Quality**:
   - Every backend modification MUST pass `uv run ruff check`, `uv run ruff format --check`, and `uv run ty check` with **0 errors**.
 
-### 8.2 Frontend (React + Vite + TanStack Router + TailwindCSS)
-- **Type Safety**: No raw `any` types in route loaders, components, or API data mappers.
-- **Route Definitions**: Use `createFileRoute` and maintain `@tanstack/router-plugin` generated tree in `routeTree.gen.ts`.
-- **Code Quality**: Every frontend change MUST pass `npm run build` cleanly.
+### 8.2 Frontend (Nuxt 3 + Vue 3 Composition API + @nuxt/ui + TailwindCSS)
+- **Type Safety**: Full TypeScript strict typing across pages, components, composables, and API client layer. No raw `any` types.
+- **Route Definitions & Layouts**: Nuxt file-based routing (`pages/`), with shared layouts (`layouts/default.vue`, `layouts/auth.vue`) and route middleware (`middleware/auth.global.ts`).
+- **State & Composables**: Built with Vue 3 `<script setup lang="ts">`, `@vueuse/core`, custom composables (`useAuth`, `useCustomToast`), and reactive stores.
+- **Code Quality**: Every frontend change MUST pass `bun run lint`, `bun run typecheck`, and `bun run build` cleanly with 0 errors.
 
 ---
 
