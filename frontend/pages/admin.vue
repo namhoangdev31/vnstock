@@ -3,12 +3,19 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <UIcon name="i-heroicons-users" class="w-7 h-7 text-amber-400" />
-          Quản lý người dùng hệ thống (Admin)
+        <div class="flex items-center gap-2 text-xs font-mono text-slate-500 mb-1">
+          <span>SECURITY & ACCESS</span>
+          <span>/</span>
+          <span class="text-amber-400">ROLE-BASED ACCESS CONTROL (RBAC)</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+            <UIcon name="i-heroicons-shield-check" class="w-4 h-4 text-amber-400" />
+          </div>
+          Quản trị tài khoản & Phân quyền
         </h1>
-        <p class="text-xs sm:text-sm text-slate-400 mt-1">
-          Quản lý danh sách tài khoản, phân quyền quản trị viên và trạng thái kích hoạt
+        <p class="text-xs text-slate-400 mt-1">
+          Quản lý danh sách tài khoản định lượng, phân bổ quyền Superuser và kiểm soát trạng thái đăng nhập
         </p>
       </div>
 
@@ -18,10 +25,11 @@
           variant="solid"
           size="sm"
           :loading="isLoading"
+          class="font-mono text-xs"
           @click="loadUsers"
         >
           <template #leading>
-            <UIcon name="i-heroicons-arrow-path" :class="{ 'animate-spin': isLoading }" class="w-4 h-4" />
+            <UIcon name="i-heroicons-arrow-path" :class="{ 'animate-spin': isLoading }" class="w-3.5 h-3.5" />
           </template>
           Làm mới
         </UButton>
@@ -30,6 +38,7 @@
           color="amber"
           size="sm"
           icon="i-heroicons-user-plus"
+          class="font-mono text-xs shadow-lg shadow-amber-500/10"
           @click="openAddModal"
         >
           Thêm người dùng
@@ -38,86 +47,99 @@
     </div>
 
     <!-- Users Table Card -->
-    <div class="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl">
+    <div class="rounded-xl border border-white/[0.08] bg-[#090d16] overflow-hidden shadow-2xl">
+      <div class="p-3.5 bg-[#0b101c] border-b border-white/[0.06] flex items-center justify-between">
+        <div class="flex items-center gap-2 font-mono text-xs text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span>DANH SÁCH NGƯỜI DÙNG HỆ THỐNG</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06]">
+            {{ users.length }} accounts
+          </span>
+        </div>
+        <div class="text-[11px] font-mono text-slate-400">
+          JWT AUTH // SCOPE: ADMIN
+        </div>
+      </div>
+
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-slate-950 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
+          <thead class="bg-[#070a11] text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-white/[0.06]">
             <tr>
-              <th class="py-3 px-4">Họ và tên</th>
-              <th class="py-3 px-4">Email</th>
-              <th class="py-3 px-4 w-32 text-center">Vai trò</th>
-              <th class="py-3 px-4 w-32 text-center">Trạng thái</th>
-              <th class="py-3 px-4 w-28 text-right">Thao tác</th>
+              <th class="py-3 px-4">HỌ VÀ TÊN</th>
+              <th class="py-3 px-4">ĐỊA CHỈ EMAIL</th>
+              <th class="py-3 px-4 w-32 text-center">VAI TRÒ (ROLE)</th>
+              <th class="py-3 px-4 w-32 text-center">TRẠNG THÁI</th>
+              <th class="py-3 px-4 w-28 text-right">THAO TÁC</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-800/60">
+          <tbody class="divide-y divide-white/[0.04]">
             <tr v-if="isLoading">
-              <td colspan="5" class="py-12 text-center text-slate-400">
-                <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin mx-auto text-amber-400 mb-2" />
-                <p>Đang tải danh sách người dùng...</p>
+              <td colspan="5" class="py-14 text-center text-slate-400">
+                <UIcon name="i-heroicons-arrow-path" class="w-7 h-7 animate-spin mx-auto text-amber-400 mb-2" />
+                <p class="font-mono text-xs text-slate-400">Đang truy vấn danh sách tài khoản từ cơ sở dữ liệu...</p>
               </td>
             </tr>
 
             <tr
               v-for="u in users"
               :key="u.id"
-              class="hover:bg-slate-800/40 transition-colors"
+              class="hover:bg-white/[0.02] transition-colors group"
             >
               <td class="py-3 px-4 font-semibold text-white flex items-center gap-2">
-                <span>{{ u.full_name || '—' }}</span>
+                <span>{{ u.full_name || 'N/A' }}</span>
                 <span
                   v-if="u.id === currentUser?.id"
                   class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                 >
-                  Tôi
+                  Current
                 </span>
               </td>
-              <td class="py-3 px-4 text-slate-300 font-mono">
+              <td class="py-3 px-4 text-slate-300 font-mono text-[11px]">
                 {{ u.email }}
               </td>
               <td class="py-3 px-4 text-center">
                 <span
                   v-if="u.is_superuser"
-                  class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase"
+                  class="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase"
                 >
                   Superuser
                 </span>
                 <span
                   v-else
-                  class="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400"
+                  class="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-white/[0.04] text-slate-400 border border-white/[0.06]"
                 >
-                  User
+                  Quant User
                 </span>
               </td>
               <td class="py-3 px-4 text-center">
                 <span
                   v-if="u.is_active"
-                  class="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-semibold"
+                  class="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 font-medium"
                 >
-                  <UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
-                  Hoạt động
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  Active
                 </span>
                 <span
                   v-else
-                  class="inline-flex items-center gap-1 text-[11px] text-rose-400 font-semibold"
+                  class="inline-flex items-center gap-1.5 text-[11px] font-mono text-rose-400 font-medium"
                 >
-                  <UIcon name="i-heroicons-x-circle" class="w-4 h-4" />
-                  Đã khóa
+                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  Locked
                 </span>
               </td>
               <td class="py-3 px-4 text-right space-x-1">
                 <button
                   type="button"
-                  class="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded transition-colors"
-                  title="Chỉnh sửa"
+                  class="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded transition-colors"
+                  title="Chỉnh sửa tài khoản"
                   @click="openEditModal(u)"
                 >
                   <UIcon name="i-heroicons-pencil-square" class="w-4 h-4" />
                 </button>
                 <button
                   type="button"
-                  class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Xóa"
+                  class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                  title="Xóa tài khoản"
                   :disabled="u.id === currentUser?.id"
                   @click="confirmDelete(u)"
                 >
@@ -132,55 +154,58 @@
 
     <!-- Add / Edit User Modal -->
     <UModal v-model="modalOpen">
-      <div class="p-6 bg-slate-900 text-slate-100 rounded-xl space-y-4">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <UIcon :name="isEditing ? 'i-heroicons-pencil-square' : 'i-heroicons-user-plus'" class="w-5 h-5 text-amber-400" />
-          {{ isEditing ? 'Chỉnh sửa Người dùng' : 'Thêm Người dùng mới' }}
-        </h3>
+      <div class="p-6 bg-[#090d16] text-slate-100 rounded-xl border border-white/[0.1] space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
+            <UIcon :name="isEditing ? 'i-heroicons-pencil-square' : 'i-heroicons-user-plus'" class="w-4 h-4 text-amber-400" />
+            {{ isEditing ? 'CẬP NHẬT THÔNG TIN NGƯỜI DÙNG' : 'TẠO TÀI KHOẢN MỚI' }}
+          </h3>
+          <span class="text-[10px] font-mono text-slate-500">ID: {{ currentUserId || 'AUTO_GEN' }}</span>
+        </div>
 
         <form class="space-y-4" @submit.prevent="saveUser">
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Email *</label>
-            <UInput v-model="form.email" type="email" placeholder="user@example.com" required size="md" class="w-full" />
+            <label class="block text-xs font-mono text-slate-300 mb-1.5">Địa chỉ Email *</label>
+            <UInput v-model="form.email" type="email" placeholder="user@example.com" required size="md" class="w-full font-mono text-xs" />
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Họ và tên</label>
-            <UInput v-model="form.full_name" placeholder="Nguyễn Văn A" size="md" class="w-full" />
+            <label class="block text-xs font-mono text-slate-300 mb-1.5">Họ và tên</label>
+            <UInput v-model="form.full_name" placeholder="Nguyễn Văn A" size="md" class="w-full text-xs" />
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">
-              {{ isEditing ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu ban đầu *' }}
+            <label class="block text-xs font-mono text-slate-300 mb-1.5">
+              {{ isEditing ? 'Mật khẩu mới (để trống nếu giữ nguyên)' : 'Mật khẩu khởi tạo *' }}
             </label>
             <UInput
               v-model="form.password"
               type="password"
-              placeholder="Mật khẩu"
+              placeholder="Mật khẩu tối thiểu 8 ký tự"
               :required="!isEditing"
               minlength="8"
               size="md"
-              class="w-full"
+              class="w-full font-mono text-xs"
             />
           </div>
 
-          <div class="space-y-2 pt-1">
-            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-              <input v-model="form.is_superuser" type="checkbox" class="rounded accent-amber-500">
-              <span>Quyền Quản trị viên (Superuser)</span>
+          <div class="space-y-2 pt-2 border-t border-white/[0.06]">
+            <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+              <input v-model="form.is_superuser" type="checkbox" class="rounded accent-amber-500 bg-slate-900 border-slate-700">
+              <span class="font-mono">Quyền Quản trị viên (Superuser Flag)</span>
             </label>
 
-            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-              <input v-model="form.is_active" type="checkbox" class="rounded accent-emerald-500">
-              <span>Kích hoạt tài khoản (Active)</span>
+            <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+              <input v-model="form.is_active" type="checkbox" class="rounded accent-emerald-500 bg-slate-900 border-slate-700">
+              <span class="font-mono">Kích hoạt tài khoản (Active Status)</span>
             </label>
           </div>
 
-          <div class="flex items-center justify-end gap-2 pt-2">
-            <UButton color="gray" variant="ghost" @click="modalOpen = false">
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
+            <UButton color="gray" variant="ghost" size="sm" class="font-mono text-xs" @click="modalOpen = false">
               Hủy
             </UButton>
-            <UButton type="submit" color="amber" :loading="isSaving">
+            <UButton type="submit" color="amber" size="sm" :loading="isSaving" class="font-mono text-xs">
               {{ isEditing ? 'Lưu thay đổi' : 'Tạo tài khoản' }}
             </UButton>
           </div>
@@ -190,19 +215,19 @@
 
     <!-- Delete Confirmation Modal -->
     <UModal v-model="deleteModalOpen">
-      <div class="p-6 bg-slate-900 text-slate-100 rounded-xl space-y-4">
-        <h3 class="text-base font-bold text-rose-400 flex items-center gap-2">
-          <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-rose-400" />
-          Xác nhận xóa tài khoản
+      <div class="p-6 bg-[#090d16] text-slate-100 rounded-xl border border-rose-500/20 space-y-4 shadow-2xl">
+        <h3 class="text-sm font-bold text-rose-400 flex items-center gap-2 font-mono">
+          <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 text-rose-400" />
+          XÁC NHẬN XÓA TÀI KHOẢN
         </h3>
-        <p class="text-xs text-slate-300">
-          Bạn có chắc chắn muốn xóa tài khoản "<span class="font-bold text-white">{{ userToDelete?.email }}</span>"? Hành động này không thể hoàn tác.
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản "<span class="font-bold text-white font-mono">{{ userToDelete?.email }}</span>"? Toàn bộ dữ liệu gắn liền với người dùng này sẽ bị hủy bỏ.
         </p>
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <UButton color="gray" variant="ghost" @click="deleteModalOpen = false">
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
+          <UButton color="gray" variant="ghost" size="sm" class="font-mono text-xs" @click="deleteModalOpen = false">
             Hủy
           </UButton>
-          <UButton color="red" :loading="isDeleting" @click="handleDelete">
+          <UButton color="red" size="sm" :loading="isDeleting" class="font-mono text-xs" @click="handleDelete">
             Xác nhận xóa
           </UButton>
         </div>

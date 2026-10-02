@@ -52,7 +52,7 @@
 
     <!-- Tab 3: Interactive Tri-Engine Simulator -->
     <div v-else-if="activeTab === 'simulator'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-6">
+      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -295,7 +295,7 @@ const finalSignalClass = computed(() => {
 const ensembleBannerClass = computed(() => {
   if (finalScore.value >= 25) return "bg-emerald-500/10 border-emerald-500/30"
   if (finalScore.value <= -25) return "bg-rose-500/10 border-rose-500/30"
-  return "bg-slate-900 border-slate-800"
+  return "bg-[#0d1322] border-white/[0.08]"
 })
 
 const testCases = [

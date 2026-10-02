@@ -52,7 +52,7 @@
 
     <!-- Tab 3: Interactive Session Timeline -->
     <div v-else-if="activeTab === 'timeline'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-6">
+      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
         <div>
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <UIcon name="i-heroicons-play-circle" class="w-5 h-5 text-indigo-400" />

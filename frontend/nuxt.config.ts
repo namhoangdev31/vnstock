@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   telemetry: false,
   ssr: false, // SPA mode for seamless FastAPI static hosting & client-side rendering
   modules: ["@nuxt/ui", "@vueuse/nuxt"],
+  css: ["~/assets/css/main.css"],
   app: {
     head: {
       title: "Vnstock Quants & Predictive Analytics Engine",
@@ -21,6 +22,12 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: "icon", type: "image/png", href: "/assets/images/favicon.png" },
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        {
+          rel: "preconnect",
+          href: "https://fonts.gstatic.com",
+          crossorigin: "",
+        },
       ],
     },
   },

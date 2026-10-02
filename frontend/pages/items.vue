@@ -3,12 +3,19 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <UIcon name="i-heroicons-folder" class="w-7 h-7 text-emerald-400" />
+        <div class="flex items-center gap-2 text-xs font-mono text-slate-500 mb-1">
+          <span>WORKSPACE</span>
+          <span>/</span>
+          <span class="text-emerald-400">ITEMS CATALOG</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+            <UIcon name="i-heroicons-folder" class="w-4 h-4 text-emerald-400" />
+          </div>
           Quản lý danh mục Items
         </h1>
-        <p class="text-xs sm:text-sm text-slate-400 mt-1">
-          Danh sách các hạng mục dữ liệu và cấu hình danh mục nghiên cứu
+        <p class="text-xs text-slate-400 mt-1">
+          Danh mục định danh dữ liệu, cấu hình pipeline và tham số nghiên cứu định lượng
         </p>
       </div>
 
@@ -18,10 +25,11 @@
           variant="solid"
           size="sm"
           :loading="isLoading"
+          class="font-mono text-xs"
           @click="loadItems"
         >
           <template #leading>
-            <UIcon name="i-heroicons-arrow-path" :class="{ 'animate-spin': isLoading }" class="w-4 h-4" />
+            <UIcon name="i-heroicons-arrow-path" :class="{ 'animate-spin': isLoading }" class="w-3.5 h-3.5" />
           </template>
           Làm mới
         </UButton>
@@ -30,6 +38,7 @@
           color="emerald"
           size="sm"
           icon="i-heroicons-plus"
+          class="font-mono text-xs shadow-lg shadow-emerald-500/10"
           @click="openAddModal"
         >
           Thêm Item
@@ -38,51 +47,66 @@
     </div>
 
     <!-- Items Table Card -->
-    <div class="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl">
+    <div class="rounded-xl border border-white/[0.08] bg-[#090d16] overflow-hidden shadow-2xl">
+      <div class="p-3.5 bg-[#0b101c] border-b border-white/[0.06] flex items-center justify-between">
+        <div class="flex items-center gap-2 font-mono text-xs text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>BẢNG DANH MỤC THỰC THỂ</span>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06]">
+            {{ items.length }} records
+          </span>
+        </div>
+        <div class="text-[11px] font-mono text-slate-400">
+          ISO-8601 // POSTGRESQL TIER
+        </div>
+      </div>
+
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-slate-950 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
+          <thead class="bg-[#070a11] text-slate-400 uppercase font-mono text-[10px] tracking-wider border-b border-white/[0.06]">
             <tr>
-              <th class="py-3 px-4 w-44">ID</th>
-              <th class="py-3 px-4">Tiêu đề (Title)</th>
-              <th class="py-3 px-4">Mô tả (Description)</th>
-              <th class="py-3 px-4 w-28 text-right">Thao tác</th>
+              <th class="py-3 px-4 w-48">MÃ ĐỊNH DANH (UUID)</th>
+              <th class="py-3 px-4">TIÊU ĐỀ (TITLE)</th>
+              <th class="py-3 px-4">MÔ TẢ CHI TIẾT</th>
+              <th class="py-3 px-4 w-28 text-right">THAO TÁC</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-800/60">
+          <tbody class="divide-y divide-white/[0.04]">
             <tr v-if="isLoading">
-              <td colspan="4" class="py-12 text-center text-slate-400">
-                <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin mx-auto text-emerald-400 mb-2" />
-                <p>Đang tải danh sách items...</p>
+              <td colspan="4" class="py-14 text-center text-slate-400">
+                <UIcon name="i-heroicons-arrow-path" class="w-7 h-7 animate-spin mx-auto text-emerald-400 mb-2" />
+                <p class="font-mono text-xs text-slate-400">Đang đồng bộ danh sách items từ server...</p>
               </td>
             </tr>
 
             <tr v-else-if="items.length === 0">
-              <td colspan="4" class="py-12 text-center text-slate-400">
+              <td colspan="4" class="py-14 text-center text-slate-400">
                 <UIcon name="i-heroicons-inbox" class="w-8 h-8 mx-auto text-slate-600 mb-2" />
-                <p class="font-medium text-slate-300">Chưa có item nào</p>
-                <p class="text-xs text-slate-500 mt-1">Nhấn "Thêm Item" để bắt đầu tạo mới.</p>
+                <p class="font-mono text-xs text-slate-300">Chưa có item nào được lưu trữ</p>
+                <p class="text-[11px] text-slate-500 mt-1">Nhấn "Thêm Item" ở góc trên để tạo bản ghi đầu tiên.</p>
               </td>
             </tr>
 
             <tr
               v-for="item in items"
               :key="item.id"
-              class="hover:bg-slate-800/40 transition-colors"
+              class="hover:bg-white/[0.02] transition-colors group"
             >
-              <td class="py-3 px-4 font-mono text-slate-400 text-[11px] truncate max-w-[160px]">
-                {{ item.id }}
+              <td class="py-3 px-4 font-mono text-slate-400 text-[11px] truncate max-w-[180px]">
+                <span class="px-1.5 py-0.5 rounded bg-white/[0.03] border border-white/[0.06] text-slate-300">
+                  {{ item.id }}
+                </span>
               </td>
               <td class="py-3 px-4 font-semibold text-white">
                 {{ item.title }}
               </td>
-              <td class="py-3 px-4 text-slate-300">
-                {{ item.description || '—' }}
+              <td class="py-3 px-4 text-slate-400">
+                {{ item.description || 'N/A' }}
               </td>
               <td class="py-3 px-4 text-right space-x-1">
                 <button
                   type="button"
-                  class="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors"
+                  class="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors"
                   title="Chỉnh sửa"
                   @click="openEditModal(item)"
                 >
@@ -90,7 +114,7 @@
                 </button>
                 <button
                   type="button"
-                  class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded transition-colors"
+                  class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
                   title="Xóa"
                   @click="confirmDelete(item)"
                 >
@@ -105,28 +129,31 @@
 
     <!-- Add / Edit Modal -->
     <UModal v-model="modalOpen">
-      <div class="p-6 bg-slate-900 text-slate-100 rounded-xl space-y-4">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <UIcon :name="isEditing ? 'i-heroicons-pencil-square' : 'i-heroicons-plus-circle'" class="w-5 h-5 text-emerald-400" />
-          {{ isEditing ? 'Chỉnh sửa Item' : 'Thêm Item mới' }}
-        </h3>
+      <div class="p-6 bg-[#090d16] text-slate-100 rounded-xl border border-white/[0.1] space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
+            <UIcon :name="isEditing ? 'i-heroicons-pencil-square' : 'i-heroicons-plus-circle'" class="w-4 h-4 text-emerald-400" />
+            {{ isEditing ? 'CẬP NHẬT ITEM' : 'KHỞI TẠO ITEM MỚI' }}
+          </h3>
+          <span class="text-[10px] font-mono text-slate-500">ID: {{ currentItemId || 'AUTO_GEN' }}</span>
+        </div>
 
         <form class="space-y-4" @submit.prevent="saveItem">
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Tiêu đề (Title) *</label>
-            <UInput v-model="form.title" placeholder="Nhập tiêu đề item" required size="md" class="w-full" />
+            <label class="block text-xs font-mono text-slate-300 mb-1.5">Tiêu đề (Title) *</label>
+            <UInput v-model="form.title" placeholder="Nhập tiêu đề item" required size="md" class="w-full font-mono text-xs" />
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">Mô tả (Description)</label>
-            <UTextarea v-model="form.description" placeholder="Nhập mô tả chi tiết..." :rows="3" class="w-full" />
+            <label class="block text-xs font-mono text-slate-300 mb-1.5">Mô tả (Description)</label>
+            <UTextarea v-model="form.description" placeholder="Nhập mô tả chi tiết danh mục..." :rows="3" class="w-full text-xs" />
           </div>
 
-          <div class="flex items-center justify-end gap-2 pt-2">
-            <UButton color="gray" variant="ghost" @click="modalOpen = false">
-              Hủy
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
+            <UButton color="gray" variant="ghost" size="sm" class="font-mono text-xs" @click="modalOpen = false">
+              Hủy bỏ
             </UButton>
-            <UButton type="submit" color="emerald" :loading="isSaving">
+            <UButton type="submit" color="emerald" size="sm" :loading="isSaving" class="font-mono text-xs">
               {{ isEditing ? 'Lưu thay đổi' : 'Thêm mới' }}
             </UButton>
           </div>
@@ -136,19 +163,19 @@
 
     <!-- Delete Confirmation Modal -->
     <UModal v-model="deleteModalOpen">
-      <div class="p-6 bg-slate-900 text-slate-100 rounded-xl space-y-4">
-        <h3 class="text-base font-bold text-rose-400 flex items-center gap-2">
-          <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-rose-400" />
-          Xác nhận xóa Item
+      <div class="p-6 bg-[#090d16] text-slate-100 rounded-xl border border-rose-500/20 space-y-4 shadow-2xl">
+        <h3 class="text-sm font-bold text-rose-400 flex items-center gap-2 font-mono">
+          <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 text-rose-400" />
+          XÁC NHẬN XÓA ITEM
         </h3>
-        <p class="text-xs text-slate-300">
-          Bạn có chắc chắn muốn xóa item "<span class="font-bold text-white">{{ itemToDelete?.title }}</span>"? Thao tác này không thể hoàn tác.
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Bạn có chắc chắn muốn xóa vĩnh viễn item "<span class="font-bold text-white font-mono">{{ itemToDelete?.title }}</span>"? Thao tác này không thể hoàn tác.
         </p>
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <UButton color="gray" variant="ghost" @click="deleteModalOpen = false">
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.06]">
+          <UButton color="gray" variant="ghost" size="sm" class="font-mono text-xs" @click="deleteModalOpen = false">
             Hủy
           </UButton>
-          <UButton color="red" :loading="isDeleting" @click="handleDelete">
+          <UButton color="red" size="sm" :loading="isDeleting" class="font-mono text-xs" @click="handleDelete">
             Xác nhận xóa
           </UButton>
         </div>

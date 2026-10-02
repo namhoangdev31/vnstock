@@ -52,7 +52,7 @@
 
     <!-- Tab 3: Cockpit Preview -->
     <div v-else-if="activeTab === 'cockpit'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-6">
+      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
         <div>
           <h3 class="text-base font-bold text-white flex items-center gap-2">
             <UIcon name="i-heroicons-computer-desktop" class="w-5 h-5 text-cyan-400" />
@@ -65,54 +65,54 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Live Depth & Basis -->
-          <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-4">
+          <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-4">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-300">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono text-[10px]">
                 Độ sâu sổ lệnh VN30F1M
               </span>
               <span class="text-xs font-mono text-emerald-400 animate-pulse">● LIVE</span>
             </div>
 
             <div class="space-y-2 font-mono text-xs">
-              <div class="flex justify-between py-1 border-b border-slate-800 text-slate-400">
+              <div class="flex justify-between py-1 border-b border-white/[0.06] text-slate-400 text-[11px]">
                 <span>Dư Mua (Bids)</span>
                 <span>Giá Khớp</span>
                 <span>Dư Bán (Asks)</span>
               </div>
               <div class="flex justify-between py-1 text-slate-300">
                 <span class="text-emerald-400 font-bold">120 @ 1,328.0</span>
-                <span class="text-white font-bold bg-slate-800 px-1 rounded">1,328.2</span>
+                <span class="text-white font-bold bg-white/[0.06] px-1 rounded">1,328.2</span>
                 <span class="text-rose-400 font-bold">145 @ 1,328.5</span>
               </div>
               <div class="flex justify-between py-1 text-slate-400">
                 <span class="text-emerald-400/80">350 @ 1,327.8</span>
-                <span>—</span>
+                <span class="text-slate-600">/</span>
                 <span class="text-rose-400/80">420 @ 1,329.0</span>
               </div>
               <div class="flex justify-between py-1 text-slate-400">
                 <span class="text-emerald-400/60">800 @ 1,327.5</span>
-                <span>—</span>
+                <span class="text-slate-600">/</span>
                 <span class="text-rose-400/60">650 @ 1,329.5</span>
               </div>
             </div>
 
-            <div class="pt-3 border-t border-slate-800 text-xs flex justify-between">
-              <span class="text-slate-400">Basis Spread (F1M - VN30):</span>
+            <div class="pt-3 border-t border-white/[0.06] text-xs flex justify-between">
+              <span class="text-slate-400 font-mono text-[11px]">Basis Spread (F1M - VN30):</span>
               <span class="font-mono font-bold text-emerald-400">+2.4 điểm</span>
             </div>
           </div>
 
           <!-- Multi-Horizon Alpha Baskets -->
-          <div class="lg:col-span-2 p-5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-4">
+          <div class="lg:col-span-2 p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-4">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-300">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono text-[10px]">
                 Rổ cổ phiếu Alpha Khuyến nghị (T+2 Compliant)
               </span>
               <div class="flex gap-1 text-xs">
                 <button
                   v-for="h in ['Tuần', 'Tháng', 'Quý']"
                   :key="h"
-                  class="px-2 py-0.5 rounded font-mono text-[11px]"
+                  class="px-2 py-0.5 rounded font-mono text-[11px] transition-colors"
                   :class="selectedHorizon === h ? 'bg-cyan-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
                   @click="selectedHorizon = h"
                 >
@@ -125,7 +125,7 @@
               <div
                 v-for="stock in alphaStocks"
                 :key="stock.ticker"
-                class="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1"
+                class="p-3 rounded-lg bg-[#090d16] border border-white/[0.08] space-y-1"
               >
                 <div class="flex justify-between items-center">
                   <span class="font-bold text-white text-sm">{{ stock.ticker }}</span>

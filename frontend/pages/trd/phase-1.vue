@@ -52,10 +52,10 @@
 
     <!-- Tab 3: Schema Playground -->
     <div v-else-if="activeTab === 'schema'" class="space-y-4">
-      <div class="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <UIcon name="i-heroicons-code-bracket" class="w-5 h-5 text-emerald-400" />
-          Mô hình cơ sở dữ liệu quan hệ (PostgreSQL SQLModel)
+      <div class="p-5 rounded-xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2 font-mono">
+          <UIcon name="i-heroicons-code-bracket" class="w-4 h-4 text-emerald-400" />
+          MÔ HÌNH CƠ SỞ DỮ LIỆU QUAN HỆ (POSTGRESQL SQLMODEL)
         </h3>
         <p class="text-xs text-slate-400">
           Các thực thể đã được migrate vào PostgreSQL đảm bảo tính độc lập giữa dữ liệu thị trường và paper trading sandbox:
@@ -66,7 +66,7 @@
             v-for="s in schemas"
             :key="s.name"
             class="p-4 rounded-lg border transition-all cursor-pointer"
-            :class="selectedSchema === s.name ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'"
+            :class="selectedSchema === s.name ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300' : 'bg-[#0d1322] border-white/[0.06] text-slate-400 hover:border-white/[0.12]'"
             @click="selectedSchema = s.name"
           >
             <div class="font-mono font-bold text-xs text-white">{{ s.table }}</div>
@@ -74,7 +74,7 @@
           </div>
         </div>
 
-        <div v-if="currentSchema" class="mt-4 p-4 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs overflow-x-auto text-emerald-400">
+        <div v-if="currentSchema" class="mt-4 p-4 rounded-lg bg-[#070a11] border border-white/[0.06] font-mono text-xs overflow-x-auto text-emerald-400">
           <pre>{{ currentSchema.code }}</pre>
         </div>
       </div>

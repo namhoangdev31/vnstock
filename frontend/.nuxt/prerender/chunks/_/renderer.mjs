@@ -59,7 +59,7 @@ function createHead(options = {}) {
 
 const NUXT_RUNTIME_PAYLOAD_EXTRACTION = false;
 
-const appHead = {"meta":[{"charset":"utf-8"},{"name":"viewport","content":"width=device-width, initial-scale=1"},{"name":"description","content":"24/7 Continuous Quantitative Research, Predictive Analytics, and Simulation Engine for VN30F1M Derivatives & Equities"}],"link":[{"rel":"icon","type":"image/png","href":"/assets/images/favicon.png"}],"style":[],"script":[],"noscript":[],"title":"Vnstock Quants & Predictive Analytics Engine"};
+const appHead = {"meta":[{"charset":"utf-8"},{"name":"viewport","content":"width=device-width, initial-scale=1"},{"name":"description","content":"24/7 Continuous Quantitative Research, Predictive Analytics, and Simulation Engine for VN30F1M Derivatives & Equities"}],"link":[{"rel":"icon","type":"image/png","href":"/assets/images/favicon.png"},{"rel":"preconnect","href":"https://fonts.googleapis.com"},{"rel":"preconnect","href":"https://fonts.gstatic.com","crossorigin":""}],"style":[],"script":[],"noscript":[],"title":"Vnstock Quants & Predictive Analytics Engine"};
 
 const appRootTag = "div";
 

@@ -43,25 +43,25 @@
     </div>
 
     <!-- Tab 1: Profile Information -->
-    <div v-if="activeTab === 'profile'" class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl space-y-4">
+    <div v-if="activeTab === 'profile'" class="p-6 rounded-2xl bg-[#090d16]/80 border border-white/[0.08] shadow-xl space-y-4">
       <div>
-        <h3 class="text-sm font-bold text-white">Thông tin cơ bản</h3>
+        <h3 class="text-sm font-bold text-white font-mono">Thông tin cơ bản</h3>
         <p class="text-xs text-slate-400">Cập nhật họ tên và địa chỉ email đăng nhập</p>
       </div>
 
-      <form class="space-y-4 max-w-md" @submit.prevent="updateProfile">
+      <form class="space-y-4 max-w-md font-mono" @submit.prevent="updateProfile">
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Họ và tên</label>
-          <UInput v-model="profileForm.full_name" size="md" class="w-full" />
+          <label class="block text-xs font-medium text-slate-300 mb-1 font-sans">Họ và tên</label>
+          <UInput v-model="profileForm.full_name" size="md" class="w-full text-xs font-mono" />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Email</label>
-          <UInput v-model="profileForm.email" type="email" required size="md" class="w-full" />
+          <label class="block text-xs font-medium text-slate-300 mb-1 font-sans">Email</label>
+          <UInput v-model="profileForm.email" type="email" required size="md" class="w-full text-xs font-mono" />
         </div>
 
         <div class="pt-2">
-          <UButton type="submit" color="emerald" :loading="isSavingProfile">
+          <UButton type="submit" color="emerald" :loading="isSavingProfile" class="text-xs font-mono font-semibold">
             Lưu thay đổi
           </UButton>
         </div>
@@ -69,49 +69,49 @@
     </div>
 
     <!-- Tab 2: Change Password -->
-    <div v-else-if="activeTab === 'password'" class="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl space-y-4">
+    <div v-else-if="activeTab === 'password'" class="p-6 rounded-2xl bg-[#090d16]/80 border border-white/[0.08] shadow-xl space-y-4">
       <div>
-        <h3 class="text-sm font-bold text-white">Đổi mật khẩu</h3>
+        <h3 class="text-sm font-bold text-white font-mono">Đổi mật khẩu</h3>
         <p class="text-xs text-slate-400">Đảm bảo mật khẩu mới có ít nhất 8 ký tự và độ phức tạp cao</p>
       </div>
 
-      <form class="space-y-4 max-w-md" @submit.prevent="changePassword">
+      <form class="space-y-4 max-w-md font-mono" @submit.prevent="changePassword">
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Mật khẩu hiện tại *</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1 font-sans">Mật khẩu hiện tại *</label>
           <UInput
             v-model="passwordForm.current_password"
             type="password"
             required
             size="md"
-            class="w-full"
+            class="w-full text-xs font-mono"
           />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Mật khẩu mới *</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1 font-sans">Mật khẩu mới *</label>
           <UInput
             v-model="passwordForm.new_password"
             type="password"
             required
             minlength="8"
             size="md"
-            class="w-full"
+            class="w-full text-xs font-mono"
           />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Xác nhận mật khẩu mới *</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1 font-sans">Xác nhận mật khẩu mới *</label>
           <UInput
             v-model="passwordForm.confirm_password"
             type="password"
             required
             minlength="8"
             size="md"
-            class="w-full"
+            class="w-full text-xs font-mono"
           />
         </div>
 
-        <div v-if="passwordMismatch" class="text-xs text-rose-400">
+        <div v-if="passwordMismatch" class="text-xs text-rose-400 font-mono">
           Mật khẩu mới xác nhận không khớp!
         </div>
 
@@ -121,6 +121,7 @@
             color="emerald"
             :loading="isSavingPassword"
             :disabled="passwordMismatch || !passwordForm.new_password"
+            class="text-xs font-mono font-semibold"
           >
             Cập nhật mật khẩu
           </UButton>
@@ -129,35 +130,35 @@
     </div>
 
     <!-- Tab 3: Danger Zone -->
-    <div v-else-if="activeTab === 'danger'" class="p-6 rounded-2xl bg-slate-900/60 border border-rose-900/40 shadow-xl space-y-4">
+    <div v-else-if="activeTab === 'danger'" class="p-6 rounded-2xl bg-[#090d16]/80 border border-rose-500/20 shadow-xl space-y-4">
       <div>
-        <h3 class="text-sm font-bold text-rose-400 flex items-center gap-2">
+        <h3 class="text-sm font-bold text-rose-400 flex items-center gap-2 font-mono">
           <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-rose-400" />
           Xóa tài khoản vĩnh viễn
         </h3>
-        <p class="text-xs text-slate-400">
+        <p class="text-xs text-slate-400 leading-relaxed font-sans">
           Khi bạn xóa tài khoản, tất cả dữ liệu danh mục, mô phỏng cá nhân và thiết lập sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
         </p>
       </div>
 
       <div class="pt-2">
-        <UButton color="red" @click="deleteAccountModal = true">
+        <UButton color="red" class="text-xs font-mono" @click="deleteAccountModal = true">
           Xóa tài khoản của tôi
         </UButton>
       </div>
 
       <!-- Delete Account Confirmation Modal -->
       <UModal v-model="deleteAccountModal">
-        <div class="p-6 bg-slate-900 text-slate-100 rounded-xl space-y-4">
-          <h3 class="text-base font-bold text-rose-400">Bạn có chắc chắn muốn xóa tài khoản?</h3>
+        <div class="p-6 bg-[#090d16] text-slate-100 rounded-2xl border border-white/[0.08] space-y-4">
+          <h3 class="text-base font-bold text-rose-400 font-mono">Bạn có chắc chắn muốn xóa tài khoản?</h3>
           <p class="text-xs text-slate-300">
             Hành động này sẽ hủy kích hoạt tài khoản của bạn ngay lập tức. Bạn sẽ bị đăng xuất và không thể truy cập lại.
           </p>
           <div class="flex items-center justify-end gap-2 pt-2">
-            <UButton color="gray" variant="ghost" @click="deleteAccountModal = false">
+            <UButton color="gray" variant="ghost" class="text-xs font-mono" @click="deleteAccountModal = false">
               Hủy
             </UButton>
-            <UButton color="red" :loading="isDeletingAccount" @click="handleDeleteAccount">
+            <UButton color="red" :loading="isDeletingAccount" class="text-xs font-mono" @click="handleDeleteAccount">
               Xác nhận xóa tài khoản
             </UButton>
           </div>

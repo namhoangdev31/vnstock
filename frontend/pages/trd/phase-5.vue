@@ -52,7 +52,7 @@
 
     <!-- Tab 3: Interactive Ledger Simulator -->
     <div v-else-if="activeTab === 'ledger'" class="space-y-6">
-      <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-6">
+      <div class="p-6 rounded-2xl bg-[#090d16] border border-white/[0.08] shadow-2xl space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -75,9 +75,9 @@
         </div>
 
         <!-- Ledger Table -->
-        <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
+        <div class="overflow-x-auto rounded-xl border border-white/[0.06] bg-[#070a11]">
           <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-slate-950 text-slate-400 uppercase text-[11px] border-b border-slate-800">
+            <thead class="bg-[#0b101c] text-slate-400 uppercase text-[10px] tracking-wider border-b border-white/[0.06]">
               <tr>
                 <th class="py-3 px-4">Mã / Tài sản</th>
                 <th class="py-3 px-4">Khung (Horizon)</th>
@@ -88,15 +88,15 @@
                 <th class="py-3 px-4 text-center">Trạng thái</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-800/60">
+            <tbody class="divide-y divide-white/[0.04]">
               <tr
                 v-for="item in journalEntries"
                 :key="item.id"
-                class="hover:bg-slate-800/30 transition-colors"
+                class="hover:bg-white/[0.02] transition-colors"
               >
                 <td class="py-3 px-4 font-bold text-white">{{ item.symbol }}</td>
                 <td class="py-3 px-4">
-                  <span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300">
+                  <span class="px-2 py-0.5 rounded text-[10px] bg-white/[0.04] border border-white/[0.06] text-slate-300">
                     {{ item.horizon }}
                   </span>
                 </td>
@@ -105,10 +105,10 @@
                   {{ item.prediction }}
                 </td>
                 <td class="py-3 px-4 text-slate-200">
-                  {{ item.actual || '— (Đang chờ phiên)' }}
+                  {{ item.actual || 'Đang chờ phiên đối soát' }}
                 </td>
                 <td class="py-3 px-4 text-slate-300">
-                  {{ item.mae !== null ? item.mae.toFixed(1) + ' pts' : '—' }}
+                  {{ item.mae !== null ? item.mae.toFixed(1) + ' pts' : 'N/A' }}
                 </td>
                 <td class="py-3 px-4 text-center">
                   <span
@@ -124,10 +124,10 @@
         </div>
 
         <!-- Governed Feedback Loop Explanation -->
-        <div class="p-5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2 text-xs">
-          <h4 class="font-bold text-white flex items-center gap-1.5">
+        <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-2 text-xs">
+          <h4 class="font-bold text-white flex items-center gap-1.5 font-mono">
             <UIcon name="i-heroicons-arrow-path-rounded-square" class="w-4 h-4 text-rose-400" />
-            Cơ chế Tự học có Kiểm soát (Governed Recalibration)
+            CƠ CHẾ TỰ HỌC CÓ KIỂM SOÁT (GOVERNED RECALIBRATION)
           </h4>
           <p class="text-slate-400 leading-relaxed">
             Hệ thống tính toán Directional Accuracy và Brier Score trên toàn bộ lịch sử sổ nhật ký. Khi tỷ lệ dự đoán vượt ngưỡng kiểm thử Walk-Forward, phiên bản model mới (Model Version Snapshot) được tạo ra. Mọi thay đổi trọng số đều có thể Rollback lập tức về trạng thái an toàn trước đó.
