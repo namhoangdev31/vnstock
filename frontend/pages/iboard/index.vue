@@ -30,7 +30,6 @@ useHead({
 
 const { showSuccessToast, showErrorToast } = useCustomToast()
 
-// Current Live Clock
 const currentTime = ref("00:00:00")
 let clockTimer: ReturnType<typeof setInterval> | null = null
 let autoRefreshTimer: ReturnType<typeof setInterval> | null = null
@@ -40,10 +39,8 @@ const updateClock = () => {
   currentTime.value = now.toTimeString().split(" ")[0]
 }
 
-// Top Index Ribbon Visibility
 const isIndexRibbonOpen = ref(true)
 
-// Indices Data
 interface IndexDisplayItem {
   id: string
   name: string
@@ -66,7 +63,6 @@ interface IndexDisplayItem {
 
 const indices = ref<IndexDisplayItem[]>([])
 
-// Primary Categories & Sub-baskets
 const mainCategory = ref<
   | "watchlist"
   | "listed"
@@ -86,7 +82,6 @@ const sectorSubBasket = ref<string>("bank")
 const searchQuery = ref("")
 const priceUnitDisplay = ref<"percent" | "diff">("percent")
 
-// Stocks Data Interface
 interface StockRowDisplay {
   symbol: string
   name: string
@@ -150,7 +145,6 @@ const mapBackendRow = (raw: IBoardStockRow): StockRowDisplay => ({
   expiryDate: raw.expiry_date,
 })
 
-// Fluctuation Summary Counters
 const fluctuationStats = computed(() => {
   let ceil = 0
   let up = 0
@@ -169,7 +163,6 @@ const fluctuationStats = computed(() => {
   return { ceil, up, unch, down, flr }
 })
 
-// Sector categories definitions
 const sectorDefinitions = [
   { id: "bank", name: "Ngân hàng" },
   { id: "real_estate", name: "Bất động sản" },
@@ -199,7 +192,6 @@ const sectorList = computed(() => {
   })
 })
 
-// Filtered Stocks based on search in local memory or current tableData
 const currentTableData = computed(() => {
   if (!searchQuery.value.trim()) return tableData.value
   const q = searchQuery.value.trim().toUpperCase()
@@ -209,13 +201,11 @@ const currentTableData = computed(() => {
   )
 })
 
-// Active Selected Stock (for split detail view)
 const selectedStock = ref<StockRowDisplay | null>(null)
 const selectedDetailTab = ref<"depth" | "overview" | "events">("depth")
 const selectedDepthSubTab = ref<"depth" | "time">("depth")
 const rawCandles = ref<IBoardCandleBar[]>([])
 
-// Candlestick SVG calculation
 const chartCandles = computed(() => {
   const list = rawCandles.value
   if (!list || list.length === 0) {
@@ -276,7 +266,6 @@ const closeStockDetail = () => {
   selectedStock.value = null
 }
 
-// Sparkline SVG Path Generator
 const getSparklinePoints = (points: number[], width = 64, height = 24) => {
   if (!points || points.length === 0) return ""
   const min = Math.min(...points)
@@ -291,18 +280,14 @@ const getSparklinePoints = (points: number[], width = 64, height = 24) => {
     .join(" ")
 }
 
-// Right Collapsible Panel
 const isRightPanelOpen = ref(true)
 const rightPanelTab = ref<"market" | "order" | "orders_book">("market")
 
-// Market AI Assistant Pulse
 const aiInsightText = ref("")
 
-// Top Movers
 const topGainers = ref<TopMoverItem[]>([])
 const topLosers = ref<TopMoverItem[]>([])
 
-// Order Sandbox Ticket (Rule 1 & Rule 2 compliant: purely simulated paper trading)
 const orderSide = ref<"BUY" | "SELL">("BUY")
 const orderSymbol = ref("")
 const orderPrice = ref("")
@@ -335,20 +320,13 @@ const quickFillOrder = (
   isRightPanelOpen.value = true
 }
 
-// Time & Sales Ticks for Stock Detail
 const matchedTicks = ref<MatchedTickDTO[]>([])
 
-// Corporate Overview & Events from Backend
 const stockOverview = ref<CompanyOverviewDTO | null>(null)
 const corporateEvents = ref<CorporateEventDTO[]>([])
 
-// Candle timeframe selector
 const selectedTimeframe = ref("1D")
 const timeframes = ["1m", "5m", "15m", "1H", "1D", "1W"]
-
-// =========================================================================
-// BACKEND API INTEGRATIONS
-// =========================================================================
 
 const loadIndices = async () => {
   try {
@@ -536,7 +514,6 @@ const placeSimulatedOrder = async () => {
   rightPanelTab.value = "orders_book"
 }
 
-// Watchers on categories/sub-baskets to auto-reload board from backend
 watch([mainCategory, listedSubBasket, sectorSubBasket], () => {
   loadBoardData()
 })
@@ -553,13 +530,11 @@ onMounted(() => {
   updateClock()
   clockTimer = setInterval(updateClock, 1000)
 
-  // Initial backend loads
   loadIndices()
   loadBoardData()
   loadMarketPulse()
   loadPortfolios()
 
-  // Periodic polling to keep prices and indices live
   autoRefreshTimer = setInterval(() => {
     loadIndices()
     loadBoardData()
@@ -573,12 +548,11 @@ onUnmounted(() => {
 })
 </script>
 
-
 <template>
   <div class="min-h-screen bg-surface-abyss text-aave-paper font-sans flex flex-col antialiased select-none overflow-x-hidden">
-    <!-- Top Header Bar -->
+
     <header class="h-12 bg-aave-inkwell border-b border-white/[0.08] px-4 flex items-center justify-between shrink-0 z-30">
-      <!-- Left: Logo & Navigation Links -->
+
       <div class="flex items-center gap-5">
         <NuxtLink to="/" class="flex items-center gap-2 group">
           <div class="flex flex-col">
@@ -607,9 +581,8 @@ onUnmounted(() => {
         </nav>
       </div>
 
-      <!-- Right: Live Clock, Status, Actions -->
       <div class="flex items-center gap-3">
-        <!-- Live Clock -->
+
         <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-white/[0.04] border border-white/[0.06] text-xs font-mono text-aave-ash tabular-nums">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>{{ currentTime }}</span>
@@ -621,7 +594,6 @@ onUnmounted(() => {
           </UTooltip>
         </div>
 
-        <!-- Quick Cockpit Button -->
         <NuxtLink to="/admin" class="hidden md:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium transition-colors">
           <span>Trung tâm định lượng</span>
           <UIcon name="i-heroicons-arrow-right" class="w-3.5 h-3.5" />
@@ -629,7 +601,6 @@ onUnmounted(() => {
       </div>
     </header>
 
-    <!-- Top Index Market Ribbon -->
     <div v-if="isIndexRibbonOpen" class="bg-aave-obsidian border-b border-white/[0.08] px-3 py-2 flex items-center gap-3 overflow-x-auto shrink-0 scrollbar-thin">
       <div v-if="indices.length === 0" class="flex items-center gap-2 py-1.5 px-3 text-xs text-aave-graphite font-mono">
         <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
@@ -664,7 +635,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Miniature Sparkline SVG -->
         <div class="w-16 h-8 flex items-center justify-center shrink-0">
           <svg class="w-full h-full overflow-visible" viewBox="0 0 64 24">
             <polyline
@@ -679,7 +649,6 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Toggle Ribbon Button -->
       <button
         type="button"
         class="px-2 py-1 text-xs text-aave-graphite hover:text-white shrink-0 flex items-center gap-1 transition-colors"
@@ -690,7 +659,6 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Collapsed Ribbon Expand Button -->
     <div v-else class="bg-aave-obsidian border-b border-white/[0.08] px-3 py-1 flex items-center justify-end">
       <button
         type="button"
@@ -702,9 +670,8 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Category Tabs Navigation & Filters -->
     <div class="bg-aave-inkwell border-b border-white/[0.08] px-4 py-2 flex flex-col gap-2 shrink-0">
-      <!-- Main Category Tabs Row -->
+
       <div class="flex items-center justify-between gap-4 overflow-x-auto">
         <div class="flex items-center gap-1 text-xs font-medium text-aave-ash">
           <button
@@ -765,7 +732,6 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <!-- Fluctuation Summary Pills (Thống kê biến động) -->
         <div class="hidden lg:flex items-center gap-1.5 text-xs font-mono">
           <span class="text-aave-graphite mr-1">Thống kê biến động:</span>
           <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-950/40 border border-purple-800/40 text-purple-400">
@@ -791,10 +757,9 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Secondary Sub-basket Filters Row -->
       <div class="flex items-center justify-between gap-3 overflow-x-auto pt-1 border-t border-white/[0.04]">
         <div class="flex items-center gap-2">
-          <!-- Search Input -->
+
           <div class="relative w-48 shrink-0">
             <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-aave-graphite" />
             <input
@@ -805,7 +770,6 @@ onUnmounted(() => {
             >
           </div>
 
-          <!-- Listed Sub-Basket Chips -->
           <template v-if="mainCategory === 'listed'">
             <button
               type="button"
@@ -849,7 +813,6 @@ onUnmounted(() => {
             </button>
           </template>
 
-          <!-- Sector Chips (Screenshot 4) -->
           <template v-else-if="mainCategory === 'sectors'">
             <div class="flex items-center gap-1.5 overflow-x-auto">
               <button
@@ -872,33 +835,27 @@ onUnmounted(() => {
             </div>
           </template>
 
-          <!-- Derivatives Contract Chips -->
           <template v-else-if="mainCategory === 'derivatives'">
             <span class="text-xs text-aave-graphite px-2 font-mono">Hợp đồng tương lai chỉ số VN30 và VN100</span>
           </template>
 
-          <!-- Warrants Chips -->
           <template v-else-if="mainCategory === 'warrants'">
             <span class="text-xs text-aave-graphite px-2 font-mono">Chứng quyền có bảo đảm niêm yết trên HOSE</span>
           </template>
 
-          <!-- ETF Chips -->
           <template v-else-if="mainCategory === 'etf'">
             <span class="text-xs text-aave-graphite px-2 font-mono">Chứng chỉ quỹ ETF mô phỏng rổ chỉ số chứng khoán</span>
           </template>
 
-          <!-- Watchlist Chips -->
           <template v-else-if="mainCategory === 'watchlist'">
             <span class="text-xs text-aave-graphite px-2 font-mono">Danh mục cổ phiếu đang theo dõi</span>
           </template>
 
-          <!-- Put-Through Chips -->
           <template v-else-if="mainCategory === 'put_through'">
             <span class="text-xs text-aave-graphite px-2 font-mono">Giao dịch thỏa thuận khớp lệnh định kỳ</span>
           </template>
         </div>
 
-        <!-- Toggle Price Display: Percent vs Points -->
         <div class="flex items-center gap-2 text-xs font-mono">
           <div class="flex items-center bg-surface-abyss border border-white/[0.08] rounded p-0.5">
             <button
@@ -922,11 +879,10 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Main Workspace (Dual Mode: Table or Split Detail + Right Sidebar) -->
     <div class="flex-1 flex overflow-hidden">
-      <!-- Center Left: Stock Board Area -->
+
       <div class="flex-1 flex flex-col overflow-hidden bg-surface-abyss">
-        <!-- MODE A: FULL TABLE VIEW (When no stock detail is active) -->
+
         <div v-if="!selectedStock" class="flex-1 overflow-y-auto">
           <table class="w-full text-left border-collapse text-xs">
             <thead class="sticky top-0 bg-aave-inkwell border-b border-white/[0.08] text-aave-graphite font-medium z-10">
@@ -950,7 +906,7 @@ onUnmounted(() => {
                 class="hover:bg-white/[0.04] transition-colors cursor-pointer group"
                 @click="openStockDetail(stk)"
               >
-                <!-- Symbol & Name -->
+
                 <td class="py-2.5 px-4">
                   <div class="flex items-center gap-2.5">
                     <div class="flex flex-col">
@@ -976,7 +932,6 @@ onUnmounted(() => {
                   </div>
                 </td>
 
-                <!-- Last Price -->
                 <td class="py-2.5 px-4 text-right font-mono font-bold tabular-nums text-sm"
                   :class="{
                     'text-purple-400': stk.status === 'ceiling',
@@ -989,7 +944,6 @@ onUnmounted(() => {
                   {{ stk.lastPrice.toFixed(mainCategory === 'derivatives' ? 1 : 2) }}
                 </td>
 
-                <!-- Change -->
                 <td class="py-2.5 px-4 text-right font-mono font-medium tabular-nums"
                   :class="{
                     'text-emerald-400': stk.change > 0,
@@ -1005,17 +959,14 @@ onUnmounted(() => {
                   </span>
                 </td>
 
-                <!-- Expiry Date (derivatives only) -->
                 <td v-if="mainCategory === 'derivatives'" class="py-2.5 px-4 text-center font-mono text-aave-ash">
                   {{ stk.expiryDate || 'Chưa định dạng' }}
                 </td>
 
-                <!-- Total Volume -->
                 <td class="py-2.5 px-4 text-right font-mono text-aave-ash tabular-nums">
                   {{ stk.volume.toLocaleString('en-US') }}
                 </td>
 
-                <!-- Sparkline Chart -->
                 <td class="py-2.5 px-4 text-center">
                   <div class="w-16 h-6 mx-auto flex items-center justify-center">
                     <svg class="w-full h-full overflow-visible" viewBox="0 0 64 24">
@@ -1031,7 +982,6 @@ onUnmounted(() => {
                   </div>
                 </td>
 
-                <!-- Buy / Sell Pressure Delta Bar -->
                 <td class="py-2.5 px-4 text-center">
                   <div class="flex flex-col gap-1 w-32 mx-auto">
                     <div class="flex items-center justify-between text-xs font-mono text-aave-graphite">
@@ -1045,7 +995,6 @@ onUnmounted(() => {
                   </div>
                 </td>
 
-                <!-- Action Button -->
                 <td class="py-2.5 px-3 text-center">
                   <button
                     type="button"
@@ -1061,9 +1010,8 @@ onUnmounted(() => {
           </table>
         </div>
 
-        <!-- MODE B: SPLIT DETAIL VIEW (Screenshot 2 & 3) -->
         <div v-else class="flex-1 flex overflow-hidden">
-          <!-- Compact Stock Selector Left Column -->
+
           <div class="w-64 border-r border-white/[0.08] bg-aave-inkwell flex flex-col shrink-0">
             <div class="p-2 border-b border-white/[0.08] text-xs font-medium text-aave-graphite flex items-center justify-between">
               <span>Danh sách mã</span>
@@ -1095,9 +1043,8 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Main Detail Workspace (Chart + Order Book Depth) -->
           <div class="flex-1 flex flex-col overflow-y-auto">
-            <!-- Selected Stock Header (Screenshot 2) -->
+
             <div class="p-3 bg-aave-obsidian border-b border-white/[0.08] flex items-center justify-between shrink-0">
               <div class="flex items-center gap-3">
                 <button
@@ -1119,7 +1066,6 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <!-- Price & Volume Snapshot -->
               <div class="flex items-center gap-5">
                 <div class="flex items-center gap-2 font-mono">
                   <span class="text-xl font-bold tabular-nums" :class="selectedStock.change > 0 ? 'text-emerald-400' : selectedStock.change < 0 ? 'text-rose-500' : 'text-amber-400'">
@@ -1155,9 +1101,8 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Candlestick Chart Area (Screenshot 2) -->
             <div class="p-3 bg-surface-abyss border-b border-white/[0.08] flex flex-col h-72 shrink-0">
-              <!-- Timeframe Selector -->
+
               <div class="flex items-center justify-between pb-2 border-b border-white/[0.04]">
                 <div class="flex items-center gap-1 text-xs font-mono">
                   <button
@@ -1176,7 +1121,6 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <!-- Interactive Simulated Chart Canvas / SVG -->
               <div class="flex-1 w-full relative pt-2 flex items-center justify-center">
                 <div v-if="isCandlesLoading" class="absolute inset-0 flex items-center justify-center text-xs text-aave-graphite font-mono">
                   Đang tải nến kỹ thuật...
@@ -1185,14 +1129,13 @@ onUnmounted(() => {
                   Không có dữ liệu nến lịch sử
                 </div>
                 <svg v-else class="w-full h-full" viewBox="0 0 800 200" preserveAspectRatio="none">
-                  <!-- Grid Lines -->
+
                   <line x1="0" y1="50" x2="800" y2="50" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4" />
                   <line x1="0" y1="100" x2="800" y2="100" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4" />
                   <line x1="0" y1="150" x2="800" y2="150" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4" />
 
-                  <!-- Candlesticks (Wicks + Bodies + Volumes) dynamically projected from backend -->
                   <g v-for="(c, idx) in chartCandles" :key="idx">
-                    <!-- Wick (High - Low) -->
+
                     <line
                       :x1="c.x"
                       :y1="c.wickHigh"
@@ -1201,7 +1144,7 @@ onUnmounted(() => {
                       :stroke="c.isBull ? '#34d399' : '#f43f5e'"
                       stroke-width="1.5"
                     />
-                    <!-- Body (Open - Close) -->
+
                     <rect
                       :x="c.x - c.halfWidth"
                       :y="c.bodyTop"
@@ -1210,7 +1153,7 @@ onUnmounted(() => {
                       :fill="c.isBull ? '#34d399' : '#f43f5e'"
                       rx="1"
                     />
-                    <!-- Volume Bar at Bottom -->
+
                     <rect
                       :x="c.x - c.halfWidth"
                       :y="200 - c.volHeight"
@@ -1223,7 +1166,6 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Bottom Tabs: Bước giá / Thông tin / Sự kiện (Screenshot 3) -->
             <div class="flex-1 bg-aave-inkwell flex flex-col p-3">
               <div class="flex items-center justify-between border-b border-white/[0.08] pb-2 mb-3">
                 <div class="flex items-center gap-3 text-xs font-medium">
@@ -1273,11 +1215,10 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <!-- Tab: Bước giá (Screenshot 3 - Depth Order Book) -->
               <div v-if="selectedDetailTab === 'depth' && selectedDepthSubTab === 'depth'" class="space-y-4">
-                <!-- 3-Level Depth Table -->
+
                 <div class="grid grid-cols-2 gap-4">
-                  <!-- Buy Book (Dư Mua) -->
+
                   <div class="bg-surface-abyss p-3 rounded border border-white/[0.04]">
                     <div class="flex items-center justify-between text-xs font-medium text-emerald-400 mb-2 border-b border-white/[0.04] pb-1">
                       <span>Dư Mua</span>
@@ -1297,7 +1238,6 @@ onUnmounted(() => {
                     </div>
                   </div>
 
-                  <!-- Sell Book (Dư Bán) -->
                   <div class="bg-surface-abyss p-3 rounded border border-white/[0.04]">
                     <div class="flex items-center justify-between text-xs font-medium text-rose-500 mb-2 border-b border-white/[0.04] pb-1">
                       <span>Dư Bán</span>
@@ -1318,7 +1258,6 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <!-- Reference Price Strip (Screenshot 3) -->
                 <div class="grid grid-cols-6 gap-2 text-center text-xs font-mono">
                   <div class="p-2 rounded bg-surface-abyss border border-cyan-800/40">
                     <span class="text-cyan-400 block text-xs">Sàn</span>
@@ -1346,7 +1285,6 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <!-- Institutional / Foreign Flow Statistics -->
                 <div class="grid grid-cols-3 gap-3 p-3 rounded bg-surface-abyss border border-white/[0.04] text-xs font-mono">
                   <div>
                     <span class="text-aave-graphite block">Khối ngoại mua</span>
@@ -1363,7 +1301,6 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <!-- Tab: Thời gian (Time & Sales) -->
               <div v-else-if="selectedDetailTab === 'depth' && selectedDepthSubTab === 'time'" class="flex-1 overflow-y-auto">
                 <div v-if="matchedTicks.length === 0" class="p-6 text-center text-xs text-aave-graphite font-mono">
                   Không có dữ liệu khớp lệnh trong phiên
@@ -1392,7 +1329,6 @@ onUnmounted(() => {
                 </table>
               </div>
 
-              <!-- Tab: Thông tin doanh nghiệp -->
               <div v-else-if="selectedDetailTab === 'overview'" class="p-3 text-xs space-y-3">
                 <div v-if="!stockOverview" class="p-6 text-center text-xs text-aave-graphite font-mono">
                   Chưa có dữ liệu chỉ số tài chính của doanh nghiệp
@@ -1417,7 +1353,6 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <!-- Tab: Sự kiện doanh nghiệp -->
               <div v-else-if="selectedDetailTab === 'events'" class="p-3 text-xs text-aave-ash space-y-2">
                 <div v-if="corporateEvents.length === 0" class="p-6 text-center text-xs text-aave-graphite font-mono">
                   Không có sự kiện doanh nghiệp được ghi nhận
@@ -1437,12 +1372,11 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Right Collapsible Sidebar (Screenshot 1, 2, 3) -->
       <div
         class="bg-aave-inkwell border-l border-white/[0.08] flex flex-col shrink-0 transition-all duration-200"
         :class="isRightPanelOpen ? 'w-80' : 'w-10'"
       >
-        <!-- Panel Header Tabs & Toggle -->
+
         <div class="h-10 bg-aave-obsidian border-b border-white/[0.08] flex items-center justify-between px-2 shrink-0">
           <div v-if="isRightPanelOpen" class="flex items-center gap-1 text-xs font-medium">
             <button
@@ -1481,11 +1415,10 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <!-- Panel Body -->
         <div v-if="isRightPanelOpen" class="flex-1 overflow-y-auto p-3 space-y-4">
-          <!-- TAB 1: THỊ TRƯỜNG & TRỢ LÝ AI (Screenshot 1) -->
+
           <template v-if="rightPanelTab === 'market'">
-            <!-- AI Quantitative Assistant Card -->
+
             <div class="p-3.5 rounded-xl bg-surface-abyss border border-white/[0.06] space-y-3">
               <div class="flex items-center gap-2">
                 <div class="w-6 h-6 rounded-full bg-rose-600 flex items-center justify-center font-bold text-white text-xs">
@@ -1508,7 +1441,6 @@ onUnmounted(() => {
               </button>
             </div>
 
-            <!-- Top Gainers -->
             <div class="space-y-2">
               <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
                 <UIcon name="i-heroicons-arrow-trending-up" class="w-4 h-4" />
@@ -1536,7 +1468,6 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Top Losers -->
             <div class="space-y-2">
               <div class="flex items-center gap-1.5 text-xs font-bold text-rose-500">
                 <UIcon name="i-heroicons-arrow-trending-down" class="w-4 h-4" />
@@ -1565,7 +1496,6 @@ onUnmounted(() => {
             </div>
           </template>
 
-          <!-- TAB 2: ĐẶT LỆNH MÔ PHỎNG SANDBOX (Rule 1 & Rule 2 compliant) -->
           <template v-else-if="rightPanelTab === 'order'">
             <div class="p-3.5 rounded-xl bg-surface-abyss border border-white/[0.06] space-y-4">
               <div class="flex items-center justify-between">
@@ -1575,7 +1505,6 @@ onUnmounted(() => {
                 </span>
               </div>
 
-              <!-- Side Toggle: Buy vs Sell -->
               <div class="grid grid-cols-2 gap-1 p-0.5 bg-aave-obsidian rounded-lg border border-white/[0.08]">
                 <button
                   type="button"
@@ -1595,7 +1524,6 @@ onUnmounted(() => {
                 </button>
               </div>
 
-              <!-- Ticker Input -->
               <div>
                 <label class="block text-xs font-medium text-aave-graphite mb-1">Mã chứng khoán</label>
                 <input
@@ -1606,7 +1534,6 @@ onUnmounted(() => {
                 >
               </div>
 
-              <!-- Order Type -->
               <div>
                 <label class="block text-xs font-medium text-aave-graphite mb-1">Loại lệnh</label>
                 <div class="grid grid-cols-4 gap-1">
@@ -1623,7 +1550,6 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <!-- Price Input -->
               <div>
                 <label class="block text-xs font-medium text-aave-graphite mb-1">Giá đặt</label>
                 <input
@@ -1634,7 +1560,6 @@ onUnmounted(() => {
                 >
               </div>
 
-              <!-- Volume Input -->
               <div>
                 <label class="block text-xs font-medium text-aave-graphite mb-1">Khối lượng</label>
                 <input
@@ -1645,7 +1570,6 @@ onUnmounted(() => {
                 >
               </div>
 
-              <!-- Purchasing Power -->
               <div class="p-2.5 rounded bg-aave-obsidian border border-white/[0.04] text-xs font-mono">
                 <div class="flex items-center justify-between text-aave-graphite">
                   <span>Sức mua mô phỏng:</span>
@@ -1653,7 +1577,6 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <!-- Submit Button -->
               <button
                 type="button"
                 class="w-full py-2.5 rounded-lg text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
@@ -1665,7 +1588,6 @@ onUnmounted(() => {
             </div>
           </template>
 
-          <!-- TAB 3: SỔ LỆNH MÔ PHỎNG -->
           <template v-else-if="rightPanelTab === 'orders_book'">
             <div class="space-y-2">
               <div class="flex items-center justify-between text-xs font-medium text-aave-graphite pb-1 border-b border-white/[0.04]">
