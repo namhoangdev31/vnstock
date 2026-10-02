@@ -123,14 +123,14 @@
           </table>
         </div>
 
-        <!-- Governed Feedback Loop Explanation -->
+        <!-- Autonomous Auto-Promote & Circuit Breaker Explanation -->
         <div class="p-5 rounded-xl bg-[#0d1322] border border-white/[0.06] space-y-2 text-xs">
           <h4 class="font-bold text-white flex items-center gap-1.5 font-mono">
             <UIcon name="i-heroicons-arrow-path-rounded-square" class="w-4 h-4 text-rose-400" />
-            CƠ CHẾ TỰ HỌC CÓ KIỂM SOÁT (GOVERNED RECALIBRATION)
+            CƠ CHẾ TỰ HỌC TỰ ĐỘNG (AUTONOMOUS AUTO-PROMOTE & CIRCUIT BREAKER)
           </h4>
           <p class="text-slate-400 leading-relaxed">
-            Hệ thống tính toán Directional Accuracy và Brier Score trên toàn bộ lịch sử sổ nhật ký. Khi tỷ lệ dự đoán vượt ngưỡng kiểm thử Walk-Forward, phiên bản model mới (Model Version Snapshot) được tạo ra. Mọi thay đổi trọng số đều có thể Rollback lập tức về trạng thái an toàn trước đó.
+            Hệ thống tự động đánh giá Directional Accuracy và Brier Score trên 30 phiên gần nhất. Khi bộ trọng số mới vượt qua Cổng Walk-Forward Gate, phiên bản mới sẽ được tự động kích hoạt (Auto-Promote <span class="font-mono text-emerald-400 font-bold">is_active = true</span>) mà không cần Admin duyệt thủ công. Nếu Drawdown vượt -3%, Circuit Breaker sẽ tự động khóa và phục hồi trọng số phòng thủ an toàn.
           </p>
         </div>
       </div>
@@ -258,10 +258,10 @@ const testCases = [
   },
   {
     id: "TEST-RCAL-01",
-    group: "Governed Recalibration",
+    group: "Autonomous Recalibration",
     scenario: "Hiệu chuẩn trọng số Engine mới trên tập dữ liệu lịch sử",
     expectation:
-      "Bắt buộc tạo model_version mới; duy trì snapshot phiên bản cũ cho phép rollback",
+      "Tự động Auto-Promote khi đạt chuẩn Walk-Forward Gate; duy trì Circuit Breaker và snapshot cho phép rollback",
     status: "PASS" as const,
   },
 ]

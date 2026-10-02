@@ -253,9 +253,14 @@ The ledger feeds a **governed** feedback loop. It adjusts analytical calibration
 - **What it MAY adjust**: ensemble engine weights, signal thresholds, regime-detection parameters, probability calibration (e.g. Platt/isotonic on the ledger).
 - **Hard guardrails**:
   - **Auditable & reversible**: every recalibration MUST write a new `model_version` + `parameter_snapshot`. The previous version MUST remain restorable (rollback).
-  - **No live mutation by default**: a recalibration MUST pass a validation/walk-forward gate on the ledger before it becomes active; it is never applied to the live signal path un-reviewed.
-  - **Human-in-the-loop for promotion**: promoting a new calibration to the active path is a human-approved action, consistent with the informational-only stance (RULE 4).
-  - **Anti-overfit**: validate out-of-sample; refuse recalibrations whose improvement is within noise, and cap how aggressively weights may shift per cycle.
+  - **Automated Walk-Forward Gate & Auto-Promote (Autonomous Self-Learning)**:
+    - Recalibration is **fully autonomous**: once reality resolves and forecasts are scored, the system evaluates rolling 30-day out-of-sample metrics (Directional Accuracy, Brier score, MAE).
+    - If the proposed recalibration passes the Automated Walk-Forward Validation Gate (improves historical Brier score / MAE, shift bounded by $\pm 5\%$, weights within $[0.15, 0.60]$), the system **automatically promotes** the new `model_version` (`is_active = True`) to the live analytical path **without requiring manual Admin approval**.
+  - **Automated Circuit Breaker (Safety Kill-Switch)**:
+    - If 3 consecutive sessions fail or drawdown exceeds $-3\%$, the autonomous loop automatically triggers a Circuit Breaker, locks further auto-promotions, reverts immediately to default baseline weights (`0.33, 0.33, 0.34`), and fires an emergency notification.
+  - **Auditable & Reversible**: Every auto-promotion writes an immutable `model_version` + `parameter_snapshot` with an `auto_promoted: True` audit flag. Admin retains 1-click manual Rollback and manual override authority at all times.
+  - **Rule 1 & Rule 2 Inviolability**: Auto-promote applies strictly and exclusively to internal quantitative ensemble weights. It NEVER touches real broker accounts (RULE 1) and never escapes the simulation boundary (RULE 2).
+  - **Anti-overfit bounds**: Capped shift of $\pm 5\%$ per cycle; bounded within $[0.15, 0.60]$ to ensure no engine is zeroed out.
 
 ### 9.3 Continuous Loop
 ```
@@ -267,8 +272,8 @@ back-fill actual ──► score ──► aggregate accuracy by engine/horizon/
    ▼ (governed, gated)
 recalibrate weights/thresholds ──► new model_version (snapshot)
    │
-   ▼ (walk-forward validation + human approval)
-promote to active signal path  ◄── rollback always available
+   ▼ (automated walk-forward validation gate)
+auto-promote to active signal path  ◄── rollback & circuit breaker always active
 ```
 
 <!-- vnai-bootstrap | auto-generated -->

@@ -1,4 +1,4 @@
-import{f,u as S,c as i,a as t,b as s,w as P,d as c,F as d,r as g,k as o,z as B,m as _,e as D,o as a,j as M,n as u,t as h,x as m}from"./C1DYnwlf.js";import{_ as E,a as w}from"./B6L1P5HN.js";import"./TKeYaff7.js";const A=`# TRD Phase 6: Frontend Dashboards & Trạm Điều Hành Giao Dịch Lượng Hóa
+import{f,u as S,c as i,a as t,b as s,w as P,d as c,F as d,r as g,k as o,z as B,m as _,e as D,o as a,j as M,n as u,t as h,x as m}from"./CEQaG_D0.js";import{_ as E,a as w}from"./BNDCHqLO.js";import"./Dh_jXsGk.js";const A=`# TRD Phase 6: Frontend Dashboards & Trạm Điều Hành Giao Dịch Lượng Hóa
 ## Xây Dựng Trạm Điều Hành Phái Sinh, Radar Dòng Tiền, Bảng Kịch Bản ATC/T+1 & Terminal Giao Dịch Mô Phỏng
 
 > **Tài liệu đặc tả kỹ thuật chi tiết dành cho kỹ sư phát triển frontend & fullstack (Self-Implementation Blueprint)**  
