@@ -64,7 +64,9 @@ export const useAuth = () => {
 
       await fetchUser()
       showSuccessToast("Đăng nhập thành công!", "Chào mừng bạn quay trở lại.")
-      await router.push("/")
+      const route = useRoute()
+      const redirectTarget = (route.query.redirect as string) || "/admin"
+      await router.push(redirectTarget)
     } catch (err: unknown) {
       const error = err as { body?: { detail?: string }; message?: string }
       const message =

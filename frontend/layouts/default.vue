@@ -34,30 +34,42 @@
           </div>
           <nav class="space-y-1">
             <NuxtLink
-              to="/"
+              to="/admin"
               class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all group"
-              :class="route.path === '/' ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              :class="route.path === '/admin' ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
             >
               <UIcon name="i-heroicons-squares-2x2" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
               <span>Dashboard Cockpit</span>
             </NuxtLink>
 
             <NuxtLink
-              to="/stock"
+              to="/admin/stock"
               class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all group"
-              :class="route.path.startsWith('/stock') ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              :class="route.path.startsWith('/admin/stock') ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
             >
               <UIcon name="i-heroicons-chart-bar" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
               <span>Thị trường cổ phiếu</span>
             </NuxtLink>
 
             <NuxtLink
-              to="/items"
+              to="/admin/items"
               class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all group"
-              :class="route.path.startsWith('/items') ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              :class="route.path.startsWith('/admin/items') ? 'bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-semibold shadow-sm' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
             >
               <UIcon name="i-heroicons-archive-box" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
               <span>Danh mục Items</span>
+            </NuxtLink>
+
+            <NuxtLink
+              to="/"
+              target="_blank"
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all group text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
+            >
+              <UIcon name="i-heroicons-globe-alt" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-teal-400" />
+              <div class="flex items-center justify-between w-full">
+                <span>Landing Page</span>
+                <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3 h-3 text-slate-500" />
+              </div>
             </NuxtLink>
           </nav>
         </div>
@@ -89,9 +101,9 @@
           </div>
           <nav class="space-y-1">
             <NuxtLink
-              to="/admin"
+              to="/admin/users"
               class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-all"
-              :class="route.path.startsWith('/admin') ? 'bg-amber-500/10 text-amber-300 border-l-2 border-amber-400 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
+              :class="route.path.startsWith('/admin/users') ? 'bg-amber-500/10 text-amber-300 border-l-2 border-amber-400 font-semibold' : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]'"
             >
               <UIcon name="i-heroicons-shield-check" class="w-4 h-4 shrink-0" />
               <span>Quản lý người dùng</span>
@@ -115,7 +127,7 @@
             </p>
           </div>
           <NuxtLink
-            to="/settings"
+            to="/admin/settings"
             title="Cài đặt tài khoản"
             class="p-1.5 text-slate-400 hover:text-slate-200 rounded-md hover:bg-white/[0.05] transition-colors"
           >
@@ -153,9 +165,9 @@
 
           <div class="mt-4 space-y-4">
             <NuxtLink
-              to="/"
+              to="/admin"
               class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
-              :class="route.path === '/' ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
+              :class="route.path === '/admin' ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-squares-2x2" class="w-4 h-4" />
@@ -163,9 +175,9 @@
             </NuxtLink>
 
             <NuxtLink
-              to="/stock"
+              to="/admin/stock"
               class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
-              :class="route.path.startsWith('/stock') ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
+              :class="route.path.startsWith('/admin/stock') ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-chart-bar" class="w-4 h-4" />
@@ -173,13 +185,22 @@
             </NuxtLink>
 
             <NuxtLink
-              to="/items"
+              to="/admin/items"
               class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
-              :class="route.path.startsWith('/items') ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
+              :class="route.path.startsWith('/admin/items') ? 'bg-emerald-500/10 text-emerald-400 font-semibold' : 'text-slate-300'"
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-archive-box" class="w-4 h-4" />
               <span>Danh mục Items</span>
+            </NuxtLink>
+
+            <NuxtLink
+              to="/"
+              class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-teal-400 hover:text-teal-300"
+              @click="mobileOpen = false"
+            >
+              <UIcon name="i-heroicons-globe-alt" class="w-4 h-4" />
+              <span>Landing Page (Trang chủ)</span>
             </NuxtLink>
 
             <div class="pt-2 border-t border-white/[0.06]">
@@ -200,7 +221,7 @@
         </div>
 
         <div class="pt-4 border-t border-white/[0.06] flex justify-between items-center">
-          <NuxtLink to="/settings" class="text-xs text-slate-400 hover:text-slate-200" @click="mobileOpen = false">
+          <NuxtLink to="/admin/settings" class="text-xs text-slate-400 hover:text-slate-200" @click="mobileOpen = false">
             Cài đặt tài khoản
           </NuxtLink>
           <button class="text-xs text-rose-400 hover:underline" @click="logout">
@@ -248,7 +269,7 @@
 
           <!-- Quick Stock Lookup -->
           <NuxtLink
-            to="/stock"
+            to="/admin/stock"
             class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 text-xs font-mono text-slate-300 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] transition-colors border border-white/[0.08]"
           >
             <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-slate-400" />
@@ -258,7 +279,7 @@
 
           <!-- Current User Badge -->
           <NuxtLink
-            to="/settings"
+            to="/admin/settings"
             class="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-lg bg-white/[0.02] border border-white/[0.08] hover:bg-white/[0.05] transition-colors"
           >
             <div class="w-6 h-6 rounded bg-emerald-600/80 text-white font-mono font-bold text-[10px] flex items-center justify-center ring-1 ring-white/10">
@@ -359,32 +380,32 @@ onUnmounted(() => {
 
 const trdPhases = [
   {
-    path: "/trd/phase-1",
+    path: "/admin/trd/phase-1",
     title: "Phase 1: Nền tảng & Data",
     icon: "i-heroicons-circle-stack",
   },
   {
-    path: "/trd/phase-2",
+    path: "/admin/trd/phase-2",
     title: "Phase 2: Tri-Engine Arch",
     icon: "i-heroicons-cpu-chip",
   },
   {
-    path: "/trd/phase-3",
+    path: "/admin/trd/phase-3",
     title: "Phase 3: Daemon 24/7",
     icon: "i-heroicons-clock",
   },
   {
-    path: "/trd/phase-4",
+    path: "/admin/trd/phase-4",
     title: "Phase 4: Phái sinh & T+2",
     icon: "i-heroicons-arrows-right-left",
   },
   {
-    path: "/trd/phase-5",
+    path: "/admin/trd/phase-5",
     title: "Phase 5: Sổ cái dự báo",
     icon: "i-heroicons-document-check",
   },
   {
-    path: "/trd/phase-6",
+    path: "/admin/trd/phase-6",
     title: "Phase 6: Trạm Cockpit",
     icon: "i-heroicons-computer-desktop",
   },

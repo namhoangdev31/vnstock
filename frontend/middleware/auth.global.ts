@@ -6,6 +6,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   initToken()
 
   const publicRoutes = [
+    "/",
     "/login",
     "/signup",
     "/recover-password",
@@ -13,19 +14,24 @@ export default defineNuxtRouteMiddleware(async (to) => {
   ]
 
   const isPublicRoute = publicRoutes.some((route) => to.path === route)
-  const isTrdRoute = to.path.startsWith("/trd")
+  const isAuthPage = [
+    "/login",
+    "/signup",
+    "/recover-password",
+    "/reset-password",
+  ].includes(to.path)
 
-  // If user is logged in and trying to access auth pages, redirect to dashboard
-  if (token.value && isPublicRoute) {
-    return navigateTo("/")
+  // If user is logged in and trying to access auth pages, redirect to admin cockpit
+  if (token.value && isAuthPage) {
+    return navigateTo("/admin")
   }
 
-  // If route is public or TRD, allow access
-  if (isPublicRoute || isTrdRoute) {
+  // If route is public, allow access
+  if (isPublicRoute) {
     return
   }
 
-  // If not logged in, redirect to login
+  // All other routes (including /admin and sub-routes) require login
   if (!token.value) {
     return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
   }
@@ -35,8 +41,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     await fetchUser()
   }
 
-  // If visiting /admin, ensure user is superuser
-  if (to.path.startsWith("/admin") && !user.value?.is_superuser) {
-    return navigateTo("/")
+  // If visiting /admin/users (RBAC), ensure user is superuser
+  if (to.path.startsWith("/admin/users") && !user.value?.is_superuser) {
+    return navigateTo("/admin")
   }
 })
+
