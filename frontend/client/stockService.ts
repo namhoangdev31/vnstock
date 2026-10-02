@@ -219,4 +219,218 @@ export class StockService {
 		});
 		return res.data;
 	}
+
+	public static async getIBoardIndices(): Promise<IBoardIndexItem[]> {
+		const res = await client.get<IBoardIndexItem[], unknown, true>({
+			url: "/api/v1/stock/iboard/indices",
+			security: [{ scheme: "bearer", type: "http" }],
+		});
+		return res.data;
+	}
+
+	public static async getIBoardBoard(options?: {
+		query?: {
+			category?: string;
+			group?: string;
+			sector?: string;
+			search?: string;
+			limit?: number;
+		};
+	}): Promise<IBoardStockRow[]> {
+		const res = await client.get<IBoardStockRow[], unknown, true>({
+			url: "/api/v1/stock/iboard/board",
+			security: [{ scheme: "bearer", type: "http" }],
+			query: options?.query,
+		});
+		return res.data;
+	}
+
+	public static async getIBoardStockDetail(options: {
+		path: { symbol: string };
+		query?: { timeframe?: string };
+	}): Promise<IBoardStockDetail> {
+		const res = await client.get<IBoardStockDetail, unknown, true>({
+			url: `/api/v1/stock/iboard/stock-detail/${options.path.symbol}`,
+			security: [{ scheme: "bearer", type: "http" }],
+			query: options.query,
+		});
+		return res.data;
+	}
+
+	public static async getIBoardCandles(options: {
+		path: { symbol: string };
+		query?: {
+			timeframe?: string;
+			limit?: number;
+		};
+	}): Promise<IBoardCandleBar[]> {
+		const res = await client.get<IBoardCandleBar[], unknown, true>({
+			url: `/api/v1/stock/iboard/candles/${options.path.symbol}`,
+			security: [{ scheme: "bearer", type: "http" }],
+			query: options.query,
+		});
+		return res.data;
+	}
+
+	public static async getIBoardMarketPulse(): Promise<IBoardMarketPulse> {
+		const res = await client.get<IBoardMarketPulse, unknown, true>({
+			url: "/api/v1/stock/iboard/market-pulse",
+			security: [{ scheme: "bearer", type: "http" }],
+		});
+		return res.data;
+	}
+
+	public static async placeSimulationOrder(payload: {
+		portfolio_id: string;
+		symbol: string;
+		side: "BUY" | "SELL";
+		order_type?: string;
+		quantity: number;
+		price?: number;
+	}): Promise<unknown> {
+		const res = await client.post({
+			url: "/api/v1/simulation/orders",
+			security: [{ scheme: "bearer", type: "http" }],
+			body: payload,
+		});
+		return res.data;
+	}
+
+	public static async listSimulationOrders(options?: {
+		query?: { portfolio_id?: string; limit?: number };
+	}): Promise<SimulationOrderDTO[]> {
+		const res = await client.get<SimulationOrderDTO[], unknown, true>({
+			url: "/api/v1/simulation/orders",
+			security: [{ scheme: "bearer", type: "http" }],
+			query: options?.query,
+		});
+		return res.data;
+	}
 }
+
+export interface IBoardIndexBreadth {
+	advance: number;
+	ceiling: number;
+	unchanged: number;
+	decline: number;
+	floor: number;
+}
+
+export interface IBoardIndexItem {
+	id: string;
+	name: string;
+	price: string;
+	change: string;
+	change_percent: string;
+	is_positive: boolean;
+	is_unchanged?: boolean;
+	volume: string;
+	value: string;
+	breadth: IBoardIndexBreadth;
+	sparkline: number[];
+}
+
+export interface OrderBookLevel {
+	price: number;
+	volume: number;
+}
+
+export interface IBoardStockRow {
+	symbol: string;
+	name: string;
+	exchange: string;
+	margin_rate?: string | null;
+	last_price: number;
+	ref_price: number;
+	ceiling_price: number;
+	floor_price: number;
+	high_price: number;
+	low_price: number;
+	avg_price: number;
+	change: number;
+	change_percent: number;
+	volume: number;
+	value_billion: number;
+	buy_ratio: number;
+	sell_ratio: number;
+	foreign_buy: number;
+	foreign_sell: number;
+	foreign_room: number;
+	status: "up" | "down" | "ref" | "ceiling" | "floor";
+	sparkline: number[];
+	bid_book: OrderBookLevel[];
+	ask_book: OrderBookLevel[];
+	category: string;
+	sector?: string | null;
+	expiry_date?: string | null;
+}
+
+export interface MatchedTickDTO {
+	time: string;
+	price: number;
+	volume: number;
+	side: string;
+}
+
+export interface CompanyOverviewDTO {
+	market_cap_billion: number;
+	pe: number;
+	pb: number;
+	roe: number;
+}
+
+export interface CorporateEventDTO {
+	date: string;
+	title: string;
+}
+
+export interface IBoardCandleBar {
+	time: string;
+	open: number;
+	high: number;
+	low: number;
+	close: number;
+	volume: number;
+}
+
+export interface IBoardStockDetail {
+	stock: IBoardStockRow;
+	matched_ticks: MatchedTickDTO[];
+	overview: CompanyOverviewDTO;
+	company_overview?: CompanyOverviewDTO;
+	events: CorporateEventDTO[];
+	candles: IBoardCandleBar[];
+}
+
+export interface TopMoverItem {
+	symbol: string;
+	name: string;
+	price: string;
+	change: string;
+}
+
+export interface IBoardMarketPulse {
+	ai_insight: string;
+	top_gainers: TopMoverItem[];
+	top_losers: TopMoverItem[];
+	sector_performance?: Record<string, number>;
+}
+
+export interface SimulationOrderDTO {
+	id: string;
+	symbol: string;
+	side: string;
+	order_type: string;
+	price: number;
+	stop_price?: number | null;
+	quantity: number;
+	filled_quantity: number;
+	filled_price?: number | null;
+	fee: number;
+	tax: number;
+	status: string;
+	reject_reason?: string | null;
+	created_at: string;
+	updated_at: string;
+}
+

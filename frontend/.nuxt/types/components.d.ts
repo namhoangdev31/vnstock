@@ -14,7 +14,9 @@ type HydrationStrategies = {
 type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }> & T
 
 interface _GlobalComponents {
+  ClosedLoopPipelineCard: typeof import("../../components/ClosedLoopPipelineCard.vue")['default']
   MarkdownViewer: typeof import("../../components/MarkdownViewer.vue")['default']
+  QuantPulseCard: typeof import("../../components/QuantPulseCard.vue")['default']
   TestMatrix: typeof import("../../components/TestMatrix.vue")['default']
   UAccordion: typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Accordion.vue")['default']
   UAlert: typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Alert.vue")['default']
@@ -90,7 +92,9 @@ interface _GlobalComponents {
   Html: typeof import("../../../node_modules/nuxt/dist/head/runtime/components")['Html']
   Body: typeof import("../../../node_modules/nuxt/dist/head/runtime/components")['Body']
   NuxtIsland: typeof import("../../../node_modules/nuxt/dist/app/components/nuxt-island")['default']
+  LazyClosedLoopPipelineCard: LazyComponent<typeof import("../../components/ClosedLoopPipelineCard.vue")['default']>
   LazyMarkdownViewer: LazyComponent<typeof import("../../components/MarkdownViewer.vue")['default']>
+  LazyQuantPulseCard: LazyComponent<typeof import("../../components/QuantPulseCard.vue")['default']>
   LazyTestMatrix: LazyComponent<typeof import("../../components/TestMatrix.vue")['default']>
   LazyUAccordion: LazyComponent<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Accordion.vue")['default']>
   LazyUAlert: LazyComponent<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Alert.vue")['default']>

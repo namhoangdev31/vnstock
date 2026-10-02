@@ -2,40 +2,38 @@
   <div class="min-h-screen font-sans selection:bg-aave-violet selection:text-aave-charcoal relative overflow-x-hidden antialiased">
 
     <div class="bg-aave-paper text-aave-obsidian relative">
-
       <div class="absolute inset-0 bg-surface-lavender opacity-35 pointer-events-none" />
 
       <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-black/[0.06] transition-colors">
-        <div class="max-w-[1200px] mx-auto px-6 h-18 flex items-center justify-between">
-
+        <div class="max-w-[1200px] mx-auto px-6 py-2 h-18 flex items-center justify-between">
           <NuxtLink to="/" class="flex items-center gap-2 group">
-            <span class="font-medium tracking-[-0.4px] text-[17px] text-aave-obsidian flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
+            <span class="font-medium tracking-tight text-base text-aave-obsidian flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
               Vnstock
-              <span class="text-[10px] font-mono uppercase font-medium px-2 py-0.5 rounded-full bg-aave-bone text-aave-iron border border-black/[0.06]">Quants</span>
+              <span class="text-xs font-mono uppercase font-medium px-2 py-0.5 rounded-full bg-aave-bone text-aave-iron border border-black/[0.06]">Quants</span>
             </span>
           </NuxtLink>
 
-          <nav class="hidden md:flex items-center gap-7 text-[14px] font-medium text-aave-iron">
-            <a href="#tri-engine" class="hover:text-aave-obsidian transition-colors">Động cơ Lượng hóa</a>
-            <a href="#full-session" class="hover:text-aave-obsidian transition-colors">Chu kỳ ATO-ATC</a>
-            <a href="#strategies" class="hover:text-aave-obsidian transition-colors">Chiến lược Đầu tư</a>
-            <a href="#self-learning" class="hover:text-aave-obsidian transition-colors">Hệ thống Tự học</a>
+          <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-aave-iron">
+            <a href="#tru-cot" class="hover:text-aave-obsidian transition-colors">Trụ Cột Phân Tích</a>
+            <a href="#phien-giao-dich" class="hover:text-aave-obsidian transition-colors">Chu Kỳ Phiên</a>
+            <a href="#chien-luoc" class="hover:text-aave-obsidian transition-colors">Chiến Lược</a>
+            <a href="#quan-tri-rui-ro" class="hover:text-aave-obsidian transition-colors">Quản Trị Rủi Ro</a>
           </nav>
 
           <div class="flex items-center gap-3">
             <template v-if="token">
               <NuxtLink
-                to="/admin"
+                to="/iboard"
                 class="btn-aave-dark text-sm !py-2.5 !px-5"
               >
-                <span>Vào Cockpit Điều Hành</span>
+                <span>Bảng giá</span>
                 <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
               </NuxtLink>
             </template>
             <template v-else>
               <NuxtLink
                 to="/login"
-                class="text-[14px] font-medium text-aave-iron hover:text-aave-obsidian px-3 py-2 transition-colors"
+                class="text-sm font-medium text-aave-iron hover:text-aave-obsidian px-3 py-2 transition-colors"
               >
                 Đăng nhập
               </NuxtLink>
@@ -51,18 +49,17 @@
       </header>
 
       <section class="relative z-10 max-w-[1200px] mx-auto px-6 pt-16 pb-24 text-center">
-
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aave-bone border border-black/[0.06] text-[13px] font-medium text-aave-obsidian mb-6">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aave-bone border border-black/[0.06] text-xs font-medium text-aave-obsidian mb-6">
           <span class="w-2 h-2 rounded-full bg-aave-violet" />
-          <span>Hệ thống lượng hóa 24/7 thị trường chứng khoán Việt Nam</span>
+          <span>Nghiên Cứu Định Lượng Chứng Khoán</span>
         </div>
 
-        <h1 class="text-4xl sm:text-5xl lg:text-[62px] font-medium text-aave-obsidian tracking-[-2.5px] leading-[1.08] max-w-4xl mx-auto">
-          Nền tảng định lượng và dự báo xu hướng giao dịch độc lập
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-medium text-aave-obsidian tracking-tighter leading-[1.08] max-w-3xl mx-auto">
+          Phân Tích Định Lượng & Mô Phỏng Giao Dịch
         </h1>
 
-        <p class="text-[18px] text-aave-iron leading-relaxed max-w-2xl mx-auto mt-6">
-          Vận hành liên tục không gián đoạn kết hợp 3 động cơ độc lập: Hành vi giá và dòng lệnh tick, Dòng vốn tổ chức và chu kỳ bù trừ, cùng Mô hình xác suất định lượng với cơ chế thích ứng thị trường.
+        <p class="text-base text-aave-iron leading-relaxed max-w-xl mx-auto mt-5">
+          Theo dõi dòng lệnh khớp VN30F1M, dòng tiền tổ chức và giá cân bằng phiên ATC.
         </p>
 
         <div class="flex flex-wrap items-center justify-center gap-4 mt-8">
@@ -70,7 +67,7 @@
             to="/admin"
             class="btn-aave-violet shadow-sm"
           >
-            <span>Truy cập Trạm Cockpit</span>
+            <span>Vào Cockpit</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
 
@@ -78,97 +75,28 @@
             to="/admin/stock"
             class="btn-aave-ghost-light"
           >
-            <span>Bảng Dữ liệu Thị trường</span>
+            <span>Bảng Dữ Liệu</span>
           </NuxtLink>
         </div>
 
-        <div class="mt-14 max-w-3xl mx-auto bg-white rounded-[20px] p-6 sm:p-8 border border-black/[0.06] shadow-[rgba(0,0,0,0.04)_0px_8px_30px_0px] text-left relative overflow-hidden">
-
-          <div class="flex items-center justify-between pb-5 border-b border-black/[0.06]">
-            <div class="flex items-center gap-2.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-aave-violet animate-pulse" />
-              <span class="text-xs font-mono font-medium text-aave-iron uppercase tracking-wider">
-                VN30F1M // QUANT TELEMETRY PULSE
-              </span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-[11px] font-mono px-2.5 py-1 rounded-full bg-aave-bone text-aave-obsidian border border-black/[0.06]">
-                SANDBOX SIMULATION
-              </span>
-              <UTooltip text="Môi trường mô phỏng độc lập cách ly hoàn toàn với tiền thật">
-                <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-aave-iron cursor-help" />
-              </UTooltip>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 py-6 border-b border-black/[0.06]">
-            <div>
-              <div class="text-[13px] font-medium text-aave-iron mb-1">Hợp đồng VN30F1M</div>
-              <div class="text-4xl font-medium tracking-[-1px] text-aave-obsidian font-mono tabular-nums">
-                1,318.50
-              </div>
-              <div class="text-[13px] font-medium text-aave-violet mt-1 font-mono">
-                +6.40 / +0.49%
-              </div>
-            </div>
-
-            <div>
-              <div class="text-[13px] font-medium text-aave-iron mb-1">Độ lệch Basis Spread</div>
-              <div class="text-4xl font-medium tracking-[-1px] text-aave-obsidian font-mono tabular-nums">
-                -2.30
-              </div>
-              <div class="text-[13px] font-medium text-aave-violet mt-1 font-mono">
-                Arbitrage Range Safe
-              </div>
-            </div>
-
-            <div>
-              <div class="text-[13px] font-medium text-aave-iron mb-1">Khớp lệnh ATC Dự Báo</div>
-              <div class="text-4xl font-medium tracking-[-1px] text-aave-obsidian font-mono tabular-nums">
-                1,321.2
-              </div>
-              <div class="text-[13px] font-medium text-aave-violet mt-1 font-mono">
-                Xác suất Long 68.4%
-              </div>
-            </div>
-          </div>
-
-          <div class="pt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <span class="text-[13px] text-aave-iron">Trọng số 3 Engine:</span>
-              <div class="flex items-center gap-1.5 text-xs font-mono font-medium">
-                <span class="px-2 py-0.5 rounded-full bg-aave-bone text-aave-obsidian">W1: 38%</span>
-                <span class="px-2 py-0.5 rounded-full bg-aave-bone text-aave-obsidian">W2: 32%</span>
-                <span class="px-2 py-0.5 rounded-full bg-aave-bone text-aave-obsidian">W3: 30%</span>
-              </div>
-            </div>
-
-            <NuxtLink
-              to="/admin"
-              class="text-[13px] font-medium text-aave-violet hover:underline flex items-center gap-1 self-start sm:self-auto"
-            >
-              <span>Vào Cockpit điều hành</span>
-              <UIcon name="i-heroicons-arrow-right" class="w-3.5 h-3.5" />
-            </NuxtLink>
-          </div>
-        </div>
+        <QuantPulseCard />
       </section>
     </div>
 
     <div class="bg-aave-inkwell text-aave-paper relative">
 
       <section class="max-w-[1200px] mx-auto px-6 pt-24 pb-20 text-center">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aave-obsidian border border-white/[0.08] text-[13px] font-medium text-aave-paper mb-5">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aave-obsidian border border-white/[0.08] text-xs font-medium text-aave-paper mb-5">
           <span class="w-2 h-2 rounded-full bg-aave-violet" />
-          <span>VNSTOCK QUANTITATIVE SUITE</span>
+          <span>MÔ HÌNH ĐỊNH LƯỢNG</span>
         </div>
 
-        <h2 class="text-3xl sm:text-4xl lg:text-[44px] font-medium text-white tracking-[-1.5px] leading-tight max-w-3xl mx-auto">
-          Môi trường mô phỏng và phân tích định lượng chuyên sâu
+        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-medium text-white tracking-tight leading-tight max-w-2xl mx-auto">
+          Mô Phỏng Giao Dịch Độc Lập
         </h2>
 
-        <p class="text-[16px] text-aave-graphite max-w-2xl mx-auto mt-4 leading-relaxed">
-          Được thiết kế theo phong cách tối giản thanh lịch, vận hành cách ly hoàn toàn trong Sandbox, đảm bảo an toàn tuyệt đối và tuân thủ các quy định giao dịch chứng khoán Việt Nam.
+        <p class="text-base text-aave-graphite max-w-xl mx-auto mt-4 leading-relaxed">
+          Tuân thủ chu kỳ thanh toán T+2 cơ sở và T+0 phái sinh dưới hạn mức rủi ro kỷ luật.
         </p>
 
         <div class="flex items-center justify-center gap-4 mt-8">
@@ -176,261 +104,260 @@
             to="/admin"
             class="btn-aave-white"
           >
-            <span>Mở Trạm Cockpit</span>
+            <span>Mở Cockpit</span>
           </NuxtLink>
           <NuxtLink
             to="/admin/stock"
             class="btn-aave-ghost-dark"
           >
-            <span>Tra cứu mã cổ phiếu</span>
+            <span>Tra Cứu Cổ Phiếu</span>
           </NuxtLink>
         </div>
       </section>
 
-      <section id="tri-engine" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
-
+      <section id="tru-cot" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <div class="text-[14px] font-medium text-aave-violet mb-2">
-              KIẾN TRÚC LƯỢNG HÓA
+            <div class="text-xs font-mono font-medium text-aave-violet mb-2">
+              TRỤ CỘT ĐỊNH LƯỢNG
             </div>
-            <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-[-1.2px]">
-              Tam trụ động cơ định lượng độc lập
+            <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-tight">
+              Trụ Cột Phân Tích Cốt Lõi
             </h2>
-            <p class="text-[16px] text-aave-graphite mt-2 max-w-xl">
-              Ba động cơ phân tích dữ liệu đa chiều hoạt động độc lập và tổng hợp qua thuật toán Softmax để thanh lọc tín hiệu nhiễu.
+            <p class="text-sm text-aave-graphite mt-2 max-w-lg">
+              Kết hợp hành vi giá, dòng vốn tổ chức và độ lệch phái sinh để tìm kiếm lợi thế thống kê.
             </p>
           </div>
           <NuxtLink
             to="/admin"
             class="btn-aave-outline-violet self-start md:self-auto text-sm !py-2.5 !px-5"
           >
-            <span>Xem Cockpit điều hành</span>
+            <span>Xem Cockpit</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          <div class="card-aave-dark flex flex-col justify-between space-y-6">
-            <div class="space-y-4">
-              <div class="text-[14px] font-medium text-aave-violet">
-                ĐỘNG CƠ 01 // KỸ THUẬT
+          <div class="card-aave-dark flex flex-col justify-between space-y-5">
+            <div class="space-y-3">
+              <div class="text-xs font-mono font-medium text-aave-violet">
+                TRỤ CỘT 01
               </div>
-              <h3 class="text-[20px] font-medium text-white tracking-[-0.4px]">
-                Hành vi Giá và Khớp lệnh
+              <h3 class="text-lg font-medium text-white tracking-tight">
+                Hành Vi Giá & Lực Khớp Lệnh
               </h3>
-              <p class="text-[14px] text-aave-ash leading-relaxed">
-                Xử lý chuỗi nến đa khung thời gian từ 1 phút đến đồ thị ngày, quét các vùng thanh khoản, khoảng trống giá và đo lường áp lực mua bán chủ động theo thời gian thực.
+              <p class="text-sm text-aave-ash leading-relaxed">
+                Chuỗi nến đa khung, lực mua bán chủ động tức thì và giá bình quân VWAP.
               </p>
             </div>
-            <div class="pt-4 border-t border-white/[0.06] text-[13px] text-aave-graphite font-mono flex items-center justify-between">
-              <span>Order Flow Delta</span>
-              <span class="text-aave-violet">VWAP & ATR</span>
+            <div class="pt-4 border-t border-white/[0.06] text-xs text-aave-graphite font-mono flex items-center justify-between">
+              <span>Lực Mua Bán</span>
+              <span class="text-aave-violet">Giá Bình Quân VWAP</span>
             </div>
           </div>
 
-          <div class="card-aave-dark flex flex-col justify-between space-y-6">
-            <div class="space-y-4">
-              <div class="text-[14px] font-medium text-aave-violet">
-                ĐỘNG CƠ 02 // DÒNG VỐN TỔ CHỨC
+          <div class="card-aave-dark flex flex-col justify-between space-y-5">
+            <div class="space-y-3">
+              <div class="text-xs font-mono font-medium text-aave-violet">
+                TRỤ CỘT 02
               </div>
-              <h3 class="text-[20px] font-medium text-white tracking-[-0.4px]">
-                Dòng tiền Khối ngoại và Vĩ mô
+              <h3 class="text-lg font-medium text-white tracking-tight">
+                Vốn Khối Ngoại & Chu Kỳ T+2
               </h3>
-              <p class="text-[14px] text-aave-ash leading-relaxed">
-                Giám sát giao dịch ròng của Khối ngoại và Khối Tự doanh, biến động tỷ giá USD và giá vàng SJC, đồng thời mô hình hóa áp lực bán giải tỏa thanh khoản trong phiên chiều.
+              <p class="text-sm text-aave-ash leading-relaxed">
+                Giao dịch ròng Khối ngoại, Tự doanh và thanh khoản hàng về phiên chiều T+2.
               </p>
             </div>
-            <div class="pt-4 border-t border-white/[0.06] text-[13px] text-aave-graphite font-mono flex items-center justify-between">
-              <span>Chu kỳ T+2</span>
-              <span class="text-aave-violet">Institutional Flow</span>
+            <div class="pt-4 border-t border-white/[0.06] text-xs text-aave-graphite font-mono flex items-center justify-between">
+              <span>Chu Kỳ T+2</span>
+              <span class="text-aave-violet">Dòng Tiền Khối Ngoại</span>
             </div>
           </div>
 
-          <div class="card-aave-dark flex flex-col justify-between space-y-6">
-            <div class="space-y-4">
-              <div class="text-[14px] font-medium text-aave-violet">
-                ĐỘNG CƠ 03 // XÁC SUẤT ĐỊNH LƯỢNG
+          <div class="card-aave-dark flex flex-col justify-between space-y-5">
+            <div class="space-y-3">
+              <div class="text-xs font-mono font-medium text-aave-violet">
+                TRỤ CỘT 03
               </div>
-              <h3 class="text-[20px] font-medium text-white tracking-[-0.4px]">
-                Xác suất và Độ lệch Cơ sở
+              <h3 class="text-lg font-medium text-white tracking-tight">
+                Độ Lệch Basis & Cân Bằng ATC
               </h3>
-              <p class="text-[14px] text-aave-ash leading-relaxed">
-                Theo dõi liên tục khoảng chênh lệch giữa hợp đồng phái sinh và chỉ số cơ sở, phân loại khoảng trống giá mở cửa và ước lượng khối lượng cân bằng trong phiên đóng cửa.
+              <p class="text-sm text-aave-ash leading-relaxed">
+                Chênh lệch Basis phái sinh với VN30, mở cửa ATO và khối lượng cân bằng ATC.
               </p>
             </div>
-            <div class="pt-4 border-t border-white/[0.06] text-[13px] text-aave-graphite font-mono flex items-center justify-between">
-              <span>Basis Arbitrage</span>
-              <span class="text-aave-violet">ATC Equilibrium</span>
+            <div class="pt-4 border-t border-white/[0.06] text-xs text-aave-graphite font-mono flex items-center justify-between">
+              <span>Độ Lệch Basis</span>
+              <span class="text-aave-violet">Cân Bằng ATC</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="full-session" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
+      <section id="phien-giao-dich" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
         <div class="mb-12">
-          <div class="text-[14px] font-medium text-aave-violet mb-2">
-            THEO DÕI LIÊN TỤC 24/7
+          <div class="text-xs font-mono font-medium text-aave-violet mb-2">
+            CHU KỲ PHIÊN
           </div>
-          <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-[-1.2px]">
-            Chuỗi giám sát toàn diện phiên giao dịch
+          <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-tight">
+            Theo Dõi 5 Pha Giao Dịch Trong Ngày
           </h2>
-          <p class="text-[16px] text-aave-graphite mt-2 max-w-xl">
-            Vòng lặp tính toán tự động xuyên suốt 5 pha của phiên giao dịch để phát hiện kịp thời các biến động bất thường.
+          <p class="text-sm text-aave-graphite mt-2 max-w-lg">
+            Giám sát liên tục từ phiên mở cửa ATO đến phiên đóng cửa ATC.
           </p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div class="card-aave-dark !p-5 space-y-2">
-            <div class="text-[12px] font-mono text-aave-graphite">08:30 - 08:45</div>
-            <h4 class="text-[16px] font-medium text-white">Chuẩn bị trước phiên</h4>
-            <p class="text-[13px] text-aave-graphite leading-relaxed">
-              Đồng bộ giá thanh toán phiên trước, cập nhật các ngưỡng Pivot và đo lường khoảng lệch cơ sở qua đêm.
+            <div class="text-xs font-mono text-aave-graphite">08:30 - 08:45</div>
+            <h4 class="text-sm font-medium text-white">Trước phiên</h4>
+            <p class="text-xs text-aave-graphite leading-relaxed">
+              Đồng bộ giá thanh toán và xác định ngưỡng cản Pivot.
             </p>
           </div>
 
           <div class="card-aave-dark !p-5 space-y-2">
-            <div class="text-[12px] font-mono text-aave-violet">08:45 - 09:00</div>
-            <h4 class="text-[16px] font-medium text-white">Khớp lệnh ATO</h4>
-            <p class="text-[13px] text-aave-graphite leading-relaxed">
-              Theo dõi lệnh khớp ước tính ATO, phân loại khoảng trống mở cửa và xác định thiên hướng tâm lý đầu ngày.
+            <div class="text-xs font-mono text-aave-violet">08:45 - 09:00</div>
+            <h4 class="text-sm font-medium text-white">Khớp lệnh ATO</h4>
+            <p class="text-xs text-aave-graphite leading-relaxed">
+              Theo dõi giá khớp dự kiến và khoảng trống mở cửa.
             </p>
           </div>
 
           <div class="card-aave-dark !p-5 space-y-2">
-            <div class="text-[12px] font-mono text-aave-paper">09:00 - 11:30</div>
-            <h4 class="text-[16px] font-medium text-white">Khớp lệnh sáng</h4>
-            <p class="text-[13px] text-aave-graphite leading-relaxed">
-              Tính toán dữ liệu nến 1 phút, bám sát đường trung bình VWAP và nhận diện các điểm bứt phá xu hướng.
+            <div class="text-xs font-mono text-aave-paper">09:00 - 11:30</div>
+            <h4 class="text-sm font-medium text-white">Khớp liên tục sáng</h4>
+            <p class="text-xs text-aave-graphite leading-relaxed">
+              Biểu đồ nến 1 phút và bám sát đường bình quân VWAP.
             </p>
           </div>
 
           <div class="card-aave-dark !p-5 space-y-2">
-            <div class="text-[12px] font-mono text-aave-graphite">11:30 - 13:00</div>
-            <h4 class="text-[16px] font-medium text-white">Nghỉ giữa phiên</h4>
-            <p class="text-[13px] text-aave-graphite leading-relaxed">
-              Tái tính toán ngầm, đánh giá rổ cổ phiếu cơ sở và hoạch định trước các kịch bản cho phiên buổi chiều.
+            <div class="text-xs font-mono text-aave-graphite">11:30 - 13:00</div>
+            <h4 class="text-sm font-medium text-white">Nghỉ trưa</h4>
+            <p class="text-xs text-aave-graphite leading-relaxed">
+              Đánh giá rổ chỉ số VN30 và chuẩn bị cho phiên chiều.
             </p>
           </div>
 
           <div class="card-aave-dark !p-5 space-y-2 border !border-aave-violet/40">
-            <div class="text-[12px] font-mono text-aave-violet">14:15 - 14:45</div>
-            <h4 class="text-[16px] font-medium text-white">Khớp lệnh ATC</h4>
-            <p class="text-[13px] text-aave-ash leading-relaxed">
-              Kích hoạt thuật toán dự báo ATC, ước tính khối lượng cơ cấu và xác định vùng giá đóng cửa tối ưu.
+            <div class="text-xs font-mono text-aave-violet">14:15 - 14:45</div>
+            <h4 class="text-sm font-medium text-white">Khớp lệnh ATC</h4>
+            <p class="text-xs text-aave-ash leading-relaxed">
+              Dự báo khối lượng tái cơ cấu và giá cân bằng kết phiên.
             </p>
           </div>
         </div>
       </section>
 
-      <section id="strategies" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
+      <section id="chien-luoc" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <div class="text-[14px] font-medium text-aave-violet mb-2">
-              CHIẾN LƯỢC MÔ PHỎNG
+            <div class="text-xs font-mono font-medium text-aave-violet mb-2">
+              CHIẾN LƯỢC ĐẦU TƯ
             </div>
-            <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-[-1.2px]">
-              Tối ưu vị thế phái sinh và rổ cổ phiếu
+            <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-tight">
+              Phái Sinh VN30F1M & Rổ Cổ Phiếu
             </h2>
-            <p class="text-[16px] text-aave-graphite mt-2 max-w-xl">
-              Mô hình hóa chiến lược định lượng hai nhánh giúp phân bổ rủi ro và tìm kiếm cơ hội trên thị trường.
+            <p class="text-sm text-aave-graphite mt-2 max-w-lg">
+              Mô hình hóa vị thế theo từng khung thời gian đầu tư.
             </p>
           </div>
           <NuxtLink
             to="/admin/stock"
             class="btn-aave-outline-violet self-start md:self-auto text-sm !py-2.5 !px-5"
           >
-            <span>Xem Danh mục Cổ phiếu</span>
+            <span>Tra Cứu Bảng Giá</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-          <div class="card-aave-dark space-y-6">
+          <div class="card-aave-dark space-y-5">
             <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-aave-violet" />
-                <span class="text-sm font-medium text-white">Phái sinh VN30F1M</span>
+                <span class="text-sm font-medium text-white">Phái Sinh VN30F1M</span>
               </div>
               <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-aave-obsidian text-aave-violet border border-white/[0.08]">
                 CHẾ ĐỘ T+0
               </span>
             </div>
 
-            <div class="space-y-4">
-              <div class="p-4 rounded-[16px] bg-aave-obsidian border border-white/[0.05] space-y-1.5">
+            <div class="space-y-3">
+              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
                 <div class="text-sm font-medium text-white flex items-center justify-between">
-                  <span>Tín hiệu Vị thế Trong phiên</span>
-                  <span class="text-xs font-mono text-aave-violet">REALTIME</span>
+                  <span>Vị thế trong phiên</span>
+                  <span class="text-xs font-mono text-aave-violet">TRỰC TIẾP</span>
                 </div>
-                <p class="text-[13px] text-aave-graphite leading-relaxed">
-                  Cung cấp các điểm kích hoạt vị thế mua hoặc bán kèm vùng dừng lỗ động dựa trên độ biến động thực tế.
+                <p class="text-xs text-aave-graphite">
+                  Điểm mở vị thế Long/Short kèm mức dừng lỗ động.
                 </p>
               </div>
 
-              <div class="p-4 rounded-[16px] bg-aave-obsidian border border-white/[0.05] space-y-1.5">
+              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
                 <div class="text-sm font-medium text-white flex items-center justify-between">
-                  <span>Giám sát Khoảng cách Cơ sở</span>
-                  <span class="text-xs font-mono text-aave-violet">ARBITRAGE</span>
+                  <span>Chênh lệch Basis</span>
+                  <span class="text-xs font-mono text-aave-violet">BASIS</span>
                 </div>
-                <p class="text-[13px] text-aave-graphite leading-relaxed">
-                  Đo lường độ lệch giá giữa hợp đồng tương lai và rổ chỉ số cơ sở để nhận diện vùng rủi ro đảo chiều.
+                <p class="text-xs text-aave-graphite">
+                  Đo lường độ lệch giá giữa phái sinh và rổ chỉ số VN30.
                 </p>
               </div>
 
-              <div class="p-4 rounded-[16px] bg-aave-obsidian border border-white/[0.05] space-y-1.5">
+              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
                 <div class="text-sm font-medium text-white flex items-center justify-between">
-                  <span>Khuyến nghị Vị thế Qua đêm</span>
-                  <span class="text-xs font-mono text-aave-violet">OVERNIGHT</span>
+                  <span>Phòng vệ qua đêm</span>
+                  <span class="text-xs font-mono text-aave-violet">QUA ĐÊM</span>
                 </div>
-                <p class="text-[13px] text-aave-graphite leading-relaxed">
-                  Mô phỏng các kịch bản biến động thị trường quốc tế nhằm đưa ra tỷ lệ phòng vệ tài khoản phù hợp.
+                <p class="text-xs text-aave-graphite">
+                  Ước lượng tỷ lệ vị thế an toàn trước biến động thế giới.
                 </p>
               </div>
             </div>
           </div>
 
-          <div class="card-aave-dark space-y-6">
+          <div class="card-aave-dark space-y-5">
             <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-white" />
-                <span class="text-sm font-medium text-white">Rổ Cổ phiếu Lượng hóa</span>
+                <span class="text-sm font-medium text-white">Rổ Cổ Phiếu Định Lượng</span>
               </div>
               <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-aave-obsidian text-aave-paper border border-white/[0.08]">
                 CHẾ ĐỘ T+2
               </span>
             </div>
 
-            <div class="space-y-4">
-              <div class="p-4 rounded-[16px] bg-aave-obsidian border border-white/[0.05] space-y-1.5">
+            <div class="space-y-3">
+              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
                 <div class="text-sm font-medium text-white flex items-center justify-between">
-                  <span>Danh mục Tuần</span>
+                  <span>Đà tăng trưởng tuần</span>
                   <span class="text-xs font-mono text-white">MOMENTUM</span>
                 </div>
-                <p class="text-[13px] text-aave-graphite leading-relaxed">
-                  Ưu tiên các mã cổ phiếu có dòng tiền bứt phá mạnh, thanh khoản gia tăng và đà tăng giá ngắn hạn.
+                <p class="text-xs text-aave-graphite">
+                  Cổ phiếu có sức mạnh giá và dòng tiền đột biến.
                 </p>
               </div>
 
-              <div class="p-4 rounded-[16px] bg-aave-obsidian border border-white/[0.05] space-y-1.5">
+              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
                 <div class="text-sm font-medium text-white flex items-center justify-between">
-                  <span>Danh mục Tháng</span>
-                  <span class="text-xs font-mono text-white">SECTOR ROTATION</span>
+                  <span>Luân chuyển ngành tháng</span>
+                  <span class="text-xs font-mono text-white">NGÀNH NGHỀ</span>
                 </div>
-                <p class="text-[13px] text-aave-graphite leading-relaxed">
-                  Theo dõi sự dịch chuyển của dòng vốn giữa các nhóm ngành nghề và tích lũy cổ phiếu có triển vọng tốt.
+                <p class="text-xs text-aave-graphite">
+                  Theo dõi dòng tiền chuyển dịch giữa các nhóm ngành.
                 </p>
               </div>
 
-              <div class="p-4 rounded-[16px] bg-aave-obsidian border border-white/[0.05] space-y-1.5">
+              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
                 <div class="text-sm font-medium text-white flex items-center justify-between">
-                  <span>Danh mục Quý</span>
-                  <span class="text-xs font-mono text-white">FUNDAMENTAL</span>
+                  <span>Giá trị cơ bản quý</span>
+                  <span class="text-xs font-mono text-white">CƠ BẢN</span>
                 </div>
-                <p class="text-[13px] text-aave-graphite leading-relaxed">
-                  Sàng lọc doanh nghiệp có hiệu quả sử dụng vốn cao, dòng tiền hoạt động dồi dào và cơ cấu tài chính lành mạnh.
+                <p class="text-xs text-aave-graphite">
+                  Doanh nghiệp sinh lời cao, dòng tiền tốt và nợ thấp.
                 </p>
               </div>
             </div>
@@ -438,100 +365,65 @@
         </div>
       </section>
 
-      <section id="self-learning" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
+      <section id="quan-tri-rui-ro" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div class="space-y-6">
-            <div class="text-[14px] font-medium text-aave-violet">
-              HỌC MÁY KHÉP KÍN // TỰ HỌC BẤT BIẾN
+            <div class="text-xs font-mono font-medium text-aave-violet">
+              QUẢN TRỊ RỦI RO
             </div>
-            <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-[-1.2px]">
-              Sổ cái dự báo và cơ chế tự điều chỉnh trọng số
+            <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-tight">
+              Sổ Cái Vị Thế & Hiệu Chỉnh Tỷ Trọng
             </h2>
-            <p class="text-[16px] text-aave-graphite leading-relaxed">
-              Mọi kịch bản dự báo đều được ghi nhận vĩnh viễn vào sổ cái trước khi phiên giao dịch kết thúc. Sau phiên, hệ thống tự động đối soát kết quả thực tế, tính toán sai số và tự cập nhật trọng số khi thỏa mãn điều kiện kiểm định.
+            <p class="text-sm text-aave-graphite leading-relaxed">
+              Ghi nhận kịch bản trước phiên, đối soát kết quả sau phiên để hiệu chỉnh tỷ trọng có kỷ luật.
             </p>
 
-            <div class="space-y-3 pt-2">
-              <div class="p-4 rounded-[16px] bg-aave-obsidian border border-white/[0.05] space-y-1">
+            <div class="space-y-3 pt-1">
+              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
                 <div class="text-sm font-medium text-white flex items-center gap-2">
                   <span class="w-1.5 h-1.5 rounded-full bg-aave-violet" />
                   <div class="flex items-center gap-1.5">
-                    <span>Tự động cập nhật mô hình</span>
-                    <UTooltip text="Cơ chế tự nâng cấp trọng số khi qua cổng kiểm định">
+                    <span>Kiểm định ngoài mẫu 30 phiên</span>
+                    <UTooltip text="Tự động điều chỉnh tỷ trọng khi vượt qua các ngưỡng thẩm định rủi ro">
                       <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-aave-graphite cursor-help" />
                     </UTooltip>
                   </div>
                 </div>
-                <p class="text-[13px] text-aave-graphite">
-                  Khi vượt qua kỳ kiểm tra ngoài mẫu 30 phiên gần nhất, hệ thống tự áp dụng bộ trọng số mới vào luồng tính toán trực tiếp.
+                <p class="text-xs text-aave-graphite">
+                  Đo lường sai số và tỷ lệ đúng hướng trên dữ liệu thực tế.
                 </p>
               </div>
 
-              <div class="p-4 rounded-[16px] bg-aave-obsidian border border-white/[0.05] space-y-1">
+              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
                 <div class="text-sm font-medium text-white flex items-center gap-2">
                   <span class="w-1.5 h-1.5 rounded-full bg-rose-400" />
                   <div class="flex items-center gap-1.5">
-                    <span>Cầu dao an toàn tự động</span>
-                    <UTooltip text="Cơ chế ngắt mạch bảo vệ khi sai số vượt ngưỡng an toàn">
+                    <span>Cơ chế ngắt mạch bảo vệ</span>
+                    <UTooltip text="Khóa cập nhật tỷ trọng và hoàn nguyên về phân bổ phòng thủ khi thị trường biến động vượt ngưỡng">
                       <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-aave-graphite cursor-help" />
                     </UTooltip>
                   </div>
                 </div>
-                <p class="text-[13px] text-aave-graphite">
-                  Nếu phát sinh sai lệch vượt ngưỡng quy định, hệ thống tự động ngắt tính năng nâng cấp và hoàn nguyên về trọng số cân bằng an toàn.
+                <p class="text-xs text-aave-graphite">
+                  Tự động dừng áp dụng khi biến động thị trường vượt ngưỡng.
                 </p>
               </div>
             </div>
           </div>
 
-          <div class="card-aave-dark space-y-5 font-mono text-xs">
-            <div class="text-[13px] font-medium text-aave-graphite pb-3 border-b border-white/[0.06] flex items-center justify-between">
-              <span>CLOSED-LOOP ML PIPELINE</span>
-              <span class="text-aave-violet">AUTONOMOUS</span>
-            </div>
-
-            <div class="space-y-3">
-              <div class="p-3.5 rounded-[12px] bg-black/40 border border-white/[0.06] flex items-center justify-between">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-white">1. Phát sinh kịch bản dự báo</span>
-                  <UTooltip text="Trạng thái chờ phiên giao dịch thực tế kết thúc">
-                    <UIcon name="i-heroicons-information-circle" class="w-3.5 h-3.5 text-aave-graphite cursor-help" />
-                  </UTooltip>
-                </div>
-                <span class="text-aave-violet">Ghi nhận vào Sổ cái</span>
-              </div>
-
-              <div class="text-center text-aave-graphite">
-                <UIcon name="i-heroicons-arrow-down" class="w-4 h-4 mx-auto text-aave-graphite" />
-              </div>
-
-              <div class="p-3.5 rounded-[12px] bg-black/40 border border-white/[0.06] flex items-center justify-between">
-                <span class="text-white">2. Đối soát thực tế và Chấm điểm</span>
-                <span class="text-aave-violet">Brier Score / MAE</span>
-              </div>
-
-              <div class="text-center text-aave-graphite">
-                <UIcon name="i-heroicons-arrow-down" class="w-4 h-4 mx-auto text-aave-graphite" />
-              </div>
-
-              <div class="p-3.5 rounded-[12px] bg-aave-violet/10 border border-aave-violet/30 flex items-center justify-between">
-                <span class="text-white font-medium">3. Tự động nâng cấp phiên bản mô hình</span>
-                <span class="text-aave-violet font-bold">Kích hoạt trực tiếp</span>
-              </div>
-            </div>
-          </div>
+          <ClosedLoopPipelineCard />
         </div>
       </section>
 
       <section class="max-w-[1200px] mx-auto px-6 py-12">
-        <div class="rounded-[20px] bg-surface-midnight border border-aave-violet/30 p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div class="space-y-2 max-w-2xl">
-            <div class="text-[14px] font-medium text-aave-violet flex items-center gap-2">
+        <div class="rounded-[20px] bg-surface-midnight border border-aave-violet/30 p-7 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div class="space-y-1.5 max-w-2xl">
+            <div class="text-xs font-mono font-medium text-aave-violet flex items-center gap-2">
               <UIcon name="i-heroicons-shield-check" class="w-5 h-5 text-aave-violet" />
-              <span>CAM KẾT CÁCH LY SANDBOX // AN TOÀN TUYỆT ĐỐI</span>
+              <span>MÔ HÌNH MÔ PHỎNG SANDBOX</span>
             </div>
-            <p class="text-[14px] text-aave-ash leading-relaxed">
-              Hệ thống tuyệt đối không tích hợp cổng đặt lệnh tiền thật với bất kỳ công ty chứng khoán nào. Mọi phân tích chỉ phục vụ mục đích nghiên cứu lượng hóa và môi trường mô phỏng độc lập. Quyền quyết định giao dịch thực tế hoàn toàn thuộc về con người.
+            <p class="text-xs text-aave-ash leading-relaxed">
+              Môi trường nghiên cứu độc lập. Không kết nối tài khoản chứng khoán và không đặt lệnh tiền thật.
             </p>
           </div>
 
@@ -539,32 +431,129 @@
             to="/admin"
             class="btn-aave-violet shrink-0"
           >
-            <span>Trải nghiệm Trạm Cockpit</span>
+            <span>Vào Cockpit</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
         </div>
       </section>
 
-      <footer class="border-t border-white/[0.06] bg-aave-inkwell py-12 text-[13px] text-aave-graphite">
-        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div class="flex items-center gap-3">
-            <NuxtLink to="/" class="hover:text-white transition-colors">
-              <span class="text-white font-medium text-[15px] tracking-[-0.3px]">Vnstock Quants</span>
-            </NuxtLink>
-            <span class="text-aave-iron">|</span>
-            <span class="text-aave-graphite">Continuous Quantitative Research & Predictive Analytics Engine</span>
+      <footer class="border-t border-white/[0.08] bg-surface-midnight pt-14 pb-10 text-xs text-aave-graphite">
+        <div class="max-w-[1200px] mx-auto px-6">
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pb-10">
+
+            <div class="lg:col-span-2 space-y-3">
+              <NuxtLink to="/" class="flex items-center gap-2 group">
+                <span class="font-medium tracking-tight text-lg text-white flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
+                  Vnstock
+                  <span class="text-xs font-mono uppercase font-medium px-2 py-0.5 rounded-full bg-white/10 text-aave-violet border border-white/[0.1]">Quants</span>
+                </span>
+              </NuxtLink>
+
+              <p class="text-xs text-aave-ash leading-relaxed max-w-sm">
+                Nền tảng phân tích định lượng, dự báo phiên ATC và mô phỏng giao dịch phái sinh VN30F1M cùng rổ cổ phiếu.
+              </p>
+
+              <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-xs font-mono text-aave-ash">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                </span>
+                <span>Vận hành liên tục · Mô phỏng Sandbox 100%</span>
+              </div>
+            </div>
+
+            <div class="space-y-2.5">
+              <div class="text-xs font-mono font-semibold uppercase text-aave-violet tracking-wider">
+                Trụ Cột Phân Tích
+              </div>
+              <ul class="space-y-2 text-xs">
+                <li>
+                  <a href="#tru-cot" class="hover:text-white transition-colors">Giá & Lực Khớp Lệnh</a>
+                </li>
+                <li>
+                  <a href="#tru-cot" class="hover:text-white transition-colors">Dòng Tiền Khối Ngoại</a>
+                </li>
+                <li>
+                  <a href="#tru-cot" class="hover:text-white transition-colors">Chu Kỳ Thanh Toán T+2</a>
+                </li>
+                <li>
+                  <a href="#tru-cot" class="hover:text-white transition-colors">Độ Lệch Basis</a>
+                </li>
+                <li>
+                  <a href="#phien-giao-dich" class="hover:text-white transition-colors">Cân Bằng Phiên ATC</a>
+                </li>
+              </ul>
+            </div>
+
+            <div class="space-y-2.5">
+              <div class="text-xs font-mono font-semibold uppercase text-aave-violet tracking-wider">
+                Danh Mục Đầu Tư
+              </div>
+              <ul class="space-y-2 text-xs">
+                <li>
+                  <a href="#chien-luoc" class="hover:text-white transition-colors">Phái Sinh VN30F1M T+0</a>
+                </li>
+                <li>
+                  <a href="#chien-luoc" class="hover:text-white transition-colors">Đà Tăng Trưởng Tuần</a>
+                </li>
+                <li>
+                  <a href="#chien-luoc" class="hover:text-white transition-colors">Luân Chuyển Ngành</a>
+                </li>
+                <li>
+                  <a href="#chien-luoc" class="hover:text-white transition-colors">Giá Trị Cơ Bản Quý</a>
+                </li>
+                <li>
+                  <NuxtLink to="/admin/stock" class="hover:text-white transition-colors">Bảng Giá Thị Trường</NuxtLink>
+                </li>
+              </ul>
+            </div>
+
+            <div class="space-y-2.5">
+              <div class="text-xs font-mono font-semibold uppercase text-aave-violet tracking-wider">
+                Điều Hành
+              </div>
+              <ul class="space-y-2 text-xs">
+                <li>
+                  <NuxtLink to="/admin" class="hover:text-white transition-colors">Trạm Cockpit</NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/admin/stock" class="hover:text-white transition-colors">Tra Cứu Cổ Phiếu</NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/admin/items" class="hover:text-white transition-colors">Danh Mục Tài Sản</NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/admin/settings" class="hover:text-white transition-colors">Cấu Hình Tham Số</NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/login" class="hover:text-white transition-colors">Đăng Nhập Sandbox</NuxtLink>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div class="flex items-center gap-6 font-medium text-[13px]">
-            <NuxtLink to="/admin" class="hover:text-white transition-colors">Trạm Cockpit</NuxtLink>
-            <NuxtLink to="/admin/stock" class="hover:text-white transition-colors">Thị trường CK</NuxtLink>
-            <NuxtLink to="/admin/items" class="hover:text-white transition-colors">Quản lý Hàng hóa</NuxtLink>
-            <NuxtLink to="/admin/settings" class="hover:text-white transition-colors">Cài đặt</NuxtLink>
-            <NuxtLink to="/login" class="hover:text-white transition-colors">Đăng nhập</NuxtLink>
+          <div class="p-3.5 rounded-[12px] bg-white/[0.02] border border-white/[0.06] mb-6">
+            <div class="flex items-start gap-2.5">
+              <UIcon name="i-heroicons-shield-exclamation" class="w-4 h-4 text-aave-violet shrink-0 mt-0.5" />
+              <p class="text-xs text-aave-ash leading-relaxed">
+                Cảnh báo rủi ro: Mọi kịch bản dự báo và lệnh mô phỏng chỉ phục vụ mục đích nghiên cứu học thuật. Nền tảng không phải công ty chứng khoán, không giao dịch tiền thật và không khuyến nghị đầu tư.
+              </p>
+            </div>
           </div>
 
-          <div class="font-mono text-[12px] text-aave-iron">
-            Aave Design System // Mixed Dual-Mood
+          <div class="pt-5 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-mono text-aave-iron">
+            <div>
+              © 2026 Vnstock Quants.
+            </div>
+
+            <div class="flex items-center gap-3">
+              <span>Chứng khoán Việt Nam</span>
+              <span>·</span>
+              <span>Chu kỳ T+2 & Phái sinh T+0</span>
+              <span>·</span>
+              <span>Chuẩn Thiết Kế Tối Giản</span>
+            </div>
           </div>
         </div>
       </footer>
@@ -578,12 +567,12 @@ definePageMeta({
 })
 
 useHead({
-  title: "Vnstock Quants Engine - Nền Tảng Định Lượng & Dự Báo Xu Hướng 24/7",
+  title: "Vnstock Quants - Phân Tích Định Lượng & Dự Báo Giao Dịch",
   meta: [
     {
       name: "description",
       content:
-        "Hệ thống nghiên cứu định lượng, dự báo phiên ATC và mô phỏng giao dịch phái sinh VN30F1M cùng rổ cổ phiếu hoạt động liên tục 24/7.",
+        "Hệ thống phân tích định lượng, dự báo phiên ATC và mô phỏng giao dịch phái sinh VN30F1M cùng rổ cổ phiếu chứng khoán Việt Nam.",
     },
   ],
 })
