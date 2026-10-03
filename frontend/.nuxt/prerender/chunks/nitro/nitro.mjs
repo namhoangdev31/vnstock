@@ -898,7 +898,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "e8c700e3-a54c-4620-b5e3-70fdb70e1f1f",
+    "buildId": "93392db4-3e57-4e28-b940-6c9018388716",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -907,6 +907,12 @@ const _inlineRuntimeConfig = {
     "routeRules": {
       "/__nuxt_error": {
         "cache": false
+      },
+      "/api/**": {
+        "proxy": {
+          "to": "https://vnstock.fastapicloud.dev/api/**",
+          "_proxyStripBase": "/api"
+        }
       },
       "/_nuxt/builds/meta/**": {
         "headers": {

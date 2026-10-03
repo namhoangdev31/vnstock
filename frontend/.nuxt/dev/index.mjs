@@ -927,6 +927,12 @@ const _inlineRuntimeConfig = {
       "/__nuxt_error": {
         "cache": false
       },
+      "/api/**": {
+        "proxy": {
+          "to": "https://vnstock.fastapicloud.dev/api/**",
+          "_proxyStripBase": "/api"
+        }
+      },
       "/_nuxt/builds/meta/**": {
         "headers": {
           "cache-control": "public, max-age=31536000, immutable"

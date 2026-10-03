@@ -43,6 +43,11 @@ export default defineNuxtConfig({
       publicDir: path.resolve(__dirname, "../backend/app/frontend"),
     },
   },
+  routeRules: {
+    "/api/**": {
+      proxy: `${process.env.VITE_API_URL || process.env.NUXT_PUBLIC_API_URL || "https://vnstock.fastapicloud.dev"}/api/**`,
+    },
+  },
   colorMode: {
     preference: "dark",
     fallback: "dark",

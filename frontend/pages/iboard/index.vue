@@ -445,6 +445,9 @@ const loadMarketPulse = async () => {
 }
 
 const loadOrders = async () => {
+  const token = process.client ? localStorage.getItem("access_token") : null
+  if (!token) return
+
   try {
     const res = await StockService.listSimulationOrders({
       query: { portfolio_id: activePortfolioId.value || undefined, limit: 30 },
@@ -471,6 +474,9 @@ const loadOrders = async () => {
 }
 
 const loadPortfolios = async () => {
+  const token = process.client ? localStorage.getItem("access_token") : null
+  if (!token) return
+
   try {
     const res = await StockService.listPortfolios()
     if (res?.data && res.data.length > 0) {
@@ -533,7 +539,10 @@ onMounted(() => {
   loadIndices()
   loadBoardData()
   loadMarketPulse()
-  loadPortfolios()
+  const token = process.client ? localStorage.getItem("access_token") : null
+  if (token) {
+    loadPortfolios()
+  }
 
   autoRefreshTimer = setInterval(() => {
     loadIndices()
