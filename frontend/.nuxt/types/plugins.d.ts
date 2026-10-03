@@ -9,26 +9,30 @@ type NuxtAppInjections =
   InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/revive-payload.client.js")> &
   InjectionType<typeof import("../../../node_modules/nuxt/dist/head/runtime/plugins/unhead.js")> &
   InjectionType<typeof import("../../../node_modules/nuxt/dist/pages/runtime/plugins/router.js")> &
+  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/browser-devtools-timing.client.js")> &
+  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/dev-server-logs.js")> &
   InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/navigation-repaint.client.js")> &
   InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/check-outdated-build.client.js")> &
   InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/revive-payload.server.js")> &
   InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/chunk-reload.client.js")> &
   InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/island-link-navigation.client.js")> &
   InjectionType<typeof import("../../../node_modules/nuxt/dist/pages/runtime/plugins/prefetch.client.js")> &
+  InjectionType<typeof import("../../../node_modules/nuxt/dist/pages/runtime/plugins/check-if-page-unused.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/plugins/slideovers.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/plugins/modals.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/plugins/colors.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxtjs/color-mode/dist/runtime/plugin.server.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxtjs/color-mode/dist/runtime/plugin.client.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxt/icon/dist/runtime/plugin.js")> &
-  InjectionType<typeof import("../../plugins/api.client")> &
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/pages/runtime/plugins/prerender.server.js")>
+  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/warn.dev.server.js")> &
+  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/check-if-layout-used.js")> &
+  InjectionType<typeof import("../../plugins/api.client")>
 
 declare module '#app' {
   interface NuxtApp extends NuxtAppInjections { }
 
   interface NuxtAppLiterals {
-    pluginName: 'nuxt:revive-payload:client' | 'nuxt:head' | 'nuxt:router' | 'nuxt:revive-payload:server' | 'nuxt:chunk-reload' | 'nuxt:island-link-navigation' | 'nuxt:global-components' | 'nuxt:prefetch' | '@nuxt/icon'
+    pluginName: 'nuxt:revive-payload:client' | 'nuxt:head' | 'nuxt:router' | 'nuxt:browser-devtools-timing' | 'nuxt:revive-payload:server' | 'nuxt:chunk-reload' | 'nuxt:island-link-navigation' | 'nuxt:global-components' | 'nuxt:prefetch' | 'nuxt:checkIfPageUnused' | '@nuxt/icon' | 'nuxt:checkIfLayoutUsed'
   }
 }
 
