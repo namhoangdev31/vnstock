@@ -72,10 +72,10 @@
           </NuxtLink>
 
           <NuxtLink
-            to="/admin/stock"
+            to="/iboard"
             class="btn-aave-ghost-light"
           >
-            <span>Bảng Dữ Liệu</span>
+            <span>Bảng giá chứng khoán</span>
           </NuxtLink>
         </div>
 

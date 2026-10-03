@@ -6,7 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, Query
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import SessionDep
 from app.domains.market_data.application.iboard_schemas import (
     IBoardCandleBar,
     IBoardIndexItem,
@@ -22,7 +22,6 @@ router = APIRouter(prefix="/iboard", tags=["iboard"])
 @router.get("/indices", response_model=list[IBoardIndexItem])
 def get_iboard_indices(
     session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
 ) -> Any:
     """Truy xuất dải chỉ số thị trường (VN30, VNINDEX, HNX30, HNX, VN30F1M)."""
     return IBoardService.get_indices(session)
@@ -31,7 +30,6 @@ def get_iboard_indices(
 @router.get("/board", response_model=list[IBoardStockRow])
 def get_iboard_board(
     session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
     category: str = Query(
         default="listed",
         description="listed, derivatives, warrants, etf, sectors, watchlist, put_through",
@@ -65,7 +63,6 @@ def get_iboard_board(
 def get_iboard_stock_detail(
     symbol: str,
     session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
     timeframe: str = Query(
         default="1D",
         description="Khung thời gian nến (1m, 5m, 15m, 1H, 1D, 1W)",
@@ -81,7 +78,6 @@ def get_iboard_stock_detail(
 def get_iboard_candles(
     symbol: str,
     session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
     timeframe: str = Query(
         default="1D",
         description="Khung thời gian nến: 1m, 5m, 15m, 1H, 1D, 1W",
@@ -100,7 +96,6 @@ def get_iboard_candles(
 @router.get("/market-pulse", response_model=IBoardMarketPulse)
 def get_iboard_market_pulse(
     session: SessionDep,
-    current_user: CurrentUser,  # noqa: ARG001
 ) -> Any:
     """Truy xuất nhận định định lượng và top cổ phiếu biến động."""
     return IBoardService.get_market_pulse(session=session)
