@@ -41,7 +41,7 @@ from app.domains.quant.domain.indicators import (
     compute_atr,
     compute_engine_correlation,
 )
-from app.domains.quant.domain.models import ForecastJournal
+from app.domains.quant.domain.models import ForecastJournal, ModelVersionSnapshot
 
 # Bảng trọng số động theo chu kỳ phiên giao dịch chuẩn quy định tại TRD Phase 2
 DEFAULT_SCHEDULE: dict[str, dict[str, float]] = {
@@ -259,6 +259,9 @@ class EnsembleEngine:
         engine_weights: dict[str, float],
         engine_scores: dict[str, float],
         parameter_snapshot: dict[str, Any],
+        predicted_probability: float | None = None,
+        predicted_price_low: float | None = None,
+        predicted_price_high: float | None = None,
     ) -> uuid.UUID:
         """Bắt buộc ghi nhận dự báo vào bảng sổ nhật ký ForecastJournal (Tuân thủ RULE 3)."""
         if predicted_at.tzinfo is None:
@@ -280,6 +283,25 @@ class EnsembleEngine:
 
         journal_id = uuid.uuid4()
         if self.session is not None:
+            active = self.session.exec(
+                select(ModelVersionSnapshot)
+                .where(ModelVersionSnapshot.is_active == True)  # noqa: E712
+                .order_by(col(ModelVersionSnapshot.created_at).desc())
+            ).first()
+            if active is None:
+                active = ModelVersionSnapshot(
+                    version_tag=self.MODEL_VERSION,
+                    w1=0.33,
+                    w2=0.33,
+                    w3=0.34,
+                    is_active=True,
+                    parameter_snapshot={"source": "phase5-baseline"},
+                    promoted_at=datetime.now(VN_TZ),
+                )
+                self.session.add(active)
+                self.session.commit()
+                self.session.refresh(active)
+            persistent_weights = {"w1": active.w1, "w2": active.w2, "w3": active.w3}
             mapped_direction = (
                 ForecastDirection.BULLISH
                 if predicted_direction in ("LONG", ForecastDirection.BULLISH)
@@ -294,12 +316,16 @@ class EnsembleEngine:
                 predicted_at=predicted_at,
                 predicted_value=predicted_value,
                 predicted_direction=mapped_direction,
-                engine_weights=engine_weights,
-                model_version=self.MODEL_VERSION,
+                engine_weights=persistent_weights,
+                model_version=active.version_tag,
+                predicted_probability=predicted_probability,
+                predicted_price_low=predicted_price_low,
+                predicted_price_high=predicted_price_high,
                 parameter_snapshot={
                     **parameter_snapshot,
                     "engine_scores": engine_scores,
                     "predicted_score": predicted_score,
+                    "engine_forecasts": parameter_snapshot.get("engine_forecasts", {}),
                 },
                 status=ForecastStatus.PENDING,
             )
@@ -447,6 +473,21 @@ class EnsembleEngine:
             "engine3": e3_res.score,
         }
 
+        effective_atr = max(2.0, float(atr_val or 5.0))
+        engine_forecasts = {
+            key: {
+                "score": score,
+                "direction": self.classify_direction(score),
+                "probability": round(0.5 + 0.5 * abs(score), 6),
+                "target_price": round(entry_price + effective_atr * score, 4),
+            }
+            for key, score in engine_scores.items()
+        }
+        mc_targets = getattr(e3_res, "monte_carlo_targets", {}) or {}
+        predicted_low = mc_targets.get("p05", mc_targets.get("low"))
+        predicted_high = mc_targets.get("p95", mc_targets.get("high"))
+        ensemble_probability = round(0.5 + 0.5 * abs(final_score), 6)
+
         # Tính correlation giữa các engine (single-point → [score] cho mỗi engine)
         # Với nhiều phiên tích lũy sẽ chính xác hơn; hiện tại dùng 1 điểm → corr = 0.0
         engine_corr = compute_engine_correlation(
@@ -471,7 +512,12 @@ class EnsembleEngine:
                 "engine_disagreement": disagreement,
                 "regime": regime,
                 "engine_correlation": engine_corr,
+                "entry_price": entry_price,
+                "engine_forecasts": engine_forecasts,
             },
+            predicted_probability=ensemble_probability,
+            predicted_price_low=predicted_low,
+            predicted_price_high=predicted_high,
         )
 
         return EnsembleSignalResponse(

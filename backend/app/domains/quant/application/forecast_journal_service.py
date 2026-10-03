@@ -54,6 +54,9 @@ class ForecastJournalService:
         horizon: str = ForecastHorizon.T_PLUS_1,
         predicted_value: float | None = None,
         predicted_direction: str = ForecastDirection.NEUTRAL,
+        predicted_probability: float | None = None,
+        predicted_price_low: float | None = None,
+        predicted_price_high: float | None = None,
         engine_weights: dict | None = None,
         parameter_snapshot: dict | None = None,
     ) -> ForecastJournal:
@@ -76,6 +79,11 @@ class ForecastJournalService:
             raise ForecastJournalError(
                 f"Unsupported forecast direction: {predicted_direction}"
             )
+        if (
+            predicted_probability is not None
+            and not 0.0 <= predicted_probability <= 1.0
+        ):
+            raise ForecastJournalError("predicted_probability must be between 0 and 1")
 
         entry = ForecastJournal(
             symbol=symbol,
@@ -83,6 +91,9 @@ class ForecastJournalService:
             predicted_at=predicted_at,
             predicted_value=predicted_value,
             predicted_direction=predicted_direction,
+            predicted_probability=predicted_probability,
+            predicted_price_low=predicted_price_low,
+            predicted_price_high=predicted_price_high,
             engine_weights=engine_weights or {},
             model_version=model_version,
             parameter_snapshot=parameter_snapshot or {},
@@ -177,12 +188,42 @@ class ForecastJournalService:
         if entry.predicted_value is not None and entry.actual_value is not None:
             error = math.fabs(entry.predicted_value - entry.actual_value)
 
-        score = self._directional_score(
-            entry.predicted_direction, entry.actual_direction
+        actual_direction = entry.actual_direction
+        entry_price = entry.parameter_snapshot.get("entry_price")
+        if entry_price is not None and entry.actual_value is not None:
+            delta = float(entry.actual_value) - float(entry_price)
+            actual_direction = (
+                ForecastDirection.BULLISH.value
+                if delta > 0
+                else ForecastDirection.BEARISH.value
+                if delta < 0
+                else ForecastDirection.NEUTRAL.value
+            )
+            entry.actual_direction = actual_direction
+
+        directional_correct = self._directional_correct(
+            entry.predicted_direction, actual_direction
         )
+        score = None if directional_correct is None else float(directional_correct)
+        brier = None
+        if entry.predicted_probability is not None and actual_direction in (
+            ForecastDirection.BULLISH,
+            ForecastDirection.BEARISH,
+            ForecastDirection.BULLISH.value,
+            ForecastDirection.BEARISH.value,
+        ):
+            outcome = (
+                1.0
+                if str(actual_direction).upper() == ForecastDirection.BULLISH
+                else 0.0
+            )
+            brier = (entry.predicted_probability - outcome) ** 2
 
         entry.error = error
+        entry.absolute_error = error
         entry.score = score
+        entry.directional_correct = directional_correct
+        entry.brier_score = brier
         entry.status = ForecastStatus.SCORED
         entry.updated_at = datetime.now(VN_TZ)
         self.session.add(entry)
@@ -192,15 +233,15 @@ class ForecastJournalService:
         return entry
 
     @staticmethod
-    def _directional_score(predicted: str | None, actual: str | None) -> float:
-        """Directional accuracy reward in [0, 1]."""
+    def _directional_correct(predicted: str | None, actual: str | None) -> bool | None:
+        """Return correctness, excluding neutral outcomes from DA metrics."""
         if predicted is None or actual is None:
-            return 0.5
+            return None
         p = str(predicted).upper()
         a = str(actual).upper()
         if p == ForecastDirection.NEUTRAL or a == ForecastDirection.NEUTRAL:
-            return 0.5
-        return 1.0 if p == a else 0.0
+            return None
+        return p == a
 
     # ------------------------------------------------------------------
     # Aggregation helpers
@@ -230,7 +271,12 @@ class ForecastJournalService:
 
         rows = self.session.exec(query).all()
         errors = [r.error for r in rows if r.error is not None]
-        scores = [r.score for r in rows if r.score is not None]
+        scores = [
+            float(r.directional_correct)
+            for r in rows
+            if r.directional_correct is not None
+        ]
+        briers = [r.brier_score for r in rows if r.brier_score is not None]
         mae = (sum(errors) / len(errors)) if errors else None
         directional_accuracy = (sum(scores) / len(scores)) if scores else None
         return {
@@ -238,6 +284,12 @@ class ForecastJournalService:
             "mae": mae,
             "directional_accuracy": directional_accuracy,
             "scored_with_error": len(errors),
+            "directional_count": len(scores),
+            "mean_brier": sum(briers) / len(briers) if briers else None,
+            "rmse": math.sqrt(sum(error * error for error in errors) / len(errors))
+            if errors
+            else None,
+            "win_rate": directional_accuracy,
         }
 
     def pending(self, *, limit: int = 100) -> list[ForecastJournal]:
@@ -306,8 +358,11 @@ class ForecastJournalService:
                 continue
 
             actual_value = bar.close
-            if entry.predicted_value is not None:
-                diff = actual_value - entry.predicted_value
+            reference_price = entry.parameter_snapshot.get("entry_price")
+            if reference_price is None:
+                reference_price = entry.predicted_value
+            if reference_price is not None:
+                diff = actual_value - float(reference_price)
                 if diff > 0:
                     actual_dir = ForecastDirection.BULLISH
                 elif diff < 0:

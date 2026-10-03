@@ -22,6 +22,9 @@ class ForecastCreate(SQLModel):
     predicted_at: datetime
     predicted_value: float | None = None
     predicted_direction: str = Field(default=ForecastDirection.NEUTRAL, max_length=10)
+    predicted_probability: float | None = Field(default=None, ge=0.0, le=1.0)
+    predicted_price_low: float | None = None
+    predicted_price_high: float | None = None
     engine_weights: dict = Field(default_factory=dict)
     model_version: str = Field(max_length=40)
     parameter_snapshot: dict = Field(default_factory=dict)
@@ -90,6 +93,9 @@ class ForecastJournalPublic(SQLModel):
     predicted_at: datetime
     predicted_value: float | None = None
     predicted_direction: str
+    predicted_probability: float | None = None
+    predicted_price_low: float | None = None
+    predicted_price_high: float | None = None
     engine_weights: dict
     model_version: str
     parameter_snapshot: dict
@@ -98,6 +104,9 @@ class ForecastJournalPublic(SQLModel):
     realized_at: datetime | None = None
     error: float | None = None
     score: float | None = None
+    directional_correct: bool | None = None
+    brier_score: float | None = None
+    absolute_error: float | None = None
     status: str
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -119,6 +128,45 @@ class ForecastAggregateResponse(SQLModel):
     mae: float | None = None
     directional_accuracy: float | None = None
     scored_with_error: int
+    directional_count: int = 0
+    mean_brier: float | None = None
+    rmse: float | None = None
+    win_rate: float | None = None
+
+
+class ForecastPage(SQLModel):
+    items: list[ForecastJournalPublic]
+    page: int
+    page_size: int
+    total: int
+
+
+class ModelVersionPublic(SQLModel):
+    id: uuid.UUID
+    version_tag: str
+    parameter_snapshot: dict
+    w1: float
+    w2: float
+    w3: float
+    is_active: bool
+    auto_promoted: bool
+    circuit_breaker_triggered: bool
+    auto_promotion_enabled: bool
+    baseline_version_tag: str | None = None
+    rolling_da: float | None = None
+    rolling_brier: float | None = None
+    rolling_mae: float | None = None
+    promoted_at: datetime | None = None
+    rolled_back_at: datetime | None = None
+    rollback_reason: str | None = None
+    created_at: datetime
+
+
+class RecalibrationResponse(SQLModel):
+    status: str
+    version: ModelVersionPublic | None = None
+    reason: str | None = None
+    metrics: dict = Field(default_factory=dict)
 
 
 class InstitutionalFlowPublic(SQLModel):

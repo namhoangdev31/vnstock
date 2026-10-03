@@ -401,7 +401,12 @@ def run_forecast_resolution_hook(
 
         with session_factory() as session:
             svc = ForecastJournalService(session)
-            result = svc.resolve_and_score_due_forecasts(as_of=run_date)
+            result: dict[str, Any] = svc.resolve_and_score_due_forecasts(as_of=run_date)
+            from app.domains.quant.application.recalibration_engine import (
+                RecalibrationEngine,
+            )
+
+            result["recalibration"] = RecalibrationEngine(session).auto_run()
 
         _tracker.mark_ran(hook_name, run_date)
         logger.info("[hook] %s completed: %s", hook_name, result)

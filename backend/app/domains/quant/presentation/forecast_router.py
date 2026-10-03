@@ -26,6 +26,7 @@ from app.domains.quant.application.schemas import (
     ForecastAggregateResponse,
     ForecastCreate,
     ForecastJournalPublic,
+    ForecastPage,
     ForecastResolve,
     ForecastScoredPublic,
 )
@@ -56,6 +57,9 @@ def create_forecast(
             horizon=payload.horizon,
             predicted_value=payload.predicted_value,
             predicted_direction=payload.predicted_direction,
+            predicted_probability=payload.predicted_probability,
+            predicted_price_low=payload.predicted_price_low,
+            predicted_price_high=payload.predicted_price_high,
             engine_weights=payload.engine_weights,
             parameter_snapshot=payload.parameter_snapshot,
         )
@@ -64,7 +68,7 @@ def create_forecast(
     return ForecastJournalPublic.model_validate(entry)
 
 
-@router.get("", response_model=list[ForecastJournalPublic])
+@router.get("", response_model=Any)
 def list_forecasts(
     session: SessionDep,
     current_user: CurrentUser,  # noqa: ARG001
@@ -73,6 +77,8 @@ def list_forecasts(
     status: str | None = None,
     model_version: str | None = None,
     limit: int = Query(default=50, ge=1, le=500),
+    page: int = Query(default=1, ge=1),
+    page_size: int | None = Query(default=None, ge=1, le=500),
 ) -> Any:
     """List forecasts with optional filters."""
     query = select(ForecastJournal)
@@ -84,10 +90,19 @@ def list_forecasts(
         query = query.where(ForecastJournal.status == status)
     if model_version is not None:
         query = query.where(ForecastJournal.model_version == model_version)
+    effective_size = page_size or limit
+    total = len(session.exec(query).all())
     rows = session.exec(
-        query.order_by(col(ForecastJournal.predicted_at).desc()).limit(limit)
+        query.order_by(col(ForecastJournal.predicted_at).desc())
+        .offset((page - 1) * effective_size)
+        .limit(effective_size)
     ).all()
-    return [ForecastJournalPublic.model_validate(r) for r in rows]
+    items = [ForecastJournalPublic.model_validate(r) for r in rows]
+    # Preserve the original response shape for existing consumers; explicit
+    # page-size requests opt into the Phase 5 envelope.
+    if page_size is None and page == 1:
+        return items
+    return ForecastPage(items=items, page=page, page_size=effective_size, total=total)
 
 
 @router.get("/aggregate", response_model=ForecastAggregateResponse)

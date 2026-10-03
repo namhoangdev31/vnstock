@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
+from typing import Any, cast
 
-from sqlalchemy import DateTime, Index, UniqueConstraint
+from sqlalchemy import DateTime, Index, UniqueConstraint, column
 from sqlmodel import Field
 
 from app.core.enums import (
@@ -45,6 +46,9 @@ class ForecastJournal(AwareSQLModel, table=True):
     )
     predicted_value: float | None = None
     predicted_direction: str = Field(default=ForecastDirection.NEUTRAL, max_length=10)
+    predicted_probability: float | None = Field(default=None, ge=0.0, le=1.0)
+    predicted_price_low: float | None = None
+    predicted_price_high: float | None = None
     engine_weights: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
     model_version: str = Field(max_length=40)
     parameter_snapshot: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
@@ -58,6 +62,9 @@ class ForecastJournal(AwareSQLModel, table=True):
     )
     error: float | None = None
     score: float | None = None
+    directional_correct: bool | None = None
+    brier_score: float | None = None
+    absolute_error: float | None = None
     status: ForecastStatus = Field(default=ForecastStatus.PENDING, index=True)
     created_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -67,6 +74,49 @@ class ForecastJournal(AwareSQLModel, table=True):
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
+
+
+class ModelVersionSnapshot(AwareSQLModel, table=True):
+    """Immutable calibration snapshot used by persisted ensemble forecasts."""
+
+    __tablename__ = "model_version_snapshot"
+    __table_args__ = (
+        UniqueConstraint("version_tag", name="uq_model_version_snapshot_tag"),
+        Index(
+            "uq_model_version_snapshot_active",
+            "is_active",
+            unique=True,
+            postgresql_where=(column("is_active") == True),  # noqa: E712
+            sqlite_where=(column("is_active") == True),  # noqa: E712
+        ),
+        Index("ix_model_version_snapshot_created_at", "created_at"),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    version_tag: str = Field(max_length=40, index=True)
+    parameter_snapshot: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
+    w1: float = Field(default=0.33, ge=0.15, le=0.60)
+    w2: float = Field(default=0.33, ge=0.15, le=0.60)
+    w3: float = Field(default=0.34, ge=0.15, le=0.60)
+    is_active: bool = Field(default=False, index=True)
+    auto_promoted: bool = False
+    circuit_breaker_triggered: bool = False
+    auto_promotion_enabled: bool = True
+    baseline_version_tag: str | None = Field(default=None, max_length=40)
+    rolling_da: float | None = None
+    rolling_brier: float | None = None
+    rolling_mae: float | None = None
+    promoted_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))  # type: ignore
+    rolled_back_at: datetime | None = Field(
+        default=None, sa_type=cast(Any, DateTime(timezone=True))
+    )  # type: ignore[arg-type]
+    rollback_reason: str | None = Field(default=None, max_length=500)
+    created_at: datetime = Field(
+        default_factory=get_datetime_utc, sa_type=cast(Any, DateTime(timezone=True))
+    )  # type: ignore[arg-type]
+    updated_at: datetime = Field(
+        default_factory=get_datetime_utc, sa_type=cast(Any, DateTime(timezone=True))
+    )  # type: ignore[arg-type]
 
 
 class MacroIndicator(AwareSQLModel, table=True):
