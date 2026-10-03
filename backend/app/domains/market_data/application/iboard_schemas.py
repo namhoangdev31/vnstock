@@ -36,7 +36,6 @@ class IBoardStockRow(SQLModel):
     symbol: str
     name: str
     exchange: str
-    margin_rate: str | None = None
     last_price: float
     ref_price: float
     ceiling_price: float

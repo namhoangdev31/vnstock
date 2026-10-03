@@ -431,7 +431,6 @@ export interface IBoardStockRow {
 	symbol: string;
 	name: string;
 	exchange: string;
-	margin_rate?: string | null;
 	last_price: number;
 	ref_price: number;
 	ceiling_price: number;

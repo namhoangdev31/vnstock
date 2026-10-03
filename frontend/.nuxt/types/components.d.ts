@@ -18,6 +18,9 @@ interface _GlobalComponents {
   MarkdownViewer: typeof import("../../components/MarkdownViewer.vue")['default']
   QuantPulseCard: typeof import("../../components/QuantPulseCard.vue")['default']
   TestMatrix: typeof import("../../components/TestMatrix.vue")['default']
+  IboardIBoardIndexCard: typeof import("../../components/iboard/IBoardIndexCard.vue")['default']
+  IboardIBoardIndexRibbon: typeof import("../../components/iboard/IBoardIndexRibbon.vue")['default']
+  IboardTypes: typeof import("../../components/iboard/types")['default']
   TradingActivePositionsTable: typeof import("../../components/trading/ActivePositionsTable.vue")['default']
   TradingAlphaBasketsRebalanceCard: typeof import("../../components/trading/AlphaBasketsRebalanceCard.vue")['default']
   TradingAtcImbalanceMonitor: typeof import("../../components/trading/AtcImbalanceMonitor.vue")['default']
@@ -119,6 +122,9 @@ interface _GlobalComponents {
   LazyMarkdownViewer: LazyComponent<typeof import("../../components/MarkdownViewer.vue")['default']>
   LazyQuantPulseCard: LazyComponent<typeof import("../../components/QuantPulseCard.vue")['default']>
   LazyTestMatrix: LazyComponent<typeof import("../../components/TestMatrix.vue")['default']>
+  LazyIboardIBoardIndexCard: LazyComponent<typeof import("../../components/iboard/IBoardIndexCard.vue")['default']>
+  LazyIboardIBoardIndexRibbon: LazyComponent<typeof import("../../components/iboard/IBoardIndexRibbon.vue")['default']>
+  LazyIboardTypes: LazyComponent<typeof import("../../components/iboard/types")['default']>
   LazyTradingActivePositionsTable: LazyComponent<typeof import("../../components/trading/ActivePositionsTable.vue")['default']>
   LazyTradingAlphaBasketsRebalanceCard: LazyComponent<typeof import("../../components/trading/AlphaBasketsRebalanceCard.vue")['default']>
   LazyTradingAtcImbalanceMonitor: LazyComponent<typeof import("../../components/trading/AtcImbalanceMonitor.vue")['default']>

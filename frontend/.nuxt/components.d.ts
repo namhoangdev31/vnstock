@@ -18,6 +18,9 @@ export const ClosedLoopPipelineCard: typeof import("../components/ClosedLoopPipe
 export const MarkdownViewer: typeof import("../components/MarkdownViewer.vue")['default']
 export const QuantPulseCard: typeof import("../components/QuantPulseCard.vue")['default']
 export const TestMatrix: typeof import("../components/TestMatrix.vue")['default']
+export const IboardIBoardIndexCard: typeof import("../components/iboard/IBoardIndexCard.vue")['default']
+export const IboardIBoardIndexRibbon: typeof import("../components/iboard/IBoardIndexRibbon.vue")['default']
+export const IboardTypes: typeof import("../components/iboard/types")['default']
 export const TradingActivePositionsTable: typeof import("../components/trading/ActivePositionsTable.vue")['default']
 export const TradingAlphaBasketsRebalanceCard: typeof import("../components/trading/AlphaBasketsRebalanceCard.vue")['default']
 export const TradingAtcImbalanceMonitor: typeof import("../components/trading/AtcImbalanceMonitor.vue")['default']
@@ -119,6 +122,9 @@ export const LazyClosedLoopPipelineCard: LazyComponent<typeof import("../compone
 export const LazyMarkdownViewer: LazyComponent<typeof import("../components/MarkdownViewer.vue")['default']>
 export const LazyQuantPulseCard: LazyComponent<typeof import("../components/QuantPulseCard.vue")['default']>
 export const LazyTestMatrix: LazyComponent<typeof import("../components/TestMatrix.vue")['default']>
+export const LazyIboardIBoardIndexCard: LazyComponent<typeof import("../components/iboard/IBoardIndexCard.vue")['default']>
+export const LazyIboardIBoardIndexRibbon: LazyComponent<typeof import("../components/iboard/IBoardIndexRibbon.vue")['default']>
+export const LazyIboardTypes: LazyComponent<typeof import("../components/iboard/types")['default']>
 export const LazyTradingActivePositionsTable: LazyComponent<typeof import("../components/trading/ActivePositionsTable.vue")['default']>
 export const LazyTradingAlphaBasketsRebalanceCard: LazyComponent<typeof import("../components/trading/AlphaBasketsRebalanceCard.vue")['default']>
 export const LazyTradingAtcImbalanceMonitor: LazyComponent<typeof import("../components/trading/AtcImbalanceMonitor.vue")['default']>
