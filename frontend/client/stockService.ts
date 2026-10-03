@@ -105,6 +105,39 @@ export interface AlphaBasketsResponse {
 	baskets: Record<string, AlphaTicker[]>;
 }
 
+export interface DerivativesSnapshot {
+	symbol: string;
+	as_of: string;
+	session_phase: string;
+	quote: { price: number | null; reference: number | null; change: number | null; change_percent: number | null; ceiling: number | null; floor: number | null };
+	basis: { value: number; zscore: number; spot: number | null };
+	technical: { vwap: number | null; bollinger: Record<string, number>; rsi: number | null; atr: number | null };
+	candles: Array<{ time: string; open: number; high: number; low: number; close: number; volume: number }>;
+	orderflow: Array<{ time: string; buy_volume: number; sell_volume: number; delta: number; vwap: number | null }>;
+	signal: { direction: string; entry: number; stop_loss: number | null; take_profit: number | null; trailing_stop: number | null; confidence: number; created_at: string } | null;
+	disclaimer: string;
+}
+
+export interface FlowRadarSnapshot {
+	as_of: string;
+	engine: Record<string, unknown>;
+	flows: Array<Record<string, unknown>>;
+	breadth: Record<string, number> | null;
+	macro: Array<Record<string, unknown>>;
+	availability: Record<string, { available: boolean; reason: string | null }>;
+}
+
+export interface PredictionSnapshot {
+	symbol: string;
+	as_of: string;
+	current_price: number | null;
+	price_limits: { floor: number | null; ceiling: number | null };
+	atc: { available: boolean; reason: string };
+	monte_carlo: { available: boolean; simulations: number; p10: number | null; p50: number | null; p90: number | null; histogram: Array<{ price: number; probability: number }>; reason: string | null };
+	ledger: Array<Record<string, unknown>>;
+	disclaimer: string;
+}
+
 export interface PortfolioItem {
 	id: string;
 	name: string;
@@ -121,192 +154,251 @@ export interface PortfoliosResponse {
 	count: number;
 }
 
-export class StockService {
-	public static async listSymbols(options?: {
-		query?: {
-			skip?: number;
-			limit?: number;
-			exchange?: string;
-			asset_type?: string;
-			search?: string;
-		};
-	}): Promise<StockSymbolsResponse> {
-		const res = await client.get<StockSymbolsResponse, unknown, true>({
-			url: "/api/v1/stock/symbols",
-			security: [{ scheme: "bearer", type: "http" }],
-			query: options?.query,
-		});
-		return res.data;
-	}
+export interface PositionItem { id: string; symbol: string; side: string; quantity: number; entry_price: number; current_price: number; unrealized_pnl: number; realized_pnl: number; margin_required: number; settlement_date?: string | null; status: string }
+export interface OrderItem { id: string; symbol: string; side: string; order_type: string; price: number; stop_price?: number | null; quantity: number; filled_quantity: number; filled_price?: number | null; fee: number; tax: number; status: string; reject_reason?: string | null; created_at: string; updated_at: string }
 
-	public static async getDailyPrice(options: {
-		path: { symbol: string };
-		query: { start: string; end?: string };
-	}): Promise<PriceHistoryResponse> {
-		const res = await client.get<PriceHistoryResponse, unknown, true>({
-			url: `/api/v1/stock/${options.path.symbol}/price/daily`,
-			security: [{ scheme: "bearer", type: "http" }],
-			query: options.query,
-		});
-		return res.data;
-	}
-
-	public static async getRealtimePrice(options: {
-		path: { symbol: string };
-	}): Promise<RealtimePriceResponse> {
-		const res = await client.get<RealtimePriceResponse, unknown, true>({
-			url: `/api/v1/stock/${options.path.symbol}/price/realtime`,
-			security: [{ scheme: "bearer", type: "http" }],
-		});
-		return res.data;
-	}
-
-	public static async getCompanyOverview(options: {
-		path: { symbol: string };
-	}): Promise<CompanyOverview> {
-		const res = await client.get<CompanyOverview, unknown, true>({
-			url: `/api/v1/stock/${options.path.symbol}/overview`,
-			security: [{ scheme: "bearer", type: "http" }],
-		});
-		return res.data;
-	}
-
-	public static async getFinancials(options: {
-		path: { symbol: string };
-		query?: { report_type?: string; period?: string };
-	}): Promise<FinancialReportsResponse> {
-		const res = await client.get<FinancialReportsResponse, unknown, true>({
-			url: `/api/v1/stock/${options.path.symbol}/financials`,
-			security: [{ scheme: "bearer", type: "http" }],
-			query: options.query,
-		});
-		return res.data;
-	}
-
-	public static async listPortfolios(): Promise<PortfoliosResponse> {
-		const res = await client.get<PortfoliosResponse, unknown, true>({
-			url: "/api/v1/simulation/portfolios",
-			security: [{ scheme: "bearer", type: "http" }],
-		});
-		return res.data;
-	}
-
-	public static async getMarginStatus(options: {
-		path: { portfolio_id: string };
-	}): Promise<MarginStatusResponse> {
-		const res = await client.get<MarginStatusResponse, unknown, true>({
-			url: `/api/v1/simulation/portfolios/${options.path.portfolio_id}/margin-status`,
-			security: [{ scheme: "bearer", type: "http" }],
-		});
-		return res.data;
-	}
-
-	public static async processSettlement(): Promise<SettlementProcessResponse> {
-		const res = await client.post<SettlementProcessResponse, unknown, true>({
-			url: "/api/v1/simulation/settlement/process",
-			security: [{ scheme: "bearer", type: "http" }],
-		});
-		return res.data;
-	}
-
-	public static async getAlphaBaskets(options?: {
-		query?: { horizon?: string; record_journal?: boolean };
-	}): Promise<AlphaBasketsResponse> {
-		const res = await client.get<AlphaBasketsResponse, unknown, true>({
-			url: "/api/v1/simulation/alpha/baskets",
-			security: [{ scheme: "bearer", type: "http" }],
-			query: options?.query,
-		});
-		return res.data;
-	}
-
-	public static async getIBoardIndices(): Promise<IBoardIndexItem[]> {
-		const res = await client.get<IBoardIndexItem[], unknown, true>({
-			url: "/api/v1/stock/iboard/indices",
-			security: [{ scheme: "bearer", type: "http" }],
-		});
-		return res.data;
-	}
-
-	public static async getIBoardBoard(options?: {
-		query?: {
-			category?: string;
-			group?: string;
-			sector?: string;
-			search?: string;
-			limit?: number;
-		};
-	}): Promise<IBoardStockRow[]> {
-		const res = await client.get<IBoardStockRow[], unknown, true>({
-			url: "/api/v1/stock/iboard/board",
-			security: [{ scheme: "bearer", type: "http" }],
-			query: options?.query,
-		});
-		return res.data;
-	}
-
-	public static async getIBoardStockDetail(options: {
-		path: { symbol: string };
-		query?: { timeframe?: string };
-	}): Promise<IBoardStockDetail> {
-		const res = await client.get<IBoardStockDetail, unknown, true>({
-			url: `/api/v1/stock/iboard/stock-detail/${options.path.symbol}`,
-			security: [{ scheme: "bearer", type: "http" }],
-			query: options.query,
-		});
-		return res.data;
-	}
-
-	public static async getIBoardCandles(options: {
-		path: { symbol: string };
-		query?: {
-			timeframe?: string;
-			limit?: number;
-		};
-	}): Promise<IBoardCandleBar[]> {
-		const res = await client.get<IBoardCandleBar[], unknown, true>({
-			url: `/api/v1/stock/iboard/candles/${options.path.symbol}`,
-			security: [{ scheme: "bearer", type: "http" }],
-			query: options.query,
-		});
-		return res.data;
-	}
-
-	public static async getIBoardMarketPulse(): Promise<IBoardMarketPulse> {
-		const res = await client.get<IBoardMarketPulse, unknown, true>({
-			url: "/api/v1/stock/iboard/market-pulse",
-			security: [{ scheme: "bearer", type: "http" }],
-		});
-		return res.data;
-	}
-
-	public static async placeSimulationOrder(payload: {
-		portfolio_id: string;
-		symbol: string;
-		side: "BUY" | "SELL";
-		order_type?: string;
-		quantity: number;
-		price?: number;
-	}): Promise<unknown> {
-		const res = await client.post({
-			url: "/api/v1/simulation/orders",
-			security: [{ scheme: "bearer", type: "http" }],
-			body: payload,
-		});
-		return res.data;
-	}
-
-	public static async listSimulationOrders(options?: {
-		query?: { portfolio_id?: string; limit?: number };
-	}): Promise<SimulationOrderDTO[]> {
-		const res = await client.get<SimulationOrderDTO[], unknown, true>({
-			url: "/api/v1/simulation/orders",
-			security: [{ scheme: "bearer", type: "http" }],
-			query: options?.query,
-		});
-		return res.data;
-	}
+export async function getDerivativesSnapshot(options?: { query?: { symbol?: string; timeframe?: string; limit?: number } }): Promise<DerivativesSnapshot> {
+	return (await client.get<DerivativesSnapshot, unknown, true>({ url: "/api/v1/quant/cockpit/derivatives", query: options?.query, security: [{ scheme: "bearer", type: "http" }] })).data;
 }
+
+export async function getFlowRadarSnapshot(): Promise<FlowRadarSnapshot> {
+	return (await client.get<FlowRadarSnapshot, unknown, true>({ url: "/api/v1/quant/cockpit/flow-radar", security: [{ scheme: "bearer", type: "http" }] })).data;
+}
+
+export async function getPredictionSnapshot(options?: { query?: { symbol?: string } }): Promise<PredictionSnapshot> {
+	return (await client.get<PredictionSnapshot, unknown, true>({ url: "/api/v1/quant/cockpit/prediction", query: options?.query, security: [{ scheme: "bearer", type: "http" }] })).data;
+}
+
+export async function listSymbols(options?: {
+	query?: {
+		skip?: number;
+		limit?: number;
+		exchange?: string;
+		asset_type?: string;
+		search?: string;
+	};
+}): Promise<StockSymbolsResponse> {
+	const res = await client.get<StockSymbolsResponse, unknown, true>({
+		url: "/api/v1/stock/symbols",
+		security: [{ scheme: "bearer", type: "http" }],
+		query: options?.query,
+	});
+	return res.data;
+}
+
+export async function getDailyPrice(options: {
+	path: { symbol: string };
+	query: { start: string; end?: string };
+}): Promise<PriceHistoryResponse> {
+	const res = await client.get<PriceHistoryResponse, unknown, true>({
+		url: `/api/v1/stock/${options.path.symbol}/price/daily`,
+		security: [{ scheme: "bearer", type: "http" }],
+		query: options.query,
+	});
+	return res.data;
+}
+
+export async function getRealtimePrice(options: {
+	path: { symbol: string };
+}): Promise<RealtimePriceResponse> {
+	const res = await client.get<RealtimePriceResponse, unknown, true>({
+		url: `/api/v1/stock/${options.path.symbol}/price/realtime`,
+		security: [{ scheme: "bearer", type: "http" }],
+	});
+	return res.data;
+}
+
+export async function getCompanyOverview(options: {
+	path: { symbol: string };
+}): Promise<CompanyOverview> {
+	const res = await client.get<CompanyOverview, unknown, true>({
+		url: `/api/v1/stock/${options.path.symbol}/overview`,
+		security: [{ scheme: "bearer", type: "http" }],
+	});
+	return res.data;
+}
+
+export async function getFinancials(options: {
+	path: { symbol: string };
+	query?: { report_type?: string; period?: string };
+}): Promise<FinancialReportsResponse> {
+	const res = await client.get<FinancialReportsResponse, unknown, true>({
+		url: `/api/v1/stock/${options.path.symbol}/financials`,
+		security: [{ scheme: "bearer", type: "http" }],
+		query: options.query,
+	});
+	return res.data;
+}
+
+export async function listPortfolios(): Promise<PortfoliosResponse> {
+	const res = await client.get<PortfoliosResponse, unknown, true>({
+		url: "/api/v1/simulation/portfolios",
+		security: [{ scheme: "bearer", type: "http" }],
+	});
+	return res.data;
+}
+
+export async function getMarginStatus(options: {
+	path: { portfolio_id: string };
+}): Promise<MarginStatusResponse> {
+	const res = await client.get<MarginStatusResponse, unknown, true>({
+		url: `/api/v1/simulation/portfolios/${options.path.portfolio_id}/margin-status`,
+		security: [{ scheme: "bearer", type: "http" }],
+	});
+	return res.data;
+}
+
+export async function processSettlement(): Promise<SettlementProcessResponse> {
+	const res = await client.post<SettlementProcessResponse, unknown, true>({
+		url: "/api/v1/simulation/settlement/process",
+		security: [{ scheme: "bearer", type: "http" }],
+	});
+	return res.data;
+}
+
+export async function getAlphaBaskets(options?: {
+	query?: { horizon?: string; record_journal?: boolean };
+}): Promise<AlphaBasketsResponse> {
+	const res = await client.get<AlphaBasketsResponse, unknown, true>({
+		url: "/api/v1/simulation/alpha/baskets",
+		security: [{ scheme: "bearer", type: "http" }],
+		query: options?.query,
+	});
+	return res.data;
+}
+
+export async function getIBoardIndices(): Promise<IBoardIndexItem[]> {
+	const res = await client.get<IBoardIndexItem[], unknown, true>({
+		url: "/api/v1/stock/iboard/indices",
+		security: [{ scheme: "bearer", type: "http" }],
+	});
+	return res.data;
+}
+
+export async function getIBoardBoard(options?: {
+	query?: {
+		category?: string;
+		group?: string;
+		sector?: string;
+		search?: string;
+		limit?: number;
+	};
+}): Promise<IBoardStockRow[]> {
+	const res = await client.get<IBoardStockRow[], unknown, true>({
+		url: "/api/v1/stock/iboard/board",
+		security: [{ scheme: "bearer", type: "http" }],
+		query: options?.query,
+	});
+	return res.data;
+}
+
+export async function getIBoardStockDetail(options: {
+	path: { symbol: string };
+	query?: { timeframe?: string };
+}): Promise<IBoardStockDetail> {
+	const res = await client.get<IBoardStockDetail, unknown, true>({
+		url: `/api/v1/stock/iboard/stock-detail/${options.path.symbol}`,
+		security: [{ scheme: "bearer", type: "http" }],
+		query: options.query,
+	});
+	return res.data;
+}
+
+export async function getIBoardCandles(options: {
+	path: { symbol: string };
+	query?: {
+		timeframe?: string;
+		limit?: number;
+	};
+}): Promise<IBoardCandleBar[]> {
+	const res = await client.get<IBoardCandleBar[], unknown, true>({
+		url: `/api/v1/stock/iboard/candles/${options.path.symbol}`,
+		security: [{ scheme: "bearer", type: "http" }],
+		query: options.query,
+	});
+	return res.data;
+}
+
+export async function getIBoardMarketPulse(): Promise<IBoardMarketPulse> {
+	const res = await client.get<IBoardMarketPulse, unknown, true>({
+		url: "/api/v1/stock/iboard/market-pulse",
+		security: [{ scheme: "bearer", type: "http" }],
+	});
+	return res.data;
+}
+
+export async function placeSimulationOrder(payload: {
+	portfolio_id: string;
+	symbol: string;
+	side: "BUY" | "SELL";
+	order_type?: string;
+	quantity: number;
+	price?: number;
+}): Promise<unknown> {
+	const res = await client.post({
+		url: "/api/v1/simulation/orders",
+		security: [{ scheme: "bearer", type: "http" }],
+		body: payload,
+	});
+	return res.data;
+}
+
+export async function listSimulationOrders(options?: {
+	query?: { portfolio_id?: string; limit?: number };
+}): Promise<SimulationOrderDTO[]> {
+	const res = await client.get<SimulationOrderDTO[], unknown, true>({
+		url: "/api/v1/simulation/orders",
+		security: [{ scheme: "bearer", type: "http" }],
+		query: options?.query,
+	});
+	return res.data;
+}
+
+export async function listSimulationPositions(options: { path: { portfolio_id: string } }): Promise<PositionItem[]> {
+	const res = await client.get<PositionItem[], unknown, true>({ url: `/api/v1/simulation/portfolios/${options.path.portfolio_id}/positions`, security: [{ scheme: "bearer", type: "http" }] });
+	return res.data;
+}
+
+export async function placePortfolioOrder(options: { path: { portfolio_id: string }; body: { symbol: string; side: string; quantity: number; price: number; order_type: string; stop_price?: number } }): Promise<OrderItem> {
+	const res = await client.post<OrderItem, unknown, true>({ url: `/api/v1/simulation/portfolios/${options.path.portfolio_id}/orders`, security: [{ scheme: "bearer", type: "http" }], body: options.body });
+	return res.data;
+}
+
+export async function closeSimulationPosition(options: { path: { position_id: string }; body: { quantity: number; price: number } }): Promise<unknown> {
+	const res = await client.post({ url: `/api/v1/simulation/positions/${options.path.position_id}/close`, security: [{ scheme: "bearer", type: "http" }], body: options.body });
+	return res.data;
+}
+
+export async function allocateAlphaBasket(options: { path: { portfolio_id: string }; body: { horizon: string } }): Promise<OrderItem[]> {
+	const res = await client.post<OrderItem[], unknown, true>({ url: `/api/v1/simulation/portfolios/${options.path.portfolio_id}/alpha/allocate`, security: [{ scheme: "bearer", type: "http" }], body: options.body });
+	return res.data;
+}
+
+export const StockService = {
+	getDerivativesSnapshot,
+	getFlowRadarSnapshot,
+	getPredictionSnapshot,
+	listSymbols,
+	getDailyPrice,
+	getRealtimePrice,
+	getCompanyOverview,
+	getFinancials,
+	listPortfolios,
+	getMarginStatus,
+	processSettlement,
+	getAlphaBaskets,
+	getIBoardIndices,
+	getIBoardBoard,
+	getIBoardStockDetail,
+	getIBoardCandles,
+	getIBoardMarketPulse,
+	placeSimulationOrder,
+	listSimulationOrders,
+	listSimulationPositions,
+	placePortfolioOrder,
+	closeSimulationPosition,
+	allocateAlphaBasket,
+};
 
 export interface IBoardIndexBreadth {
 	advance: number;
@@ -433,4 +525,3 @@ export interface SimulationOrderDTO {
 	created_at: string;
 	updated_at: string;
 }
-

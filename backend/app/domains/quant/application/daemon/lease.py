@@ -147,12 +147,21 @@ class PostgresAdvisoryLease:
             self._connection = None
             if connection is None or self.engine.dialect.name != "postgresql":
                 return
+            if connection.closed:
+                return
             try:
                 connection.execute(
                     text("SELECT pg_advisory_unlock(hashtext(:lock_name))"),
                     {"lock_name": self.lock_name},
                 )
-            except Exception:
-                logger.warning("Failed to release daemon advisory lease", exc_info=True)
+            except Exception as exc:
+                logger.info(
+                    "Advisory lease connection already closed or terminated by database (%s): %s",
+                    self.lock_name,
+                    exc,
+                )
             finally:
-                connection.close()
+                try:
+                    connection.close()
+                except Exception:
+                    pass

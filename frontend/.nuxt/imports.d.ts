@@ -32,8 +32,13 @@ export { computedAsync, asyncComputed, computedEager, eagerComputed, computedInj
 export { createGenericProjection, createProjection, logicAnd, and, logicNot, not, logicOr, or, useAbs, useAverage, useCeil, useClamp, useFloor, useMath, useMax, useMin, usePrecision, useProjection, useRound, useSum, useTrunc } from '@vueuse/math';
 export { definePageMeta } from '../../node_modules/nuxt/dist/pages/runtime/composables';
 export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
+export { useAtcPrediction } from '../composables/useAtcPrediction';
 export { useAuth } from '../composables/useAuth';
 export { useCustomToast } from '../composables/useCustomToast';
+export { useDerivativesLive } from '../composables/useDerivativesLive';
+export { useFlowBreadthRadar } from '../composables/useFlowBreadthRadar';
+export { usePaperTrading } from '../composables/usePaperTrading';
+export { useTradingPhase, useTradingPolling, TradingPhase } from '../composables/useTradingPolling';
 export { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d';
 export { defineShortcuts } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts';
 export { useProvideButtonGroup, useInjectButtonGroup } from '../../node_modules/@nuxt/ui/dist/runtime/composables/useButtonGroup';

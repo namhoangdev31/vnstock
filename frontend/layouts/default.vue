@@ -46,6 +46,25 @@
             </NuxtLink>
 
             <NuxtLink
+              to="/trading"
+              class="flex items-center gap-3 rounded-xl px-3 py-2 text-xs"
+              :class="route.path.startsWith('/trading') ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
+              @click="mobileOpen = false"
+            >
+              <UIcon name="i-heroicons-chart-bar-square" class="h-4 w-4" />
+              <span>Trading Cockpit</span>
+            </NuxtLink>
+
+            <NuxtLink
+              to="/trading"
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all"
+              :class="route.path.startsWith('/trading') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
+            >
+              <UIcon name="i-heroicons-chart-bar-square" class="w-4 h-4 shrink-0" />
+              <span>Trading Cockpit</span>
+            </NuxtLink>
+
+            <NuxtLink
               to="/admin/items"
               class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group"
               :class="route.path.startsWith('/admin/items') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"

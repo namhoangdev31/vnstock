@@ -117,7 +117,7 @@
         "../../node_modules/@nuxt/ui/dist/runtime/*"
       ],
       "#ui-colors": [
-        "./ui.colors.mjs"
+        "./ui.colors"
       ],
       "#color-mode-options": [
         "./color-mode-options.mjs"
@@ -132,7 +132,7 @@
         "./tailwind/expose/*"
       ],
       "#nuxt-icon-server-bundle": [
-        "./nuxt-icon-server-bundle.mjs"
+        "./nuxt-icon-server-bundle"
       ]
     },
     "lib": [

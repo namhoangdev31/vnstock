@@ -164,3 +164,9 @@ class AlphaBasketsResponse(SQLModel):
 
     horizon: str
     baskets: dict[str, list[AlphaTicker]]
+
+
+class AlphaAllocateRequest(SQLModel):
+    """Request to allocate one screened basket inside a paper portfolio."""
+
+    horizon: str = Field(max_length=20)

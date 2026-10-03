@@ -25,6 +25,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import Session, col, select
 
 from app.api.deps import CurrentUser, SessionDep
+from app.domains.market_data.domain.models import StockOHLCVDaily
 from app.domains.simulation.application.alpha_screener import screen
 from app.domains.simulation.application.engine import SimulationEngine, is_derivative
 from app.domains.simulation.application.margin_calculator import (
@@ -34,6 +35,7 @@ from app.domains.simulation.application.margin_calculator import (
     total_derivative_position_value,
 )
 from app.domains.simulation.application.schemas import (
+    AlphaAllocateRequest,
     AlphaBasketsResponse,
     AlphaCriteria,
     AlphaTicker,
@@ -354,3 +356,62 @@ def get_alpha_baskets(
         ]
 
     return AlphaBasketsResponse(horizon=horizon, baskets=baskets_dto)
+
+
+@router.post(
+    "/portfolios/{portfolio_id}/alpha/allocate", response_model=list[OrderResponse]
+)
+def allocate_alpha_basket(
+    session: SessionDep,
+    current_user: CurrentUser,
+    portfolio_id: UUID,
+    payload: AlphaAllocateRequest,
+) -> list[OrderResponse]:
+    """Create equal-weight BUY orders for a screened basket in paper trading only."""
+    if payload.horizon not in ("weekly", "monthly", "quarterly"):
+        raise HTTPException(status_code=422, detail="Invalid basket horizon")
+    engine = _engine(session)
+    portfolio = _owned_portfolio(engine, portfolio_id, current_user.id)
+    screened = screen(session, horizon=payload.horizon, record_journal=False)
+    basket = screened.get(payload.horizon, [])
+    if not basket:
+        raise HTTPException(
+            status_code=422, detail="No source-backed basket is available"
+        )
+    prices: dict[str, float] = {}
+    for ticker in basket:
+        bar = session.exec(
+            select(StockOHLCVDaily)
+            .where(StockOHLCVDaily.symbol == ticker.symbol)
+            .order_by(col(StockOHLCVDaily.trading_date).desc())
+            .limit(1)
+        ).first()
+        if bar is None or bar.close <= 0:
+            raise HTTPException(
+                status_code=422, detail=f"No source price for {ticker.symbol}"
+            )
+        prices[ticker.symbol] = float(bar.close)
+    allocation = portfolio.cash_balance / len(prices)
+    quantities = {symbol: int(allocation // price) for symbol, price in prices.items()}
+    if any(quantity < 1 for quantity in quantities.values()):
+        raise HTTPException(
+            status_code=422,
+            detail="Insufficient virtual balance for equal-weight allocation",
+        )
+    orders = []
+    for symbol, price in prices.items():
+        try:
+            orders.append(
+                engine.place_order(
+                    portfolio=portfolio,
+                    symbol=symbol,
+                    side="BUY",
+                    quantity=quantities[symbol],
+                    price=price,
+                    order_type="LO",
+                    stop_price=None,
+                )
+            )
+        except SimulationError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+    return [OrderResponse.model_validate(order) for order in orders]

@@ -187,6 +187,7 @@ declare global {
   const useAsyncData: typeof import('../../../node_modules/nuxt/dist/app/composables/asyncData').useAsyncData
   const useAsyncQueue: typeof import('@vueuse/core').useAsyncQueue
   const useAsyncState: typeof import('@vueuse/core').useAsyncState
+  const useAtcPrediction: typeof import('../../composables/useAtcPrediction').useAtcPrediction
   const useAttrs: typeof import('vue').useAttrs
   const useAuth: typeof import('../../composables/useAuth').useAuth
   const useAverage: typeof import('../../../node_modules/@vueuse/math/index').useAverage
@@ -221,6 +222,7 @@ declare global {
   const useDebounce: typeof import('@vueuse/core').useDebounce
   const useDebounceFn: typeof import('@vueuse/core').useDebounceFn
   const useDebouncedRefHistory: typeof import('@vueuse/core').useDebouncedRefHistory
+  const useDerivativesLive: typeof import('../../composables/useDerivativesLive').useDerivativesLive
   const useDeviceMotion: typeof import('@vueuse/core').useDeviceMotion
   const useDeviceOrientation: typeof import('@vueuse/core').useDeviceOrientation
   const useDevicePixelRatio: typeof import('@vueuse/core').useDevicePixelRatio
@@ -245,6 +247,7 @@ declare global {
   const useFileDialog: typeof import('@vueuse/core').useFileDialog
   const useFileSystemAccess: typeof import('@vueuse/core').useFileSystemAccess
   const useFloor: typeof import('../../../node_modules/@vueuse/math/index').useFloor
+  const useFlowBreadthRadar: typeof import('../../composables/useFlowBreadthRadar').useFlowBreadthRadar
   const useFocus: typeof import('@vueuse/core').useFocus
   const useFocusWithin: typeof import('@vueuse/core').useFocusWithin
   const useFormGroup: typeof import('../../../node_modules/@nuxt/ui/dist/runtime/composables/useFormGroup').useFormGroup
@@ -295,6 +298,7 @@ declare global {
   const useOffsetPagination: typeof import('@vueuse/core').useOffsetPagination
   const useOnline: typeof import('@vueuse/core').useOnline
   const usePageLeave: typeof import('@vueuse/core').usePageLeave
+  const usePaperTrading: typeof import('../../composables/usePaperTrading').usePaperTrading
   const useParallax: typeof import('@vueuse/core').useParallax
   const useParentElement: typeof import('@vueuse/core').useParentElement
   const usePerformanceObserver: typeof import('@vueuse/core').usePerformanceObserver
@@ -419,6 +423,8 @@ declare global {
   const useToString: typeof import('@vueuse/core').useToString
   const useToast: typeof import('../../../node_modules/@nuxt/ui/dist/runtime/composables/useToast').useToast
   const useToggle: typeof import('@vueuse/core').useToggle
+  const useTradingPhase: typeof import('../../composables/useTradingPolling').useTradingPhase
+  const useTradingPolling: typeof import('../../composables/useTradingPolling').useTradingPolling
   const useTransition: typeof import('@vueuse/core').useTransition
   const useTransitionState: typeof import('vue').useTransitionState
   const useTrunc: typeof import('../../../node_modules/@vueuse/math/index').useTrunc
@@ -466,6 +472,9 @@ declare global {
   // @ts-ignore
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { TradingPhase } from '../../composables/useTradingPolling'
+  import('../../composables/useTradingPolling')
   // @ts-ignore
   export type { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d'
   import('../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d')
@@ -660,6 +669,7 @@ declare module 'vue' {
     readonly useAsyncData: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/asyncData')['useAsyncData']>
     readonly useAsyncQueue: UnwrapRef<typeof import('@vueuse/core')['useAsyncQueue']>
     readonly useAsyncState: UnwrapRef<typeof import('@vueuse/core')['useAsyncState']>
+    readonly useAtcPrediction: UnwrapRef<typeof import('../../composables/useAtcPrediction')['useAtcPrediction']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useAuth: UnwrapRef<typeof import('../../composables/useAuth')['useAuth']>
     readonly useAverage: UnwrapRef<typeof import('../../../node_modules/@vueuse/math/index')['useAverage']>
@@ -694,6 +704,7 @@ declare module 'vue' {
     readonly useDebounce: UnwrapRef<typeof import('@vueuse/core')['useDebounce']>
     readonly useDebounceFn: UnwrapRef<typeof import('@vueuse/core')['useDebounceFn']>
     readonly useDebouncedRefHistory: UnwrapRef<typeof import('@vueuse/core')['useDebouncedRefHistory']>
+    readonly useDerivativesLive: UnwrapRef<typeof import('../../composables/useDerivativesLive')['useDerivativesLive']>
     readonly useDeviceMotion: UnwrapRef<typeof import('@vueuse/core')['useDeviceMotion']>
     readonly useDeviceOrientation: UnwrapRef<typeof import('@vueuse/core')['useDeviceOrientation']>
     readonly useDevicePixelRatio: UnwrapRef<typeof import('@vueuse/core')['useDevicePixelRatio']>
@@ -718,6 +729,7 @@ declare module 'vue' {
     readonly useFileDialog: UnwrapRef<typeof import('@vueuse/core')['useFileDialog']>
     readonly useFileSystemAccess: UnwrapRef<typeof import('@vueuse/core')['useFileSystemAccess']>
     readonly useFloor: UnwrapRef<typeof import('../../../node_modules/@vueuse/math/index')['useFloor']>
+    readonly useFlowBreadthRadar: UnwrapRef<typeof import('../../composables/useFlowBreadthRadar')['useFlowBreadthRadar']>
     readonly useFocus: UnwrapRef<typeof import('@vueuse/core')['useFocus']>
     readonly useFocusWithin: UnwrapRef<typeof import('@vueuse/core')['useFocusWithin']>
     readonly useFormGroup: UnwrapRef<typeof import('../../../node_modules/@nuxt/ui/dist/runtime/composables/useFormGroup')['useFormGroup']>
@@ -768,6 +780,7 @@ declare module 'vue' {
     readonly useOffsetPagination: UnwrapRef<typeof import('@vueuse/core')['useOffsetPagination']>
     readonly useOnline: UnwrapRef<typeof import('@vueuse/core')['useOnline']>
     readonly usePageLeave: UnwrapRef<typeof import('@vueuse/core')['usePageLeave']>
+    readonly usePaperTrading: UnwrapRef<typeof import('../../composables/usePaperTrading')['usePaperTrading']>
     readonly useParallax: UnwrapRef<typeof import('@vueuse/core')['useParallax']>
     readonly useParentElement: UnwrapRef<typeof import('@vueuse/core')['useParentElement']>
     readonly usePerformanceObserver: UnwrapRef<typeof import('@vueuse/core')['usePerformanceObserver']>
@@ -892,6 +905,8 @@ declare module 'vue' {
     readonly useToString: UnwrapRef<typeof import('@vueuse/core')['useToString']>
     readonly useToast: UnwrapRef<typeof import('../../../node_modules/@nuxt/ui/dist/runtime/composables/useToast')['useToast']>
     readonly useToggle: UnwrapRef<typeof import('@vueuse/core')['useToggle']>
+    readonly useTradingPhase: UnwrapRef<typeof import('../../composables/useTradingPolling')['useTradingPhase']>
+    readonly useTradingPolling: UnwrapRef<typeof import('../../composables/useTradingPolling')['useTradingPolling']>
     readonly useTransition: UnwrapRef<typeof import('@vueuse/core')['useTransition']>
     readonly useTransitionState: UnwrapRef<typeof import('vue')['useTransitionState']>
     readonly useTrunc: UnwrapRef<typeof import('../../../node_modules/@vueuse/math/index')['useTrunc']>

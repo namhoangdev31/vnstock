@@ -2,7 +2,7 @@ export const phase6Markdown = `# TRD Phase 6: Frontend Dashboards & Trạm Đi�
 ## Xây Dựng Trạm Điều Hành Phái Sinh, Radar Dòng Tiền, Bảng Kịch Bản ATC/T+1 & Terminal Giao Dịch Mô Phỏng
 
 > **Tài liệu đặc tả kỹ thuật chi tiết dành cho kỹ sư phát triển frontend & fullstack (Self-Implementation Blueprint)**  
-> *Phiên bản: 1.0.0 | Công nghệ: React 18, TanStack Router, TanStack Query, TailwindCSS, Lightweight Charts / Recharts, Lucide Icons.*
+> *Phiên bản: 1.0.0 | Công nghệ: Nuxt 3, Vue 3 Composition API, @nuxt/ui, TailwindCSS, Lightweight Charts, TypeScript.*
 
 ---
 

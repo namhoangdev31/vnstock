@@ -1,0 +1,1 @@
+<template><div class="flex items-center gap-2 rounded-lg border border-aave-violet/30 bg-aave-violet/10 px-3 py-2 text-[11px] font-semibold tracking-wide text-aave-violet" role="note"><UIcon name="i-heroicons-shield-check" class="h-4 w-4" />[MÔ PHỎNG / PAPER TRADING 100%]</div></template>

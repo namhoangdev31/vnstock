@@ -4,7 +4,7 @@
     "description": "Continuous 24/7 Quantitative Research, Predictive Analytics & Simulation Engine for Vietnamese Financial Market",
     "language": "Python 3.11+ / TypeScript",
     "frameworks": ["FastAPI", "SQLModel", "PostgreSQL", "Nuxt 3", "Vue 3", "@nuxt/ui", "TailwindCSS"],
-    "last_updated": "2026-10-02"
+    "last_updated": "2026-10-03"
   },
   "architecture_metadata": {
     "backend": {
@@ -85,6 +85,8 @@
         "application/sync_service.py": "Orchestrates backfilling and incremental sync from vnstock adapters",
         "application/sync_constants.py": "Sync interval definitions, backfill date limits, default symbols",
         "application/schemas.py": "Pydantic request/response schemas for price queries and symbol lookup",
+        "application/iboard_schemas.py": "DTOs and response schemas for iBoard indices, stock rows, market pulse, and matched ticks",
+        "application/iboard_service.py": "Real-time SSI iBoard engine caching market snapshots, price boards, depth books, candles, and AI pulse",
         "application/jobs/purge_ticks_job.py": "Job logic for purging old tick data beyond retention window",
         "application/jobs/sync_daily_market_job.py": "Job logic for daily historical price sync",
         "application/jobs/sync_symbols_job.py": "Job logic for syncing full ticker catalog",
@@ -100,6 +102,7 @@
         "presentation/symbol_router.py": "Endpoints GET /api/v1/market-data/symbols, /groups",
         "presentation/sync_router.py": "Endpoints POST /api/v1/market-data/sync/trigger",
         "presentation/vnstock_router.py": "Endpoints surfacing raw vnstock adapter diagnostic checks",
+        "presentation/iboard_router.py": "Endpoints GET /api/v1/stock/iboard/indices, /board, /stock-detail/{symbol}, /candles/{symbol}, /market-pulse",
         "presentation/router.py": "Aggregated router for market data domain"
       },
       "app/domains/fundamental": {
@@ -119,6 +122,7 @@
         "application/forecast_journal_service.py": "Service recording predictions, back-filling actuals, scoring MAE/accuracy",
         "application/market_data_ingest.py": "Ingests tick/OHLCV data into live quants feature buffers",
         "application/quant_sync_service.py": "Syncs quantitative feature stores and baseline indicators",
+        "application/recalibration_engine.py": "Governed Layer B model recalibration engine with walk-forward validation and automated auto-promote gate",
         "application/schemas.py": "Schemas for ForecastJournalEntry, EngineSignals, VolatilityForecast",
         "application/engines/technical_engine.py": "Engine 1: Multi-timeframe RSI, MACD, VWAP, Order Flow Buy/Sell Delta",
         "application/engines/flow_engine.py": "Engine 2: Foreign net flow, proprietary desks flow, USD/VND, Gold, T+2 flow",
@@ -135,9 +139,11 @@
         "application/daemon/state.py": "In-memory state buffer holding active session features",
         "application/daemon/symbol_registry.py": "Monitored tickers registry for quant daemon",
         "domain/indicators.py": "Pure technical and statistical indicator calculation functions",
-        "domain/models.py": "SQLModel tables: ForecastJournal, QuantSignal, VolatilityModelRecord",
+        "domain/models.py": "SQLModel tables: ForecastJournal, ModelVersionSnapshot, MacroIndicator, TickFlowAggregated, DaemonSessionLog",
         "domain/exceptions.py": "Exceptions for forecast scoring or daemon state errors",
+        "presentation/cockpit_router.py": "Endpoints GET /api/v1/quant/cockpit/derivatives, /flow-radar, /prediction (Cockpit Telemetry)",
         "presentation/forecast_router.py": "Endpoints GET/POST /api/v1/quant/forecasts (Forecast Ledger audit)",
+        "presentation/recalibration_router.py": "Endpoints GET/POST /api/v1/quant/recalibration/runs, /trigger, /rollback",
         "presentation/daemon_router.py": "Endpoints GET/POST /api/v1/quant/daemon/status, /start, /stop",
         "presentation/quant_router.py": "Endpoints GET /api/v1/quant/signals, /basis, /volatility",
         "presentation/router.py": "Aggregated router for quant domain"
@@ -179,34 +185,69 @@
       },
       "composables": {
         "useAuth.ts": "Authentication state and actions (login, signup, logout, fetchCurrentUser)",
-        "useCustomToast.ts": "Custom toast notifications wrapper around Nuxt UI useToast"
+        "useCustomToast.ts": "Custom toast notifications wrapper around Nuxt UI useToast",
+        "useAtcPrediction.ts": "ATC session closing price, probability and Monte Carlo distribution prediction composable",
+        "useDerivativesLive.ts": "Real-time VN30F1M telemetry, order flow imbalances, basis spread and trigger signals",
+        "useFlowBreadthRadar.ts": "Engine 2 institutional flow radar, market breadth and macro liquidity telemetry",
+        "usePaperTrading.ts": "Paper trading simulation actions, portfolio management, order placement and position closing",
+        "useTradingPolling.ts": "Adaptive multi-cadence polling composable for live market feeds and order books"
       },
       "pages": {
         "index.vue": "Dashboard overview screen with real-time indices, top movers & Tri-Engine status",
+        "trading.vue": "Quantitative Trading Cockpit with real-time VN30F1M station, Flow Radar, Prediction Terminal, and Paper Trading panel",
+        "iboard/index.vue": "Next-gen lightning-fast SSI iBoard replica with real-time price board, depth book, candle charting, tick matching, and fast paper trading",
         "login.vue": "User authentication sign-in screen",
         "signup.vue": "User registration screen",
         "recover-password.vue": "Password recovery email request screen",
         "reset-password.vue": "Password reset confirmation screen",
-        "stock/index.vue": "Market data terminal overview page with pagination and exchange filtering",
-        "stock/[symbol].vue": "Stock detail view with high-DPI Canvas OHLCV chart, financial statements, and ratios",
-        "admin.vue": "Administrator panel for managing system users (add/edit/delete/toggle superuser)",
-        "settings.vue": "User profile settings, password update, and danger zone account deletion",
-        "items.vue": "Items management CRUD view with modals",
-        "trd/phase-1.vue": "TRD Spec Phase 1: Technical & Price-Action Engine specification and test matrix",
-        "trd/phase-2.vue": "TRD Spec Phase 2: Flow, Macro & T+2 Cash Flow Engine with interactive simulator",
-        "trd/phase-3.vue": "TRD Spec Phase 3: 24/7 Autonomous Daemon timeline & session phases",
-        "trd/phase-4.vue": "TRD Spec Phase 4: Full Session Derivatives VN30F1M Protocol & margin/PnL simulator",
-        "trd/phase-5.vue": "TRD Spec Phase 5: Forecast Journal ledger & self-learning loop scoring",
-        "trd/phase-6.vue": "TRD Spec Phase 6: Cockpit preview with real-time telemetry and alpha basket rotation"
+        "admin": {
+          "index.vue": "Admin dashboard overview and quick navigation hub",
+          "users.vue": "Administrator panel for managing system users (add/edit/delete/toggle superuser)",
+          "items.vue": "Items management CRUD view with modals",
+          "settings.vue": "User profile settings, password update, and danger zone account deletion",
+          "stock/index.vue": "Market data terminal overview page with pagination and exchange filtering",
+          "stock/[symbol].vue": "Stock detail view with high-DPI Canvas OHLCV chart, financial statements, and ratios",
+          "trd/phase-1.vue": "TRD Spec Phase 1: Technical & Price-Action Engine specification and test matrix",
+          "trd/phase-2.vue": "TRD Spec Phase 2: Flow, Macro & T+2 Cash Flow Engine with interactive simulator",
+          "trd/phase-3.vue": "TRD Spec Phase 3: 24/7 Autonomous Daemon timeline & session phases",
+          "trd/phase-4.vue": "TRD Spec Phase 4: Full Session Derivatives VN30F1M Protocol & margin/PnL simulator",
+          "trd/phase-5.vue": "TRD Spec Phase 5: Forecast Journal ledger & self-learning loop scoring",
+          "trd/phase-6.vue": "TRD Spec Phase 6: Cockpit preview with real-time telemetry and alpha basket rotation"
+        }
       },
       "components": {
+        "ClosedLoopPipelineCard.vue": "Autonomous closed-loop learning pipeline status card with auto-promotion gate telemetry",
+        "QuantPulseCard.vue": "Real-time quant engine heartbeat and cycle performance pulse card",
         "MarkdownViewer.vue": "Rich Markdown document viewer with syntax rendering, copy and download actions",
-        "TestMatrix.vue": "Interactive test matrix with search, group filter, and PASS/PENDING statistics"
+        "TestMatrix.vue": "Interactive test matrix with search, group filter, and PASS/PENDING statistics",
+        "trading": {
+          "DerivativesStation.vue": "Live VN30F1M trading station with basis gauge, signal card, and interactive chart",
+          "FlowRadar.vue": "Engine 2 institutional cashflow, market breadth gauge, and macro liquidity ticker",
+          "PredictionTerminal.vue": "Engine 3 ATC scenario projection, Monte Carlo distribution, and Forecast Journal ledger",
+          "PaperCockpit.vue": "Paper trading cockpit with virtual account balance, order placement, and active positions",
+          "ActivePositionsTable.vue": "Real-time paper trading open positions table with PnL calculation and close actions",
+          "OrderHistoryTable.vue": "Paper orders history table with fill statuses and audit details",
+          "OrderPlacementForm.vue": "Fast paper order execution form supporting BUY/SELL, LIMIT/MARKET, and leverage checks",
+          "VirtualAccountOverview.vue": "Paper portfolio balance, equity, margin usage ratio, and settlement alerts",
+          "AlphaBasketsRebalanceCard.vue": "Multi-horizon (Weekly/Monthly/Quarterly) high-alpha stock basket allocator card",
+          "EnsembleSignalCard.vue": "Tri-Engine ensemble signal summary card with direction, entry, stop-loss and target",
+          "InteractiveCandleChart.vue": "High-DPI candlestick chart with timeframe switcher and volume bars",
+          "InstitutionalFlowChart.vue": "Foreign investor and proprietary desk net buying/selling histogram",
+          "MonteCarloDistributionChart.vue": "Probabilistic distribution histogram with P10, P50, and P90 price targets",
+          "OrderflowDeltaBar.vue": "Tick-level aggressive buy vs aggressive sell delta volume meter",
+          "MarketBreadthGauge.vue": "Advance/decline ratio and market sentiment breadth gauge",
+          "MacroSummaryTicker.vue": "Macro liquidity context ticker tracking USD/VND exchange rate and SJC gold",
+          "AtcImbalanceMonitor.vue": "ATC session indicative price and order book volume imbalance monitor",
+          "TPlus2PressureMeter.vue": "T+2 settlement liquidity pressure and pending cashflow meter",
+          "DerivativesPriceHeader.vue": "Live derivatives quote header with price, change %, ceiling/floor and reference",
+          "ForecastLedgerTable.vue": "Forecast journal ledger auditing historical model predictions vs realized outcomes",
+          "SimulationWarningBadge.vue": "Zero-real-capital compliance warning badge enforcing paper simulation isolation"
+        }
       },
       "client": {
         "sdk.gen.ts": "Generated TypeScript SDK for all FastAPI endpoints",
         "types.gen.ts": "Generated TypeScript type interfaces matching SQLModel/Pydantic schemas",
-        "stockService.ts": "Market data API client service wrapper",
+        "stockService.ts": "Market data, iBoard, simulation and quant cockpit API client service (standalone functions + StockService object)",
         "client.gen.ts": "OpenAPI fetch/axios request handlers and configuration"
       },
       "data/trd": {
