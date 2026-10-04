@@ -134,7 +134,7 @@
         "./tailwind/expose/*"
       ],
       "#app-manifest": [
-        "./manifest/meta/dev.json"
+        "./manifest/meta/e4b790ac-94ef-47bd-8c4c-61132d5f3cba.json"
       ],
       "#components": [
         "./components"
@@ -200,6 +200,6 @@
     "../../node_modules/@vueuse/nuxt/node_modules",
     "../../node_modules/runtime/server",
     "../../node_modules/dist/runtime/server",
-    "dev"
+    "../.output"
   ]
 }

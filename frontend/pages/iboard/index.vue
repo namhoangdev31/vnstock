@@ -135,7 +135,7 @@ const defaultIndices: IndexDisplayItem[] = [
     volume: "25.08 Triệu CP",
     value: "436.39 Tỷ",
     breadth: { advance: 5, ceiling: 0, unchanged: 5, decline: 20, floor: 0 },
-    sparkline: create100DailyPoints(440.0, 433.80, 5, 404),
+    sparkline: create100DailyPoints(440.0, 433.8, 5, 404),
   },
   {
     id: "vn30f1m",
@@ -228,7 +228,7 @@ const defaultDerivativesTable: StockRowDisplay[] = [
     foreignSell: 980,
     foreignRoom: 500000,
     status: "down",
-    sparkline: [1895, 1892, 1889, 1886, 1883, 1885],
+    sparkline: create100DailyPoints(1895.0, 1885.0, 6, 11),
     bidBook: [
       { price: 1884.9, volume: 120 },
       { price: 1884.8, volume: 85 },
@@ -263,7 +263,7 @@ const defaultDerivativesTable: StockRowDisplay[] = [
     foreignSell: 55,
     foreignRoom: 500000,
     status: "down",
-    sparkline: [1890.8, 1888.0, 1885.0, 1882.0, 1882.8],
+    sparkline: create100DailyPoints(1890.8, 1882.8, 5, 22),
     bidBook: [
       { price: 1882.5, volume: 15 },
       { price: 1882.0, volume: 20 },
@@ -298,7 +298,7 @@ const defaultDerivativesTable: StockRowDisplay[] = [
     foreignSell: 15,
     foreignRoom: 500000,
     status: "down",
-    sparkline: [1897.4, 1894.0, 1890.0, 1887.0, 1888.5],
+    sparkline: create100DailyPoints(1897.4, 1888.5, 7, 33),
     bidBook: [
       { price: 1888.0, volume: 10 },
       { price: 1887.5, volume: 12 },
@@ -333,7 +333,7 @@ const defaultDerivativesTable: StockRowDisplay[] = [
     foreignSell: 10,
     foreignRoom: 500000,
     status: "down",
-    sparkline: [1887.4, 1885.0, 1883.0, 1880.0, 1881.0],
+    sparkline: create100DailyPoints(1887.4, 1881.0, 5, 44),
     bidBook: [
       { price: 1880.5, volume: 8 },
       { price: 1880.0, volume: 14 },
@@ -368,7 +368,7 @@ const defaultDerivativesTable: StockRowDisplay[] = [
     foreignSell: 12,
     foreignRoom: 500000,
     status: "down",
-    sparkline: [1794.6, 1792.0, 1788.0, 1784.0, 1785.6],
+    sparkline: create100DailyPoints(1794.6, 1785.6, 6, 55),
     bidBook: [
       { price: 1785.0, volume: 10 },
       { price: 1784.5, volume: 15 },
@@ -403,7 +403,7 @@ const defaultDerivativesTable: StockRowDisplay[] = [
     foreignSell: 0,
     foreignRoom: 500000,
     status: "down",
-    sparkline: [1789.0, 1790.0, 1790.5, 1791.0, 1791.1],
+    sparkline: create100DailyPoints(1795.6, 1791.1, 4, 66),
     bidBook: [
       { price: 1790.0, volume: 5 },
       { price: 1789.0, volume: 8 },
@@ -438,7 +438,7 @@ const defaultDerivativesTable: StockRowDisplay[] = [
     foreignSell: 20,
     foreignRoom: 500000,
     status: "down",
-    sparkline: [1791.1, 1792.5, 1788.0, 1782.0, 1780.5],
+    sparkline: create100DailyPoints(1791.1, 1780.5, 8, 77),
     bidBook: [
       { price: 1780.0, volume: 12 },
       { price: 1779.5, volume: 18 },
@@ -473,7 +473,7 @@ const defaultDerivativesTable: StockRowDisplay[] = [
     foreignSell: 5,
     foreignRoom: 500000,
     status: "down",
-    sparkline: [1794.0, 1796.8, 1797.2, 1791.0, 1784.9],
+    sparkline: create100DailyPoints(1794.0, 1784.9, 7, 88),
     bidBook: [
       { price: 1784.0, volume: 4 },
       { price: 1783.5, volume: 6 },

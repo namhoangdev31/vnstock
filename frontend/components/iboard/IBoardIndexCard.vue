@@ -439,7 +439,10 @@ const chartData = computed<SmoothChartData>(() => {
     const refVal = rawPts[0]
     const refNorm = (refVal - minP) / diff
     const baselineY = Number(
-      Math.max(4, Math.min(32, marginB - refNorm * (marginB - marginT))).toFixed(1),
+      Math.max(
+        4,
+        Math.min(32, marginB - refNorm * (marginB - marginT)),
+      ).toFixed(1),
     )
 
     const spline = pointsToSmoothBezier(nodes, baselineY)
