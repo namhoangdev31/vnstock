@@ -15,6 +15,7 @@ import logging
 import time
 import urllib.request
 from datetime import date, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 from sqlmodel import Session, col, select
@@ -56,12 +57,68 @@ class IBoardService:
     """Xử lý toàn bộ logic nghiệp vụ tổng hợp dữ liệu cho bảng giá iBoard v2."""
 
     _dow_cache: dict[str, Any] = {}
+    _index_spark_cache: dict[str, Any] = {}
 
     @classmethod
-    def _get_dow_jones_futures(cls) -> IBoardIndexItem:
+    def _get_index_intraday_sparkline(
+        cls,
+        code: str,
+        vn: VnstockService,
+        fallback_daily: list[float],
+        cur_close: float,
+    ) -> list[float]:
+        """Truy xuất chuỗi nến 1m trong ngày cho các chỉ số thị trường (VN30, VNINDEX, HNX30, VN30F1M)."""
+        now = time.time()
+        cached = cls._index_spark_cache.get(code)
+        if cached and (now - cached["timestamp"] < 300):
+            return cached["sparkline"]
+
+        # 1. Thử đọc file cache persistent đã lưu
+        cache_file = Path("data/index_intraday_cache.json")
+        if cache_file.exists():
+            try:
+                with open(cache_file) as f:
+                    data = json.load(f)
+                    if code in data and len(data[code]) >= 10:
+                        pts = [float(x) for x in data[code]]
+                        pts[-1] = cur_close
+                        cls._index_spark_cache[code] = {
+                            "timestamp": now,
+                            "sparkline": pts,
+                        }
+                        return pts
+            except Exception as e:
+                logger.debug("Không thể đọc cache file cho %s: %s", code, e)
+
+        # 2. Thử fetch từ API vnstock
+        try:
+            df = vn.fetch_intraday(code, interval="1m", count_back=80)
+            if df is not None and not df.empty and "close" in df.columns:
+                raw_closes = [
+                    round(float(c), 2) for c in df["close"].tolist() if c is not None
+                ]
+                if len(raw_closes) >= 10:
+                    raw_closes[-1] = cur_close
+                    cls._index_spark_cache[code] = {
+                        "timestamp": now,
+                        "sparkline": raw_closes,
+                    }
+                    return raw_closes
+        except Exception as e:
+            logger.debug("Không thể tải nến 1m intraday cho %s: %s", code, e)
+
+        # 3. Fallback
+        cls._index_spark_cache[code] = {
+            "timestamp": now,
+            "sparkline": fallback_daily,
+        }
+        return fallback_daily
+
+    @classmethod
+    def _get_dow_jones_futures(cls) -> IBoardIndexItem | None:
         """Truy xuất dữ liệu chỉ số quốc tế Dow Jones Futures (YM=F).
 
-        Có TTL cache 60s và fallback chuẩn xác theo thị trường.
+        Có TTL cache 60s. Tuyệt đối không dùng số giả lập khi lỗi kết nối mạng (Rule 3).
         """
         now = time.time()
         cached = cls._dow_cache.get("dji")
@@ -75,7 +132,7 @@ class IBoardService:
             with urllib.request.urlopen(req, timeout=3) as resp:
                 data = json.loads(resp.read().decode())["chart"]["result"][0]
                 meta = data["meta"]
-                price = float(meta.get("regularMarketPrice") or 51477.0)
+                price = float(meta.get("regularMarketPrice") or 0.0)
                 raw_closes = [
                     round(float(c), 2)
                     for c in data["indicators"]["quote"][0]["close"]
@@ -87,7 +144,7 @@ class IBoardService:
                     prev_close = float(meta.get("chartPreviousClose") or price)
 
                 chg = price - prev_close
-                pct = (chg / prev_close * 100) if prev_close else 0.46
+                pct = (chg / prev_close * 100) if prev_close else 0.0
                 spark = raw_closes[-50:] if len(raw_closes) >= 50 else raw_closes
 
                 item = IBoardIndexItem(
@@ -98,42 +155,20 @@ class IBoardService:
                     change_percent=f"{pct:+,.2f}%",
                     is_positive=chg >= 0,
                     is_unchanged=chg == 0,
-                    volume="18.42K HĐ",
-                    value="3,892.40 Triệu USD",
+                    volume="-",
+                    value="-",
                     breadth=None,
                     sparkline=spark,
                 )
                 cls._dow_cache["dji"] = {"timestamp": now, "item": item}
                 return item
         except Exception as e:
-            logger.debug("Không thể tải Dow Jones Futures online, dùng fallback: %s", e)
+            logger.debug("Không thể tải Dow Jones Futures online: %s", e)
 
-        # Fallback chuẩn khớp với thị trường
-        fallback = IBoardIndexItem(
-            id="dji",
-            name="DOW JONES FUTURES",
-            price="51,477.00",
-            change="+236.00",
-            change_percent="+0.46%",
-            is_positive=True,
-            is_unchanged=False,
-            volume="18.42K HĐ",
-            value="3,892.40 Triệu USD",
-            breadth=None,
-            sparkline=[
-                51240.0,
-                51280.0,
-                51310.0,
-                51350.0,
-                51320.0,
-                51390.0,
-                51420.0,
-                51460.0,
-                51477.0,
-            ],
-        )
-        cls._dow_cache["dji"] = {"timestamp": now, "item": fallback}
-        return fallback
+        # Trả về cache cũ nếu có, nếu chưa có thì trả về None thay vì số giả lập
+        if cached:
+            return cached["item"]
+        return None
 
     @staticmethod
     def get_candles(
@@ -357,18 +392,61 @@ class IBoardService:
                 select(StockSymbol).where(StockSymbol.exchange == "HNX")
             ).all()
         }
+        hnx30_symbols = {
+            s.symbol
+            for s in session.exec(
+                select(StockSymbol).where(StockSymbol.index_group == "HNX30")
+            ).all()
+        }
+        if not hnx30_symbols:
+            hnx30_symbols = {
+                "BVS",
+                "CAP",
+                "CEO",
+                "DP3",
+                "DTD",
+                "DVM",
+                "DXP",
+                "HUT",
+                "IDC",
+                "IDV",
+                "L14",
+                "L18",
+                "LAS",
+                "LHC",
+                "MBS",
+                "NDN",
+                "NTP",
+                "PLC",
+                "PSD",
+                "PVB",
+                "PVC",
+                "PVS",
+                "SHS",
+                "SLS",
+                "TMB",
+                "TNG",
+                "TVD",
+                "VC3",
+                "VCS",
+                "VFS",
+            }
 
-        def compute_breadth(sym_subset: set[str]) -> IBoardIndexBreadth:
+        def compute_breadth(
+            sym_subset: set[str], is_hnx: bool = False
+        ) -> IBoardIndexBreadth:
             adv, ceil, unch, dec, flr = 0, 0, 0, 0, 0
+            ceil_mult = 1.10 if is_hnx else 1.07
+            flr_mult = 0.90 if is_hnx else 0.93
             for s in sym_subset:
                 if s in today_bars and s in prev_bars:
                     cur_p = today_bars[s].close
                     pre_p = prev_bars[s].close
                     if pre_p <= 0:
                         continue
-                    chg = cur_p - pre_p
-                    ceil_p = round(pre_p * 1.07, 2)
-                    flr_p = round(pre_p * 0.93, 2)
+                    chg_s = cur_p - pre_p
+                    ceil_p = round(pre_p * ceil_mult, 2)
+                    flr_p = round(pre_p * flr_mult, 2)
 
                     if cur_p >= ceil_p:
                         ceil += 1
@@ -376,9 +454,9 @@ class IBoardService:
                     elif cur_p <= flr_p:
                         flr += 1
                         dec += 1
-                    elif chg > 0:
+                    elif chg_s > 0:
                         adv += 1
-                    elif chg < 0:
+                    elif chg_s < 0:
                         dec += 1
                     else:
                         unch += 1
@@ -394,7 +472,7 @@ class IBoardService:
         target_indices = [
             ("VN30", "vn30", "VN30", vn30_symbols),
             ("VNINDEX", "vnindex", "VNINDEX", hose_symbols),
-            ("HNX30", "hnx30", "HNX30", hnx_symbols),
+            ("HNX30", "hnx30", "HNX30", hnx30_symbols),
             ("VN30F1M", "vn30f1m", "VN30F1M", set()),
             ("HNXINDEX", "hnx", "HNX-INDEX", hnx_symbols),
         ]
@@ -470,125 +548,90 @@ class IBoardService:
             raw_val = float(latest.value or 0)
 
             if code == "VN30":
-                vn30_vol_sum = sum(
-                    int(today_bars[s].volume) for s in vn30_symbols if s in today_bars
-                )
-                vn30_val_sum = sum(
-                    float(
-                        today_bars[s].value
-                        or (today_bars[s].close * today_bars[s].volume * 1000)
+                if raw_val <= 0:
+                    vn30_val_sum = sum(
+                        float(
+                            today_bars[s].value
+                            or (today_bars[s].close * today_bars[s].volume * 1000)
+                        )
+                        for s in vn30_symbols
+                        if s in today_bars
                     )
-                    for s in vn30_symbols
-                    if s in today_bars
-                )
-                if vn30_vol_sum > 0 and vn30_val_sum > 1e12:
-                    raw_vol = float(vn30_vol_sum)
-                    raw_val = float(vn30_val_sum)
-                elif raw_val < 1e12:
-                    raw_vol = 334_910_000.0
-                    raw_val = 10_272_880_000_000.0
+                    if vn30_val_sum > 0:
+                        raw_val = float(vn30_val_sum)
 
             elif code == "VNINDEX":
-                hose_vol_sum = sum(
-                    int(today_bars[s].volume) for s in hose_symbols if s in today_bars
-                )
-                hose_val_sum = sum(
-                    float(
-                        today_bars[s].value
-                        or (today_bars[s].close * today_bars[s].volume * 1000)
+                if raw_val <= 0:
+                    hose_val_sum = sum(
+                        float(
+                            today_bars[s].value
+                            or (today_bars[s].close * today_bars[s].volume * 1000)
+                        )
+                        for s in hose_symbols
+                        if s in today_bars
                     )
-                    for s in hose_symbols
-                    if s in today_bars
-                )
-                if hose_vol_sum > 0 and hose_val_sum > 1e12:
-                    raw_vol = float(hose_vol_sum)
-                    raw_val = float(hose_val_sum)
-                elif raw_val < 1e12:
-                    raw_vol = 829_390_000.0
-                    raw_val = 19_176_090_000_000.0
+                    if hose_val_sum > 0:
+                        raw_val = float(hose_val_sum)
 
             elif code in ("HNX30", "hnx30"):
-                hnx30_vol_sum = sum(
-                    int(today_bars[s].volume) for s in hnx_symbols if s in today_bars
-                )
-                hnx30_val_sum = sum(
-                    float(
-                        today_bars[s].value
-                        or (today_bars[s].close * today_bars[s].volume * 1000)
+                if raw_val <= 0:
+                    hnx30_val_sum = sum(
+                        float(
+                            today_bars[s].value
+                            or (today_bars[s].close * today_bars[s].volume * 1000)
+                        )
+                        for s in hnx30_symbols
+                        if s in today_bars
                     )
-                    for s in hnx_symbols
-                    if s in today_bars
-                )
-                if hnx30_vol_sum > 0 and hnx30_val_sum > 1e11:
-                    raw_vol = float(hnx30_vol_sum) * 0.45
-                    raw_val = float(hnx30_val_sum) * 0.45
-                elif raw_val < 1e11:
-                    raw_vol = 25_080_000.0
-                    raw_val = 436_390_000_000.0
+                    if hnx30_val_sum > 0:
+                        raw_val = float(hnx30_val_sum)
 
-            elif code in ("HNXINDEX", "HNX", "hnx") and raw_vol <= 0:
-                hnx_vol_sum = sum(
-                    int(today_bars[s].volume) for s in hnx_symbols if s in today_bars
-                )
-                hnx_val_sum = sum(
-                    float(
-                        today_bars[s].value
-                        or (today_bars[s].close * today_bars[s].volume * 1000)
+            elif code in ("HNXINDEX", "HNX", "hnx"):
+                if raw_val <= 0:
+                    hnx_val_sum = sum(
+                        float(
+                            today_bars[s].value
+                            or (today_bars[s].close * today_bars[s].volume * 1000)
+                        )
+                        for s in hnx_symbols
+                        if s in today_bars
                     )
-                    for s in hnx_symbols
-                    if s in today_bars
-                )
-                if hnx_vol_sum > 0:
-                    raw_vol = float(hnx_vol_sum)
-                    raw_val = float(hnx_val_sum)
-                else:
-                    raw_vol = 39_190_000.0
-                    raw_val = 750_250_000_000.0
+                    if hnx_val_sum > 0:
+                        raw_val = float(hnx_val_sum)
 
             elif code == "VN30F1M":
-                if raw_vol <= 0 or raw_val < 1e12:
-                    raw_vol = 253_004.0
-                    raw_val = 47_739_000_000_000.0
+                if raw_val <= 0 and raw_vol > 0:
+                    raw_val = cur_close * raw_vol * 100000
 
             if raw_val > 0:
                 val_num = raw_val / 1e9
+                if not is_deriv and val_num > 100_000:
+                    val_num = val_num / 1000
+                val_str = f"{val_num:,.2f} Tỷ"
             else:
-                mult = 100000 if is_deriv else 1000
-                val_num = cur_close * raw_vol * mult / 1e9
-
-            # Chuẩn hóa nếu đơn vị trong DB bị nhân dư hệ số 1,000 hoặc tràn số
-            if not is_deriv and val_num > 50_000:
-                val_num = val_num / 1000
-
-            if code == "VNINDEX" and (val_num > 35_000 or val_num < 5_000):
-                val_num = 19_176.09
-                raw_vol = 829_390_000.0
-            elif code == "VN30" and (val_num > 25_000 or val_num < 2_000):
-                val_num = 10_272.88
-                raw_vol = 334_910_000.0
-            elif code in ("HNX30", "hnx30") and (val_num > 2_000 or val_num < 100):
-                val_num = 436.39
-                raw_vol = 25_080_000.0
-            elif code in ("HNXINDEX", "HNX", "hnx") and (
-                val_num > 5_000 or val_num < 100
-            ):
-                val_num = 750.25
-                raw_vol = 39_190_000.0
-            elif is_deriv and (val_num > 100_000 or val_num < 10_000):
-                val_num = 47_739.00
-                raw_vol = 253_004.0
+                val_str = "-"
 
             vol_str = (
-                f"{int(raw_vol):,} HĐ" if is_deriv else f"{raw_vol / 1e6:,.2f} Triệu CP"
+                f"{int(raw_vol):,} HĐ"
+                if is_deriv
+                else f"{raw_vol / 1e6:,.2f} Triệu CP"
+                if raw_vol > 0
+                else "-"
             )
-            val_str = f"{val_num:,.2f} Tỷ"
 
             if is_deriv and len(daily_rows) < 50:
-                sparkline = []
+                fallback_spark = []
                 for r in reversed(daily_rows):
-                    sparkline.extend([float(r.open), float(r.close)])
+                    fallback_spark.extend([float(r.open), float(r.close)])
             else:
-                sparkline = [float(r.close) for r in reversed(daily_rows)]
+                fallback_spark = [float(r.close) for r in reversed(daily_rows)]
+
+            sparkline = cls._get_index_intraday_sparkline(
+                code=code,
+                vn=vn,
+                fallback_daily=fallback_spark,
+                cur_close=cur_close,
+            )
 
             if is_deriv:
                 breadth = IBoardIndexBreadth(
@@ -599,28 +642,8 @@ class IBoardService:
                     floor=0,
                 )
             else:
-                breadth = compute_breadth(subset)
-                if (
-                    code == "VNINDEX"
-                    and (breadth.advance + breadth.decline + breadth.unchanged) < 15
-                ):
-                    vn30_b = compute_breadth(vn30_symbols)
-                    tot_vn30 = max(
-                        vn30_b.advance + vn30_b.decline + vn30_b.unchanged, 1
-                    )
-                    mult_factor = 380 / tot_vn30
-                    calc_adv = max(int(vn30_b.advance * mult_factor * 0.9), 12)
-                    calc_dec = max(int(vn30_b.decline * mult_factor * 1.05), 25)
-                    calc_ceil = max(int(vn30_b.ceiling * 2), 2 if chg > 0 else 0)
-                    calc_flr = max(int(vn30_b.floor * 2), 1 if chg < 0 else 0)
-                    calc_unch = max(380 - calc_adv - calc_dec, 35)
-                    breadth = IBoardIndexBreadth(
-                        advance=calc_adv,
-                        ceiling=calc_ceil,
-                        unchanged=calc_unch,
-                        decline=calc_dec,
-                        floor=calc_flr,
-                    )
+                is_hnx_basket = "HNX" in code
+                breadth = compute_breadth(subset, is_hnx=is_hnx_basket)
 
             items.append(
                 IBoardIndexItem(
@@ -638,13 +661,16 @@ class IBoardService:
                 )
             )
 
-        # Chèn DOW JONES FUTURES vào vị trí số 3 (sau VN30 và VNINDEX) chuẩn theo dải chỉ số DNSE
+        # Chèn DOW JONES FUTURES vào dải chỉ số nếu có dữ liệu online thực tế (Rule 3)
         dji_item = cls._get_dow_jones_futures()
-        vnindex_pos = next((i for i, it in enumerate(items) if it.id == "vnindex"), -1)
-        if vnindex_pos >= 0:
-            items.insert(vnindex_pos + 1, dji_item)
-        else:
-            items.append(dji_item)
+        if dji_item is not None:
+            vnindex_pos = next(
+                (i for i, it in enumerate(items) if it.id == "vnindex"), -1
+            )
+            if vnindex_pos >= 0:
+                items.insert(vnindex_pos + 1, dji_item)
+            else:
+                items.append(dji_item)
 
         return items
 
@@ -704,14 +730,6 @@ class IBoardService:
                     logger.warning(
                         "Không thể tải danh sách hợp đồng phái sinh từ vnstock: %s", e
                     )
-
-            vn30_row = session.exec(
-                select(StockOHLCVDaily)
-                .where(StockOHLCVDaily.symbol == "VN30")
-                .order_by(col(StockOHLCVDaily.trading_date).desc())
-                .limit(1)
-            ).first()
-            vn30_price = float(vn30_row.close) if vn30_row else 1875.99
 
             for c in contracts:
                 sym_rec = session.exec(
@@ -775,22 +793,17 @@ class IBoardService:
                     except Exception:
                         pass
 
-                if bars:
-                    latest = bars[0]
-                    prev = bars[1] if len(bars) > 1 else latest
-                    c_last = float(latest.close)
-                    c_ref = float(prev.close) if len(bars) > 1 else float(latest.open)
-                    c_vol = int(latest.volume)
-                    c_high = float(latest.high)
-                    c_low = float(latest.low)
-                    spark = [float(b.close) for b in reversed(bars)]
-                else:
-                    c_last = vn30_price
-                    c_ref = vn30_price
-                    c_vol = 0
-                    c_high = c_last
-                    c_low = c_last
-                    spark = [c_last]
+                if not bars:
+                    continue
+
+                latest = bars[0]
+                prev = bars[1] if len(bars) > 1 else latest
+                c_last = float(latest.close)
+                c_ref = float(prev.close) if len(bars) > 1 else float(latest.open)
+                c_vol = int(latest.volume)
+                c_high = float(latest.high)
+                c_low = float(latest.low)
+                spark = [float(b.close) for b in reversed(bars)]
 
                 chg = round(c_last - c_ref, 1)
                 pct = round((chg / c_ref) * 100, 2) if c_ref else 0.0
@@ -811,35 +824,8 @@ class IBoardService:
                 val_bil = round(c_last * c_vol * c.multiplier / 1e9, 2)
                 exp_str = c.expiration_date.strftime("%d/%m/%Y")
 
-                step = 0.1
-                bid_book = [
-                    OrderBookLevel(
-                        price=round(c_last - step, 1),
-                        volume=max(int(c_vol * 0.05), 10),
-                    ),
-                    OrderBookLevel(
-                        price=round(c_last - step * 2, 1),
-                        volume=max(int(c_vol * 0.08), 20),
-                    ),
-                    OrderBookLevel(
-                        price=round(c_last - step * 3, 1),
-                        volume=max(int(c_vol * 0.12), 35),
-                    ),
-                ]
-                ask_book = [
-                    OrderBookLevel(
-                        price=round(c_last + step, 1),
-                        volume=max(int(c_vol * 0.04), 8),
-                    ),
-                    OrderBookLevel(
-                        price=round(c_last + step * 2, 1),
-                        volume=max(int(c_vol * 0.07), 18),
-                    ),
-                    OrderBookLevel(
-                        price=round(c_last + step * 3, 1),
-                        volume=max(int(c_vol * 0.11), 30),
-                    ),
-                ]
+                bid_book: list[OrderBookLevel] = []
+                ask_book: list[OrderBookLevel] = []
 
                 rows.append(
                     IBoardStockRow(
@@ -857,8 +843,8 @@ class IBoardService:
                         change_percent=pct,
                         volume=c_vol,
                         value_billion=val_bil,
-                        buy_ratio=55 if chg >= 0 else 45,
-                        sell_ratio=45 if chg >= 0 else 55,
+                        buy_ratio=0,
+                        sell_ratio=0,
                         foreign_buy=0,
                         foreign_sell=0,
                         foreign_room=0,
@@ -938,35 +924,8 @@ class IBoardService:
                         )
                         val_bil = round(last_p * vol * 1000 / 1e9, 2)
 
-                        step = 0.01
-                        bid_book = [
-                            OrderBookLevel(
-                                price=round(last_p - step, 2),
-                                volume=max(int(vol * 0.05), 10),
-                            ),
-                            OrderBookLevel(
-                                price=round(last_p - step * 2, 2),
-                                volume=max(int(vol * 0.08), 20),
-                            ),
-                            OrderBookLevel(
-                                price=round(last_p - step * 3, 2),
-                                volume=max(int(vol * 0.12), 30),
-                            ),
-                        ]
-                        ask_book = [
-                            OrderBookLevel(
-                                price=round(last_p + step, 2),
-                                volume=max(int(vol * 0.04), 10),
-                            ),
-                            OrderBookLevel(
-                                price=round(last_p + step * 2, 2),
-                                volume=max(int(vol * 0.07), 20),
-                            ),
-                            OrderBookLevel(
-                                price=round(last_p + step * 3, 2),
-                                volume=max(int(vol * 0.11), 30),
-                            ),
-                        ]
+                        bid_book: list[OrderBookLevel] = []
+                        ask_book: list[OrderBookLevel] = []
 
                         rows.append(
                             IBoardStockRow(
@@ -984,8 +943,8 @@ class IBoardService:
                                 change_percent=pct,
                                 volume=vol,
                                 value_billion=val_bil,
-                                buy_ratio=50,
-                                sell_ratio=50,
+                                buy_ratio=0,
+                                sell_ratio=0,
                                 foreign_buy=0,
                                 foreign_sell=0,
                                 foreign_room=0,
@@ -1019,13 +978,7 @@ class IBoardService:
                         ]
                 except Exception as e:
                     logger.warning("Không thể tải danh sách ETF từ vnstock: %s", e)
-                    etf_symbols = [
-                        "E1VFVN30",
-                        "FUEVFVND",
-                        "FUESSVFL",
-                        "FUESSV30",
-                        "FUESSV50",
-                    ]
+                    etf_symbols = []
 
             for etf_sym in etf_symbols[:limit]:
                 if search and search.strip().upper() not in etf_sym:
@@ -1038,18 +991,17 @@ class IBoardService:
                     .limit(8)
                 ).all()
 
-                if bars:
-                    latest = bars[0]
-                    prev = bars[1] if len(bars) > 1 else latest
-                    last_p = float(latest.close)
-                    ref_p = float(prev.close) if len(bars) > 1 else float(latest.open)
-                    vol = int(latest.volume)
-                    high_p = float(latest.high)
-                    low_p = float(latest.low)
-                    spark = [float(b.close) for b in reversed(bars)]
-                else:
-                    last_p, ref_p, vol, high_p, low_p = 25.0, 25.0, 0, 25.0, 25.0
-                    spark = [25.0]
+                if not bars:
+                    continue
+
+                latest = bars[0]
+                prev = bars[1] if len(bars) > 1 else latest
+                last_p = float(latest.close)
+                ref_p = float(prev.close) if len(bars) > 1 else float(latest.open)
+                vol = int(latest.volume)
+                high_p = float(latest.high)
+                low_p = float(latest.low)
+                spark = [float(b.close) for b in reversed(bars)]
 
                 chg = round(last_p - ref_p, 2)
                 pct = round((chg / ref_p) * 100, 2) if ref_p else 0.0
@@ -1068,33 +1020,8 @@ class IBoardService:
                 )
                 val_bil = round(last_p * vol * 1000 / 1e9, 2)
 
-                step = 0.05
-                bid_book = [
-                    OrderBookLevel(
-                        price=round(last_p - step, 2), volume=max(int(vol * 0.04), 100)
-                    ),
-                    OrderBookLevel(
-                        price=round(last_p - step * 2, 2),
-                        volume=max(int(vol * 0.06), 200),
-                    ),
-                    OrderBookLevel(
-                        price=round(last_p - step * 3, 2),
-                        volume=max(int(vol * 0.08), 300),
-                    ),
-                ]
-                ask_book = [
-                    OrderBookLevel(
-                        price=round(last_p + step, 2), volume=max(int(vol * 0.03), 100)
-                    ),
-                    OrderBookLevel(
-                        price=round(last_p + step * 2, 2),
-                        volume=max(int(vol * 0.05), 200),
-                    ),
-                    OrderBookLevel(
-                        price=round(last_p + step * 3, 2),
-                        volume=max(int(vol * 0.07), 300),
-                    ),
-                ]
+                bid_book: list[OrderBookLevel] = []
+                ask_book: list[OrderBookLevel] = []
 
                 rows.append(
                     IBoardStockRow(
@@ -1112,8 +1039,8 @@ class IBoardService:
                         change_percent=pct,
                         volume=vol,
                         value_billion=val_bil,
-                        buy_ratio=52 if chg >= 0 else 48,
-                        sell_ratio=48 if chg >= 0 else 52,
+                        buy_ratio=0,
+                        sell_ratio=0,
                         foreign_buy=0,
                         foreign_sell=0,
                         foreign_room=0,
@@ -1293,40 +1220,14 @@ class IBoardService:
 
             if latest.buy_volume and latest.sell_volume:
                 tot = latest.buy_volume + latest.sell_volume
-                buy_r = int(latest.buy_volume / tot * 100) if tot > 0 else 50
+                buy_r = int(latest.buy_volume / tot * 100) if tot > 0 else 0
+                sell_r = 100 - buy_r
             else:
-                buy_r = int(50 + min(max(pct * 6, -40), 40))
-            sell_r = 100 - buy_r
+                buy_r = 0
+                sell_r = 0
 
-            step = 0.01 if last_p < 10 else 0.05 if last_p < 50 else 0.1
-            bid_book = [
-                OrderBookLevel(
-                    price=round(last_p - step, 2),
-                    volume=max(int(vol * 0.03), 100),
-                ),
-                OrderBookLevel(
-                    price=round(last_p - step * 2, 2),
-                    volume=max(int(vol * 0.05), 200),
-                ),
-                OrderBookLevel(
-                    price=round(last_p - step * 3, 2),
-                    volume=max(int(vol * 0.08), 300),
-                ),
-            ]
-            ask_book = [
-                OrderBookLevel(
-                    price=round(last_p + step, 2),
-                    volume=max(int(vol * 0.02), 100),
-                ),
-                OrderBookLevel(
-                    price=round(last_p + step * 2, 2),
-                    volume=max(int(vol * 0.04), 200),
-                ),
-                OrderBookLevel(
-                    price=round(last_p + step * 3, 2),
-                    volume=max(int(vol * 0.07), 300),
-                ),
-            ]
+            bid_book: list[OrderBookLevel] = []
+            ask_book: list[OrderBookLevel] = []
 
             sparkline = [float(r.close) for r in reversed(daily_rows)]
             sector_name = sym.industry or sym.icb_name or "Chưa phân ngành"
@@ -1458,33 +1359,16 @@ class IBoardService:
         ceil_p = round(ref_p * (1 + ratio_lim), 2)
         flr_p = round(ref_p * (1 - ratio_lim), 2)
 
-        step = 0.01 if last_p < 10 else 0.05 if last_p < 50 else 0.1
-        bid_book = [
-            OrderBookLevel(
-                price=round(last_p - step, 2), volume=max(int(vol * 0.03), 100)
-            ),
-            OrderBookLevel(
-                price=round(last_p - step * 2, 2),
-                volume=max(int(vol * 0.05), 200),
-            ),
-            OrderBookLevel(
-                price=round(last_p - step * 3, 2),
-                volume=max(int(vol * 0.08), 300),
-            ),
-        ]
-        ask_book = [
-            OrderBookLevel(
-                price=round(last_p + step, 2), volume=max(int(vol * 0.02), 100)
-            ),
-            OrderBookLevel(
-                price=round(last_p + step * 2, 2),
-                volume=max(int(vol * 0.04), 200),
-            ),
-            OrderBookLevel(
-                price=round(last_p + step * 3, 2),
-                volume=max(int(vol * 0.07), 300),
-            ),
-        ]
+        bid_book: list[OrderBookLevel] = []
+        ask_book: list[OrderBookLevel] = []
+
+        if daily_rows and latest.buy_volume and latest.sell_volume:
+            tot_v = latest.buy_volume + latest.sell_volume
+            buy_r = int(latest.buy_volume / tot_v * 100) if tot_v > 0 else 0
+            sell_r = 100 - buy_r
+        else:
+            buy_r = 0
+            sell_r = 0
 
         stock_row = IBoardStockRow(
             symbol=sym_code,
@@ -1501,8 +1385,8 @@ class IBoardService:
             change_percent=pct,
             volume=vol,
             value_billion=val_bil,
-            buy_ratio=55 if chg >= 0 else 45,
-            sell_ratio=45 if chg >= 0 else 55,
+            buy_ratio=buy_r,
+            sell_ratio=sell_r,
             foreign_buy=int(latest.foreign_buy_volume or 0) if daily_rows else 0,
             foreign_sell=int(latest.foreign_sell_volume or 0) if daily_rows else 0,
             foreign_room=0,
@@ -1856,9 +1740,6 @@ class IBoardService:
                 sorted_sec = sorted(
                     sector_avg.items(), key=lambda x: x[1], reverse=True
                 )
-                best_sec = sorted_sec[0][0] if sorted_sec else "Bán lẻ"
-                worst_sec = sorted_sec[-1][0] if sorted_sec else "Ngân hàng"
-
                 gainer_note = (
                     f" ({top_gainers[0].symbol} {top_gainers[0].change})"
                     if top_gainers
@@ -1874,12 +1755,20 @@ class IBoardService:
                     "tăng" if vn_chg > 0 else "điều chỉnh" if vn_chg < 0 else "đi ngang"
                 )
 
+                if sorted_sec:
+                    best_sec = sorted_sec[0][0]
+                    worst_sec = sorted_sec[-1][0]
+                    sec_comment = (
+                        f" Dòng tiền tích cực luân chuyển vào nhóm {best_sec}{gainer_note}, "
+                        f"trong khi áp lực bán tập trung tại nhóm {worst_sec}{loser_note}."
+                    )
+                else:
+                    sec_comment = ""
+
                 insight = (
                     f"{index_label} {direction} {vn_pct:+.2f}%, đóng cửa tại {vn_bar.close:,.2f} điểm "
                     f"với thanh khoản toàn thị trường {vn_vol_mil:,.2f} triệu cổ phiếu. "
-                    f"Độ rộng ghi nhận {adv_count} mã tăng so với {dec_count} mã giảm. "
-                    f"Dòng tiền tích cực luân chuyển vào nhóm {best_sec}{gainer_note}, "
-                    f"trong khi áp lực bán tập trung tại nhóm {worst_sec}{loser_note}."
+                    f"Độ rộng ghi nhận {adv_count} mã tăng so với {dec_count} mã giảm.{sec_comment}"
                 )
 
         return IBoardMarketPulse(

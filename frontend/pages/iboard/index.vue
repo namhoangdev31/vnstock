@@ -59,103 +59,7 @@ const handleIndexSelect = (id: string) => {
   }
 }
 
-const create100DailyPoints = (
-  start: number,
-  end: number,
-  volatility: number,
-  seed = 42,
-): number[] => {
-  const points: number[] = []
-  const n = 100
-  for (let i = 0; i < n; i++) {
-    const progress = i / (n - 1)
-    const trend = start + progress * (end - start)
-    const wave1 = Math.sin(i * 0.18 + seed) * volatility
-    const wave2 = Math.cos(i * 0.42 + seed * 1.6) * (volatility * 0.45)
-    points.push(Number((trend + wave1 + wave2).toFixed(2)))
-  }
-  points[points.length - 1] = end
-  return points
-}
-
-const defaultIndices: IndexDisplayItem[] = [
-  {
-    id: "vn30",
-    name: "VN30",
-    price: "1,875.99",
-    change: "-14.58",
-    changePercent: "-0.77%",
-    isPositive: false,
-    isUnchanged: false,
-    volume: "334.91 Triệu CP",
-    value: "10,272.88 Tỷ",
-    breadth: { advance: 5, ceiling: 0, unchanged: 3, decline: 22, floor: 0 },
-    sparkline: create100DailyPoints(1895.0, 1875.99, 14, 101),
-  },
-  {
-    id: "vnindex",
-    name: "VNINDEX",
-    price: "1,737.71",
-    change: "-11.59",
-    changePercent: "-0.66%",
-    isPositive: false,
-    isUnchanged: false,
-    volume: "829.39 Triệu CP",
-    value: "19,176.09 Tỷ",
-    breadth: {
-      advance: 90,
-      ceiling: 3,
-      unchanged: 50,
-      decline: 216,
-      floor: 10,
-    },
-    sparkline: create100DailyPoints(1749.3, 1737.71, 16, 202),
-  },
-  {
-    id: "dji",
-    name: "DOW JONES FUTURES",
-    price: "51,477.00",
-    change: "+236.00",
-    changePercent: "+0.46%",
-    isPositive: true,
-    isUnchanged: false,
-    volume: "",
-    value: "",
-    breadth: { advance: 0, ceiling: 0, unchanged: 0, decline: 0, floor: 0 },
-    sparkline: create100DailyPoints(50400, 51477.0, 240, 303),
-  },
-  {
-    id: "hnx30",
-    name: "HNX30",
-    price: "433.80",
-    change: "-5.58",
-    changePercent: "-1.27%",
-    isPositive: false,
-    isUnchanged: false,
-    volume: "25.08 Triệu CP",
-    value: "436.39 Tỷ",
-    breadth: { advance: 5, ceiling: 0, unchanged: 5, decline: 20, floor: 0 },
-    sparkline: create100DailyPoints(440.0, 433.8, 5, 404),
-  },
-  {
-    id: "vn30f1m",
-    name: "VN30F1M",
-    price: "1,885.0",
-    change: "-10.00",
-    changePercent: "-0.53%",
-    isPositive: false,
-    isUnchanged: false,
-    volume: "253,004 HĐ",
-    value: "47,739.00 Tỷ",
-    ceilingPrice: 2027.6,
-    refPrice: 1895.0,
-    floorPrice: 1762.4,
-    breadth: { advance: 0, ceiling: 0, unchanged: 0, decline: 0, floor: 0 },
-    sparkline: create100DailyPoints(1895.0, 1885.0, 15, 505),
-  },
-]
-
-const indices = ref<IndexDisplayItem[]>(defaultIndices)
+const indices = ref<IndexDisplayItem[]>([])
 
 const mainCategory = ref<
   | "watchlist"
@@ -175,7 +79,6 @@ const sectorSubBasket = ref<string>("bank")
 
 const searchQuery = ref("")
 const priceUnitDisplay = ref<"percent" | "diff">("percent")
-const boardViewMode = ref<"orderbook" | "compact">("orderbook")
 
 interface StockRowDisplay {
   symbol: string
@@ -206,290 +109,7 @@ interface StockRowDisplay {
   expiryDate?: string | null
 }
 
-const defaultDerivativesTable: StockRowDisplay[] = [
-  {
-    symbol: "41I1GA000",
-    name: "HĐTL chỉ số VN30 1 tháng",
-    exchange: "DERIVATIVES",
-    lastPrice: 1885.0,
-    refPrice: 1895.0,
-    ceilingPrice: 2027.6,
-    floorPrice: 1762.4,
-    highPrice: 1898.0,
-    lowPrice: 1881.0,
-    avgPrice: 1889.5,
-    change: -10.0,
-    changePercent: -0.53,
-    volume: 253004,
-    valueBillion: 47739.0,
-    buyRatio: 39,
-    sellRatio: 61,
-    foreignBuy: 1200,
-    foreignSell: 980,
-    foreignRoom: 500000,
-    status: "down",
-    sparkline: create100DailyPoints(1895.0, 1885.0, 6, 11),
-    bidBook: [
-      { price: 1884.9, volume: 120 },
-      { price: 1884.8, volume: 85 },
-      { price: 1884.7, volume: 210 },
-    ],
-    askBook: [
-      { price: 1885.1, volume: 95 },
-      { price: 1885.2, volume: 140 },
-      { price: 1885.3, volume: 300 },
-    ],
-    category: "derivatives",
-    expiryDate: "15/10/2026",
-  },
-  {
-    symbol: "41I1GB000",
-    name: "HĐTL chỉ số VN30 2 tháng",
-    exchange: "DERIVATIVES",
-    lastPrice: 1882.8,
-    refPrice: 1890.8,
-    ceilingPrice: 2023.1,
-    floorPrice: 1758.5,
-    highPrice: 1892.0,
-    lowPrice: 1880.0,
-    avgPrice: 1886.0,
-    change: -8.0,
-    changePercent: -0.42,
-    volume: 520,
-    valueBillion: 98.2,
-    buyRatio: 46,
-    sellRatio: 54,
-    foreignBuy: 40,
-    foreignSell: 55,
-    foreignRoom: 500000,
-    status: "down",
-    sparkline: create100DailyPoints(1890.8, 1882.8, 5, 22),
-    bidBook: [
-      { price: 1882.5, volume: 15 },
-      { price: 1882.0, volume: 20 },
-      { price: 1881.5, volume: 30 },
-    ],
-    askBook: [
-      { price: 1883.0, volume: 25 },
-      { price: 1883.5, volume: 18 },
-      { price: 1884.0, volume: 40 },
-    ],
-    category: "derivatives",
-    expiryDate: "19/11/2026",
-  },
-  {
-    symbol: "41I1GC000",
-    name: "HĐTL chỉ số VN30 1 quý",
-    exchange: "DERIVATIVES",
-    lastPrice: 1888.5,
-    refPrice: 1897.4,
-    ceilingPrice: 2030.2,
-    floorPrice: 1764.6,
-    highPrice: 1897.0,
-    lowPrice: 1884.0,
-    avgPrice: 1890.5,
-    change: -8.9,
-    changePercent: -0.47,
-    volume: 213,
-    valueBillion: 40.2,
-    buyRatio: 56,
-    sellRatio: 44,
-    foreignBuy: 20,
-    foreignSell: 15,
-    foreignRoom: 500000,
-    status: "down",
-    sparkline: create100DailyPoints(1897.4, 1888.5, 7, 33),
-    bidBook: [
-      { price: 1888.0, volume: 10 },
-      { price: 1887.5, volume: 12 },
-      { price: 1887.0, volume: 15 },
-    ],
-    askBook: [
-      { price: 1889.0, volume: 18 },
-      { price: 1889.5, volume: 22 },
-      { price: 1890.0, volume: 35 },
-    ],
-    category: "derivatives",
-    expiryDate: "17/12/2026",
-  },
-  {
-    symbol: "41I1H3000",
-    name: "HĐTL chỉ số VN30 2 quý",
-    exchange: "DERIVATIVES",
-    lastPrice: 1881.0,
-    refPrice: 1887.4,
-    ceilingPrice: 2019.5,
-    floorPrice: 1755.3,
-    highPrice: 1888.0,
-    lowPrice: 1879.0,
-    avgPrice: 1883.5,
-    change: -6.4,
-    changePercent: -0.34,
-    volume: 78,
-    valueBillion: 14.7,
-    buyRatio: 48,
-    sellRatio: 52,
-    foreignBuy: 5,
-    foreignSell: 10,
-    foreignRoom: 500000,
-    status: "down",
-    sparkline: create100DailyPoints(1887.4, 1881.0, 5, 44),
-    bidBook: [
-      { price: 1880.5, volume: 8 },
-      { price: 1880.0, volume: 14 },
-      { price: 1879.5, volume: 20 },
-    ],
-    askBook: [
-      { price: 1881.5, volume: 12 },
-      { price: 1882.0, volume: 15 },
-      { price: 1882.5, volume: 18 },
-    ],
-    category: "derivatives",
-    expiryDate: "18/03/2027",
-  },
-  {
-    symbol: "41I2GA000",
-    name: "HĐTL chỉ số VN100 1 tháng",
-    exchange: "DERIVATIVES",
-    lastPrice: 1785.6,
-    refPrice: 1794.6,
-    ceilingPrice: 1920.2,
-    floorPrice: 1669.0,
-    highPrice: 1795.0,
-    lowPrice: 1782.0,
-    avgPrice: 1788.5,
-    change: -9.0,
-    changePercent: -0.5,
-    volume: 92,
-    valueBillion: 16.4,
-    buyRatio: 43,
-    sellRatio: 57,
-    foreignBuy: 8,
-    foreignSell: 12,
-    foreignRoom: 500000,
-    status: "down",
-    sparkline: create100DailyPoints(1794.6, 1785.6, 6, 55),
-    bidBook: [
-      { price: 1785.0, volume: 10 },
-      { price: 1784.5, volume: 15 },
-      { price: 1784.0, volume: 20 },
-    ],
-    askBook: [
-      { price: 1786.0, volume: 14 },
-      { price: 1786.5, volume: 18 },
-      { price: 1787.0, volume: 25 },
-    ],
-    category: "derivatives",
-    expiryDate: "15/10/2026",
-  },
-  {
-    symbol: "41I2GB000",
-    name: "HĐTL chỉ số VN100 2 tháng",
-    exchange: "DERIVATIVES",
-    lastPrice: 1791.1,
-    refPrice: 1795.6,
-    ceilingPrice: 1921.3,
-    floorPrice: 1669.9,
-    highPrice: 1796.0,
-    lowPrice: 1788.0,
-    avgPrice: 1792.0,
-    change: -4.5,
-    changePercent: -0.25,
-    volume: 2,
-    valueBillion: 0.36,
-    buyRatio: 49,
-    sellRatio: 51,
-    foreignBuy: 0,
-    foreignSell: 0,
-    foreignRoom: 500000,
-    status: "down",
-    sparkline: create100DailyPoints(1795.6, 1791.1, 4, 66),
-    bidBook: [
-      { price: 1790.0, volume: 5 },
-      { price: 1789.0, volume: 8 },
-      { price: 1788.0, volume: 12 },
-    ],
-    askBook: [
-      { price: 1792.0, volume: 6 },
-      { price: 1793.0, volume: 10 },
-      { price: 1794.0, volume: 15 },
-    ],
-    category: "derivatives",
-    expiryDate: "19/11/2026",
-  },
-  {
-    symbol: "41I2GC000",
-    name: "HĐTL chỉ số VN100 1 quý",
-    exchange: "DERIVATIVES",
-    lastPrice: 1780.5,
-    refPrice: 1791.1,
-    ceilingPrice: 1916.5,
-    floorPrice: 1665.7,
-    highPrice: 1793.0,
-    lowPrice: 1778.0,
-    avgPrice: 1785.5,
-    change: -10.6,
-    changePercent: -0.59,
-    volume: 209,
-    valueBillion: 37.2,
-    buyRatio: 49,
-    sellRatio: 51,
-    foreignBuy: 15,
-    foreignSell: 20,
-    foreignRoom: 500000,
-    status: "down",
-    sparkline: create100DailyPoints(1791.1, 1780.5, 8, 77),
-    bidBook: [
-      { price: 1780.0, volume: 12 },
-      { price: 1779.5, volume: 18 },
-      { price: 1779.0, volume: 22 },
-    ],
-    askBook: [
-      { price: 1781.0, volume: 15 },
-      { price: 1781.5, volume: 20 },
-      { price: 1782.0, volume: 30 },
-    ],
-    category: "derivatives",
-    expiryDate: "17/12/2026",
-  },
-  {
-    symbol: "41I2H3000",
-    name: "HĐTL chỉ số VN100 2 quý",
-    exchange: "DERIVATIVES",
-    lastPrice: 1784.9,
-    refPrice: 1794.0,
-    ceilingPrice: 1919.6,
-    floorPrice: 1668.4,
-    highPrice: 1797.5,
-    lowPrice: 1781.0,
-    avgPrice: 1789.2,
-    change: -9.1,
-    changePercent: -0.51,
-    volume: 18,
-    valueBillion: 3.2,
-    buyRatio: 46,
-    sellRatio: 54,
-    foreignBuy: 2,
-    foreignSell: 5,
-    foreignRoom: 500000,
-    status: "down",
-    sparkline: create100DailyPoints(1794.0, 1784.9, 7, 88),
-    bidBook: [
-      { price: 1784.0, volume: 4 },
-      { price: 1783.5, volume: 6 },
-      { price: 1783.0, volume: 10 },
-    ],
-    askBook: [
-      { price: 1785.5, volume: 8 },
-      { price: 1786.0, volume: 12 },
-      { price: 1786.5, volume: 15 },
-    ],
-    category: "derivatives",
-    expiryDate: "18/03/2027",
-  },
-]
-
-const tableData = ref<StockRowDisplay[]>(defaultDerivativesTable)
+const tableData = ref<StockRowDisplay[]>([])
 const isLoadingBoard = ref(false)
 
 const mapBackendRow = (raw: IBoardStockRow): StockRowDisplay => ({
@@ -532,12 +152,6 @@ const getPriceColorClass = (
   if (price > stk.refPrice) return "text-emerald-400 font-semibold"
   if (price < stk.refPrice) return "text-rose-500 font-semibold"
   return "text-amber-400 font-semibold"
-}
-
-const formatBookVol = (vol: number | undefined | null) => {
-  if (vol === undefined || vol === null || vol <= 0) return "-"
-  const inTens = Math.round(vol / 10)
-  return inTens.toLocaleString("en-US")
 }
 
 const fluctuationStats = computed(() => {
@@ -806,78 +420,19 @@ const loadIndices = async () => {
   try {
     const res = await StockService.getIBoardIndices()
     if (res && res.length > 0) {
-      indices.value = res.map((r: IBoardIndexItem) => {
-        let breadth = r.breadth ? { ...r.breadth } : null
-        let volume = r.volume
-        let value = r.value
-
-        // Khắc phục trường hợp API trả về độ rộng VNINDEX bị 0 · 0 · 2
-        if (
-          r.id === "vnindex" &&
-          breadth &&
-          breadth.advance === 0 &&
-          breadth.decline <= 2
-        ) {
-          const vn30 = res.find((x: IBoardIndexItem) => x.id === "vn30")
-          if (vn30?.breadth) {
-            breadth = {
-              advance: vn30.breadth.advance * 14 + 18,
-              ceiling: vn30.breadth.ceiling * 3 + 2,
-              unchanged: vn30.breadth.unchanged * 12 + 22,
-              decline: vn30.breadth.decline * 11 + 25,
-              floor: vn30.breadth.floor * 2 + 1,
-            }
-          } else {
-            breadth = {
-              advance: 165,
-              ceiling: 8,
-              unchanged: 74,
-              decline: 242,
-              floor: 3,
-            }
-          }
-        }
-
-        // Khắc phục khối lượng HNX nếu đang hiển thị 0.00
-        if (r.id === "hnx" && (volume === "0.00 Triệu CP" || !volume)) {
-          volume = "48.20 Triệu CP"
-          value = "982.50 Tỷ"
-        }
-
-        return {
-          id: r.id,
-          name: r.name,
-          price: r.price,
-          change: r.change,
-          changePercent: r.change_percent,
-          isPositive: r.is_positive,
-          isUnchanged: r.is_unchanged,
-          volume,
-          value,
-          breadth,
-          sparkline: r.sparkline,
-        }
-      })
-
-      // Đảm bảo có chỉ số phái sinh quốc tế Dow Jones Futures đồng bộ dải iBoard
-      if (!indices.value.some((x) => x.id === "dji")) {
-        const vnindexIdx = indices.value.findIndex((x) => x.id === "vnindex")
-        const insertPos = vnindexIdx >= 0 ? vnindexIdx + 1 : 2
-        indices.value.splice(insertPos, 0, {
-          id: "dji",
-          name: "DOW JONES FUTURES",
-          price: "51,477.00",
-          change: "+236.00",
-          changePercent: "+0.46%",
-          isPositive: true,
-          volume: "18.42K HĐ",
-          value: "3,892.40 Triệu USD",
-          breadth: null,
-          sparkline: [
-            51240, 51280, 51310, 51350, 51320, 51390, 51420, 51460, 51477,
-          ],
-        })
-      }
+      indices.value = res.map((r: IBoardIndexItem) => ({
+        id: r.id,
+        name: r.name,
+        price: r.price,
+        change: r.change,
+        changePercent: r.change_percent,
+        isPositive: r.is_positive,
+        isUnchanged: r.is_unchanged,
+        volume: r.volume,
+        value: r.value,
+        breadth: r.breadth ? { ...r.breadth } : null,
+        sparkline: r.sparkline,
+      }))
     }
   } catch (err) {
     console.warn("Could not fetch indices from backend:", err)
@@ -1055,12 +610,6 @@ const placeSimulatedOrder = async () => {
 
 watch([mainCategory, listedSubBasket, sectorSubBasket], () => {
   loadBoardData()
-})
-
-watch(mainCategory, (newCat) => {
-  if (newCat === "derivatives") {
-    boardViewMode.value = "compact"
-  }
 })
 
 let searchDebounce: ReturnType<typeof setTimeout> | null = null
@@ -1347,27 +896,6 @@ onUnmounted(() => {
           <div class="flex items-center bg-surface-abyss border border-white/[0.08] rounded p-0.5">
             <button
               type="button"
-              class="px-2 py-0.5 rounded text-xs transition-colors flex items-center gap-1"
-              :class="boardViewMode === 'orderbook' ? 'bg-white/[0.1] text-white font-semibold' : 'text-aave-graphite hover:text-white'"
-              @click="boardViewMode = 'orderbook'"
-            >
-              <UIcon name="i-heroicons-table-cells" class="w-3.5 h-3.5" />
-              <span>Sổ lệnh 3 cấp</span>
-            </button>
-            <button
-              type="button"
-              class="px-2 py-0.5 rounded text-xs transition-colors flex items-center gap-1"
-              :class="boardViewMode === 'compact' ? 'bg-white/[0.1] text-white font-semibold' : 'text-aave-graphite hover:text-white'"
-              @click="boardViewMode = 'compact'"
-            >
-              <UIcon name="i-heroicons-bars-3-bottom-left" class="w-3.5 h-3.5" />
-              <span>Rút gọn</span>
-            </button>
-          </div>
-
-          <div class="flex items-center bg-surface-abyss border border-white/[0.08] rounded p-0.5">
-            <button
-              type="button"
               class="px-2 py-0.5 rounded text-xs transition-colors"
               :class="priceUnitDisplay === 'percent' ? 'bg-white/[0.1] text-white font-semibold' : 'text-aave-graphite hover:text-white'"
               @click="priceUnitDisplay = 'percent'"
@@ -1392,181 +920,8 @@ onUnmounted(() => {
       <div class="flex-1 flex flex-col overflow-hidden bg-surface-abyss">
 
         <div v-if="!selectedStock" class="flex-1 overflow-auto">
-          <!-- Chế độ xem 1: Sổ lệnh 3 cấp chuẩn HOSE / HNX -->
-          <table v-if="boardViewMode === 'orderbook'" class="w-full text-left border-collapse text-xs whitespace-nowrap">
-            <thead class="sticky top-0 bg-aave-inkwell border-b border-white/[0.08] text-aave-graphite font-medium z-10 text-2xs uppercase">
-              <tr class="border-b border-white/[0.04]">
-                <th rowspan="2" class="py-2 px-2.5 font-semibold text-white sticky left-0 z-20 bg-aave-inkwell border-r border-white/[0.06] text-center min-w-[76px]">
-                  Mã CK
-                </th>
-                <th rowspan="2" class="py-2 px-2 text-right font-medium text-purple-400 border-r border-white/[0.04] min-w-[50px]">
-                  <UTooltip text="Giá trần">Trần</UTooltip>
-                </th>
-                <th rowspan="2" class="py-2 px-2 text-right font-medium text-cyan-400 border-r border-white/[0.04] min-w-[50px]">
-                  <UTooltip text="Giá sàn">Sàn</UTooltip>
-                </th>
-                <th rowspan="2" class="py-2 px-2 text-right font-medium text-amber-400 border-r border-white/[0.08] min-w-[50px]">
-                  <UTooltip text="Giá tham chiếu">TC</UTooltip>
-                </th>
-                <th colspan="6" class="py-1 px-2 text-center font-semibold text-emerald-400 border-r border-white/[0.08] bg-emerald-950/20">
-                  Bên mua
-                </th>
-                <th colspan="3" class="py-1 px-2 text-center font-semibold text-white border-r border-white/[0.08] bg-white/[0.03]">
-                  Khớp lệnh
-                </th>
-                <th colspan="6" class="py-1 px-2 text-center font-semibold text-rose-400 border-r border-white/[0.08] bg-rose-950/20">
-                  Bên bán
-                </th>
-                <th rowspan="2" class="py-2 px-2.5 text-right font-medium text-aave-ash border-r border-white/[0.04] min-w-[70px]">
-                  Tổng KL
-                </th>
-                <th rowspan="2" class="py-2 px-2 text-right font-medium text-emerald-400 border-r border-white/[0.04] min-w-[50px]">
-                  Cao
-                </th>
-                <th rowspan="2" class="py-2 px-2 text-right font-medium text-rose-400 border-r border-white/[0.08] min-w-[50px]">
-                  Thấp
-                </th>
-                <th colspan="2" class="py-1 px-2 text-center font-semibold text-aave-ash border-r border-white/[0.08] bg-white/[0.02]">
-                  ĐTNN
-                </th>
-                <th rowspan="2" class="py-2 px-2 text-center font-medium w-8" />
-              </tr>
-              <tr class="bg-surface-abyss/80">
-                <!-- Bên mua -->
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">Giá 3</th>
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">KL 3</th>
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">Giá 2</th>
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">KL 2</th>
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">Giá 1</th>
-                <th class="py-1 px-1.5 text-right font-normal border-r border-white/[0.08] min-w-[50px]">KL 1</th>
-                <!-- Khớp lệnh -->
-                <th class="py-1 px-2 text-right font-semibold text-white min-w-[54px]">Giá</th>
-                <th class="py-1 px-2 text-right font-semibold text-white min-w-[50px]">KL</th>
-                <th class="py-1 px-2 text-right font-semibold text-white border-r border-white/[0.08] min-w-[54px]">+/-</th>
-                <!-- Bên bán -->
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">Giá 1</th>
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">KL 1</th>
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">Giá 2</th>
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">KL 2</th>
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">Giá 3</th>
-                <th class="py-1 px-1.5 text-right font-normal border-r border-white/[0.08] min-w-[50px]">KL 3</th>
-                <!-- ĐTNN -->
-                <th class="py-1 px-1.5 text-right font-normal min-w-[50px]">Mua</th>
-                <th class="py-1 px-1.5 text-right font-normal border-r border-white/[0.08] min-w-[50px]">Bán</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/[0.04] font-mono text-2xs">
-              <tr
-                v-for="stk in currentTableData"
-                :key="stk.symbol"
-                class="hover:bg-white/[0.04] transition-colors cursor-pointer group"
-                @click="openStockDetail(stk)"
-              >
-                <!-- Mã CK sticky -->
-                <td class="py-1.5 px-2.5 sticky left-0 z-10 bg-surface-abyss group-hover:bg-aave-obsidian border-r border-white/[0.06] font-bold">
-                  <div class="flex items-center gap-1">
-                    <span :class="getPriceColorClass(stk.lastPrice, stk)">
-                      {{ stk.symbol }}
-                    </span>
-                  </div>
-                </td>
-                <!-- Trần, Sàn, TC -->
-                <td class="py-1.5 px-2 text-right text-purple-400 border-r border-white/[0.04] tabular-nums font-medium">
-                  {{ stk.ceilingPrice.toFixed(mainCategory === 'derivatives' ? 1 : 2) }}
-                </td>
-                <td class="py-1.5 px-2 text-right text-cyan-400 border-r border-white/[0.04] tabular-nums font-medium">
-                  {{ stk.floorPrice.toFixed(mainCategory === 'derivatives' ? 1 : 2) }}
-                </td>
-                <td class="py-1.5 px-2 text-right text-amber-400 border-r border-white/[0.08] tabular-nums font-medium">
-                  {{ stk.refPrice.toFixed(mainCategory === 'derivatives' ? 1 : 2) }}
-                </td>
-                <!-- Bên mua 3 cấp: Giá 3, KL 3, Giá 2, KL 2, Giá 1, KL 1 -->
-                <td class="py-1.5 px-1.5 text-right tabular-nums" :class="getPriceColorClass(stk.bidBook[2]?.price, stk)">
-                  {{ stk.bidBook[2]?.price ? stk.bidBook[2].price.toFixed(mainCategory === 'derivatives' ? 1 : 2) : '-' }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right text-aave-ash tabular-nums">
-                  {{ formatBookVol(stk.bidBook[2]?.volume) }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right tabular-nums" :class="getPriceColorClass(stk.bidBook[1]?.price, stk)">
-                  {{ stk.bidBook[1]?.price ? stk.bidBook[1].price.toFixed(mainCategory === 'derivatives' ? 1 : 2) : '-' }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right text-aave-ash tabular-nums">
-                  {{ formatBookVol(stk.bidBook[1]?.volume) }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right tabular-nums" :class="getPriceColorClass(stk.bidBook[0]?.price, stk)">
-                  {{ stk.bidBook[0]?.price ? stk.bidBook[0].price.toFixed(mainCategory === 'derivatives' ? 1 : 2) : '-' }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right text-aave-ash tabular-nums border-r border-white/[0.08]">
-                  {{ formatBookVol(stk.bidBook[0]?.volume) }}
-                </td>
-                <!-- Khớp lệnh: Giá, KL, +/- -->
-                <td class="py-1.5 px-2 text-right font-bold tabular-nums" :class="getPriceColorClass(stk.lastPrice, stk)">
-                  {{ stk.lastPrice.toFixed(mainCategory === 'derivatives' ? 1 : 2) }}
-                </td>
-                <td class="py-1.5 px-2 text-right text-aave-bone tabular-nums">
-                  {{ formatBookVol(stk.volume > 100000 ? Math.round(stk.volume / 20) : stk.volume) }}
-                </td>
-                <td class="py-1.5 px-2 text-right font-medium tabular-nums border-r border-white/[0.08]" :class="getPriceColorClass(stk.lastPrice, stk)">
-                  <span v-if="priceUnitDisplay === 'percent'">
-                    {{ stk.changePercent > 0 ? '+' : '' }}{{ stk.changePercent.toFixed(2) }}%
-                  </span>
-                  <span v-else>
-                    {{ stk.change > 0 ? '+' : '' }}{{ stk.change.toFixed(2) }}
-                  </span>
-                </td>
-                <!-- Bên bán 3 cấp: Giá 1, KL 1, Giá 2, KL 2, Giá 3, KL 3 -->
-                <td class="py-1.5 px-1.5 text-right tabular-nums" :class="getPriceColorClass(stk.askBook[0]?.price, stk)">
-                  {{ stk.askBook[0]?.price ? stk.askBook[0].price.toFixed(mainCategory === 'derivatives' ? 1 : 2) : '-' }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right text-aave-ash tabular-nums">
-                  {{ formatBookVol(stk.askBook[0]?.volume) }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right tabular-nums" :class="getPriceColorClass(stk.askBook[1]?.price, stk)">
-                  {{ stk.askBook[1]?.price ? stk.askBook[1].price.toFixed(mainCategory === 'derivatives' ? 1 : 2) : '-' }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right text-aave-ash tabular-nums">
-                  {{ formatBookVol(stk.askBook[1]?.volume) }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right tabular-nums" :class="getPriceColorClass(stk.askBook[2]?.price, stk)">
-                  {{ stk.askBook[2]?.price ? stk.askBook[2].price.toFixed(mainCategory === 'derivatives' ? 1 : 2) : '-' }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right text-aave-ash tabular-nums border-r border-white/[0.08]">
-                  {{ formatBookVol(stk.askBook[2]?.volume) }}
-                </td>
-                <!-- Tổng KL, Cao, Thấp -->
-                <td class="py-1.5 px-2.5 text-right text-aave-ash tabular-nums border-r border-white/[0.04]">
-                  {{ formatBookVol(stk.volume) }}
-                </td>
-                <td class="py-1.5 px-2 text-right tabular-nums border-r border-white/[0.04]" :class="getPriceColorClass(stk.highPrice, stk)">
-                  {{ stk.highPrice > 0 ? stk.highPrice.toFixed(mainCategory === 'derivatives' ? 1 : 2) : '-' }}
-                </td>
-                <td class="py-1.5 px-2 text-right tabular-nums border-r border-white/[0.08]" :class="getPriceColorClass(stk.lowPrice, stk)">
-                  {{ stk.lowPrice > 0 ? stk.lowPrice.toFixed(mainCategory === 'derivatives' ? 1 : 2) : '-' }}
-                </td>
-                <!-- ĐTNN: Mua, Bán -->
-                <td class="py-1.5 px-1.5 text-right text-aave-ash tabular-nums">
-                  {{ formatBookVol(stk.foreignBuy) }}
-                </td>
-                <td class="py-1.5 px-1.5 text-right text-aave-ash tabular-nums border-r border-white/[0.08]">
-                  {{ formatBookVol(stk.foreignSell) }}
-                </td>
-                <!-- Đặt lệnh nhanh -->
-                <td class="py-1 px-1.5 text-center">
-                  <button
-                    type="button"
-                    class="w-5 h-5 rounded bg-white/[0.06] hover:bg-rose-600 text-aave-ash hover:text-white flex items-center justify-center transition-colors mx-auto"
-                    title="Đặt lệnh nhanh"
-                    @click.stop="quickFillOrder(stk.symbol, stk.lastPrice, 'BUY')"
-                  >
-                    <UIcon name="i-heroicons-plus" class="w-3 h-3" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- Chế độ xem 2: Rút gọn (Đồ thị + Tương quan Mua/Bán chủ động) -->
-          <table v-else class="w-full text-left border-collapse text-xs">
+          <!-- Bang gia rut gon: Do thi va Tuong quan Mua / Ban chu dong -->
+          <table class="w-full text-left border-collapse text-xs">
             <thead class="sticky top-0 bg-aave-inkwell border-b border-white/[0.08] text-aave-graphite font-medium z-10">
               <tr>
                 <th class="py-2.5 px-4 font-normal">Mã chứng khoán</th>
@@ -1730,7 +1085,7 @@ onUnmounted(() => {
           </table>
         </div>
 
-        <div v-else class="flex-1 flex overflow-hidden">
+        <div v-else-if="selectedStock" class="flex-1 flex overflow-hidden">
 
           <div class="w-64 border-r border-white/[0.08] bg-aave-inkwell flex flex-col shrink-0">
             <div class="p-2 border-b border-white/[0.08] text-xs font-medium text-aave-graphite flex items-center justify-between">

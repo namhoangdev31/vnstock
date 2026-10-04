@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col justify-between min-w-[250px] max-w-[285px] flex-1 px-2.5 py-2 rounded-lg bg-surface-abyss border border-white/[0.06] hover:border-white/[0.16] transition-colors cursor-pointer select-none"
+    class="flex flex-col justify-between min-w-[262px] max-w-[295px] flex-1 px-3 py-2 rounded-lg bg-surface-abyss border border-white/[0.06] hover:border-white/[0.16] transition-colors cursor-pointer select-none"
     :class="{ 'ring-1 ring-white/[0.2] border-white/[0.2]': active }"
     @click="$emit('select', item.id)"
   >
@@ -23,7 +23,7 @@
     </div>
 
     <!-- Row 3 & 4: Details (Volume, Breadth / Derivatives) and Chart -->
-    <div class="flex items-end justify-between gap-1.5 mt-1">
+    <div class="flex items-end justify-between gap-2 mt-1">
       <div class="flex flex-col min-w-0 flex-1">
         <!-- World indices: Keep clean with no volume/breadth, matching DNSE -->
         <template v-if="isWorld">
@@ -31,8 +31,8 @@
         </template>
 
         <template v-else>
-          <!-- Volume / Value: Compact tracking so it never truncates -->
-          <div class="text-[10px] font-mono text-aave-ash truncate leading-tight tracking-tight">
+          <!-- Volume / Value: Compact font so 829.39 Triệu CP | 19,176.09 Tỷ fits without overlap -->
+          <div class="text-[9.5px] font-mono text-aave-ash whitespace-nowrap leading-tight tracking-tighter">
             <template v-if="item.volume && item.value">
               <span>{{ item.volume }}</span>
               <span class="mx-0.5 text-aave-graphite">|</span>
@@ -50,7 +50,7 @@
           </div>
 
           <!-- Breadth or Derivatives price band -->
-          <div class="flex items-center gap-1 mt-1 text-[10px] font-mono leading-none">
+          <div class="flex items-center gap-1 mt-1 text-[9.5px] font-mono leading-none">
             <!-- Derivatives Band (Ceiling / Ref / Floor) -->
             <template v-if="isDerivatives">
               <UTooltip text="Giá Trần">
@@ -64,12 +64,12 @@
               </UTooltip>
             </template>
 
-            <!-- Standard Stock Market Breadth -->
+            <!-- Standard Stock Market Breadth with DNSE ceiling/floor colors -->
             <template v-else-if="hasBreadth && item.breadth">
               <span class="flex items-center gap-0.5 text-emerald-400 font-medium">
                 <span>▲</span>
                 <span>{{ item.breadth.advance }}</span>
-                <span class="text-[9px] text-aave-graphite font-normal">({{ item.breadth.ceiling }})</span>
+                <span class="text-[9px] text-fuchsia-400 font-normal">({{ item.breadth.ceiling }})</span>
               </span>
               <span class="flex items-center gap-0.5 text-amber-400 font-medium">
                 <span>■</span>
@@ -78,7 +78,7 @@
               <span class="flex items-center gap-0.5 text-rose-500 font-medium">
                 <span>▼</span>
                 <span>{{ item.breadth.decline }}</span>
-                <span class="text-[9px] text-aave-graphite font-normal">({{ item.breadth.floor }})</span>
+                <span class="text-[9px] text-cyan-400 font-normal">({{ item.breadth.floor }})</span>
               </span>
             </template>
 
@@ -90,53 +90,71 @@
         </template>
       </div>
 
-      <!-- Intraday Reference-Baseline Chart (84px x 34px spacious aspect) -->
-      <div class="w-[84px] h-[34px] flex items-end justify-end shrink-0 select-none">
-        <svg class="w-full h-full overflow-hidden" viewBox="0 0 96 36">
-          <!-- Subtle Reference Baseline Line (Dashed) -->
+      <!-- Intraday Reference-Baseline Chart (Dual-Clip SVG matching DNSE) -->
+      <div class="w-[76px] h-[32px] flex items-end justify-end shrink-0 select-none">
+        <svg class="w-full h-full overflow-hidden" viewBox="0 0 76 32">
+          <defs>
+            <clipPath :id="`card-top-clip-${item.id}`">
+              <rect x="0" y="0" width="76" :height="chartData.baselineY" />
+            </clipPath>
+            <clipPath :id="`card-bot-clip-${item.id}`">
+              <rect x="0" :y="chartData.baselineY" width="76" :height="32 - chartData.baselineY" />
+            </clipPath>
+          </defs>
+
+          <!-- Reference Baseline Line (Dashed) -->
           <line
             x1="0"
             :y1="chartData.baselineY"
-            x2="96"
+            x2="76"
             :y2="chartData.baselineY"
-            stroke="rgba(255, 255, 255, 0.12)"
+            stroke="rgba(255, 255, 255, 0.16)"
             stroke-width="0.8"
             stroke-dasharray="2 2"
           />
 
-          <!-- Area Fill Path (Silky Smooth Bézier Spline) -->
+          <!-- Top Shaded Area (Emerald Gain above baseline) -->
           <path
             :d="chartData.areaPath"
-            :fill="chartData.areaFill"
+            fill="rgba(16, 185, 129, 0.28)"
+            :clip-path="`url(#card-top-clip-${item.id})`"
           />
 
-          <!-- Main Trajectory Line Path (Smooth Cubic Bézier) -->
+          <!-- Bottom Shaded Area (Burgundy Loss below baseline) -->
+          <path
+            :d="chartData.areaPath"
+            fill="rgba(239, 68, 68, 0.35)"
+            :clip-path="`url(#card-bot-clip-${item.id})`"
+          />
+
+          <!-- Line Path Green (Above Baseline) -->
           <path
             fill="none"
-            :stroke="chartData.mainStroke"
-            stroke-width="1.4"
+            stroke="#10b981"
+            stroke-width="1.3"
             stroke-linecap="round"
             stroke-linejoin="round"
             :d="chartData.linePath"
+            :clip-path="`url(#card-top-clip-${item.id})`"
           />
 
-          <!-- Opening Green Segment for Negative Assets (Smooth) -->
+          <!-- Line Path Red (Below Baseline) -->
           <path
-            v-if="chartData.openGreenPath"
             fill="none"
-            stroke="#10b981"
-            stroke-width="1.4"
+            stroke="#f43f5e"
+            stroke-width="1.3"
             stroke-linecap="round"
             stroke-linejoin="round"
-            :d="chartData.openGreenPath"
+            :d="chartData.linePath"
+            :clip-path="`url(#card-bot-clip-${item.id})`"
           />
 
           <!-- Live Endpoint Halo Circle -->
           <circle
             :cx="chartData.lastPoint.x"
             :cy="chartData.lastPoint.y"
-            r="3.5"
-            :fill="chartData.mainStroke"
+            r="3.2"
+            :fill="chartData.lastColor"
             opacity="0.22"
           />
 
@@ -144,8 +162,8 @@
           <circle
             :cx="chartData.lastPoint.x"
             :cy="chartData.lastPoint.y"
-            r="1.8"
-            :fill="chartData.mainStroke"
+            r="1.6"
+            :fill="chartData.lastColor"
           />
         </svg>
       </div>
@@ -218,7 +236,7 @@ const derivativesPrices = computed(() => {
   const chg =
     parseFloat(props.item.change.replace(/,/g, "").replace(/\+/g, "")) || -10.0
   const refP = curP - chg
-  const ceilP = Math.round(refP * 1.07 * 10) / 10
+  const ceilP = Math.floor(refP * 1.07 * 10) / 10
   const flrP = Math.round(refP * 0.93 * 10) / 10
 
   return {
@@ -242,14 +260,13 @@ interface SmoothChartData {
   areaPath: string
   baselineY: number
   lastPoint: { x: number; y: number }
-  mainStroke: string
-  areaFill: string
-  openGreenPath?: string | null
+  lastColor: string
 }
 
 const pointsToSmoothBezier = (
   nodes: [number, number][],
   baselineY: number,
+  width = 76,
   k = 0.22,
 ) => {
   if (nodes.length < 2) {
@@ -275,9 +292,7 @@ const pointsToSmoothBezier = (
     d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
   }
 
-  const firstX = nodes[0][0]
-  const lastX = nodes[nodes.length - 1][0]
-  const areaPath = `${d} L ${lastX},${baselineY} L ${firstX},${baselineY} Z`
+  const areaPath = `${d} L ${width},${baselineY} L 0,${baselineY} Z`
   const lastPoint = {
     x: nodes[nodes.length - 1][0],
     y: nodes[nodes.length - 1][1],
@@ -286,122 +301,90 @@ const pointsToSmoothBezier = (
   return { linePath: d, areaPath, lastPoint }
 }
 
-// High-fidelity intraday presets matching DNSE iBoard signature trajectories with smooth Bézier spline
+// Scaled signature trajectories matching DNSE iBoard (76px x 32px)
 const dnseSignatureNodes: Record<
   string,
   {
     nodes: [number, number][]
     baselineY: number
-    openGreenNodes?: [number, number][]
   }
 > = {
   vn30f1m: {
-    baselineY: 4,
-    openGreenNodes: [
-      [0, 4],
-      [4, 4],
-      [8, 4],
-    ],
+    baselineY: 9,
     nodes: [
-      [0, 4],
-      [8, 4],
-      [14, 8],
-      [22, 14],
-      [28, 18],
-      [36, 16],
-      [44, 21],
-      [52, 27],
-      [60, 24],
-      [68, 17],
-      [74, 12],
-      [80, 16],
-      [88, 22],
-      [96, 20],
+      [0, 7],
+      [8, 5],
+      [14, 7],
+      [22, 13],
+      [30, 17],
+      [38, 15],
+      [46, 20],
+      [54, 25],
+      [62, 21],
+      [70, 16],
+      [76, 19],
     ],
   },
   vn30: {
-    baselineY: 4,
-    openGreenNodes: [
-      [0, 4],
-      [4, 2],
-      [8, 4],
-    ],
+    baselineY: 5,
     nodes: [
-      [0, 4],
-      [4, 2],
-      [8, 4],
-      [16, 12],
-      [24, 16],
-      [32, 14],
-      [40, 20],
-      [48, 25],
-      [56, 21],
-      [64, 18],
-      [72, 12],
-      [80, 17],
-      [88, 22],
-      [96, 21],
+      [0, 5],
+      [6, 4],
+      [12, 6],
+      [18, 12],
+      [26, 16],
+      [34, 14],
+      [42, 20],
+      [50, 24],
+      [58, 20],
+      [64, 15],
+      [70, 19],
+      [76, 18],
     ],
   },
   vnindex: {
-    baselineY: 4,
-    openGreenNodes: [
-      [0, 4],
-      [4, 2.5],
-      [8, 4],
-    ],
+    baselineY: 5,
     nodes: [
-      [0, 4],
-      [4, 2.5],
-      [8, 4],
-      [16, 15],
-      [24, 21],
-      [34, 27],
-      [44, 26],
-      [54, 22],
-      [64, 15],
-      [72, 8],
-      [78, 14],
-      [86, 24],
-      [96, 22],
+      [0, 5],
+      [6, 4],
+      [12, 7],
+      [18, 15],
+      [26, 21],
+      [34, 25],
+      [42, 22],
+      [50, 18],
+      [58, 13],
+      [64, 17],
+      [70, 22],
+      [76, 21],
     ],
   },
   hnx30: {
-    baselineY: 4,
-    openGreenNodes: [
-      [0, 4],
-      [5, 2.8],
-      [9, 4],
-    ],
+    baselineY: 5,
     nodes: [
-      [0, 4],
-      [5, 2.8],
-      [9, 4],
-      [18, 14],
-      [28, 18],
-      [38, 22],
-      [48, 26],
-      [58, 24],
-      [68, 27],
-      [78, 26],
-      [88, 30],
-      [96, 29],
+      [0, 5],
+      [8, 4],
+      [16, 9],
+      [26, 15],
+      [36, 19],
+      [46, 23],
+      [56, 21],
+      [66, 25],
+      [76, 24],
     ],
   },
   dji: {
-    baselineY: 32,
+    baselineY: 28,
     nodes: [
-      [0, 31],
-      [10, 29],
-      [20, 26],
-      [30, 24],
-      [40, 20],
-      [50, 18],
-      [60, 14],
-      [70, 12],
-      [80, 8],
-      [90, 6],
-      [96, 7],
+      [0, 27],
+      [10, 25],
+      [20, 23],
+      [30, 20],
+      [40, 17],
+      [50, 14],
+      [60, 10],
+      [68, 7],
+      [76, 6],
     ],
   },
 }
@@ -411,145 +394,144 @@ const chartData = computed<SmoothChartData>(() => {
   const isUnch = props.item.isUnchanged
   const normId = props.item.id.toLowerCase()
 
-  // Stroke and area colors matching DNSE dark burgundy and forest green
-  const mainStroke = isUp ? "#10b981" : isUnch ? "#fbbf24" : "#f43f5e"
-  const areaFill = isUp
-    ? "rgba(16, 185, 129, 0.28)"
-    : isUnch
-      ? "rgba(251, 191, 36, 0.20)"
-      : "rgba(239, 68, 68, 0.35)"
+  // Determine reference price
+  let refP = 0
+  if (props.item.refPrice) {
+    refP = Number(props.item.refPrice)
+  } else if (props.item.price && props.item.change) {
+    const curP = parseFloat(props.item.price.replace(/,/g, "")) || 0
+    const chg =
+      parseFloat(props.item.change.replace(/,/g, "").replace(/\+/g, "")) || 0
+    refP = curP - chg
+  }
 
-  // 1. If real sparkline data is provided (e.g. 100 daily points)
-  if (props.item.sparkline && props.item.sparkline.length >= 5) {
+  const width = 76
+  const height = 32
+  const topMargin = 3
+  const botMargin = 29
+  const effH = botMargin - topMargin
+
+  // 1. If real intraday sparkline data is provided
+  if (props.item.sparkline && props.item.sparkline.length >= 4) {
     const rawPts = props.item.sparkline
-    const width = 96
-    const marginT = 4
-    const marginB = 32
-    const minP = Math.min(...rawPts)
-    const maxP = Math.max(...rawPts)
-    const diff = maxP - minP || 1
+    if (refP <= 0) refP = rawPts[0]
 
-    const nodes: [number, number][] = rawPts.map((val, idx) => {
-      const x = Number(((idx / (rawPts.length - 1)) * width).toFixed(1))
-      const norm = (val - minP) / diff
-      const y = Number((marginB - norm * (marginB - marginT)).toFixed(1))
-      return [x, y]
-    })
+    const allPts = [...rawPts, refP]
+    const minP = Math.min(...allPts)
+    const maxP = Math.max(...allPts)
+    const span = maxP - minP || refP * 0.005 || 1
+    const pad = span * 0.08
+    const yMin = minP - pad
+    const yMax = maxP + pad
+    const yRange = yMax - yMin
 
-    const refVal = rawPts[0]
-    const refNorm = (refVal - minP) / diff
     const baselineY = Number(
       Math.max(
         4,
-        Math.min(32, marginB - refNorm * (marginB - marginT)),
+        Math.min(28, botMargin - ((refP - yMin) / yRange) * effH),
       ).toFixed(1),
     )
 
-    const spline = pointsToSmoothBezier(nodes, baselineY)
+    const nodes: [number, number][] = rawPts.map((val, idx) => {
+      const x = Number(((idx / (rawPts.length - 1)) * width).toFixed(1))
+      const y = Number(
+        Math.max(
+          2,
+          Math.min(30, botMargin - ((val - yMin) / yRange) * effH),
+        ).toFixed(1),
+      )
+      return [x, y]
+    })
+
+    const spline = pointsToSmoothBezier(nodes, baselineY, width)
+    const lastColor = spline.lastPoint.y <= baselineY ? "#10b981" : "#f43f5e"
 
     return {
-      mainStroke,
-      areaFill,
       baselineY,
       linePath: spline.linePath,
       areaPath: spline.areaPath,
       lastPoint: spline.lastPoint,
-      openGreenPath: null,
+      lastColor,
     }
   }
 
-  // 2. Fallback to signature presets if sparkline is empty
+  // 2. Fallback to signature presets
   if (dnseSignatureNodes[normId]) {
     const p = dnseSignatureNodes[normId]
-    const spline = pointsToSmoothBezier(p.nodes, p.baselineY)
-    let openGreenPath: string | null = null
-    if (p.openGreenNodes) {
-      openGreenPath = pointsToSmoothBezier(
-        p.openGreenNodes,
-        p.baselineY,
-      ).linePath
-    }
+    const spline = pointsToSmoothBezier(p.nodes, p.baselineY, width)
+    const lastColor = spline.lastPoint.y <= p.baselineY ? "#10b981" : "#f43f5e"
     return {
-      mainStroke,
-      areaFill,
       baselineY: p.baselineY,
       linePath: spline.linePath,
       areaPath: spline.areaPath,
       lastPoint: spline.lastPoint,
-      openGreenPath,
+      lastColor,
     }
   }
 
-  // 2. High-fidelity smooth dynamic trajectory for other tickers
-  const width = 96
+  // 3. Fallback smooth dynamic trajectory
   const count = 14
   const seed = (normId || "idx")
     .split("")
     .reduce((acc, c) => acc + c.charCodeAt(0), 0)
 
   if (isUnch) {
-    const baselineY = 18
+    const baselineY = 16
     const nodes: [number, number][] = []
     for (let i = 0; i < count; i++) {
       const x = Number(((i / (count - 1)) * width).toFixed(1))
-      const jitter = Math.sin(i * 1.5 + seed) * 1.2
+      const jitter = Math.sin(i * 1.5 + seed) * 1.0
       nodes.push([x, Number((baselineY + jitter).toFixed(1))])
     }
-    const spline = pointsToSmoothBezier(nodes, baselineY)
+    const spline = pointsToSmoothBezier(nodes, baselineY, width)
     return {
-      mainStroke,
-      areaFill,
       baselineY,
       linePath: spline.linePath,
       areaPath: spline.areaPath,
       lastPoint: spline.lastPoint,
-      openGreenPath: null,
+      lastColor: "#fbbf24",
     }
   }
 
   if (isUp) {
-    const baselineY = 32
+    const baselineY = 28
     const nodes: [number, number][] = []
     for (let i = 0; i < count; i++) {
       const t = i / (count - 1)
       const x = Number((t * width).toFixed(1))
-      const baseY = 30 - t * 24
-      const wave = Math.sin(i * 1.2 + seed) * 1.5
-      const y = Number(Math.max(5, Math.min(32, baseY + wave)).toFixed(1))
+      const baseY = 26 - t * 20
+      const wave = Math.sin(i * 1.2 + seed) * 1.2
+      const y = Number(Math.max(4, Math.min(28, baseY + wave)).toFixed(1))
       nodes.push([x, y])
     }
-    const spline = pointsToSmoothBezier(nodes, baselineY)
+    const spline = pointsToSmoothBezier(nodes, baselineY, width)
     return {
-      mainStroke,
-      areaFill,
       baselineY,
       linePath: spline.linePath,
       areaPath: spline.areaPath,
       lastPoint: spline.lastPoint,
-      openGreenPath: null,
+      lastColor: "#10b981",
     }
   }
 
   // Descending (Down)
-  const baselineY = 4
+  const baselineY = 5
   const nodes: [number, number][] = []
   for (let i = 0; i < count; i++) {
     const t = i / (count - 1)
     const x = Number((t * width).toFixed(1))
-    const baseY = 5 + t * 22
-    const wave = Math.sin(i * 1.2 + seed) * 1.6
-    const y = Number(Math.max(4, Math.min(32, baseY + wave)).toFixed(1))
+    const baseY = 6 + t * 18
+    const wave = Math.sin(i * 1.2 + seed) * 1.2
+    const y = Number(Math.max(4, Math.min(28, baseY + wave)).toFixed(1))
     nodes.push([x, y])
   }
-  const spline = pointsToSmoothBezier(nodes, baselineY)
+  const spline = pointsToSmoothBezier(nodes, baselineY, width)
   return {
-    mainStroke,
-    areaFill,
     baselineY,
     linePath: spline.linePath,
     areaPath: spline.areaPath,
     lastPoint: spline.lastPoint,
-    openGreenPath: null,
+    lastColor: "#f43f5e",
   }
 })
 </script>

@@ -22,7 +22,6 @@ import { fileURLToPath } from 'node:url';
 import { dirname as dirname$1, resolve as resolve$1, basename } from 'file:///Volumes/developer101/code/vnstock/node_modules/pathe/dist/index.mjs';
 import { getIcons } from 'file:///Volumes/developer101/code/vnstock/node_modules/@iconify/utils/lib/index.mjs';
 import { consola } from 'file:///Volumes/developer101/code/vnstock/node_modules/consola/dist/index.mjs';
-import { createRequire } from 'node:module';
 
 const serverAssets = [{"baseName":"server","dir":"/Volumes/developer101/code/vnstock/frontend/server/assets"}];
 
@@ -898,7 +897,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "7f240406-d0bd-480e-b700-9135ad0fc03c",
+    "buildId": "35181a43-8ecb-4461-b412-408ab163a601",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -1425,8 +1424,6 @@ function publicAssetsURL(...path) {
 	const publicBase = app.cdnURL || app.baseURL;
 	return path.length ? joinRelativeURL(publicBase, ...path) : publicBase;
 }
-
-createRequire(globalThis._importMeta_.url);
 
 const collections = {
 };

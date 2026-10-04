@@ -147,7 +147,10 @@ To ensure strict alignment with the latest `vnstock` v4 architectural standards,
 
 > [!CAUTION]
 > ### RULE 3: DATA INTEGRITY, PERSISTENCE & FORECAST AUDITABILITY
-> - **NO FABRICATED DATA**: Never invent, hallucinate, or hardcode market prices, volumes, or financial figures. Every value MUST originate from a verifiable source (a `vnstock` adapter) or a persisted DB row. If data is missing or unavailable, the system MUST surface the gap explicitly — it MUST NOT guess or interpolate silently.
+> - **NO FABRICATED DATA & ZERO HARDCODED DEFAULT VALUES**:
+>   - **STRICTLY NO DEFAULT / FALLBACK VALUES FOR MARKET DATA**: Never invent, hallucinate, hardcode, or inject static default/fallback numbers for market prices, index volumes, values, breadth, order book, or financial figures (e.g., `raw_vol = 829_390_000`, `val_num = 19_176.09`, `price = 51477.0`, mock bid/ask levels, or fake breadth `90/3/50/216/10`).
+>   - **STRICTLY NO CLAMPING OVERRIDES**: Absolutely forbidden to write conditional overrides (e.g., `if val > 35_000: val = 19_176.09`) to force calculated numbers into arbitrary target windows.
+>   - **HONEST HANDLING OF MISSING DATA**: Every value MUST originate from a verifiable source (`vnstock` adapter) or a persisted DB row. If data is missing or unavailable, the system MUST surface the gap explicitly (return `None`, `null`, `0`, or a clear missing/loading state `"-"`) — it MUST NOT guess, interpolate silently, or mask missing data with hardcoded default values.
 > - **NO LOOK-AHEAD BIAS**: Signals, backtests, and model training MUST only use information available *at the decision timestamp*. Future data must never leak into a historical evaluation.
 > - **NO SURVIVORSHIP BIAS**: Universe construction and backtests MUST account for delisted/suspended symbols and historical index constituents — not only today's survivors.
 > - **MANDATORY FORECAST LEDGER**: Every forecast/signal emitted MUST be persisted with its prediction (value/direction), timestamp, and contributing engine weights. Once reality resolves, the ledger MUST be back-filled with the actual outcome, error, and score. No forecast may be generated without leaving an auditable trail (see Section 9).
@@ -212,6 +215,7 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
 - **SQLModel Patterns**:
   - Always use `session.exec(select(Model))` and wrap order columns in `col()` (e.g., `.order_by(col(StockOHLCVDaily.trading_date))`).
   - Use `datetime.now(VN_TZ)` for timestamps (never timezone-naive `datetime.now()`).
+- **Zero Hardcoded Default Values**: Backend services and endpoints must NEVER use hardcoded fallback/default constants or clamping overrides (`if val > 35000: val = 19176`) to simulate real market data. If external APIs fail or data is empty, return `None`, `null`, `0`, or `"-"`, log appropriately, and let the frontend handle the empty/error state.
 - **Code Quality**:
   - Every backend modification MUST pass `uv run ruff check`, `uv run ruff format --check`, and `uv run ty check` with **0 errors**.
 
@@ -224,6 +228,7 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
   2. **Không dùng Gradient trong Code (Zero Gradients)**: Tuyệt đối không dùng gradient (`bg-gradient-to-...`, `linear-gradient(...)`). Tất cả bề mặt, thẻ card và nút bấm phải là các mảng màu phẳng (flat surface) có tính kỷ luật cao.
   3. **Không dùng Emoji trong Văn Bản (Zero Emojis in Text)**: Tuyệt đối không dùng icon emoji (🚀, 📦, ⚡, 🛡️,...) trong văn bản hay tiêu đề. Thay vào đó, dùng component biểu tượng hệ thống `<UIcon>` hoặc typography chuẩn.
   4. **Không viết Text dùng dấu ngoặc đơn "()" để giải thích**: Tuyệt đối không dùng dấu ngoặc đơn để chú thích thuật ngữ hay định dạng trong nhãn hiển thị (ví dụ KHÔNG viết `<span>Technical Requirements Document (Markdown Specification)</span>` hay `Mật khẩu (tối thiểu 8 ký tự)`). Nếu cần cung cấp thông tin giải thích bổ sung, **bắt buộc phải dùng tooltip** (ví dụ `<UTooltip text="...">` hoặc hint text riêng).
+  5. **Không dùng Default Mock Data tĩnh để che đậy dữ liệu thiếu**: Khi dữ liệu chưa tải xong hoặc API trả về rỗng, dùng skeleton loading hoặc hiển thị `-` / `Chưa có dữ liệu`. Tuyệt đối không hardcode mảng dữ liệu mẫu với các con số thị trường giả lập.
 - **Code Quality**: Every frontend change MUST pass `bun run lint`, `bun run typecheck`, and `bun run build` cleanly with 0 errors.
 
 ---
