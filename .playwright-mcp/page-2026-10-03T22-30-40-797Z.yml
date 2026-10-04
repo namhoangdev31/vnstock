@@ -1,0 +1,373 @@
+- generic [ref=f1e4]:
+  - banner [ref=f1e5]:
+    - link "VNSTOCK" [ref=f1e7] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f1e10]:
+      - generic [ref=f1e11]: 05:30:40
+      - generic [ref=f1e14]: Mô phỏng Sandbox
+      - link "Trung tâm định lượng" [ref=f1e17] [cursor=pointer]:
+        - /url: /admin
+  - generic [ref=f1e21]:
+    - generic [ref=f1e191] [cursor=pointer]:
+      - generic [ref=f1e192]:
+        - generic [ref=f1e193]: VN30
+        - generic [ref=f1e194]: "-0.77%"
+      - generic [ref=f1e195]:
+        - generic [ref=f1e196]: 1,875.99
+        - generic [ref=f1e197]: "-14.58"
+      - generic [ref=f1e199]:
+        - generic [ref=f1e200]: 236.96 Triệu CP|7,600.73 Tỷ
+        - generic [ref=f1e201]:
+          - generic [ref=f1e202]:
+            - generic [ref=f1e203]: ▲
+            - generic [ref=f1e204]: "5"
+            - generic [ref=f1e205]: (0)
+          - generic [ref=f1e206]:
+            - generic [ref=f1e207]: ■
+            - generic [ref=f1e208]: "3"
+          - generic [ref=f1e209]:
+            - generic [ref=f1e210]: ▼
+            - generic [ref=f1e211]: "22"
+            - generic [ref=f1e212]: (0)
+    - generic [ref=f1e218] [cursor=pointer]:
+      - generic [ref=f1e219]:
+        - generic [ref=f1e220]: VNINDEX
+        - generic [ref=f1e221]: "-0.66%"
+      - generic [ref=f1e222]:
+        - generic [ref=f1e223]: 1,737.71
+        - generic [ref=f1e224]: "-11.59"
+      - generic [ref=f1e226]:
+        - generic [ref=f1e227]: 1,164.30 Triệu CP|2,069,525.48 Tỷ
+        - generic [ref=f1e228]:
+          - generic [ref=f1e229]:
+            - generic [ref=f1e230]: ▲
+            - generic [ref=f1e231]: "57"
+            - generic [ref=f1e232]: (0)
+          - generic [ref=f1e233]:
+            - generic [ref=f1e234]: ■
+            - generic [ref=f1e235]: "35"
+          - generic [ref=f1e236]:
+            - generic [ref=f1e237]: ▼
+            - generic [ref=f1e238]: "292"
+            - generic [ref=f1e239]: (1)
+    - generic [ref=f1e245] [cursor=pointer]:
+      - generic [ref=f1e246]:
+        - generic [ref=f1e247]: DOW JONES FUTURES
+        - generic [ref=f1e248]: +0.46%
+      - generic [ref=f1e249]:
+        - generic [ref=f1e250]: 51,477.00
+        - generic [ref=f1e251]: "+236.00"
+    - generic [ref=f1e259] [cursor=pointer]:
+      - generic [ref=f1e260]:
+        - generic [ref=f1e261]: HNX30
+        - generic [ref=f1e262]: "-1.27%"
+      - generic [ref=f1e263]:
+        - generic [ref=f1e264]: "433.80"
+        - generic [ref=f1e265]: "-5.58"
+      - generic [ref=f1e267]:
+        - generic [ref=f1e268]: 18.71 Triệu CP|5,019.27 Tỷ
+        - generic [ref=f1e269]:
+          - generic [ref=f1e270]:
+            - generic [ref=f1e271]: ▲
+            - generic [ref=f1e272]: "17"
+            - generic [ref=f1e273]: (3)
+          - generic [ref=f1e274]:
+            - generic [ref=f1e275]: ■
+            - generic [ref=f1e276]: "17"
+          - generic [ref=f1e277]:
+            - generic [ref=f1e278]: ▼
+            - generic [ref=f1e279]: "26"
+            - generic [ref=f1e280]: (4)
+    - generic [ref=f1e286] [cursor=pointer]:
+      - generic [ref=f1e287]:
+        - generic [ref=f1e288]: VN30F1M
+        - generic [ref=f1e289]: "-0.53%"
+      - generic [ref=f1e290]:
+        - generic [ref=f1e291]: 1,885.0
+        - generic [ref=f1e292]: "-10.00"
+      - generic [ref=f1e294]:
+        - generic [ref=f1e295]: 253,004 HĐ|47,739.00 Tỷ
+        - generic [ref=f1e296]:
+          - generic [ref=f1e297]: 2,027.7
+          - generic [ref=f1e299]: 1,895.0
+          - generic [ref=f1e301]: 1,762.4
+    - generic [ref=f1e72]:
+      - button "Đóng" [ref=f1e73] [cursor=pointer]
+      - button "Thêm biểu đồ chỉ số" [ref=f1e76] [cursor=pointer]
+  - generic [ref=f1e78]:
+    - generic [ref=f1e79]:
+      - generic [ref=f1e80]:
+        - button "Danh mục của bạn" [ref=f1e81] [cursor=pointer]
+        - button "Niêm yết" [ref=f1e82] [cursor=pointer]
+        - button "Ngành" [ref=f1e83] [cursor=pointer]
+        - button "Phái sinh" [active] [ref=f1e84] [cursor=pointer]
+        - button "Chứng quyền" [ref=f1e85] [cursor=pointer]
+        - button "ETF" [ref=f1e86] [cursor=pointer]
+        - button "Thỏa thuận" [ref=f1e87] [cursor=pointer]
+      - generic [ref=f1e88]:
+        - generic [ref=f1e89]: "Thống kê biến động:"
+        - generic [ref=f1e90]: "0"
+        - generic [ref=f1e93]: "0"
+        - generic [ref=f1e96]: "0"
+        - generic [ref=f1e99]: "10"
+        - generic [ref=f1e102]: "0"
+    - generic [ref=f1e105]:
+      - generic [ref=f1e106]:
+        - textbox "Tìm mã chứng khoán..." [ref=f1e109]
+        - generic [ref=f1e1217]: Hợp đồng tương lai chỉ số VN30 và VN100
+      - generic [ref=f1e115]:
+        - generic [ref=f1e116]:
+          - button "Sổ lệnh 3 cấp" [ref=f1e117] [cursor=pointer]
+          - button "Rút gọn" [ref=f1e120] [cursor=pointer]
+        - generic [ref=f1e123]:
+          - button "%" [ref=f1e124] [cursor=pointer]
+          - button "+/- Điểm" [ref=f1e125] [cursor=pointer]
+  - generic [ref=f1e126]:
+    - table [ref=f1e307]:
+      - rowgroup [ref=f1e308]:
+        - row [ref=f1e1218]:
+          - columnheader "Mã chứng khoán" [ref=f1e310]
+          - columnheader "Giá khớp" [ref=f1e311]
+          - columnheader "% Thay đổi" [ref=f1e312]
+          - columnheader "Ngày đáo hạn" [ref=f1e1219]
+          - columnheader "Tổng khối lượng" [ref=f1e313]
+          - columnheader "Biểu đồ" [ref=f1e314]
+          - columnheader "Mua / Bán chủ động" [ref=f1e315]
+          - columnheader [ref=f1e316]
+      - rowgroup [ref=f1e317]:
+        - row [ref=f1e1220] [cursor=pointer]:
+          - cell "VN30F1M Hợp đồng tương lai VN30 tháng hiện tại" [ref=f1e1221]:
+            - generic [ref=f1e1223]:
+              - generic [ref=f1e1224]: VN30F1M
+              - generic [ref=f1e1226]: Hợp đồng tương lai VN30 tháng hiện tại
+          - cell "1885.0" [ref=f1e1227]
+          - cell "-0.53%" [ref=f1e1228]
+          - cell "15/10/2026" [ref=f1e1229]
+          - cell "253,004" [ref=f1e1230]
+          - cell [ref=f1e1231]
+          - cell "45% 55%" [ref=f1e1238]:
+            - generic [ref=f1e1240]:
+              - generic [ref=f1e1241]: 45%
+              - generic [ref=f1e1242]: 55%
+          - cell [ref=f1e1246]:
+            - button "Đặt lệnh nhanh" [ref=f1e1247]
+        - row [ref=f1e1249] [cursor=pointer]:
+          - cell "VN30F2M Hợp đồng tương lai VN30 tháng kế tiếp" [ref=f1e1250]:
+            - generic [ref=f1e1252]:
+              - generic [ref=f1e1253]: VN30F2M
+              - generic [ref=f1e1255]: Hợp đồng tương lai VN30 tháng kế tiếp
+          - cell "1882.8" [ref=f1e1256]
+          - cell "-0.42%" [ref=f1e1257]
+          - cell "19/11/2026" [ref=f1e1258]
+          - cell "520" [ref=f1e1259]
+          - cell [ref=f1e1260]
+          - cell "45% 55%" [ref=f1e1267]:
+            - generic [ref=f1e1269]:
+              - generic [ref=f1e1270]: 45%
+              - generic [ref=f1e1271]: 55%
+          - cell [ref=f1e1275]:
+            - button "Đặt lệnh nhanh" [ref=f1e1276]
+        - row [ref=f1e1278] [cursor=pointer]:
+          - cell "41I1GA000 Hợp đồng tương lai 41I1GA000" [ref=f1e1279]:
+            - generic [ref=f1e1281]:
+              - generic [ref=f1e1282]: 41I1GA000
+              - generic [ref=f1e1284]: Hợp đồng tương lai 41I1GA000
+          - cell "1885.0" [ref=f1e1285]
+          - cell "-0.53%" [ref=f1e1286]
+          - cell "15/10/2026" [ref=f1e1287]
+          - cell "253,004" [ref=f1e1288]
+          - cell [ref=f1e1289]
+          - cell "45% 55%" [ref=f1e1296]:
+            - generic [ref=f1e1298]:
+              - generic [ref=f1e1299]: 45%
+              - generic [ref=f1e1300]: 55%
+          - cell [ref=f1e1304]:
+            - button "Đặt lệnh nhanh" [ref=f1e1305]
+        - row [ref=f1e1307] [cursor=pointer]:
+          - cell "41I1GB000 Hợp đồng tương lai 41I1GB000" [ref=f1e1308]:
+            - generic [ref=f1e1310]:
+              - generic [ref=f1e1311]: 41I1GB000
+              - generic [ref=f1e1313]: Hợp đồng tương lai 41I1GB000
+          - cell "1882.8" [ref=f1e1314]
+          - cell "-0.42%" [ref=f1e1315]
+          - cell "15/10/2026" [ref=f1e1316]
+          - cell "520" [ref=f1e1317]
+          - cell [ref=f1e1318]
+          - cell "45% 55%" [ref=f1e1325]:
+            - generic [ref=f1e1327]:
+              - generic [ref=f1e1328]: 45%
+              - generic [ref=f1e1329]: 55%
+          - cell [ref=f1e1333]:
+            - button "Đặt lệnh nhanh" [ref=f1e1334]
+        - row [ref=f1e1336] [cursor=pointer]:
+          - cell "41I1GC000 Hợp đồng tương lai 41I1GC000" [ref=f1e1337]:
+            - generic [ref=f1e1339]:
+              - generic [ref=f1e1340]: 41I1GC000
+              - generic [ref=f1e1342]: Hợp đồng tương lai 41I1GC000
+          - cell "1888.5" [ref=f1e1343]
+          - cell "-0.47%" [ref=f1e1344]
+          - cell "15/10/2026" [ref=f1e1345]
+          - cell "213" [ref=f1e1346]
+          - cell [ref=f1e1347]
+          - cell "45% 55%" [ref=f1e1354]:
+            - generic [ref=f1e1356]:
+              - generic [ref=f1e1357]: 45%
+              - generic [ref=f1e1358]: 55%
+          - cell [ref=f1e1362]:
+            - button "Đặt lệnh nhanh" [ref=f1e1363]
+        - row [ref=f1e1365] [cursor=pointer]:
+          - cell "41I1H3000 Hợp đồng tương lai 41I1H3000" [ref=f1e1366]:
+            - generic [ref=f1e1368]:
+              - generic [ref=f1e1369]: 41I1H3000
+              - generic [ref=f1e1371]: Hợp đồng tương lai 41I1H3000
+          - cell "1881.0" [ref=f1e1372]
+          - cell "-0.34%" [ref=f1e1373]
+          - cell "15/10/2026" [ref=f1e1374]
+          - cell "78" [ref=f1e1375]
+          - cell [ref=f1e1376]
+          - cell "45% 55%" [ref=f1e1383]:
+            - generic [ref=f1e1385]:
+              - generic [ref=f1e1386]: 45%
+              - generic [ref=f1e1387]: 55%
+          - cell [ref=f1e1391]:
+            - button "Đặt lệnh nhanh" [ref=f1e1392]
+        - row [ref=f1e1394] [cursor=pointer]:
+          - cell "41I2GA000 Hợp đồng tương lai 41I2GA000" [ref=f1e1395]:
+            - generic [ref=f1e1397]:
+              - generic [ref=f1e1398]: 41I2GA000
+              - generic [ref=f1e1400]: Hợp đồng tương lai 41I2GA000
+          - cell "1785.6" [ref=f1e1401]
+          - cell "-0.50%" [ref=f1e1402]
+          - cell "15/10/2026" [ref=f1e1403]
+          - cell "92" [ref=f1e1404]
+          - cell [ref=f1e1405]
+          - cell "45% 55%" [ref=f1e1412]:
+            - generic [ref=f1e1414]:
+              - generic [ref=f1e1415]: 45%
+              - generic [ref=f1e1416]: 55%
+          - cell [ref=f1e1420]:
+            - button "Đặt lệnh nhanh" [ref=f1e1421]
+        - row [ref=f1e1423] [cursor=pointer]:
+          - cell "41I2GB000 Hợp đồng tương lai 41I2GB000" [ref=f1e1424]:
+            - generic [ref=f1e1426]:
+              - generic [ref=f1e1427]: 41I2GB000
+              - generic [ref=f1e1429]: Hợp đồng tương lai 41I2GB000
+          - cell "1791.1" [ref=f1e1430]
+          - cell "-0.25%" [ref=f1e1431]
+          - cell "15/10/2026" [ref=f1e1432]
+          - cell "2" [ref=f1e1433]
+          - cell [ref=f1e1434]
+          - cell "45% 55%" [ref=f1e1441]:
+            - generic [ref=f1e1443]:
+              - generic [ref=f1e1444]: 45%
+              - generic [ref=f1e1445]: 55%
+          - cell [ref=f1e1449]:
+            - button "Đặt lệnh nhanh" [ref=f1e1450]
+        - row [ref=f1e1452] [cursor=pointer]:
+          - cell "41I2GC000 Hợp đồng tương lai 41I2GC000" [ref=f1e1453]:
+            - generic [ref=f1e1455]:
+              - generic [ref=f1e1456]: 41I2GC000
+              - generic [ref=f1e1458]: Hợp đồng tương lai 41I2GC000
+          - cell "1780.5" [ref=f1e1459]
+          - cell "-0.59%" [ref=f1e1460]
+          - cell "15/10/2026" [ref=f1e1461]
+          - cell "209" [ref=f1e1462]
+          - cell [ref=f1e1463]
+          - cell "45% 55%" [ref=f1e1470]:
+            - generic [ref=f1e1472]:
+              - generic [ref=f1e1473]: 45%
+              - generic [ref=f1e1474]: 55%
+          - cell [ref=f1e1478]:
+            - button "Đặt lệnh nhanh" [ref=f1e1479]
+        - row [ref=f1e1481] [cursor=pointer]:
+          - cell "41I2H3000 Hợp đồng tương lai 41I2H3000" [ref=f1e1482]:
+            - generic [ref=f1e1484]:
+              - generic [ref=f1e1485]: 41I2H3000
+              - generic [ref=f1e1487]: Hợp đồng tương lai 41I2H3000
+          - cell "1784.9" [ref=f1e1488]
+          - cell "-0.51%" [ref=f1e1489]
+          - cell "15/10/2026" [ref=f1e1490]
+          - cell "18" [ref=f1e1491]
+          - cell [ref=f1e1492]
+          - cell "45% 55%" [ref=f1e1499]:
+            - generic [ref=f1e1501]:
+              - generic [ref=f1e1502]: 45%
+              - generic [ref=f1e1503]: 55%
+          - cell [ref=f1e1507]:
+            - button "Đặt lệnh nhanh" [ref=f1e1508]
+    - generic [ref=f1e165]:
+      - generic [ref=f1e166]:
+        - generic [ref=f1e167]:
+          - button "Thị trường" [ref=f1e168] [cursor=pointer]
+          - button "Đặt lệnh" [ref=f1e169] [cursor=pointer]
+          - button "Sổ lệnh" [ref=f1e170] [cursor=pointer]
+        - button "Thu gọn thanh bên" [ref=f1e171] [cursor=pointer]
+      - generic [ref=f1e172]:
+        - generic [ref=f1e173]:
+          - generic [ref=f1e174]:
+            - generic [ref=f1e175]: AI
+            - generic [ref=f1e176]: Trợ lý định lượng thị trường
+          - paragraph [ref=f1e177]: VNINDEX điều chỉnh -0.66%, đóng cửa tại 1,737.71 điểm với thanh khoản toàn thị trường 829.39 triệu cổ phiếu. Độ rộng ghi nhận 25 mã tăng so với 67 mã giảm. Dòng tiền tích cực luân chuyển vào nhóm Khác (NVB +9.49%), trong khi áp lực bán tập trung tại nhóm Equities (SHN -6.98%).
+          - button "Cập nhật nhận định AI" [ref=f1e178] [cursor=pointer]
+        - generic [ref=f1e181]:
+          - generic [ref=f1e182]: Top cổ phiếu tăng giá
+          - generic [ref=f1e1159]:
+            - generic [ref=f1e1160] [cursor=pointer]:
+              - generic [ref=f1e1161]:
+                - generic [ref=f1e1162]: NVB
+                - generic [ref=f1e1163]: Ngân hàng Thương mại Cổ phần Quốc Dân
+              - generic [ref=f1e1164]:
+                - generic [ref=f1e1165]: "15.00"
+                - generic [ref=f1e1166]: +9.49%
+            - generic [ref=f1e1167] [cursor=pointer]:
+              - generic [ref=f1e1168]:
+                - generic [ref=f1e1169]: TMC
+                - generic [ref=f1e1170]: Công ty Cổ phần Thương mại Xuất nhập khẩu Thủ Đức
+              - generic [ref=f1e1171]:
+                - generic [ref=f1e1172]: "7.00"
+                - generic [ref=f1e1173]: +7.69%
+            - generic [ref=f1e1174] [cursor=pointer]:
+              - generic [ref=f1e1175]:
+                - generic [ref=f1e1176]: PGT
+                - generic [ref=f1e1177]: Công ty Cổ phần PGT Holdings
+              - generic [ref=f1e1178]:
+                - generic [ref=f1e1179]: "6.10"
+                - generic [ref=f1e1180]: +7.02%
+            - generic [ref=f1e1181] [cursor=pointer]:
+              - generic [ref=f1e1182]:
+                - generic [ref=f1e1183]: PGS
+                - generic [ref=f1e1184]: Công ty Cổ phần Kinh doanh Khí Miền Nam
+              - generic [ref=f1e1185]:
+                - generic [ref=f1e1186]: "79.90"
+                - generic [ref=f1e1187]: +6.53%
+        - generic [ref=f1e186]:
+          - generic [ref=f1e187]: Top cổ phiếu giảm giá
+          - generic [ref=f1e1188]:
+            - generic [ref=f1e1189] [cursor=pointer]:
+              - generic [ref=f1e1190]:
+                - generic [ref=f1e1191]: SHN
+                - generic [ref=f1e1192]: Công ty Cổ phần Đầu tư Tổng hợp Hà Nội
+              - generic [ref=f1e1193]:
+                - generic [ref=f1e1194]: "8.00"
+                - generic [ref=f1e1195]: "-6.98%"
+            - generic [ref=f1e1196] [cursor=pointer]:
+              - generic [ref=f1e1197]:
+                - generic [ref=f1e1198]: SDC
+                - generic [ref=f1e1199]: Công ty Cổ phần Tư vấn Sông Đà
+              - generic [ref=f1e1200]:
+                - generic [ref=f1e1201]: "5.80"
+                - generic [ref=f1e1202]: "-7.94%"
+            - generic [ref=f1e1203] [cursor=pointer]:
+              - generic [ref=f1e1204]:
+                - generic [ref=f1e1205]: SGH
+                - generic [ref=f1e1206]: Công ty Cổ phần Khách sạn Sài Gòn
+              - generic [ref=f1e1207]:
+                - generic [ref=f1e1208]: "18.10"
+                - generic [ref=f1e1209]: "-8.59%"
+            - generic [ref=f1e1210] [cursor=pointer]:
+              - generic [ref=f1e1211]:
+                - generic [ref=f1e1212]: QST
+                - generic [ref=f1e1213]: Công ty Cổ phần Sách và Thiết bị trường học Quảng Ninh
+              - generic [ref=f1e1214]:
+                - generic [ref=f1e1215]: "19.00"
+                - generic [ref=f1e1216]: "-9.52%"

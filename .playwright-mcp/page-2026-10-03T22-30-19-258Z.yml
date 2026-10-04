@@ -1,0 +1,99 @@
+- generic [ref=f1e4]:
+  - banner [ref=f1e5]:
+    - link "VNSTOCK" [ref=f1e7] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f1e10]:
+      - generic [ref=f1e11]: 05:30:19
+      - generic [ref=f1e14]: Mô phỏng Sandbox
+      - link "Trung tâm định lượng" [ref=f1e17] [cursor=pointer]:
+        - /url: /admin
+  - generic [ref=f1e72]:
+    - button "Đóng" [ref=f1e73] [cursor=pointer]
+    - button "Thêm biểu đồ chỉ số" [ref=f1e76] [cursor=pointer]
+  - generic [ref=f1e78]:
+    - generic [ref=f1e79]:
+      - generic [ref=f1e80]:
+        - button "Danh mục của bạn" [ref=f1e81] [cursor=pointer]
+        - button "Niêm yết" [ref=f1e82] [cursor=pointer]
+        - button "Ngành" [ref=f1e83] [cursor=pointer]
+        - button "Phái sinh" [ref=f1e84] [cursor=pointer]
+        - button "Chứng quyền" [ref=f1e85] [cursor=pointer]
+        - button "ETF" [ref=f1e86] [cursor=pointer]
+        - button "Thỏa thuận" [ref=f1e87] [cursor=pointer]
+      - generic [ref=f1e88]:
+        - generic [ref=f1e89]: "Thống kê biến động:"
+        - generic [ref=f1e90]: "0"
+        - generic [ref=f1e93]: "0"
+        - generic [ref=f1e96]: "0"
+        - generic [ref=f1e99]: "0"
+        - generic [ref=f1e102]: "0"
+    - generic [ref=f1e105]:
+      - generic [ref=f1e106]:
+        - textbox "Tìm mã chứng khoán..." [ref=f1e109]
+        - button "VN30" [ref=f1e110] [cursor=pointer]
+        - button "HSX" [ref=f1e111] [cursor=pointer]
+        - button "HNX" [ref=f1e112] [cursor=pointer]
+        - button "UPCOM" [ref=f1e113] [cursor=pointer]
+        - button "Vay ưu đãi" [ref=f1e114] [cursor=pointer]
+      - generic [ref=f1e115]:
+        - generic [ref=f1e116]:
+          - button "Sổ lệnh 3 cấp" [ref=f1e117] [cursor=pointer]
+          - button "Rút gọn" [ref=f1e120] [cursor=pointer]
+        - generic [ref=f1e123]:
+          - button "%" [ref=f1e124] [cursor=pointer]
+          - button "+/- Điểm" [ref=f1e125] [cursor=pointer]
+  - generic [ref=f1e126]:
+    - table [ref=f1e129]:
+      - rowgroup [ref=f1e130]:
+        - row [ref=f1e131]:
+          - columnheader "Mã CK" [ref=f1e132]
+          - columnheader "Trần" [ref=f1e133]
+          - columnheader "Sàn" [ref=f1e135]
+          - columnheader "TC" [ref=f1e137]
+          - columnheader "Bên mua" [ref=f1e139]
+          - columnheader "Khớp lệnh" [ref=f1e140]
+          - columnheader "Bên bán" [ref=f1e141]
+          - columnheader "Tổng KL" [ref=f1e142]
+          - columnheader "Cao" [ref=f1e143]
+          - columnheader "Thấp" [ref=f1e144]
+          - columnheader "ĐTNN" [ref=f1e145]
+          - columnheader [ref=f1e146]
+        - row [ref=f1e147]:
+          - columnheader "Giá 3" [ref=f1e148]
+          - columnheader "KL 3" [ref=f1e149]
+          - columnheader "Giá 2" [ref=f1e150]
+          - columnheader "KL 2" [ref=f1e151]
+          - columnheader "Giá 1" [ref=f1e152]
+          - columnheader "KL 1" [ref=f1e153]
+          - columnheader "Giá" [ref=f1e154]
+          - columnheader "KL" [ref=f1e155]
+          - columnheader "+/-" [ref=f1e156]
+          - columnheader "Giá 1" [ref=f1e157]
+          - columnheader "KL 1" [ref=f1e158]
+          - columnheader "Giá 2" [ref=f1e159]
+          - columnheader "KL 2" [ref=f1e160]
+          - columnheader "Giá 3" [ref=f1e161]
+          - columnheader "KL 3" [ref=f1e162]
+          - columnheader "Mua" [ref=f1e163]
+          - columnheader "Bán" [ref=f1e164]
+      - rowgroup
+    - generic [ref=f1e165]:
+      - generic [ref=f1e166]:
+        - generic [ref=f1e167]:
+          - button "Thị trường" [ref=f1e168] [cursor=pointer]
+          - button "Đặt lệnh" [ref=f1e169] [cursor=pointer]
+          - button "Sổ lệnh" [ref=f1e170] [cursor=pointer]
+        - button "Thu gọn thanh bên" [ref=f1e171] [cursor=pointer]
+      - generic [ref=f1e172]:
+        - generic [ref=f1e173]:
+          - generic [ref=f1e174]:
+            - generic [ref=f1e175]: AI
+            - generic [ref=f1e176]: Trợ lý định lượng thị trường
+          - paragraph [ref=f1e177]: Đang cập nhật phân tích định lượng thị trường...
+          - button "Cập nhật nhận định AI" [ref=f1e178] [cursor=pointer]
+        - generic [ref=f1e181]:
+          - generic [ref=f1e182]: Top cổ phiếu tăng giá
+          - generic [ref=f1e185]: Đang tính toán top cổ phiếu tăng giá...
+        - generic [ref=f1e186]:
+          - generic [ref=f1e187]: Top cổ phiếu giảm giá
+          - generic [ref=f1e190]: Đang tính toán top cổ phiếu giảm giá...

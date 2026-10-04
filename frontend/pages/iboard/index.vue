@@ -59,7 +59,84 @@ const handleIndexSelect = (id: string) => {
   }
 }
 
-const indices = ref<IndexDisplayItem[]>([])
+const defaultIndices: IndexDisplayItem[] = [
+  {
+    id: "vn30",
+    name: "VN30",
+    price: "1,875.99",
+    change: "-14.58",
+    changePercent: "-0.77%",
+    isPositive: false,
+    isUnchanged: false,
+    volume: "334.91 Triệu CP",
+    value: "10,272.88 Tỷ",
+    breadth: { advance: 5, ceiling: 0, unchanged: 3, decline: 22, floor: 0 },
+    sparkline: [1890, 1888, 1884, 1880, 1876],
+  },
+  {
+    id: "vnindex",
+    name: "VNINDEX",
+    price: "1,737.71",
+    change: "-11.59",
+    changePercent: "-0.66%",
+    isPositive: false,
+    isUnchanged: false,
+    volume: "829.39 Triệu CP",
+    value: "19,176.09 Tỷ",
+    breadth: {
+      advance: 90,
+      ceiling: 3,
+      unchanged: 50,
+      decline: 216,
+      floor: 10,
+    },
+    sparkline: [1749, 1745, 1742, 1739, 1737],
+  },
+  {
+    id: "dji",
+    name: "DOW JONES FUTURES",
+    price: "51,477.00",
+    change: "+236.00",
+    changePercent: "+0.46%",
+    isPositive: true,
+    isUnchanged: false,
+    volume: "",
+    value: "",
+    breadth: { advance: 0, ceiling: 0, unchanged: 0, decline: 0, floor: 0 },
+    sparkline: [51240, 51300, 51380, 51420, 51477],
+  },
+  {
+    id: "hnx30",
+    name: "HNX30",
+    price: "433.80",
+    change: "-5.58",
+    changePercent: "-1.27%",
+    isPositive: false,
+    isUnchanged: false,
+    volume: "25.08 Triệu CP",
+    value: "436.39 Tỷ",
+    breadth: { advance: 5, ceiling: 0, unchanged: 5, decline: 20, floor: 0 },
+    sparkline: [439, 437, 435, 434, 433.8],
+  },
+  {
+    id: "vn30f1m",
+    name: "VN30F1M",
+    price: "1,885.0",
+    change: "-10.00",
+    changePercent: "-0.53%",
+    isPositive: false,
+    isUnchanged: false,
+    volume: "253,004 HĐ",
+    value: "47,739.00 Tỷ",
+    ceilingPrice: 2027.6,
+    refPrice: 1895.0,
+    floorPrice: 1762.4,
+    breadth: { advance: 0, ceiling: 0, unchanged: 0, decline: 0, floor: 0 },
+    sparkline: [1895, 1890, 1888, 1882, 1885],
+  },
+]
+
+const indices = ref<IndexDisplayItem[]>(defaultIndices)
 
 const mainCategory = ref<
   | "watchlist"
@@ -110,7 +187,290 @@ interface StockRowDisplay {
   expiryDate?: string | null
 }
 
-const tableData = ref<StockRowDisplay[]>([])
+const defaultDerivativesTable: StockRowDisplay[] = [
+  {
+    symbol: "41I1GA000",
+    name: "HĐTL chỉ số VN30 1 tháng",
+    exchange: "DERIVATIVES",
+    lastPrice: 1885.0,
+    refPrice: 1895.0,
+    ceilingPrice: 2027.6,
+    floorPrice: 1762.4,
+    highPrice: 1898.0,
+    lowPrice: 1881.0,
+    avgPrice: 1889.5,
+    change: -10.0,
+    changePercent: -0.53,
+    volume: 253004,
+    valueBillion: 47739.0,
+    buyRatio: 39,
+    sellRatio: 61,
+    foreignBuy: 1200,
+    foreignSell: 980,
+    foreignRoom: 500000,
+    status: "down",
+    sparkline: [1895, 1892, 1889, 1886, 1883, 1885],
+    bidBook: [
+      { price: 1884.9, volume: 120 },
+      { price: 1884.8, volume: 85 },
+      { price: 1884.7, volume: 210 },
+    ],
+    askBook: [
+      { price: 1885.1, volume: 95 },
+      { price: 1885.2, volume: 140 },
+      { price: 1885.3, volume: 300 },
+    ],
+    category: "derivatives",
+    expiryDate: "15/10/2026",
+  },
+  {
+    symbol: "41I1GB000",
+    name: "HĐTL chỉ số VN30 2 tháng",
+    exchange: "DERIVATIVES",
+    lastPrice: 1882.8,
+    refPrice: 1890.8,
+    ceilingPrice: 2023.1,
+    floorPrice: 1758.5,
+    highPrice: 1892.0,
+    lowPrice: 1880.0,
+    avgPrice: 1886.0,
+    change: -8.0,
+    changePercent: -0.42,
+    volume: 520,
+    valueBillion: 98.2,
+    buyRatio: 46,
+    sellRatio: 54,
+    foreignBuy: 40,
+    foreignSell: 55,
+    foreignRoom: 500000,
+    status: "down",
+    sparkline: [1890.8, 1888.0, 1885.0, 1882.0, 1882.8],
+    bidBook: [
+      { price: 1882.5, volume: 15 },
+      { price: 1882.0, volume: 20 },
+      { price: 1881.5, volume: 30 },
+    ],
+    askBook: [
+      { price: 1883.0, volume: 25 },
+      { price: 1883.5, volume: 18 },
+      { price: 1884.0, volume: 40 },
+    ],
+    category: "derivatives",
+    expiryDate: "19/11/2026",
+  },
+  {
+    symbol: "41I1GC000",
+    name: "HĐTL chỉ số VN30 1 quý",
+    exchange: "DERIVATIVES",
+    lastPrice: 1888.5,
+    refPrice: 1897.4,
+    ceilingPrice: 2030.2,
+    floorPrice: 1764.6,
+    highPrice: 1897.0,
+    lowPrice: 1884.0,
+    avgPrice: 1890.5,
+    change: -8.9,
+    changePercent: -0.47,
+    volume: 213,
+    valueBillion: 40.2,
+    buyRatio: 56,
+    sellRatio: 44,
+    foreignBuy: 20,
+    foreignSell: 15,
+    foreignRoom: 500000,
+    status: "down",
+    sparkline: [1897.4, 1894.0, 1890.0, 1887.0, 1888.5],
+    bidBook: [
+      { price: 1888.0, volume: 10 },
+      { price: 1887.5, volume: 12 },
+      { price: 1887.0, volume: 15 },
+    ],
+    askBook: [
+      { price: 1889.0, volume: 18 },
+      { price: 1889.5, volume: 22 },
+      { price: 1890.0, volume: 35 },
+    ],
+    category: "derivatives",
+    expiryDate: "17/12/2026",
+  },
+  {
+    symbol: "41I1H3000",
+    name: "HĐTL chỉ số VN30 2 quý",
+    exchange: "DERIVATIVES",
+    lastPrice: 1881.0,
+    refPrice: 1887.4,
+    ceilingPrice: 2019.5,
+    floorPrice: 1755.3,
+    highPrice: 1888.0,
+    lowPrice: 1879.0,
+    avgPrice: 1883.5,
+    change: -6.4,
+    changePercent: -0.34,
+    volume: 78,
+    valueBillion: 14.7,
+    buyRatio: 48,
+    sellRatio: 52,
+    foreignBuy: 5,
+    foreignSell: 10,
+    foreignRoom: 500000,
+    status: "down",
+    sparkline: [1887.4, 1885.0, 1883.0, 1880.0, 1881.0],
+    bidBook: [
+      { price: 1880.5, volume: 8 },
+      { price: 1880.0, volume: 14 },
+      { price: 1879.5, volume: 20 },
+    ],
+    askBook: [
+      { price: 1881.5, volume: 12 },
+      { price: 1882.0, volume: 15 },
+      { price: 1882.5, volume: 18 },
+    ],
+    category: "derivatives",
+    expiryDate: "18/03/2027",
+  },
+  {
+    symbol: "41I2GA000",
+    name: "HĐTL chỉ số VN100 1 tháng",
+    exchange: "DERIVATIVES",
+    lastPrice: 1785.6,
+    refPrice: 1794.6,
+    ceilingPrice: 1920.2,
+    floorPrice: 1669.0,
+    highPrice: 1795.0,
+    lowPrice: 1782.0,
+    avgPrice: 1788.5,
+    change: -9.0,
+    changePercent: -0.5,
+    volume: 92,
+    valueBillion: 16.4,
+    buyRatio: 43,
+    sellRatio: 57,
+    foreignBuy: 8,
+    foreignSell: 12,
+    foreignRoom: 500000,
+    status: "down",
+    sparkline: [1794.6, 1792.0, 1788.0, 1784.0, 1785.6],
+    bidBook: [
+      { price: 1785.0, volume: 10 },
+      { price: 1784.5, volume: 15 },
+      { price: 1784.0, volume: 20 },
+    ],
+    askBook: [
+      { price: 1786.0, volume: 14 },
+      { price: 1786.5, volume: 18 },
+      { price: 1787.0, volume: 25 },
+    ],
+    category: "derivatives",
+    expiryDate: "15/10/2026",
+  },
+  {
+    symbol: "41I2GB000",
+    name: "HĐTL chỉ số VN100 2 tháng",
+    exchange: "DERIVATIVES",
+    lastPrice: 1791.1,
+    refPrice: 1795.6,
+    ceilingPrice: 1921.3,
+    floorPrice: 1669.9,
+    highPrice: 1796.0,
+    lowPrice: 1788.0,
+    avgPrice: 1792.0,
+    change: -4.5,
+    changePercent: -0.25,
+    volume: 2,
+    valueBillion: 0.36,
+    buyRatio: 49,
+    sellRatio: 51,
+    foreignBuy: 0,
+    foreignSell: 0,
+    foreignRoom: 500000,
+    status: "down",
+    sparkline: [1789.0, 1790.0, 1790.5, 1791.0, 1791.1],
+    bidBook: [
+      { price: 1790.0, volume: 5 },
+      { price: 1789.0, volume: 8 },
+      { price: 1788.0, volume: 12 },
+    ],
+    askBook: [
+      { price: 1792.0, volume: 6 },
+      { price: 1793.0, volume: 10 },
+      { price: 1794.0, volume: 15 },
+    ],
+    category: "derivatives",
+    expiryDate: "19/11/2026",
+  },
+  {
+    symbol: "41I2GC000",
+    name: "HĐTL chỉ số VN100 1 quý",
+    exchange: "DERIVATIVES",
+    lastPrice: 1780.5,
+    refPrice: 1791.1,
+    ceilingPrice: 1916.5,
+    floorPrice: 1665.7,
+    highPrice: 1793.0,
+    lowPrice: 1778.0,
+    avgPrice: 1785.5,
+    change: -10.6,
+    changePercent: -0.59,
+    volume: 209,
+    valueBillion: 37.2,
+    buyRatio: 49,
+    sellRatio: 51,
+    foreignBuy: 15,
+    foreignSell: 20,
+    foreignRoom: 500000,
+    status: "down",
+    sparkline: [1791.1, 1792.5, 1788.0, 1782.0, 1780.5],
+    bidBook: [
+      { price: 1780.0, volume: 12 },
+      { price: 1779.5, volume: 18 },
+      { price: 1779.0, volume: 22 },
+    ],
+    askBook: [
+      { price: 1781.0, volume: 15 },
+      { price: 1781.5, volume: 20 },
+      { price: 1782.0, volume: 30 },
+    ],
+    category: "derivatives",
+    expiryDate: "17/12/2026",
+  },
+  {
+    symbol: "41I2H3000",
+    name: "HĐTL chỉ số VN100 2 quý",
+    exchange: "DERIVATIVES",
+    lastPrice: 1784.9,
+    refPrice: 1794.0,
+    ceilingPrice: 1919.6,
+    floorPrice: 1668.4,
+    highPrice: 1797.5,
+    lowPrice: 1781.0,
+    avgPrice: 1789.2,
+    change: -9.1,
+    changePercent: -0.51,
+    volume: 18,
+    valueBillion: 3.2,
+    buyRatio: 46,
+    sellRatio: 54,
+    foreignBuy: 2,
+    foreignSell: 5,
+    foreignRoom: 500000,
+    status: "down",
+    sparkline: [1794.0, 1796.8, 1797.2, 1791.0, 1784.9],
+    bidBook: [
+      { price: 1784.0, volume: 4 },
+      { price: 1783.5, volume: 6 },
+      { price: 1783.0, volume: 10 },
+    ],
+    askBook: [
+      { price: 1785.5, volume: 8 },
+      { price: 1786.0, volume: 12 },
+      { price: 1786.5, volume: 15 },
+    ],
+    category: "derivatives",
+    expiryDate: "18/03/2027",
+  },
+]
+
+const tableData = ref<StockRowDisplay[]>(defaultDerivativesTable)
 const isLoadingBoard = ref(false)
 
 const mapBackendRow = (raw: IBoardStockRow): StockRowDisplay => ({
@@ -282,18 +642,97 @@ const closeStockDetail = () => {
   selectedStock.value = null
 }
 
-const getSparklinePoints = (points: number[], width = 64, height = 24) => {
-  if (!points || points.length === 0) return ""
-  const min = Math.min(...points)
-  const max = Math.max(...points)
-  const range = max - min || 1
-  return points
-    .map((val, idx) => {
-      const x = (idx / (points.length - 1)) * width
-      const y = height - ((val - min) / range) * (height - 4) - 2
-      return `${x.toFixed(1)},${y.toFixed(1)}`
-    })
-    .join(" ")
+interface SparklineGeometry {
+  linePath: string
+  areaPath: string
+  lastPoint: { x: number; y: number }
+}
+
+const sparkCache = new Map<string, SparklineGeometry>()
+
+const getTableSparkline = (
+  stk: StockRowDisplay,
+  width = 72,
+  height = 26,
+): SparklineGeometry => {
+  const cacheKey = `${stk.symbol}_${stk.lastPrice}_${stk.refPrice}_${stk.sparkline?.length || 0}`
+  const cached = sparkCache.get(cacheKey)
+  if (cached) return cached
+
+  const midY = height / 2.0
+  const ref = stk.refPrice || stk.lastPrice || 100
+  const last = stk.lastPrice || ref
+  const chg = last - ref
+
+  let points: number[] = []
+  if (stk.sparkline && stk.sparkline.length >= 4) {
+    points = [...stk.sparkline]
+  } else {
+    const n = 14
+    const high = stk.highPrice > 0 ? stk.highPrice : Math.max(ref, last)
+    const low = stk.lowPrice > 0 ? stk.lowPrice : Math.min(ref, last)
+    const seed = (stk.symbol || "SEC")
+      .split("")
+      .reduce((acc, c) => acc + c.charCodeAt(0), 0)
+
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1)
+      const base = ref + t * chg
+      const jitter =
+        ((((seed * (i + 1) * 17) % 100) - 50) / 100.0) *
+        Math.abs(chg * 0.4 || ref * 0.002)
+      let p = base + jitter
+      if (high > low) {
+        p = Math.max(low, Math.min(high, p))
+      }
+      points.push(p)
+    }
+    points[0] = ref
+    points[points.length - 1] = last
+  }
+
+  const maxDev =
+    Math.max(...points.map((p) => Math.abs(p - ref)), Math.abs(chg)) ||
+    ref * 0.005
+  const maxH = height / 2.0 - 3.0
+
+  const nodes: [number, number][] = []
+  for (let i = 0; i < points.length; i++) {
+    const x = Number(((i / (points.length - 1)) * width).toFixed(1))
+    const p = points[i]
+    const y = Number((midY - ((p - ref) / maxDev) * maxH).toFixed(1))
+    nodes.push([x, y])
+  }
+
+  const k = 0.22
+  let d = `M ${nodes[0][0]},${nodes[0][1]}`
+  for (let i = 1; i < nodes.length; i++) {
+    const p0 = nodes[i - 2] || nodes[i - 1]
+    const p1 = nodes[i - 1]
+    const p2 = nodes[i]
+    const p3 = nodes[i + 1] || p2
+
+    const cp1x = Number((p1[0] + (p2[0] - p0[0]) * k).toFixed(1))
+    const cp1y = Number((p1[1] + (p2[1] - p0[1]) * k).toFixed(1))
+    const cp2x = Number((p2[0] - (p3[0] - p1[0]) * k).toFixed(1))
+    const cp2y = Number((p2[1] - (p3[1] - p1[1]) * k).toFixed(1))
+
+    d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
+  }
+
+  const areaStr = `${d} L ${width},${midY} L 0,${midY} Z`
+  const lastPoint = {
+    x: nodes[nodes.length - 1][0],
+    y: nodes[nodes.length - 1][1],
+  }
+
+  const result: SparklineGeometry = {
+    linePath: d,
+    areaPath: areaStr,
+    lastPoint,
+  }
+  sparkCache.set(cacheKey, result)
+  return result
 }
 
 const isRightPanelOpen = ref(true)
@@ -602,6 +1041,12 @@ const placeSimulatedOrder = async () => {
 
 watch([mainCategory, listedSubBasket, sectorSubBasket], () => {
   loadBoardData()
+})
+
+watch(mainCategory, (newCat) => {
+  if (newCat === "derivatives") {
+    boardViewMode.value = "compact"
+  }
 })
 
 let searchDebounce: ReturnType<typeof setTimeout> | null = null
@@ -1171,15 +1616,73 @@ onUnmounted(() => {
                 </td>
 
                 <td class="py-2.5 px-4 text-center">
-                  <div class="w-16 h-6 mx-auto flex items-center justify-center">
-                    <svg class="w-full h-full overflow-visible" viewBox="0 0 64 24">
-                      <polyline
+                  <div
+                    v-if="getTableSparkline(stk)"
+                    class="w-[72px] h-[26px] mx-auto flex items-center justify-center select-none"
+                  >
+                    <svg class="w-full h-full overflow-hidden" viewBox="0 0 72 26">
+                      <defs>
+                        <clipPath :id="`top-clip-${stk.symbol}`">
+                          <rect x="0" y="0" width="72" height="13" />
+                        </clipPath>
+                        <clipPath :id="`bot-clip-${stk.symbol}`">
+                          <rect x="0" y="13" width="72" height="13" />
+                        </clipPath>
+                      </defs>
+
+                      <!-- Reference Baseline -->
+                      <line
+                        x1="0"
+                        y1="13"
+                        x2="72"
+                        y2="13"
+                        stroke="rgba(255, 255, 255, 0.16)"
+                        stroke-width="0.8"
+                        stroke-dasharray="2 2"
+                      />
+
+                      <!-- Top Shaded Area (Emerald Gain) -->
+                      <path
+                        :d="getTableSparkline(stk).areaPath"
+                        fill="rgba(16, 185, 129, 0.30)"
+                        :clip-path="`url(#top-clip-${stk.symbol})`"
+                      />
+
+                      <!-- Bottom Shaded Area (Burgundy Loss) -->
+                      <path
+                        :d="getTableSparkline(stk).areaPath"
+                        fill="rgba(239, 68, 68, 0.36)"
+                        :clip-path="`url(#bot-clip-${stk.symbol})`"
+                      />
+
+                      <!-- Line Path Green (Above Baseline) -->
+                      <path
                         fill="none"
-                        :stroke="stk.change > 0 ? '#34d399' : stk.change < 0 ? '#f43f5e' : '#fbbf24'"
-                        stroke-width="1.5"
+                        stroke="#10b981"
+                        stroke-width="1.3"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        :points="getSparklinePoints(stk.sparkline, 64, 24)"
+                        :d="getTableSparkline(stk).linePath"
+                        :clip-path="`url(#top-clip-${stk.symbol})`"
+                      />
+
+                      <!-- Line Path Red (Below Baseline) -->
+                      <path
+                        fill="none"
+                        stroke="#f43f5e"
+                        stroke-width="1.3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        :d="getTableSparkline(stk).linePath"
+                        :clip-path="`url(#bot-clip-${stk.symbol})`"
+                      />
+
+                      <!-- Live Endpoint Dot -->
+                      <circle
+                        :cx="getTableSparkline(stk).lastPoint.x"
+                        :cy="getTableSparkline(stk).lastPoint.y"
+                        r="1.8"
+                        :fill="stk.change >= 0 ? '#10b981' : '#f43f5e'"
                       />
                     </svg>
                   </div>

@@ -1,0 +1,74 @@
+[   31654ms] [LOG] Migrate redux store version 2 @ https://banggia.dnse.com.vn/_app/immutable/chunks/CSewJh0Y.js:940
+[   31920ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/:0
+[   31920ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[   31951ms] [LOG] fetch failed: if this is reported on cors on local env, please ignore it TypeError: Failed to fetch
+    at TimeSync.calculateTimeDiff (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365468)
+    at new TimeSync (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365206)
+    at TimeSync.getInstance (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365340)
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365826
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1372302 @ https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:0
+[   32068ms] [LOG] fetch failed: if this is reported on cors on local env, please ignore it TypeError: Failed to fetch
+    at TimeSync.calculateTimeDiff (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365468)
+    at new TimeSync (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365206)
+    at TimeSync.getInstance (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365340)
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365826
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1372302 @ https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:0
+[   32273ms] [INFO] [adjust-sdk] 2026-10-04T07:16:19.638Z INFO:  Log level set to error @ https://banggia.dnse.com.vn/_app/immutable/chunks/B8k3mTDZ.js:6
+[   32389ms] [ERROR] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID @ https://38965e009d26e4203dbb75873d6dd5a0.azr.footprintdns.com/apc/trans.gif?7f7bbc05a7c044066c8a8916a6eb388f:0
+[   32472ms] [WARNING] [TikTok Pixel] - Duplicate Pixel ID
+Issue: The pixel ID is duplicate. This could impact the pixel data accuracy.
+Suggestion: Please double check and delete any unnecessary pixel code. @ https://banggia.dnse.com.vn/_app/immutable/chunks/B8k3mTDZ.js:6
+[   33237ms] [ERROR] Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID @ https://8446dd63343501d01e9d85df4c176ebd.azr.footprintdns.com/apc/trans.gif?8f7ba2e2f361590993b17bdabeefafab:0
+[   34377ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/:0
+[   34377ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[   45994ms] [LOG] Migrate redux store version 2 @ https://banggia.dnse.com.vn/_app/immutable/chunks/CSewJh0Y.js:940
+[   46076ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/:0
+[   46076ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[   46203ms] [LOG] fetch failed: if this is reported on cors on local env, please ignore it TypeError: Failed to fetch
+    at TimeSync.calculateTimeDiff (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365468)
+    at new TimeSync (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365206)
+    at TimeSync.getInstance (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365340)
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365826
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1372302 @ https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:0
+[   46264ms] [LOG] fetch failed: if this is reported on cors on local env, please ignore it TypeError: Failed to fetch
+    at TimeSync.calculateTimeDiff (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365468)
+    at new TimeSync (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365206)
+    at TimeSync.getInstance (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365340)
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365826
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1372302 @ https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:0
+[   46451ms] [INFO] [adjust-sdk] 2026-10-04T07:16:33.816Z INFO:  Log level set to error @ https://banggia.dnse.com.vn/_app/immutable/chunks/B8k3mTDZ.js:6
+[   46589ms] [WARNING] [TikTok Pixel] - Duplicate Pixel ID
+Issue: The pixel ID is duplicate. This could impact the pixel data accuracy.
+Suggestion: Please double check and delete any unnecessary pixel code. @ https://banggia.dnse.com.vn/_app/immutable/chunks/B8k3mTDZ.js:6
+[   48795ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/:0
+[   48795ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[  103428ms] [WARNING] `container_id` is now deprecated. Please use `container` instead to either still pass a string or an `HTMLElement`. @ https://banggia.dnse.com.vn/_app/immutable/chunks/B8k3mTDZ.js:6
+[  103843ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/phaisinh?symbol=VN30F1M:0
+[  103843ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[  103849ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/phaisinh?symbol=VN30F1M:0
+[  103849ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[  103850ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/phaisinh?symbol=VN30F1M:0
+[  103850ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[  106182ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/phaisinh?symbol=VN30F1M:0
+[  106182ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[  167506ms] [LOG] Migrate redux store version 2 @ https://banggia.dnse.com.vn/_app/immutable/chunks/CSewJh0Y.js:940
+[  167653ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/:0
+[  167653ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
+[  167857ms] [LOG] fetch failed: if this is reported on cors on local env, please ignore it TypeError: Failed to fetch
+    at TimeSync.calculateTimeDiff (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365468)
+    at new TimeSync (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365206)
+    at TimeSync.getInstance (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365340)
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365826
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1372302 @ https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:0
+[  167857ms] [LOG] fetch failed: if this is reported on cors on local env, please ignore it TypeError: Failed to fetch
+    at TimeSync.calculateTimeDiff (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365468)
+    at new TimeSync (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365206)
+    at TimeSync.getInstance (https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365340)
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1365826
+    at https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:1:1372302 @ https://banggia.dnse.com.vn/assets/socketWorker.e36e3f39.js:0
+[  168007ms] [INFO] [adjust-sdk] 2026-10-04T07:18:35.373Z INFO:  Log level set to error @ https://banggia.dnse.com.vn/_app/immutable/chunks/B8k3mTDZ.js:6
+[  168264ms] [WARNING] [TikTok Pixel] - Duplicate Pixel ID
+Issue: The pixel ID is duplicate. This could impact the pixel data accuracy.
+Suggestion: Please double check and delete any unnecessary pixel code. @ https://banggia.dnse.com.vn/_app/immutable/chunks/B8k3mTDZ.js:6
+[  170500ms] [ERROR] Access to fetch at 'https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1' from origin 'https://banggia.dnse.com.vn' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ https://banggia.dnse.com.vn/:0
+[  170501ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0

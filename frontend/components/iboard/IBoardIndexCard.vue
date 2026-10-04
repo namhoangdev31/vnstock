@@ -90,34 +90,62 @@
         </template>
       </div>
 
-      <!-- Intraday Reference-Baseline Chart (74px x 30px balanced aspect) -->
-      <div class="w-[74px] h-[30px] flex items-end justify-end shrink-0">
-        <svg class="w-full h-full overflow-hidden" viewBox="0 0 96 34">
-          <!-- Area Fill -->
-          <polygon
-            :points="chartData.areaPoints"
+      <!-- Intraday Reference-Baseline Chart (84px x 34px spacious aspect) -->
+      <div class="w-[84px] h-[34px] flex items-end justify-end shrink-0 select-none">
+        <svg class="w-full h-full overflow-hidden" viewBox="0 0 96 36">
+          <!-- Subtle Reference Baseline Line (Dashed) -->
+          <line
+            x1="0"
+            :y1="chartData.baselineY"
+            x2="96"
+            :y2="chartData.baselineY"
+            stroke="rgba(255, 255, 255, 0.12)"
+            stroke-width="0.8"
+            stroke-dasharray="2 2"
+          />
+
+          <!-- Area Fill Path (Silky Smooth Bézier Spline) -->
+          <path
+            :d="chartData.areaPath"
             :fill="chartData.areaFill"
           />
 
-          <!-- Main Trajectory Line with Micro-ticks -->
-          <polyline
+          <!-- Main Trajectory Line Path (Smooth Cubic Bézier) -->
+          <path
             fill="none"
             :stroke="chartData.mainStroke"
-            stroke-width="1.3"
+            stroke-width="1.4"
             stroke-linecap="round"
             stroke-linejoin="round"
-            :points="chartData.mainLinePoints"
+            :d="chartData.linePath"
           />
 
-          <!-- Opening Green Segment for Negative Assets -->
-          <polyline
-            v-if="chartData.openGreenPoints"
+          <!-- Opening Green Segment for Negative Assets (Smooth) -->
+          <path
+            v-if="chartData.openGreenPath"
             fill="none"
             stroke="#10b981"
-            stroke-width="1.3"
+            stroke-width="1.4"
             stroke-linecap="round"
             stroke-linejoin="round"
-            :points="chartData.openGreenPoints"
+            :d="chartData.openGreenPath"
+          />
+
+          <!-- Live Endpoint Halo Circle -->
+          <circle
+            :cx="chartData.lastPoint.x"
+            :cy="chartData.lastPoint.y"
+            r="3.5"
+            :fill="chartData.mainStroke"
+            opacity="0.22"
+          />
+
+          <!-- Live Endpoint Core Dot -->
+          <circle
+            :cx="chartData.lastPoint.x"
+            :cy="chartData.lastPoint.y"
+            r="1.8"
+            :fill="chartData.mainStroke"
           />
         </svg>
       </div>
@@ -209,147 +237,280 @@ const derivativesPrices = computed(() => {
   }
 })
 
-// High-fidelity intraday presets matching DNSE iBoard signature trajectories with 35-45 micro-ticks
-const dnseSignaturePresets: Record<
+interface SmoothChartData {
+  linePath: string
+  areaPath: string
+  baselineY: number
+  lastPoint: { x: number; y: number }
+  mainStroke: string
+  areaFill: string
+  openGreenPath?: string | null
+}
+
+const pointsToSmoothBezier = (
+  nodes: [number, number][],
+  baselineY: number,
+  k = 0.22,
+) => {
+  if (nodes.length < 2) {
+    return {
+      linePath: "",
+      areaPath: "",
+      lastPoint: { x: 0, y: 0 },
+    }
+  }
+
+  let d = `M ${nodes[0][0]},${nodes[0][1]}`
+  for (let i = 1; i < nodes.length; i++) {
+    const p0 = nodes[i - 2] || nodes[i - 1]
+    const p1 = nodes[i - 1]
+    const p2 = nodes[i]
+    const p3 = nodes[i + 1] || p2
+
+    const cp1x = Number((p1[0] + (p2[0] - p0[0]) * k).toFixed(1))
+    const cp1y = Number((p1[1] + (p2[1] - p0[1]) * k).toFixed(1))
+    const cp2x = Number((p2[0] - (p3[0] - p1[0]) * k).toFixed(1))
+    const cp2y = Number((p2[1] - (p3[1] - p1[1]) * k).toFixed(1))
+
+    d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
+  }
+
+  const firstX = nodes[0][0]
+  const lastX = nodes[nodes.length - 1][0]
+  const areaPath = `${d} L ${lastX},${baselineY} L ${firstX},${baselineY} Z`
+  const lastPoint = {
+    x: nodes[nodes.length - 1][0],
+    y: nodes[nodes.length - 1][1],
+  }
+
+  return { linePath: d, areaPath, lastPoint }
+}
+
+// High-fidelity intraday presets matching DNSE iBoard signature trajectories with smooth Bézier spline
+const dnseSignatureNodes: Record<
   string,
   {
-    openGreenPoints?: string
-    mainLinePoints: string
-    areaPoints: string
+    nodes: [number, number][]
+    baselineY: number
+    openGreenNodes?: [number, number][]
   }
 > = {
   vn30f1m: {
-    // Exactly ~11% width green open bám sát tham chiếu y=3
-    openGreenPoints: "0,3 3,3 6,3 9,3 11,3",
-    mainLinePoints:
-      "11,3 13,7 15,12 17,17 19,16 21,20 23,19 25,23 27,21 29,17 31,15 33,14 36,18 38,20 40,22 42,26 44,24 47,27 49,25 52,28 55,23 57,20 60,21 63,16 66,13 69,14 72,10 75,12 77,17 80,15 83,18 86,25 89,23 92,20 94,22 96,21",
-    areaPoints:
-      "0,3 11,3 13,7 15,12 17,17 19,16 21,20 23,19 25,23 27,21 29,17 31,15 33,14 36,18 38,20 40,22 42,26 44,24 47,27 49,25 52,28 55,23 57,20 60,21 63,16 66,13 69,14 72,10 75,12 77,17 80,15 83,18 86,25 89,23 92,20 94,22 96,21 96,3 0,3",
+    baselineY: 4,
+    openGreenNodes: [
+      [0, 4],
+      [4, 4],
+      [8, 4],
+    ],
+    nodes: [
+      [0, 4],
+      [8, 4],
+      [14, 8],
+      [22, 14],
+      [28, 18],
+      [36, 16],
+      [44, 21],
+      [52, 27],
+      [60, 24],
+      [68, 17],
+      [74, 12],
+      [80, 16],
+      [88, 22],
+      [96, 20],
+    ],
   },
   vn30: {
-    // Green notch nhô cao hơn tham chiếu y=3 rồi quay đầu
-    openGreenPoints: "0,3 1.5,1.5 3,0.5 4.5,1.8 6.5,3",
-    mainLinePoints:
-      "6.5,3 9,9 11,14 13,12 15,16 17,19 19,17 21,21 24,18 26,17 28,19 31,23 34,21 37,24 40,22 43,26 46,23 49,24 52,21 55,23 58,20 61,18 64,15 67,16 70,12 72,11 75,13 78,18 81,17 84,22 87,20 90,24 93,22 96,21",
-    areaPoints:
-      "0,3 6.5,3 9,9 11,14 13,12 15,16 17,19 19,17 21,21 24,18 26,17 28,19 31,23 34,21 37,24 40,22 43,26 46,23 49,24 52,21 55,23 58,20 61,18 64,15 67,16 70,12 72,11 75,13 78,18 81,17 84,22 87,20 90,24 93,22 96,21 96,3 0,3",
+    baselineY: 4,
+    openGreenNodes: [
+      [0, 4],
+      [4, 2],
+      [8, 4],
+    ],
+    nodes: [
+      [0, 4],
+      [4, 2],
+      [8, 4],
+      [16, 12],
+      [24, 16],
+      [32, 14],
+      [40, 20],
+      [48, 25],
+      [56, 21],
+      [64, 18],
+      [72, 12],
+      [80, 17],
+      [88, 22],
+      [96, 21],
+    ],
   },
   vnindex: {
-    // Green notch nhô nhẹ + cú giật đỉnh phiên chiều đặc trưng tại x=72..74, y=4
-    openGreenPoints: "0,3 1.5,1.2 3,0.8 4.2,2 5.5,3",
-    mainLinePoints:
-      "5.5,3 8,8 10,14 12,18 14,16 16,20 18,17 21,14 23,13 25,15 28,21 31,24 34,28 37,26 40,29 43,25 46,22 49,24 52,19 55,18 58,20 61,16 64,13 67,9 70,7 72,4 74,4 76,8 79,14 82,21 85,25 88,23 91,20 94,24 96,22",
-    areaPoints:
-      "0,3 5.5,3 8,8 10,14 12,18 14,16 16,20 18,17 21,14 23,13 25,15 28,21 31,24 34,28 37,26 40,29 43,25 46,22 49,24 52,19 55,18 58,20 61,16 64,13 67,9 70,7 72,4 74,4 76,8 79,14 82,21 85,25 88,23 91,20 94,24 96,22 96,3 0,3",
+    baselineY: 4,
+    openGreenNodes: [
+      [0, 4],
+      [4, 2.5],
+      [8, 4],
+    ],
+    nodes: [
+      [0, 4],
+      [4, 2.5],
+      [8, 4],
+      [16, 15],
+      [24, 21],
+      [34, 27],
+      [44, 26],
+      [54, 22],
+      [64, 15],
+      [72, 8],
+      [78, 14],
+      [86, 24],
+      [96, 22],
+    ],
   },
   hnx30: {
-    // Dốc trượt thác nhiều vi rung lắc
-    openGreenPoints: "0,3 1.5,1.5 3,0.8 4.5,2 6,3.2",
-    mainLinePoints:
-      "6,3.2 8,8 10,12 12,11 15,15 17,14 20,17 23,16 26,19 29,21 32,20 35,23 38,22 41,25 44,23 47,26 50,25 53,27 56,25 59,28 62,26 65,27 68,29 71,28 74,27 77,29 80,28 83,30 86,29 89,31 92,29 94,30 96,29",
-    areaPoints:
-      "0,3 6,3.2 8,8 10,12 12,11 15,15 17,14 20,17 23,16 26,19 29,21 32,20 35,23 38,22 41,25 44,23 47,26 50,25 53,27 56,25 59,28 62,26 65,27 68,29 71,28 74,27 77,29 80,28 83,30 86,29 89,31 92,29 94,30 96,29 96,3 0,3",
+    baselineY: 4,
+    openGreenNodes: [
+      [0, 4],
+      [5, 2.8],
+      [9, 4],
+    ],
+    nodes: [
+      [0, 4],
+      [5, 2.8],
+      [9, 4],
+      [18, 14],
+      [28, 18],
+      [38, 22],
+      [48, 26],
+      [58, 24],
+      [68, 27],
+      [78, 26],
+      [88, 30],
+      [96, 29],
+    ],
   },
   dji: {
-    // Chuỗi bậc thang leo dốc gồ ghề (staircase upward)
-    mainLinePoints:
-      "0,31 3,29 6,27 9,28 12,25 15,26 18,23 21,24 24,21 27,22 30,19 33,20 36,17 39,18 42,15 45,16 48,13 51,14 54,12 57,13 60,11 63,12 66,9 69,10 72,7 75,5 78,4 81,6 84,5 87,7 90,6 93,8 96,7",
-    areaPoints:
-      "0,31 3,29 6,27 9,28 12,25 15,26 18,23 21,24 24,21 27,22 30,19 33,20 36,17 39,18 42,15 45,16 48,13 51,14 54,12 57,13 60,11 63,12 66,9 69,10 72,7 75,5 78,4 81,6 84,5 87,7 90,6 93,8 96,7 96,31 0,31",
+    baselineY: 32,
+    nodes: [
+      [0, 31],
+      [10, 29],
+      [20, 26],
+      [30, 24],
+      [40, 20],
+      [50, 18],
+      [60, 14],
+      [70, 12],
+      [80, 8],
+      [90, 6],
+      [96, 7],
+    ],
   },
 }
 
-const chartData = computed(() => {
+const chartData = computed<SmoothChartData>(() => {
   const isUp = props.item.isPositive
   const isUnch = props.item.isUnchanged
   const normId = props.item.id.toLowerCase()
 
   // Stroke and area colors matching DNSE dark burgundy and forest green
-  const mainStroke = isUp ? "#10b981" : isUnch ? "#fbbf24" : "#ef4444"
+  const mainStroke = isUp ? "#10b981" : isUnch ? "#fbbf24" : "#f43f5e"
   const areaFill = isUp
-    ? "rgba(16, 185, 129, 0.16)"
+    ? "rgba(16, 185, 129, 0.28)"
     : isUnch
-      ? "rgba(251, 191, 36, 0.14)"
-      : "rgba(225, 29, 72, 0.16)"
+      ? "rgba(251, 191, 36, 0.20)"
+      : "rgba(239, 68, 68, 0.35)"
 
-  // 1. Use signature preset if matching known index
-  if (dnseSignaturePresets[normId]) {
-    const p = dnseSignaturePresets[normId]
+  // 1. Check known index signature presets
+  if (dnseSignatureNodes[normId]) {
+    const p = dnseSignatureNodes[normId]
+    const spline = pointsToSmoothBezier(p.nodes, p.baselineY)
+    let openGreenPath: string | null = null
+    if (p.openGreenNodes) {
+      openGreenPath = pointsToSmoothBezier(
+        p.openGreenNodes,
+        p.baselineY,
+      ).linePath
+    }
     return {
       mainStroke,
       areaFill,
-      openGreenPoints: p.openGreenPoints || null,
-      mainLinePoints: p.mainLinePoints,
-      areaPoints: p.areaPoints,
+      baselineY: p.baselineY,
+      linePath: spline.linePath,
+      areaPath: spline.areaPath,
+      lastPoint: spline.lastPoint,
+      openGreenPath,
     }
   }
 
-  // 2. High-density dynamic generation for catalog items (UPCOM, VNXALLSHARE, S&P 500, etc.)
+  // 2. High-fidelity smooth dynamic trajectory for other tickers
   const width = 96
-  const topY = 3
-  const bottomY = 31
+  const count = 14
+  const seed = (normId || "idx")
+    .split("")
+    .reduce((acc, c) => acc + c.charCodeAt(0), 0)
 
   if (isUnch) {
-    const midY = 17
-    const pts: string[] = []
-    const count = 30
+    const baselineY = 18
+    const nodes: [number, number][] = []
     for (let i = 0; i < count; i++) {
       const x = Number(((i / (count - 1)) * width).toFixed(1))
-      const jitter = Math.sin(i * 1.5) * 0.8
-      pts.push(`${x},${Number((midY + jitter).toFixed(1))}`)
+      const jitter = Math.sin(i * 1.5 + seed) * 1.2
+      nodes.push([x, Number((baselineY + jitter).toFixed(1))])
     }
-    const lineStr = pts.join(" ")
+    const spline = pointsToSmoothBezier(nodes, baselineY)
     return {
       mainStroke,
       areaFill,
-      openGreenPoints: null,
-      mainLinePoints: lineStr,
-      areaPoints: `0,${midY} ${lineStr} 96,${midY} 0,${midY}`,
+      baselineY,
+      linePath: spline.linePath,
+      areaPath: spline.areaPath,
+      lastPoint: spline.lastPoint,
+      openGreenPath: null,
     }
   }
 
   if (isUp) {
-    // Ascending intraday trajectory with 35 points and micro-ticks
-    const pts: string[] = []
-    const count = 35
+    const baselineY = 32
+    const nodes: [number, number][] = []
     for (let i = 0; i < count; i++) {
       const t = i / (count - 1)
       const x = Number((t * width).toFixed(1))
-      const baseY = bottomY - t * (bottomY - 8)
-      const micro = Math.sin(i * 1.4) * 1.2
-      const y = Number(Math.max(4, Math.min(31, baseY + micro)).toFixed(1))
-      pts.push(`${x},${y}`)
+      const baseY = 30 - t * 24
+      const wave = Math.sin(i * 1.2 + seed) * 1.5
+      const y = Number(Math.max(5, Math.min(32, baseY + wave)).toFixed(1))
+      nodes.push([x, y])
     }
-    const lineStr = pts.join(" ")
+    const spline = pointsToSmoothBezier(nodes, baselineY)
     return {
       mainStroke,
       areaFill,
-      openGreenPoints: null,
-      mainLinePoints: lineStr,
-      areaPoints: `0,${bottomY} ${lineStr} 96,${bottomY} 0,${bottomY}`,
+      baselineY,
+      linePath: spline.linePath,
+      areaPath: spline.areaPath,
+      lastPoint: spline.lastPoint,
+      openGreenPath: null,
     }
   }
 
-  // Descending intraday trajectory with opening green notch
-  const openGreenPoints = "0,3 1.5,1.5 3,0.8 4.5,2 6,3"
-  const redPts: string[] = []
-  const count = 32
+  // Descending (Down)
+  const baselineY = 4
+  const nodes: [number, number][] = []
   for (let i = 0; i < count; i++) {
     const t = i / (count - 1)
-    const x = Number((6 + t * (width - 6)).toFixed(1))
-    const baseY = topY + t * (23 - topY)
-    const micro = Math.sin(i * 1.3) * 1.5
-    const y = Number(Math.max(3, Math.min(31, baseY + micro)).toFixed(1))
-    redPts.push(`${x},${y}`)
+    const x = Number((t * width).toFixed(1))
+    const baseY = 5 + t * 22
+    const wave = Math.sin(i * 1.2 + seed) * 1.6
+    const y = Number(Math.max(4, Math.min(32, baseY + wave)).toFixed(1))
+    nodes.push([x, y])
   }
-  const redLineStr = redPts.join(" ")
-
+  const spline = pointsToSmoothBezier(nodes, baselineY)
   return {
     mainStroke,
     areaFill,
-    openGreenPoints,
-    mainLinePoints: redLineStr,
-    areaPoints: `0,${topY} 6,3 ${redLineStr} 96,${topY} 0,${topY}`,
+    baselineY,
+    linePath: spline.linePath,
+    areaPath: spline.areaPath,
+    lastPoint: spline.lastPoint,
+    openGreenPath: null,
   }
 })
 </script>

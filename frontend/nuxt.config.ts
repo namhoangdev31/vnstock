@@ -35,7 +35,7 @@ export default defineNuxtConfig({
       apiUrl:
         process.env.VITE_API_URL ||
         process.env.NUXT_PUBLIC_API_URL ||
-        "https://vnstock.fastapicloud.dev",
+        "http://127.0.0.1:8000",
     },
   },
   nitro: {
@@ -45,7 +45,7 @@ export default defineNuxtConfig({
   },
   routeRules: {
     "/api/**": {
-      proxy: `${process.env.VITE_API_URL || process.env.NUXT_PUBLIC_API_URL || "https://vnstock.fastapicloud.dev"}/api/**`,
+      proxy: `${process.env.VITE_API_URL || process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/**`,
     },
   },
   colorMode: {
