@@ -59,6 +59,25 @@ const handleIndexSelect = (id: string) => {
   }
 }
 
+const create100DailyPoints = (
+  start: number,
+  end: number,
+  volatility: number,
+  seed = 42,
+): number[] => {
+  const points: number[] = []
+  const n = 100
+  for (let i = 0; i < n; i++) {
+    const progress = i / (n - 1)
+    const trend = start + progress * (end - start)
+    const wave1 = Math.sin(i * 0.18 + seed) * volatility
+    const wave2 = Math.cos(i * 0.42 + seed * 1.6) * (volatility * 0.45)
+    points.push(Number((trend + wave1 + wave2).toFixed(2)))
+  }
+  points[points.length - 1] = end
+  return points
+}
+
 const defaultIndices: IndexDisplayItem[] = [
   {
     id: "vn30",
@@ -71,7 +90,7 @@ const defaultIndices: IndexDisplayItem[] = [
     volume: "334.91 Triệu CP",
     value: "10,272.88 Tỷ",
     breadth: { advance: 5, ceiling: 0, unchanged: 3, decline: 22, floor: 0 },
-    sparkline: [1890, 1888, 1884, 1880, 1876],
+    sparkline: create100DailyPoints(1895.0, 1875.99, 14, 101),
   },
   {
     id: "vnindex",
@@ -90,7 +109,7 @@ const defaultIndices: IndexDisplayItem[] = [
       decline: 216,
       floor: 10,
     },
-    sparkline: [1749, 1745, 1742, 1739, 1737],
+    sparkline: create100DailyPoints(1749.3, 1737.71, 16, 202),
   },
   {
     id: "dji",
@@ -103,7 +122,7 @@ const defaultIndices: IndexDisplayItem[] = [
     volume: "",
     value: "",
     breadth: { advance: 0, ceiling: 0, unchanged: 0, decline: 0, floor: 0 },
-    sparkline: [51240, 51300, 51380, 51420, 51477],
+    sparkline: create100DailyPoints(50400, 51477.0, 240, 303),
   },
   {
     id: "hnx30",
@@ -116,7 +135,7 @@ const defaultIndices: IndexDisplayItem[] = [
     volume: "25.08 Triệu CP",
     value: "436.39 Tỷ",
     breadth: { advance: 5, ceiling: 0, unchanged: 5, decline: 20, floor: 0 },
-    sparkline: [439, 437, 435, 434, 433.8],
+    sparkline: create100DailyPoints(440.0, 433.80, 5, 404),
   },
   {
     id: "vn30f1m",
@@ -132,7 +151,7 @@ const defaultIndices: IndexDisplayItem[] = [
     refPrice: 1895.0,
     floorPrice: 1762.4,
     breadth: { advance: 0, ceiling: 0, unchanged: 0, decline: 0, floor: 0 },
-    sparkline: [1895, 1890, 1888, 1882, 1885],
+    sparkline: create100DailyPoints(1895.0, 1885.0, 15, 505),
   },
 ]
 

@@ -419,7 +419,43 @@ const chartData = computed<SmoothChartData>(() => {
       ? "rgba(251, 191, 36, 0.20)"
       : "rgba(239, 68, 68, 0.35)"
 
-  // 1. Check known index signature presets
+  // 1. If real sparkline data is provided (e.g. 100 daily points)
+  if (props.item.sparkline && props.item.sparkline.length >= 5) {
+    const rawPts = props.item.sparkline
+    const width = 96
+    const marginT = 4
+    const marginB = 32
+    const minP = Math.min(...rawPts)
+    const maxP = Math.max(...rawPts)
+    const diff = maxP - minP || 1
+
+    const nodes: [number, number][] = rawPts.map((val, idx) => {
+      const x = Number(((idx / (rawPts.length - 1)) * width).toFixed(1))
+      const norm = (val - minP) / diff
+      const y = Number((marginB - norm * (marginB - marginT)).toFixed(1))
+      return [x, y]
+    })
+
+    const refVal = rawPts[0]
+    const refNorm = (refVal - minP) / diff
+    const baselineY = Number(
+      Math.max(4, Math.min(32, marginB - refNorm * (marginB - marginT))).toFixed(1),
+    )
+
+    const spline = pointsToSmoothBezier(nodes, baselineY)
+
+    return {
+      mainStroke,
+      areaFill,
+      baselineY,
+      linePath: spline.linePath,
+      areaPath: spline.areaPath,
+      lastPoint: spline.lastPoint,
+      openGreenPath: null,
+    }
+  }
+
+  // 2. Fallback to signature presets if sparkline is empty
   if (dnseSignatureNodes[normId]) {
     const p = dnseSignatureNodes[normId]
     const spline = pointsToSmoothBezier(p.nodes, p.baselineY)

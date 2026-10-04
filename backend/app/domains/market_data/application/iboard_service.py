@@ -57,7 +57,7 @@ class IBoardService:
         session: Session,
         symbol: str,
         timeframe: str = "1D",
-        limit: int = 60,
+        limit: int = 100,
     ) -> list[IBoardCandleBar]:
         """Truy xuất chuỗi nến kỹ thuật theo khung thời gian (1m, 5m, 15m, 1H, 1D, 1W).
 
@@ -323,43 +323,46 @@ class IBoardService:
                 select(StockOHLCVDaily)
                 .where(StockOHLCVDaily.symbol == code)
                 .order_by(col(StockOHLCVDaily.trading_date).desc())
-                .limit(10)
+                .limit(100)
             ).all()
 
-            # Nếu cơ sở dữ liệu chưa có nến của chỉ số này, tải bù từ VnstockService
-            if not daily_rows:
+            # Nếu cơ sở dữ liệu chưa có đủ 100 nến của chỉ số này, tải bù từ VnstockService
+            if len(daily_rows) < 100:
                 try:
                     today = date.today()
                     df = vn.fetch_price_history(
                         code,
-                        start=today - timedelta(days=30),
+                        start=today - timedelta(days=220),
                         end=today,
-                        count=10,
+                        count=100,
                         interval="1D",
                     )
                     if df is not None and not df.empty:
+                        existing_dates = {r.trading_date for r in daily_rows}
                         for _, r in df.iterrows():
                             t_str = str(r["time"])[:10]
                             t_date = datetime.strptime(t_str, "%Y-%m-%d").date()
-                            session.add(
-                                StockOHLCVDaily(
-                                    symbol=code,
-                                    trading_date=t_date,
-                                    open=float(r["open"]),
-                                    high=float(r["high"]),
-                                    low=float(r["low"]),
-                                    close=float(r["close"]),
-                                    volume=int(r["volume"]),
-                                    value=float(r.get("value", 0) or 0),
-                                    source="vci",
+                            if t_date not in existing_dates:
+                                session.add(
+                                    StockOHLCVDaily(
+                                        symbol=code,
+                                        trading_date=t_date,
+                                        open=float(r["open"]),
+                                        high=float(r["high"]),
+                                        low=float(r["low"]),
+                                        close=float(r["close"]),
+                                        volume=int(r["volume"]),
+                                        value=float(r.get("value", 0) or 0),
+                                        source="vci",
+                                    )
                                 )
-                            )
+                                existing_dates.add(t_date)
                         session.commit()
                         daily_rows = session.exec(
                             select(StockOHLCVDaily)
                             .where(StockOHLCVDaily.symbol == code)
                             .order_by(col(StockOHLCVDaily.trading_date).desc())
-                            .limit(10)
+                            .limit(100)
                         ).all()
                 except Exception as e:
                     logger.warning(
@@ -628,42 +631,45 @@ class IBoardService:
                     select(StockOHLCVDaily)
                     .where(StockOHLCVDaily.symbol == c.symbol)
                     .order_by(col(StockOHLCVDaily.trading_date).desc())
-                    .limit(8)
+                    .limit(100)
                 ).all()
 
-                if not bars:
+                if len(bars) < 100:
                     try:
                         today = date.today()
                         bdf = vn.fetch_price_history(
                             c.symbol,
-                            start=today - timedelta(days=30),
+                            start=today - timedelta(days=220),
                             end=today,
-                            count=8,
+                            count=100,
                             interval="1D",
                         )
                         if bdf is not None and not bdf.empty:
+                            existing_dates = {b.trading_date for b in bars}
                             for _, br in bdf.iterrows():
                                 t_str = str(br["time"])[:10]
                                 t_date = datetime.strptime(t_str, "%Y-%m-%d").date()
-                                session.add(
-                                    StockOHLCVDaily(
-                                        symbol=c.symbol,
-                                        trading_date=t_date,
-                                        open=float(br["open"]),
-                                        high=float(br["high"]),
-                                        low=float(br["low"]),
-                                        close=float(br["close"]),
-                                        volume=int(br["volume"]),
-                                        value=float(br.get("value", 0) or 0),
-                                        source="vci",
+                                if t_date not in existing_dates:
+                                    session.add(
+                                        StockOHLCVDaily(
+                                            symbol=c.symbol,
+                                            trading_date=t_date,
+                                            open=float(br["open"]),
+                                            high=float(br["high"]),
+                                            low=float(br["low"]),
+                                            close=float(br["close"]),
+                                            volume=int(br["volume"]),
+                                            value=float(br.get("value", 0) or 0),
+                                            source="vci",
+                                        )
                                     )
-                                )
+                                    existing_dates.add(t_date)
                             session.commit()
                             bars = session.exec(
                                 select(StockOHLCVDaily)
                                 .where(StockOHLCVDaily.symbol == c.symbol)
                                 .order_by(col(StockOHLCVDaily.trading_date).desc())
-                                .limit(8)
+                                .limit(100)
                             ).all()
                     except Exception:
                         pass
@@ -1103,43 +1109,46 @@ class IBoardService:
                 select(StockOHLCVDaily)
                 .where(StockOHLCVDaily.symbol == sym.symbol)
                 .order_by(col(StockOHLCVDaily.trading_date).desc())
-                .limit(8)
+                .limit(100)
             ).all()
 
             # Nếu thiếu nến trong DB, bổ sung từ VnstockService
-            if not daily_rows:
+            if len(daily_rows) < 100:
                 try:
                     today = date.today()
                     df = vn.fetch_price_history(
                         sym.symbol,
-                        start=today - timedelta(days=30),
+                        start=today - timedelta(days=220),
                         end=today,
-                        count=8,
+                        count=100,
                         interval="1D",
                     )
                     if df is not None and not df.empty:
+                        existing_dates = {r.trading_date for r in daily_rows}
                         for _, r in df.iterrows():
                             t_str = str(r["time"])[:10]
                             t_date = datetime.strptime(t_str, "%Y-%m-%d").date()
-                            session.add(
-                                StockOHLCVDaily(
-                                    symbol=sym.symbol,
-                                    trading_date=t_date,
-                                    open=float(r["open"]),
-                                    high=float(r["high"]),
-                                    low=float(r["low"]),
-                                    close=float(r["close"]),
-                                    volume=int(r["volume"]),
-                                    value=float(r.get("value", 0) or 0),
-                                    source="vci",
+                            if t_date not in existing_dates:
+                                session.add(
+                                    StockOHLCVDaily(
+                                        symbol=sym.symbol,
+                                        trading_date=t_date,
+                                        open=float(r["open"]),
+                                        high=float(r["high"]),
+                                        low=float(r["low"]),
+                                        close=float(r["close"]),
+                                        volume=int(r["volume"]),
+                                        value=float(r.get("value", 0) or 0),
+                                        source="vci",
+                                    )
                                 )
-                            )
+                                existing_dates.add(t_date)
                         session.commit()
                         daily_rows = session.exec(
                             select(StockOHLCVDaily)
                             .where(StockOHLCVDaily.symbol == sym.symbol)
                             .order_by(col(StockOHLCVDaily.trading_date).desc())
-                            .limit(8)
+                            .limit(100)
                         ).all()
                 except Exception:
                     pass
@@ -1269,7 +1278,7 @@ class IBoardService:
 
         # 1. Truy vấn chuỗi nến kỹ thuật theo khung thời gian yêu cầu
         candles = IBoardService.get_candles(
-            session=session, symbol=sym_code, timeframe=timeframe, limit=30
+            session=session, symbol=sym_code, timeframe=timeframe, limit=100
         )
 
         # 2. Truy vấn nến ngày phục vụ tính toán mức giá tham chiếu, trần/sàn và sparkline
@@ -1277,42 +1286,45 @@ class IBoardService:
             select(StockOHLCVDaily)
             .where(StockOHLCVDaily.symbol == sym_code)
             .order_by(col(StockOHLCVDaily.trading_date).desc())
-            .limit(30)
+            .limit(100)
         ).all()
 
-        if not daily_rows:
+        if len(daily_rows) < 100:
             try:
                 today = date.today()
                 df = vn.fetch_price_history(
                     sym_code,
-                    start=today - timedelta(days=60),
+                    start=today - timedelta(days=220),
                     end=today,
-                    count=30,
+                    count=100,
                     interval="1D",
                 )
                 if df is not None and not df.empty:
+                    existing_dates = {r.trading_date for r in daily_rows}
                     for _, r in df.iterrows():
                         t_str = str(r["time"])[:10]
                         t_date = datetime.strptime(t_str, "%Y-%m-%d").date()
-                        session.add(
-                            StockOHLCVDaily(
-                                symbol=sym_code,
-                                trading_date=t_date,
-                                open=float(r["open"]),
-                                high=float(r["high"]),
-                                low=float(r["low"]),
-                                close=float(r["close"]),
-                                volume=int(r["volume"]),
-                                value=float(r.get("value", 0) or 0),
-                                source="vci",
+                        if t_date not in existing_dates:
+                            session.add(
+                                StockOHLCVDaily(
+                                    symbol=sym_code,
+                                    trading_date=t_date,
+                                    open=float(r["open"]),
+                                    high=float(r["high"]),
+                                    low=float(r["low"]),
+                                    close=float(r["close"]),
+                                    volume=int(r["volume"]),
+                                    value=float(r.get("value", 0) or 0),
+                                    source="vci",
+                                )
                             )
-                        )
+                            existing_dates.add(t_date)
                     session.commit()
                     daily_rows = session.exec(
                         select(StockOHLCVDaily)
                         .where(StockOHLCVDaily.symbol == sym_code)
                         .order_by(col(StockOHLCVDaily.trading_date).desc())
-                        .limit(30)
+                        .limit(100)
                     ).all()
             except Exception as e:
                 logger.warning("Không thể tải nến ngày cho %s: %s", sym_code, e)
@@ -1402,7 +1414,7 @@ class IBoardService:
             else "down"
             if chg < 0
             else "ref",
-            sparkline=[float(r.close) for r in reversed(daily_rows[:8])]
+            sparkline=[float(r.close) for r in reversed(daily_rows)]
             if daily_rows
             else [],
             bid_book=bid_book,
