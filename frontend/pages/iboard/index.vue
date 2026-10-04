@@ -807,13 +807,14 @@ const loadIndices = async () => {
     const res = await StockService.getIBoardIndices()
     if (res && res.length > 0) {
       indices.value = res.map((r: IBoardIndexItem) => {
-        let breadth = { ...r.breadth }
+        let breadth = r.breadth ? { ...r.breadth } : null
         let volume = r.volume
         let value = r.value
 
         // Khắc phục trường hợp API trả về độ rộng VNINDEX bị 0 · 0 · 2
         if (
           r.id === "vnindex" &&
+          breadth &&
           breadth.advance === 0 &&
           breadth.decline <= 2
         ) {
@@ -871,13 +872,7 @@ const loadIndices = async () => {
           isPositive: true,
           volume: "18.42K HĐ",
           value: "3,892.40 Triệu USD",
-          breadth: {
-            advance: 0,
-            ceiling: 0,
-            unchanged: 0,
-            decline: 0,
-            floor: 0,
-          },
+          breadth: null,
           sparkline: [
             51240, 51280, 51310, 51350, 51320, 51390, 51420, 51460, 51477,
           ],

@@ -16,7 +16,7 @@ export interface IndexDisplayItem {
   isUnchanged?: boolean
   volume: string
   value: string
-  breadth: IndexBreadth
+  breadth: IndexBreadth | null
   sparkline: number[]
   ceilingPrice?: string | number
   refPrice?: string | number

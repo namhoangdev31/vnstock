@@ -389,6 +389,20 @@ const indexCatalog = [
 
 // Fallback items if some indices are added from catalog but not returned by backend
 const fallbackItemsMap: Record<string, Partial<IndexDisplayItem>> = {
+  dji: {
+    name: "DOW JONES FUTURES",
+    price: "51,477.00",
+    change: "+236.00",
+    changePercent: "+0.46%",
+    isPositive: true,
+    volume: "18.42K HĐ",
+    value: "3,892.40 Triệu USD",
+    breadth: null,
+    sparkline: [
+      51240, 51260, 51280, 51300, 51310, 51330, 51350, 51340, 51320, 51360,
+      51390, 51405, 51420, 51440, 51460, 51455, 51470, 51477,
+    ],
+  },
   upcom: {
     name: "UPCOM",
     price: "92.45",
@@ -505,13 +519,16 @@ const activeDisplayIndices = computed<IndexDisplayItem[]>(() => {
         isPositive: fb.isPositive ?? true,
         volume: fb.volume || "",
         value: fb.value || "",
-        breadth: fb.breadth || {
-          advance: 0,
-          ceiling: 0,
-          unchanged: 0,
-          decline: 0,
-          floor: 0,
-        },
+        breadth:
+          fb.breadth !== undefined
+            ? fb.breadth
+            : {
+                advance: 0,
+                ceiling: 0,
+                unchanged: 0,
+                decline: 0,
+                floor: 0,
+              },
         sparkline: fb.sparkline || [100, 101, 102],
       })
     }

@@ -65,7 +65,7 @@
             </template>
 
             <!-- Standard Stock Market Breadth -->
-            <template v-else-if="hasBreadth">
+            <template v-else-if="hasBreadth && item.breadth">
               <span class="flex items-center gap-0.5 text-emerald-400 font-medium">
                 <span>▲</span>
                 <span>{{ item.breadth.advance }}</span>

@@ -23,7 +23,7 @@ class IBoardIndexItem(SQLModel):
     is_unchanged: bool = False
     volume: str
     value: str
-    breadth: IBoardIndexBreadth
+    breadth: IBoardIndexBreadth | None = None
     sparkline: list[float]
 
 

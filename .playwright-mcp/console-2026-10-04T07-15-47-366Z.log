@@ -95,3 +95,283 @@ Suggestion: Please double check and delete any unnecessary pixel code. @ https:/
 [28975872ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://sentry.entrade.com.vn/api/21/envelope/?sentry_key=40fbc8c4e23b4733bd527e29e39109f7&sentry_version=7&sentry_client=sentry.javascript.svelte%2F7.74.1:0
 [29316363ms] [INFO] <Suspense> is an experimental feature and its API will likely change. @ http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=d096a14f:7401
 [29357052ms] [INFO] <Suspense> is an experimental feature and its API will likely change. @ http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=d096a14f:7401
+[30214694ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30214696ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30217253ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30217254ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30219762ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30219762ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30223011ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30223011ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30225746ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30225746ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30228280ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30228281ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30230818ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30230818ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30235736ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30235736ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30241764ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30241765ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30285737ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30285737ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30286035ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30286035ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30288614ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30288615ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30291597ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30291598ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30294118ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30294118ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30296627ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30296627ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30301632ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30301632ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30309748ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30309748ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30314102ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30314103ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30338766ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30338766ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30352526ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30352526ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30355700ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30355700ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30361586ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30361587ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[30367610ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[30367610ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791127409931:946
+[31342809ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[31342810ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[31345363ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[31345364ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[31354107ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[31354108ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[32857874ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32857877ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[32862182ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32862183ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[32865042ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32865043ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[32877174ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32877174ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[32881937ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32881937ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[32898015ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32898015ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791129435341:946
+[32922519ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32922519ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791131033647:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791131033647:940
+[32925196ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32925196ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791131033647:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791131033647:940
+[32928700ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[32928700ms] [WARNING] Could not fetch indices from backend: AxiosError: Request failed with status code 500
+    at settle (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:1799:12)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:2329:7)
+    at Axios.request (http://localhost:3000/_nuxt/node_modules/.cache/vite/client/deps/axios.js?v=d096a14f:3340:43)
+    at async request (http://localhost:3000/_nuxt/client/client/client.gen.ts:55:24)
+    at async Object.getIBoardIndices (http://localhost:3000/_nuxt/client/stockService.ts:79:15)
+    at async loadIndices (http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791131033647:866:17) @ http://localhost:3000/_nuxt/pages/iboard/index.vue?t=1791131033647:940
