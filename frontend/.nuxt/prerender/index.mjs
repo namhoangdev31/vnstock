@@ -23,4 +23,5 @@ import 'node:url';
 import 'file:///Volumes/developer101/code/vnstock/node_modules/pathe/dist/index.mjs';
 import 'file:///Volumes/developer101/code/vnstock/node_modules/@iconify/utils/lib/index.mjs';
 import 'file:///Volumes/developer101/code/vnstock/node_modules/consola/dist/index.mjs';
+import 'node:module';
 //# sourceMappingURL=index.mjs.map

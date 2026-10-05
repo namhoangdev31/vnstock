@@ -5,6 +5,16 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   telemetry: false,
   ssr: false,
+  experimental: {
+    appManifest: false,
+  },
+  vite: {
+    server: {
+      watch: {
+        ignored: ["**/dist/**", "**/../backend/app/frontend/**"],
+      },
+    },
+  },
   modules: ["@nuxt/ui", "@vueuse/nuxt"],
   css: ["~/assets/css/main.css"],
   app: {

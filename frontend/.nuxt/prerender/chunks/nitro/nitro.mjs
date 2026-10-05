@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname as dirname$1, resolve as resolve$1, basename } from 'file:///Volumes/developer101/code/vnstock/node_modules/pathe/dist/index.mjs';
 import { getIcons } from 'file:///Volumes/developer101/code/vnstock/node_modules/@iconify/utils/lib/index.mjs';
 import { consola } from 'file:///Volumes/developer101/code/vnstock/node_modules/consola/dist/index.mjs';
+import { createRequire } from 'node:module';
 
 const serverAssets = [{"baseName":"server","dir":"/Volumes/developer101/code/vnstock/frontend/server/assets"}];
 
@@ -897,7 +898,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "ef8c07fe-1715-4d45-8a84-5f7e3b070274",
+    "buildId": "bed129b0-7afa-4e9b-9de4-14c31b6d0f4c",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -911,16 +912,6 @@ const _inlineRuntimeConfig = {
         "proxy": {
           "to": "https://vnstock.fastapicloud.dev/api/**",
           "_proxyStripBase": "/api"
-        }
-      },
-      "/_nuxt/builds/meta/**": {
-        "headers": {
-          "cache-control": "public, max-age=31536000, immutable"
-        }
-      },
-      "/_nuxt/builds/**": {
-        "headers": {
-          "cache-control": "public, max-age=1, immutable"
         }
       },
       "/_nuxt/**": {
@@ -1290,7 +1281,7 @@ function readAsset (id) {
   return promises.readFile(resolve$1(serverDir, assets[id].path))
 }
 
-const publicAssetBases = {"/_nuxt/builds/meta/":{"maxAge":31536000},"/_nuxt/builds/":{"maxAge":1},"/_nuxt/":{"maxAge":31536000}};
+const publicAssetBases = {"/_nuxt/":{"maxAge":31536000}};
 
 function isPublicAssetURL(id = '') {
   if (assets[id]) {
@@ -1424,6 +1415,8 @@ function publicAssetsURL(...path) {
 	const publicBase = app.cdnURL || app.baseURL;
 	return path.length ? joinRelativeURL(publicBase, ...path) : publicBase;
 }
+
+createRequire(globalThis._importMeta_.url);
 
 const collections = {
 };

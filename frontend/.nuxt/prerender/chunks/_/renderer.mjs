@@ -29,6 +29,7 @@ import 'node:url';
 import 'file:///Volumes/developer101/code/vnstock/node_modules/pathe/dist/index.mjs';
 import 'file:///Volumes/developer101/code/vnstock/node_modules/@iconify/utils/lib/index.mjs';
 import 'file:///Volumes/developer101/code/vnstock/node_modules/consola/dist/index.mjs';
+import 'node:module';
 
 const VueResolver = (_, value) => {
   return isRef(value) ? toValue(value) : value;
@@ -284,18 +285,6 @@ async function renderRoute(event, ssrError) {
 	const NO_SCRIPTS = routeOptions.noScripts;
 	
 	const { styles, scripts } = getRequestDependencies(ssrContext, renderer.rendererContext);
-	if (ssrContext["~preloadManifest"] && !NO_SCRIPTS) {
-		ssrContext.head.push({ link: [{
-			rel: "preload",
-			as: "fetch",
-			fetchpriority: "low",
-			crossorigin: "anonymous",
-			href: buildAssetsURL(`builds/meta/${ssrContext.runtimeConfig.app.buildId}.json`)
-		}] }, {
-			...headEntryOptions,
-			tagPriority: "low"
-		});
-	}
 	
 	if (inlinedStyles.length) {
 		ssrContext.head.push({ style: inlinedStyles });
