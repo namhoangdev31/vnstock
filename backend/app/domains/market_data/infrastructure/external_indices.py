@@ -19,7 +19,7 @@ from sqlmodel import Session, col, select
 
 from app.domains.market_data.application.iboard_schemas import IBoardIndexItem
 from app.domains.market_data.domain.models import StockOHLCVDaily
-from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
+from app.domains.market_data.infrastructure.vnstock import VnstockService
 
 logger = logging.getLogger(__name__)
 

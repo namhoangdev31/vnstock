@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from app.domains.market_data.infrastructure.vnstock_adapter import (
+from app.domains.market_data.infrastructure.vnstock import (
     VnstockService,
     VnstockServiceError,
 )
@@ -18,7 +18,7 @@ def service() -> VnstockService:
     return VnstockService(limiter=mock_limiter)
 
 
-@patch("app.domains.market_data.infrastructure.vnstock_adapter.Fundamental")
+@patch("app.domains.market_data.infrastructure.vnstock.adapter.Fundamental")
 def test_fundamental_income_statement(
     mock_fnd_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -51,7 +51,7 @@ def test_fundamental_income_statement(
     mock_eq.income_statement.assert_called_with(period="quarter", orient="time_series")
 
 
-@patch("app.domains.market_data.infrastructure.vnstock_adapter.Fundamental")
+@patch("app.domains.market_data.infrastructure.vnstock.adapter.Fundamental")
 def test_fundamental_balance_sheet(
     mock_fnd_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -76,7 +76,7 @@ def test_fundamental_balance_sheet(
     mock_eq.balance_sheet.assert_called_with(period="year", orient="report")
 
 
-@patch("app.domains.market_data.infrastructure.vnstock_adapter.Fundamental")
+@patch("app.domains.market_data.infrastructure.vnstock.adapter.Fundamental")
 def test_fundamental_cash_flow(
     mock_fnd_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -101,7 +101,7 @@ def test_fundamental_cash_flow(
     mock_eq.cash_flow.assert_called_with(period="quarter", orient="report")
 
 
-@patch("app.domains.market_data.infrastructure.vnstock_adapter.Fundamental")
+@patch("app.domains.market_data.infrastructure.vnstock.adapter.Fundamental")
 def test_fundamental_ratios(mock_fnd_cls: MagicMock, service: VnstockService) -> None:
     """Kiểm thử lấy bộ 50+ chỉ số tài chính định lượng qua Fundamental.equity.ratio / ratios."""
     mock_fnd = MagicMock()
@@ -133,8 +133,8 @@ def test_fundamental_ratios(mock_fnd_cls: MagicMock, service: VnstockService) ->
     mock_eq.ratio.assert_called_with(orient="time_series")
 
 
-@patch("app.domains.market_data.infrastructure.vnstock_adapter.Finance")
-@patch("app.domains.market_data.infrastructure.vnstock_adapter.Fundamental")
+@patch("app.domains.market_data.infrastructure.vnstock.adapter.Finance")
+@patch("app.domains.market_data.infrastructure.vnstock.adapter.Fundamental")
 def test_fundamental_fallback_to_finance(
     mock_fnd_cls: MagicMock, mock_fin_cls: MagicMock, service: VnstockService
 ) -> None:
@@ -154,8 +154,8 @@ def test_fundamental_fallback_to_finance(
     assert df.iloc[0]["item"] == "Doanh thu"
 
 
-@patch("app.domains.market_data.infrastructure.vnstock_adapter.Finance")
-@patch("app.domains.market_data.infrastructure.vnstock_adapter.Fundamental")
+@patch("app.domains.market_data.infrastructure.vnstock.adapter.Finance")
+@patch("app.domains.market_data.infrastructure.vnstock.adapter.Fundamental")
 def test_fundamental_error_handling_when_all_fail(
     mock_fnd_cls: MagicMock, mock_fin_cls: MagicMock, service: VnstockService
 ) -> None:

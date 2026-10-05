@@ -10,11 +10,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.deps import get_current_user
 from app.domains.market_data.application.schemas import VnstockSymbolResponse
-from app.domains.market_data.infrastructure.vnstock_adapter import vnstock_service
-from app.domains.market_data.infrastructure.vnstock_registry import (
+from app.domains.market_data.infrastructure.vnstock import (
     CapabilityInfo,
     CapabilityStatus,
     VnstockCapabilityRegistry,
+    vnstock_service,
 )
 
 router = APIRouter(

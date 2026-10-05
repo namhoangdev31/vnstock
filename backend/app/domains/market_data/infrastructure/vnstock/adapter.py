@@ -34,7 +34,7 @@ from app.domains.market_data.infrastructure.rate_limiter import (
     CircuitBreakerOpenError,
     RateLimiter,
 )
-from app.domains.market_data.infrastructure.vnstock_registry import (
+from app.domains.market_data.infrastructure.vnstock.registry import (
     DataAvailability,
     VnstockCapabilityRegistry,
 )

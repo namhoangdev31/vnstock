@@ -64,6 +64,19 @@ class Settings(BaseSettings):
     # On Community tier (60 req/min limit), 1.0s ensures safe spacing.
     VNSTOCK_REQUEST_MIN_DELAY: float = 1.0
 
+    # DNSE WebSocket real-time stream config
+    DNSE_API_KEY: str | None = None
+    DNSE_API_SECRET: str | None = None
+    DNSE_WS_URL: str = "wss://ws-openapi.dnse.com.vn"
+    DNSE_WS_ENABLED: bool = True
+    DNSE_WS_SYMBOLS: str = "VN30F1M"
+    DNSE_WS_MARKET_INDICES: str = "HOSE,HNX,UPCOM"
+    DNSE_WS_RECONNECT_DELAY: float = 5.0
+    DNSE_WS_MAX_RETRIES: int = 10
+    DNSE_WS_HEARTBEAT: float = 25.0
+    DNSE_API_KEY_SANDBOX: str | None = None
+    DNSE_API_SECRET_SANDBOX: str | None = None
+
     # Cron & Background Scheduler config
     CRON_SECRET_KEY: str | None = None
     CRON_SECRET: str | None = None

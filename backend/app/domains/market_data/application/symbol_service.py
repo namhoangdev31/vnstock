@@ -19,7 +19,7 @@ from app.domains.market_data.application.schemas import (
 )
 from app.domains.market_data.domain.exceptions import SymbolNotFoundError
 from app.domains.market_data.domain.models import IndexConstituent, StockSymbol
-from app.domains.market_data.infrastructure.vnstock_adapter import (
+from app.domains.market_data.infrastructure.vnstock import (
     VnstockServiceError,
     vnstock_service,
 )

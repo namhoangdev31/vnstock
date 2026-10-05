@@ -32,7 +32,7 @@ from app.domains.market_data.domain.models import (
     StockOHLCVDaily,
     StockSymbol,
 )
-from app.domains.market_data.infrastructure.vnstock_adapter import (
+from app.domains.market_data.infrastructure.vnstock import (
     VnstockServiceError,
     vnstock_service,
 )

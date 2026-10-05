@@ -21,7 +21,7 @@ from app.domains.fundamental.application.jobs.sync_quarterly_financials_job impo
     run_sync_quarterly_financials_job as _run_sync_quarterly_financials_job,
 )
 from app.domains.market_data.domain.models import DataSyncLog
-from app.domains.market_data.infrastructure.vnstock_adapter import vnstock_service
+from app.domains.market_data.infrastructure.vnstock import vnstock_service
 
 logger = logging.getLogger(__name__)
 

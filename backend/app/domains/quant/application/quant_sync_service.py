@@ -30,7 +30,7 @@ from sqlmodel import Session, select
 from app.core.enums import MacroIndicatorCode
 from app.core.models_base import VN_TZ
 from app.domains.market_data.domain.models import DataSyncLog, StockTickIntraday
-from app.domains.market_data.infrastructure.vnstock_adapter import (
+from app.domains.market_data.infrastructure.vnstock import (
     VnstockService,
     VnstockServiceError,
 )

@@ -110,7 +110,7 @@ async def lifespan(_app: FastAPI):
         return
     migration_task = asyncio.create_task(asyncio.to_thread(_run_migrations_and_seed))
     try:
-        from app.domains.market_data.infrastructure.vnstock_adapter import (
+        from app.domains.market_data.infrastructure.vnstock import (
             VnstockService,
         )
 
@@ -125,12 +125,34 @@ async def lifespan(_app: FastAPI):
     migrations_ready = await migration_task
     if migrations_ready:
         await quant_daemon_controller.start()
+        if settings.DNSE_WS_ENABLED:
+            try:
+                from app.domains.market_data.infrastructure.dnse import (
+                    dnse_stream_manager,
+                )
+
+                await dnse_stream_manager.start()
+            except Exception as dnse_err:
+                logger.warning(
+                    f"[LIFESPAN] Failed to start DNSE stream manager: {dnse_err}"
+                )
     else:
         logger.error("[LIFESPAN] Daemon withheld because database setup failed")
     try:
         yield
     finally:
         if migrations_ready:
+            if settings.DNSE_WS_ENABLED:
+                try:
+                    from app.domains.market_data.infrastructure.dnse import (
+                        dnse_stream_manager,
+                    )
+
+                    await dnse_stream_manager.stop()
+                except Exception as dnse_err:
+                    logger.warning(
+                        f"[LIFESPAN] Error stopping DNSE stream manager: {dnse_err}"
+                    )
             await quant_daemon_controller.stop()
         if not migration_task.done():
             migration_task.cancel()

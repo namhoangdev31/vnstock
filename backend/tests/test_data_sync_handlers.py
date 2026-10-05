@@ -31,7 +31,7 @@ from app.domains.market_data.domain.models import (
     StockOHLCVDaily,
     StockSymbol,
 )
-from app.domains.market_data.infrastructure.vnstock_adapter import VnstockServiceError
+from app.domains.market_data.infrastructure.vnstock import VnstockServiceError
 from app.domains.quant.domain.models import InstitutionalFlow
 
 

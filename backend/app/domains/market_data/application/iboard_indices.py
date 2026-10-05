@@ -20,7 +20,7 @@ from app.domains.market_data.infrastructure.external_indices import (
     IBoardDataGateway,
     IndexSparklineGateway,
 )
-from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
+from app.domains.market_data.infrastructure.vnstock import VnstockService
 
 
 class IBoardIndicesService:

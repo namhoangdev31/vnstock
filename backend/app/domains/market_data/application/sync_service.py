@@ -74,7 +74,7 @@ from app.domains.market_data.domain.models import (
     StockOHLCVIntraday,
     StockSymbol,
 )
-from app.domains.market_data.infrastructure.vnstock_adapter import (
+from app.domains.market_data.infrastructure.vnstock import (
     VnstockService,
     VnstockServiceError,
 )

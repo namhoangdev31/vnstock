@@ -28,7 +28,7 @@ from app.domains.market_data.domain.models import (
 from app.domains.market_data.infrastructure.external_indices import (
     IBoardDataGateway,
 )
-from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
+from app.domains.market_data.infrastructure.vnstock import VnstockService
 
 logger = logging.getLogger(__name__)
 

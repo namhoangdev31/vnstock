@@ -10,7 +10,7 @@
 from datetime import date, timedelta
 
 import pytest
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel, col, create_engine, select
 
 from app.domains.market_data.application.iboard_schemas import (
     IBoardCandleBar,
@@ -242,8 +242,25 @@ def test_get_candles_chronological_and_limit(memory_session: Session):
     assert last_candle.time == str(base_date + timedelta(days=119))
 
 
-def test_get_board_listed_and_derivatives(memory_session: Session):
+def test_get_board_listed_and_derivatives(
+    memory_session: Session, monkeypatch: pytest.MonkeyPatch
+):
     """Kiểm tra get_board cho cả hai nhóm cổ phiếu niêm yết và phái sinh."""
+    monkeypatch.setattr(
+        "app.domains.market_data.infrastructure.external_indices.IBoardDataGateway.fetch_batch_quotes",
+        lambda *args, **kwargs: {},
+    )
+    monkeypatch.setattr(
+        "app.domains.market_data.infrastructure.external_indices.IBoardDataGateway.backfill_ohlcv_daily",
+        lambda session, vn, symbol, target_count=100: list(
+            session.exec(
+                select(StockOHLCVDaily)
+                .where(StockOHLCVDaily.symbol == symbol)
+                .order_by(col(StockOHLCVDaily.trading_date).desc())
+                .limit(target_count)
+            ).all()
+        ),
+    )
     # 1. Thêm symbol và nến cho FPT
     fpt_sym = StockSymbol(
         symbol="FPT",
@@ -313,8 +330,23 @@ def test_get_board_listed_and_derivatives(memory_session: Session):
     assert f1m_row.category == "derivatives"
 
 
-def test_get_stock_detail(memory_session: Session):
+def test_get_stock_detail(memory_session: Session, monkeypatch: pytest.MonkeyPatch):
     """Kiểm tra get_stock_detail trả về đầy đủ các trường DTO hợp lệ."""
+    monkeypatch.setattr(
+        "app.domains.market_data.infrastructure.external_indices.IBoardDataGateway.fetch_batch_quotes",
+        lambda *args, **kwargs: {},
+    )
+    monkeypatch.setattr(
+        "app.domains.market_data.infrastructure.external_indices.IBoardDataGateway.backfill_ohlcv_daily",
+        lambda session, vn, symbol, target_count=100: list(
+            session.exec(
+                select(StockOHLCVDaily)
+                .where(StockOHLCVDaily.symbol == symbol)
+                .order_by(col(StockOHLCVDaily.trading_date).desc())
+                .limit(target_count)
+            ).all()
+        ),
+    )
     fpt_sym = StockSymbol(
         symbol="FPT",
         organ_name="Công ty Cổ phần FPT",

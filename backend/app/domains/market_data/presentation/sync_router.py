@@ -24,7 +24,7 @@ from app.domains.market_data.application.jobs import (
 from app.domains.market_data.application.schemas import SyncStatusPublic
 from app.domains.market_data.application.sync_service import DataSyncManager
 from app.domains.market_data.domain.models import DataSyncLog
-from app.domains.market_data.infrastructure.vnstock_adapter import vnstock_service
+from app.domains.market_data.infrastructure.vnstock import vnstock_service
 
 router = APIRouter()
 

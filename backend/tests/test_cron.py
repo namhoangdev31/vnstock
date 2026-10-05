@@ -217,7 +217,7 @@ def test_run_sync_daily_market_job(session: Session) -> None:  # noqa: F811
 def test_sync_daily_market_session_isolation_and_rollback(session: Session) -> None:  # noqa: F811
     """Kiểm tra DataSyncManager không làm ô nhiễm session toàn cục và rollback an toàn khi 1 mã lỗi."""
     from app.cron.sync_daily_market import run_sync_daily_market_job
-    from app.domains.market_data.infrastructure.vnstock_adapter import vnstock_service
+    from app.domains.market_data.infrastructure.vnstock import vnstock_service
 
     # 1. Khởi tạo DataSyncManager phải không làm biến đổi vnstock_service toàn cục
     DataSyncManager(session=session, vnstock_svc=vnstock_service)

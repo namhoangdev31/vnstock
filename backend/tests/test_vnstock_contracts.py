@@ -2,12 +2,12 @@
 
 import pytest
 
-from app.domains.market_data.infrastructure.vnstock_adapter import VnstockService
-from app.domains.market_data.infrastructure.vnstock_registry import (
+from app.domains.market_data.infrastructure.vnstock import (
     CapabilityStatus,
     DataAvailability,
     ProviderResponse,
     VnstockCapabilityRegistry,
+    VnstockService,
 )
 
 
