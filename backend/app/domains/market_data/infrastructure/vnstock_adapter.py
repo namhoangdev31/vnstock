@@ -694,12 +694,12 @@ class VnstockService:
             df_corp = (
                 pd.DataFrame({"symbol": bonds_corp, "type": "corporate"})
                 if not bonds_corp.empty
-                else pd.DataFrame(columns=["symbol", "type"])
+                else pd.DataFrame(columns=pd.Index(["symbol", "type"]))
             )
             df_gov = (
                 pd.DataFrame({"symbol": bonds_gov, "type": "government"})
                 if not bonds_gov.empty
-                else pd.DataFrame(columns=["symbol", "type"])
+                else pd.DataFrame(columns=pd.Index(["symbol", "type"]))
             )
             combined = pd.concat([df_corp, df_gov], ignore_index=True)
             if not combined.empty:
