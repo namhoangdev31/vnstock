@@ -262,21 +262,15 @@ class IBoardTableService:
                     .where(StockSymbol.index_group == "VN30")
                     .limit(1)
                 ).first()
-                if not has_vn30:
+                if has_vn30:
+                    stmt = stmt.where(StockSymbol.index_group == "VN30")
+                else:
                     try:
                         vn30_members = vn.fetch_group_symbols("VN30")
                         if vn30_members:
-                            for m in vn30_members:
-                                sym_item = session.exec(
-                                    select(StockSymbol).where(StockSymbol.symbol == m)
-                                ).first()
-                                if sym_item:
-                                    sym_item.index_group = "VN30"
-                                    session.add(sym_item)
-                            session.commit()
+                            stmt = stmt.where(col(StockSymbol.symbol).in_(vn30_members))
                     except Exception as e:
-                        logger.warning("Không thể đồng bộ rổ VN30: %s", e)
-                stmt = stmt.where(StockSymbol.index_group == "VN30")
+                        logger.debug("Không thể tải danh sách mã VN30: %s", e)
             elif group in ("HSX", "HOSE"):
                 stmt = stmt.where(StockSymbol.exchange == "HOSE")
             elif group == "HNX":

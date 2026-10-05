@@ -17,8 +17,10 @@ from typing import Any
 
 from sqlmodel import Session, col, select
 
+from app.core.cache import realtime_cache
 from app.domains.market_data.application.iboard_schemas import IBoardIndexItem
 from app.domains.market_data.domain.models import StockOHLCVDaily
+from app.domains.market_data.infrastructure.dnse import dnse_stream_manager
 from app.domains.market_data.infrastructure.vnstock import VnstockService
 
 logger = logging.getLogger(__name__)
@@ -145,7 +147,7 @@ class IBoardDataGateway:
         symbol: str,
         target_count: int = 100,
     ) -> list[StockOHLCVDaily]:
-        """Truy xuất nến ngày từ PostgreSQL; tự động backfill từ VnstockService nếu thiếu."""
+        """Truy xuất nến ngày từ PostgreSQL; nạp tạm thời nếu DB chưa đủ mà không sửa đổi DB."""
         rows: list[StockOHLCVDaily] = list(
             session.exec(
                 select(StockOHLCVDaily)
@@ -174,7 +176,7 @@ class IBoardDataGateway:
                         except ValueError:
                             continue
                         if t_date not in existing:
-                            session.add(
+                            rows.append(
                                 StockOHLCVDaily(
                                     symbol=symbol,
                                     trading_date=t_date,
@@ -188,31 +190,49 @@ class IBoardDataGateway:
                                 )
                             )
                             existing.add(t_date)
-                    session.commit()
-                    rows = list(
-                        session.exec(
-                            select(StockOHLCVDaily)
-                            .where(StockOHLCVDaily.symbol == symbol)
-                            .order_by(col(StockOHLCVDaily.trading_date).desc())
-                            .limit(target_count)
-                        ).all()
-                    )
+                    rows.sort(key=lambda x: x.trading_date, reverse=True)
+                    rows = rows[:target_count]
             except Exception as e:
-                logger.warning("Không thể bổ sung nến EOD cho %s: %s", symbol, e)
+                logger.debug("Không thể đọc thêm nến EOD cho %s: %s", symbol, e)
 
         return rows
 
     @staticmethod
-    def fetch_batch_quotes(vn: VnstockService, symbols: list[str]) -> dict[str, Any]:
-        """Tải bảng giá realtime snapshot hàng loạt cho danh sách mã."""
+    def fetch_batch_quotes(
+        vn: VnstockService | None, symbols: list[str]
+    ) -> dict[str, Any]:
+        """Tải bảng giá realtime snapshot hàng loạt ưu tiên DNSE realtime stream."""
         if not symbols:
             return {}
-        try:
-            df = vn.fetch_market_quote(symbols)
-            if df is not None and not df.empty and "symbol" in df.columns:
-                return {
-                    str(row["symbol"]).strip().upper(): row for _, row in df.iterrows()
-                }
-        except Exception as e:
-            logger.warning("fetch_market_quote batch thất bại: %s", e)
-        return {}
+
+        results: dict[str, Any] = {}
+        missing: list[str] = []
+
+        for s in symbols:
+            sym = s.strip().upper()
+            cached = realtime_cache.get(f"iboard_quote:{sym}")
+            if (
+                cached
+                and isinstance(cached, dict)
+                and cached.get("close_price") is not None
+            ):
+                results[sym] = cached
+            else:
+                missing.append(sym)
+
+        # Trigger dynamic DNSE stream subscription for any missing symbols
+        if missing:
+            dnse_stream_manager.subscribe_symbols_background(missing)
+
+        # Fallback to vnstock for missing symbols if cache is not populated yet
+        if missing and vn is not None:
+            try:
+                df = vn.fetch_market_quote(missing)
+                if df is not None and not df.empty and "symbol" in df.columns:
+                    for _, row in df.iterrows():
+                        r_sym = str(row["symbol"]).strip().upper()
+                        results[r_sym] = row
+            except Exception as e:
+                logger.warning("fetch_market_quote fallback batch thất bại: %s", e)
+
+        return results

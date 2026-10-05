@@ -44,6 +44,9 @@ class DNSEStreamManager:
         self._task: asyncio.Task[None] | None = None
         self._stop_event = asyncio.Event()
         self._is_connected: bool = False
+        self._subscribed_symbols: set[str] = {
+            s.strip().upper() for s in self.config.symbols if s.strip()
+        }
 
     @property
     def is_running(self) -> bool:
@@ -71,7 +74,7 @@ class DNSEStreamManager:
         self._task = asyncio.create_task(self._run_loop(), name="dnse_ws_stream")
         logger.info(
             "[DNSE] Stream manager started. Tracking symbols=%s, indices=%s",
-            self.config.symbols,
+            list(self._subscribed_symbols),
             self.config.market_indices,
         )
 
@@ -97,6 +100,68 @@ class DNSEStreamManager:
                 self._client = None
 
         logger.info("[DNSE] Stream manager stopped.")
+
+    async def subscribe_symbols(self, symbols: list[str]) -> None:
+        """Dynamically subscribe additional symbols to the running DNSE stream."""
+        clean = [
+            s.strip().upper() for s in symbols if s and isinstance(s, str) and s.strip()
+        ]
+        new_symbols = [s for s in clean if s not in self._subscribed_symbols]
+        if not new_symbols:
+            return
+
+        self._subscribed_symbols.update(new_symbols)
+        self.config.symbols = list(self._subscribed_symbols)
+
+        if self.is_connected and self._client:
+            try:
+                logger.info("[DNSE] Dynamically subscribing to: %s", new_symbols)
+                await self._client.subscribe_trades(
+                    new_symbols, on_trade=self.normalizer.on_trade
+                )
+                await self._client.subscribe_trade_extra(
+                    new_symbols, on_trade_extra=self.normalizer.on_trade_extra
+                )
+                await self._client.subscribe_quotes(
+                    new_symbols, on_quote=self.normalizer.on_quote
+                )
+                await self._client.subscribe_sec_def(
+                    new_symbols, on_sec_def=self.normalizer.on_sec_def
+                )
+                await self._client.subscribe_foreign_trading(
+                    new_symbols, on_trade=self.normalizer.on_foreign
+                )
+                await self._client.subscribe_ohlc(
+                    new_symbols,
+                    resolution="1",
+                    on_ohlc=self.normalizer.on_ohlc,
+                )
+                await self._client.subscribe_expected_price(
+                    new_symbols,
+                    on_expected_price=self.normalizer.on_expected_price,
+                )
+            except Exception as e:
+                logger.warning(
+                    "[DNSE] Dynamic subscription error for %s: %s", new_symbols, e
+                )
+
+    def subscribe_symbols_background(self, symbols: list[str]) -> None:
+        """Fire-and-forget dynamic subscription safe to invoke from synchronous contexts."""
+        clean = [
+            s.strip().upper() for s in symbols if s and isinstance(s, str) and s.strip()
+        ]
+        new_symbols = [s for s in clean if s not in self._subscribed_symbols]
+        if not new_symbols:
+            return
+
+        self._subscribed_symbols.update(new_symbols)
+        self.config.symbols = list(self._subscribed_symbols)
+
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.subscribe_symbols(new_symbols))
+        except RuntimeError:
+            pass
 
     async def _run_loop(self) -> None:
         """Continuous reconnection loop with exponential backoff."""
@@ -153,24 +218,31 @@ class DNSEStreamManager:
         logger.info("[DNSE] WebSocket connected and authenticated successfully.")
 
         # 1. Subscribe to Symbol-level Market Data
-        if self.config.symbols:
-            logger.info("[DNSE] Subscribing to symbols: %s", self.config.symbols)
+        active_symbols = list(self._subscribed_symbols)
+        if active_symbols:
+            logger.info("[DNSE] Subscribing to symbols: %s", active_symbols)
             await client.subscribe_trades(
-                self.config.symbols, on_trade=self.normalizer.on_trade
+                active_symbols, on_trade=self.normalizer.on_trade
+            )
+            await client.subscribe_trade_extra(
+                active_symbols, on_trade_extra=self.normalizer.on_trade_extra
             )
             await client.subscribe_quotes(
-                self.config.symbols, on_quote=self.normalizer.on_quote
+                active_symbols, on_quote=self.normalizer.on_quote
+            )
+            await client.subscribe_sec_def(
+                active_symbols, on_sec_def=self.normalizer.on_sec_def
             )
             await client.subscribe_ohlc(
-                self.config.symbols,
+                active_symbols,
                 resolution="1",
                 on_ohlc=self.normalizer.on_ohlc,
             )
             await client.subscribe_foreign_trading(
-                self.config.symbols, on_trade=self.normalizer.on_foreign
+                active_symbols, on_trade=self.normalizer.on_foreign
             )
             await client.subscribe_expected_price(
-                self.config.symbols,
+                active_symbols,
                 on_expected_price=self.normalizer.on_expected_price,
             )
 

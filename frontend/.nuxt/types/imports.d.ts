@@ -258,6 +258,7 @@ declare global {
   const useHead: typeof import('../../../node_modules/nuxt/dist/app/composables/head').useHead
   const useHeadSafe: typeof import('../../../node_modules/nuxt/dist/app/composables/head').useHeadSafe
   const useHydration: typeof import('../../../node_modules/nuxt/dist/app/composables/hydrate').useHydration
+  const useIBoardWebSocket: typeof import('../../composables/useIBoardWebSocket').useIBoardWebSocket
   const useId: typeof import('vue').useId
   const useIdle: typeof import('@vueuse/core').useIdle
   const useInfiniteScroll: typeof import('@vueuse/core').useInfiniteScroll
@@ -472,6 +473,9 @@ declare global {
   // @ts-ignore
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { IBoardWSIndexData, IBoardWSQuoteData, IBoardWSTradeData, IBoardWSTick, IBoardWSEventHandlers } from '../../composables/useIBoardWebSocket'
+  import('../../composables/useIBoardWebSocket')
   // @ts-ignore
   export type { TradingPhase } from '../../composables/useTradingPolling'
   import('../../composables/useTradingPolling')
@@ -740,6 +744,7 @@ declare module 'vue' {
     readonly useHead: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/head')['useHead']>
     readonly useHeadSafe: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/head')['useHeadSafe']>
     readonly useHydration: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/hydrate')['useHydration']>
+    readonly useIBoardWebSocket: UnwrapRef<typeof import('../../composables/useIBoardWebSocket')['useIBoardWebSocket']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useIdle: UnwrapRef<typeof import('@vueuse/core')['useIdle']>
     readonly useInfiniteScroll: UnwrapRef<typeof import('@vueuse/core')['useInfiniteScroll']>

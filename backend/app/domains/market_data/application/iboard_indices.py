@@ -9,6 +9,7 @@ from typing import Any
 
 from sqlmodel import Session, col, select
 
+from app.core.cache import realtime_cache
 from app.domains.market_data.application.iboard_schemas import (
     IBoardIndexBreadth,
     IBoardIndexItem,
@@ -105,10 +106,77 @@ class IBoardIndicesService:
             pct = (chg / prev_close * 100) if prev_close else 0.0
 
             is_deriv = code == "VN30F1M"
-            price_str = f"{cur_close:,.1f}" if is_deriv else f"{cur_close:,.2f}"
 
             raw_vol = float(latest.volume)
             raw_val = float(latest.value or 0)
+
+            # Check realtime DNSE cache for market index updates
+            cached_idx = realtime_cache.get(f"index:{code}")
+            if not cached_idx and code == "HNXINDEX":
+                cached_idx = realtime_cache.get("index:HNX")
+            elif not cached_idx and code == "VNINDEX":
+                cached_idx = realtime_cache.get("index:HOSE")
+
+            breadth: IBoardIndexBreadth
+            if (
+                cached_idx
+                and isinstance(cached_idx, dict)
+                and cached_idx.get("value") is not None
+            ):
+                cur_close = float(cached_idx["value"])
+                if cached_idx.get("change") is not None:
+                    chg = float(cached_idx["change"])
+                if cached_idx.get("pct_change") is not None:
+                    pct = float(cached_idx["pct_change"])
+                if cached_idx.get("total_volume") is not None:
+                    raw_vol = float(cached_idx["total_volume"])
+                if cached_idx.get("total_value") is not None:
+                    raw_val = float(cached_idx["total_value"])
+                if cached_idx.get("advance") is not None:
+                    breadth = IBoardIndexBreadth(
+                        advance=int(cached_idx.get("advance") or 0),
+                        ceiling=int(cached_idx.get("ceiling") or 0),
+                        unchanged=int(cached_idx.get("no_change") or 0),
+                        decline=int(cached_idx.get("decline") or 0),
+                        floor=int(cached_idx.get("floor") or 0),
+                    )
+                else:
+                    breadth = compute_market_breadth(
+                        today_bars=today_bars,
+                        prev_bars=prev_bars,
+                        subset=subset,
+                        is_hnx="HNX" in code,
+                    )
+            elif is_deriv:
+                cached_rt = realtime_cache.get(
+                    "realtime:VN30F1M"
+                ) or realtime_cache.get("iboard_quote:VN30F1M")
+                if cached_rt and isinstance(cached_rt, dict):
+                    c_p = cached_rt.get("close") or cached_rt.get("close_price")
+                    if c_p is not None:
+                        cur_close = float(c_p)
+                        chg = cur_close - prev_close
+                        pct = (chg / prev_close * 100) if prev_close else 0.0
+                        if cached_rt.get("volume") is not None:
+                            raw_vol = float(cached_rt["volume"])
+                        elif cached_rt.get("volume_accumulated") is not None:
+                            raw_vol = float(cached_rt["volume_accumulated"])
+                breadth = IBoardIndexBreadth(
+                    advance=1 if chg > 0 else 0,
+                    ceiling=0,
+                    unchanged=1 if chg == 0 else 0,
+                    decline=1 if chg < 0 else 0,
+                    floor=0,
+                )
+            else:
+                breadth = compute_market_breadth(
+                    today_bars=today_bars,
+                    prev_bars=prev_bars,
+                    subset=subset,
+                    is_hnx="HNX" in code,
+                )
+
+            price_str = f"{cur_close:,.1f}" if is_deriv else f"{cur_close:,.2f}"
 
             if raw_val <= 0 and code in basket_map:
                 basket_sum = sum(
@@ -147,22 +215,6 @@ class IBoardIndicesService:
                 fallback_daily=fallback_spark,
                 cur_close=cur_close,
             )
-
-            if is_deriv:
-                breadth = IBoardIndexBreadth(
-                    advance=1 if chg > 0 else 0,
-                    ceiling=0,
-                    unchanged=1 if chg == 0 else 0,
-                    decline=1 if chg < 0 else 0,
-                    floor=0,
-                )
-            else:
-                breadth = compute_market_breadth(
-                    today_bars=today_bars,
-                    prev_bars=prev_bars,
-                    subset=subset,
-                    is_hnx="HNX" in code,
-                )
 
             items.append(
                 IBoardIndexItem(

@@ -5,13 +5,33 @@ import {
   type CorporateEventDTO,
   type IBoardCandleBar,
   type IBoardIndexItem,
-  type IBoardStockDetail,
   type IBoardStockRow,
   type MatchedTickDTO,
-  type SimulationOrderDTO,
   StockService,
   type TopMoverItem,
 } from "~/client/stockService"
+import IBoardCategoryNav from "~/components/iboard/IBoardCategoryNav.vue"
+import IBoardHeader from "~/components/iboard/IBoardHeader.vue"
+import IBoardIndexRibbon from "~/components/iboard/IBoardIndexRibbon.vue"
+import IBoardRightPanel from "~/components/iboard/IBoardRightPanel.vue"
+import IBoardStockDetail from "~/components/iboard/IBoardStockDetail.vue"
+import IBoardTable from "~/components/iboard/IBoardTable.vue"
+import type {
+  FluctuationStats,
+  IndexBreadth,
+  IndexDisplayItem,
+  ListedSubBasket,
+  MainCategory,
+  SimulatedOrder,
+  StockRowDisplay,
+} from "~/components/iboard/types"
+import {
+  type IBoardWSIndexData,
+  type IBoardWSQuoteData,
+  type IBoardWSTick,
+  type IBoardWSTradeData,
+  useIBoardWebSocket,
+} from "~/composables/useIBoardWebSocket"
 
 definePageMeta({
   layout: false,
@@ -30,19 +50,20 @@ useHead({
 
 const { showSuccessToast, showErrorToast } = useCustomToast()
 
+// Thời gian hệ thống
 const currentTime = ref("00:00:00")
 let clockTimer: ReturnType<typeof setInterval> | null = null
 let autoRefreshTimer: ReturnType<typeof setInterval> | null = null
+let marketPulseTimer: ReturnType<typeof setInterval> | null = null
 
 const updateClock = () => {
   const now = new Date()
   currentTime.value = now.toTimeString().split(" ")[0]
 }
 
-import IBoardIndexRibbon from "~/components/iboard/IBoardIndexRibbon.vue"
-import type { IndexDisplayItem } from "~/components/iboard/types"
-
+// Dải chỉ số thị trường (Ribbon)
 const isIndexRibbonOpen = ref(true)
+const indices = ref<IndexDisplayItem[]>([])
 
 const handleIndexSelect = (id: string) => {
   if (id === "vn30") {
@@ -59,56 +80,14 @@ const handleIndexSelect = (id: string) => {
   }
 }
 
-const indices = ref<IndexDisplayItem[]>([])
-
-const mainCategory = ref<
-  | "watchlist"
-  | "listed"
-  | "sectors"
-  | "derivatives"
-  | "warrants"
-  | "etf"
-  | "put_through"
-  | "ideas"
-  | "screener"
->("listed")
-const listedSubBasket = ref<
-  "VN30" | "HSX" | "HNX" | "UPCOM" | "ODD_LOT" | "MARGIN_DISCOUNT"
->("VN30")
+// Điều hướng danh mục & lọc
+const mainCategory = ref<MainCategory>("listed")
+const listedSubBasket = ref<ListedSubBasket>("VN30")
 const sectorSubBasket = ref<string>("bank")
-
 const searchQuery = ref("")
 const priceUnitDisplay = ref<"percent" | "diff">("percent")
 
-interface StockRowDisplay {
-  symbol: string
-  name: string
-  exchange: string
-  lastPrice: number
-  refPrice: number
-  ceilingPrice: number
-  floorPrice: number
-  highPrice: number
-  lowPrice: number
-  avgPrice: number
-  change: number
-  changePercent: number
-  volume: number
-  valueBillion: number
-  buyRatio: number
-  sellRatio: number
-  foreignBuy: number
-  foreignSell: number
-  foreignRoom: number
-  status: "up" | "down" | "ref" | "ceiling" | "floor"
-  sparkline: number[]
-  bidBook: { price: number; volume: number }[]
-  askBook: { price: number; volume: number }[]
-  category: string
-  sector?: string | null
-  expiryDate?: string | null
-}
-
+// Dữ liệu bảng giá
 const tableData = ref<StockRowDisplay[]>([])
 const isLoadingBoard = ref(false)
 
@@ -141,20 +120,8 @@ const mapBackendRow = (raw: IBoardStockRow): StockRowDisplay => ({
   expiryDate: raw.expiry_date,
 })
 
-const getPriceColorClass = (
-  price: number | undefined | null,
-  stk: StockRowDisplay,
-  fallback = "text-aave-paper",
-) => {
-  if (price === undefined || price === null || price === 0) return fallback
-  if (price >= stk.ceilingPrice) return "text-purple-400 font-semibold"
-  if (price <= stk.floorPrice) return "text-cyan-400 font-semibold"
-  if (price > stk.refPrice) return "text-emerald-400 font-semibold"
-  if (price < stk.refPrice) return "text-rose-500 font-semibold"
-  return "text-amber-400 font-semibold"
-}
-
-const fluctuationStats = computed(() => {
+// Thống kê biến động
+const fluctuationStats = computed<FluctuationStats>(() => {
   let ceil = 0
   let up = 0
   let unch = 0
@@ -172,6 +139,7 @@ const fluctuationStats = computed(() => {
   return { ceil, up, unch, down, flr }
 })
 
+// Danh mục ngành
 const sectorDefinitions = [
   { id: "bank", name: "Ngân hàng" },
   { id: "real_estate", name: "Bất động sản" },
@@ -210,169 +178,20 @@ const currentTableData = computed(() => {
   )
 })
 
+// Chi tiết cổ phiếu được chọn
 const selectedStock = ref<StockRowDisplay | null>(null)
-const selectedDetailTab = ref<"depth" | "overview" | "events">("depth")
-const selectedDepthSubTab = ref<"depth" | "time">("depth")
 const rawCandles = ref<IBoardCandleBar[]>([])
+const isCandlesLoading = ref(false)
+const selectedTimeframe = ref("1D")
+const timeframes = ["1m", "5m", "15m", "1H", "1D", "1W"]
+const matchedTicks = ref<MatchedTickDTO[]>([])
+const stockOverview = ref<CompanyOverviewDTO | null>(null)
+const corporateEvents = ref<CorporateEventDTO[]>([])
 
-const chartCandles = computed(() => {
-  const list = rawCandles.value
-  if (!list || list.length === 0) {
-    return []
-  }
-
-  const highs = list.map((c) => c.high)
-  const lows = list.map((c) => c.low)
-  const vols = list.map((c) => c.volume)
-
-  const minPrice = Math.min(...lows)
-  const maxPrice = Math.max(...highs)
-  const priceRange = maxPrice - minPrice || 1
-  const maxVol = Math.max(...vols) || 1
-
-  const chartHeight = 140
-  const topPad = 15
-  const count = list.length
-  const stepX = 750 / (count + 1)
-  const candleW = Math.max(Math.min(stepX * 0.6, 20), 4)
-
-  return list.map((c, i) => {
-    const x = 30 + (i + 1) * stepX
-    const wickHigh =
-      topPad + chartHeight - ((c.high - minPrice) / priceRange) * chartHeight
-    const wickLow =
-      topPad + chartHeight - ((c.low - minPrice) / priceRange) * chartHeight
-    const openY =
-      topPad + chartHeight - ((c.open - minPrice) / priceRange) * chartHeight
-    const closeY =
-      topPad + chartHeight - ((c.close - minPrice) / priceRange) * chartHeight
-
-    const bodyTop = Math.min(openY, closeY)
-    const bodyHeight = Math.max(Math.abs(openY - closeY), 2)
-    const isBull = c.close >= c.open
-    const volHeight = Math.max((c.volume / maxVol) * 45, 4)
-
-    return {
-      x,
-      wickHigh,
-      wickLow,
-      bodyTop,
-      bodyHeight,
-      halfWidth: candleW / 2,
-      width: candleW,
-      isBull,
-      volHeight,
-    }
-  })
-})
-
-const openStockDetail = (stock: StockRowDisplay) => {
-  selectedStock.value = stock
-  loadStockDetail(stock.symbol)
-}
-
-const closeStockDetail = () => {
-  selectedStock.value = null
-}
-
-interface SparklineGeometry {
-  linePath: string
-  areaPath: string
-  lastPoint: { x: number; y: number }
-}
-
-const sparkCache = new Map<string, SparklineGeometry>()
-
-const getTableSparkline = (
-  stk: StockRowDisplay,
-  width = 72,
-  height = 26,
-): SparklineGeometry => {
-  const cacheKey = `${stk.symbol}_${stk.lastPrice}_${stk.refPrice}_${stk.sparkline?.length || 0}`
-  const cached = sparkCache.get(cacheKey)
-  if (cached) return cached
-
-  const midY = height / 2.0
-  const ref = stk.refPrice || stk.lastPrice || 100
-  const last = stk.lastPrice || ref
-  const chg = last - ref
-
-  let points: number[] = []
-  if (stk.sparkline && stk.sparkline.length >= 4) {
-    points = [...stk.sparkline]
-  } else {
-    const n = 14
-    const high = stk.highPrice > 0 ? stk.highPrice : Math.max(ref, last)
-    const low = stk.lowPrice > 0 ? stk.lowPrice : Math.min(ref, last)
-    const seed = (stk.symbol || "SEC")
-      .split("")
-      .reduce((acc, c) => acc + c.charCodeAt(0), 0)
-
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1)
-      const base = ref + t * chg
-      const jitter =
-        ((((seed * (i + 1) * 17) % 100) - 50) / 100.0) *
-        Math.abs(chg * 0.4 || ref * 0.002)
-      let p = base + jitter
-      if (high > low) {
-        p = Math.max(low, Math.min(high, p))
-      }
-      points.push(p)
-    }
-    points[0] = ref
-    points[points.length - 1] = last
-  }
-
-  const maxDev =
-    Math.max(...points.map((p) => Math.abs(p - ref)), Math.abs(chg)) ||
-    ref * 0.005
-  const maxH = height / 2.0 - 3.0
-
-  const nodes: [number, number][] = []
-  for (let i = 0; i < points.length; i++) {
-    const x = Number(((i / (points.length - 1)) * width).toFixed(1))
-    const p = points[i]
-    const y = Number((midY - ((p - ref) / maxDev) * maxH).toFixed(1))
-    nodes.push([x, y])
-  }
-
-  const k = 0.22
-  let d = `M ${nodes[0][0]},${nodes[0][1]}`
-  for (let i = 1; i < nodes.length; i++) {
-    const p0 = nodes[i - 2] || nodes[i - 1]
-    const p1 = nodes[i - 1]
-    const p2 = nodes[i]
-    const p3 = nodes[i + 1] || p2
-
-    const cp1x = Number((p1[0] + (p2[0] - p0[0]) * k).toFixed(1))
-    const cp1y = Number((p1[1] + (p2[1] - p0[1]) * k).toFixed(1))
-    const cp2x = Number((p2[0] - (p3[0] - p1[0]) * k).toFixed(1))
-    const cp2y = Number((p2[1] - (p3[1] - p1[1]) * k).toFixed(1))
-
-    d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
-  }
-
-  const areaStr = `${d} L ${width},${midY} L 0,${midY} Z`
-  const lastPoint = {
-    x: nodes[nodes.length - 1][0],
-    y: nodes[nodes.length - 1][1],
-  }
-
-  const result: SparklineGeometry = {
-    linePath: d,
-    areaPath: areaStr,
-    lastPoint,
-  }
-  sparkCache.set(cacheKey, result)
-  return result
-}
-
+// Panel bên phải (Thị trường, Đặt lệnh, Sổ lệnh)
 const isRightPanelOpen = ref(true)
 const rightPanelTab = ref<"market" | "order" | "orders_book">("market")
-
 const aiInsightText = ref("")
-
 const topGainers = ref<TopMoverItem[]>([])
 const topLosers = ref<TopMoverItem[]>([])
 
@@ -383,17 +202,6 @@ const orderQuantity = ref(100)
 const orderType = ref<"LO" | "ATO" | "ATC" | "MP">("LO")
 const simulatedBalance = ref(0)
 const activePortfolioId = ref<string | null>(null)
-
-interface SimulatedOrder {
-  id: string
-  symbol: string
-  side: "BUY" | "SELL"
-  price: string
-  quantity: number
-  status: "MATCHED" | "PENDING"
-  time: string
-}
-
 const simulatedOrders = ref<SimulatedOrder[]>([])
 
 const quickFillOrder = (
@@ -408,14 +216,329 @@ const quickFillOrder = (
   isRightPanelOpen.value = true
 }
 
-const matchedTicks = ref<MatchedTickDTO[]>([])
+const openStockDetail = (stock: StockRowDisplay) => {
+  selectedStock.value = stock
+  loadStockDetail(stock.symbol)
+}
 
-const stockOverview = ref<CompanyOverviewDTO | null>(null)
-const corporateEvents = ref<CorporateEventDTO[]>([])
+const closeStockDetail = () => {
+  selectedStock.value = null
+}
 
-const selectedTimeframe = ref("1D")
-const timeframes = ["1m", "5m", "15m", "1H", "1D", "1W"]
+// Xử lý WebSocket Realtime DNSE
+const calcStockStatus = (
+  last: number,
+  ref: number,
+  ceil: number,
+  flr: number,
+): "up" | "down" | "ref" | "ceiling" | "floor" => {
+  if (ceil > 0 && last >= ceil) return "ceiling"
+  if (flr > 0 && last <= flr) return "floor"
+  if (last > ref) return "up"
+  if (last < ref) return "down"
+  return "ref"
+}
 
+const formatCompactNum = (num: number | null | undefined): string => {
+  if (!num) return "0"
+  if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2)}B`
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`
+  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`
+  return num.toLocaleString("en-US")
+}
+
+const updateIndexItem = (item: IBoardWSIndexData) => {
+  if (!item.index || item.value === null || item.value === undefined) return
+  const rawId = item.index.toLowerCase()
+  const targetId =
+    rawId === "hnxindex" ? "hnx" : rawId === "upindex" ? "upcom" : rawId
+
+  const existing = indices.value.find(
+    (idx) =>
+      idx.id.toLowerCase() === targetId || idx.name.toLowerCase() === rawId,
+  )
+  const val = item.value ?? 0
+  const chg = item.change ?? 0
+  const pct = item.pct_change ?? 0
+  const isPositive = chg > 0
+  const isUnchanged = chg === 0
+
+  const breadth: IndexBreadth | null =
+    item.advance !== undefined || item.decline !== undefined
+      ? {
+          advance: item.advance ?? 0,
+          ceiling: item.ceiling ?? 0,
+          unchanged: item.no_change ?? 0,
+          decline: item.decline ?? 0,
+          floor: item.floor ?? 0,
+        }
+      : (existing?.breadth ?? null)
+
+  const volStr = item.total_volume
+    ? formatCompactNum(item.total_volume)
+    : existing?.volume || "0"
+  const valStr = item.total_value
+    ? formatCompactNum(item.total_value)
+    : existing?.value || "0"
+
+  if (existing) {
+    existing.price = val.toFixed(2)
+    existing.change = `${chg > 0 ? "+" : ""}${chg.toFixed(2)}`
+    existing.changePercent = `${pct > 0 ? "+" : ""}${pct.toFixed(2)}%`
+    existing.isPositive = isPositive
+    existing.isUnchanged = isUnchanged
+    if (breadth) existing.breadth = breadth
+    if (item.total_volume) existing.volume = volStr
+    if (item.total_value) existing.value = valStr
+  } else {
+    indices.value.push({
+      id: targetId,
+      name: item.index,
+      price: val.toFixed(2),
+      change: `${chg > 0 ? "+" : ""}${chg.toFixed(2)}`,
+      changePercent: `${pct > 0 ? "+" : ""}${pct.toFixed(2)}%`,
+      isPositive,
+      isUnchanged,
+      volume: volStr,
+      value: valStr,
+      breadth,
+      sparkline: [val],
+    })
+  }
+}
+
+const handleWsIndicesSnapshot = (list: IBoardWSIndexData[]) => {
+  for (const item of list) {
+    updateIndexItem(item)
+  }
+}
+
+const handleWsTrade = (symbol: string, trade: IBoardWSTradeData) => {
+  const sym = symbol.toUpperCase()
+  const target = tableData.value.find((s) => s.symbol.toUpperCase() === sym)
+  const last = trade.close
+
+  if (target && last !== undefined && last !== null) {
+    target.lastPrice = last
+    if (trade.volume !== undefined && trade.volume !== null) {
+      target.volume = trade.volume
+    }
+    if (
+      trade.high !== undefined &&
+      trade.high !== null &&
+      trade.high > target.highPrice
+    ) {
+      target.highPrice = trade.high
+    }
+    if (
+      trade.low !== undefined &&
+      trade.low !== null &&
+      (target.lowPrice === 0 || trade.low < target.lowPrice)
+    ) {
+      target.lowPrice = trade.low
+    }
+    if (target.refPrice > 0) {
+      target.change = target.lastPrice - target.refPrice
+      target.changePercent = (target.change / target.refPrice) * 100
+    }
+    target.status = calcStockStatus(
+      target.lastPrice,
+      target.refPrice,
+      target.ceilingPrice,
+      target.floorPrice,
+    )
+    if (target.sparkline && target.sparkline.length > 0) {
+      target.sparkline.push(target.lastPrice)
+      if (target.sparkline.length > 25) {
+        target.sparkline.shift()
+      }
+    }
+  }
+
+  if (
+    selectedStock.value &&
+    selectedStock.value.symbol.toUpperCase() === sym &&
+    last !== undefined &&
+    last !== null
+  ) {
+    selectedStock.value.lastPrice = last
+    if (trade.volume) selectedStock.value.volume = trade.volume
+    if (trade.high && trade.high > selectedStock.value.highPrice) {
+      selectedStock.value.highPrice = trade.high
+    }
+    if (
+      trade.low &&
+      (selectedStock.value.lowPrice === 0 ||
+        trade.low < selectedStock.value.lowPrice)
+    ) {
+      selectedStock.value.lowPrice = trade.low
+    }
+    if (selectedStock.value.refPrice > 0) {
+      selectedStock.value.change =
+        selectedStock.value.lastPrice - selectedStock.value.refPrice
+      selectedStock.value.changePercent =
+        (selectedStock.value.change / selectedStock.value.refPrice) * 100
+    }
+    selectedStock.value.status = calcStockStatus(
+      selectedStock.value.lastPrice,
+      selectedStock.value.refPrice,
+      selectedStock.value.ceilingPrice,
+      selectedStock.value.floorPrice,
+    )
+
+    const tickTime = trade.time
+      ? trade.time.slice(0, 8)
+      : new Date().toTimeString().split(" ")[0]
+    const ref = selectedStock.value.refPrice || last
+    const side = last > ref ? "B" : last < ref ? "S" : "U"
+    matchedTicks.value.unshift({
+      time: tickTime,
+      price: last,
+      volume: trade.trade_quantity ?? trade.volume ?? 100,
+      side,
+    })
+    if (matchedTicks.value.length > 50) {
+      matchedTicks.value.pop()
+    }
+  }
+}
+
+const handleWsQuote = (symbol: string, quote: IBoardWSQuoteData) => {
+  const sym = symbol.toUpperCase()
+  const target = tableData.value.find((s) => s.symbol.toUpperCase() === sym)
+
+  const applyQuoteToRow = (row: StockRowDisplay) => {
+    if (quote.close_price !== undefined && quote.close_price !== null) {
+      row.lastPrice = quote.close_price
+    }
+    if (quote.reference_price !== undefined && quote.reference_price !== null) {
+      row.refPrice = quote.reference_price
+    }
+    if (quote.ceiling_price !== undefined && quote.ceiling_price !== null) {
+      row.ceilingPrice = quote.ceiling_price
+    }
+    if (quote.floor_price !== undefined && quote.floor_price !== null) {
+      row.floorPrice = quote.floor_price
+    }
+    if (quote.high_price !== undefined && quote.high_price !== null) {
+      row.highPrice = quote.high_price
+    }
+    if (quote.low_price !== undefined && quote.low_price !== null) {
+      row.lowPrice = quote.low_price
+    }
+    if (quote.price_change !== undefined && quote.price_change !== null) {
+      row.change = quote.price_change
+    } else if (row.refPrice > 0) {
+      row.change = row.lastPrice - row.refPrice
+    }
+    if (quote.percent_change !== undefined && quote.percent_change !== null) {
+      row.changePercent = quote.percent_change
+    } else if (row.refPrice > 0) {
+      row.changePercent = (row.change / row.refPrice) * 100
+    }
+    if (
+      quote.volume_accumulated !== undefined &&
+      quote.volume_accumulated !== null
+    ) {
+      row.volume = quote.volume_accumulated
+    }
+    if (
+      quote.foreign_buy_volume !== undefined &&
+      quote.foreign_buy_volume !== null
+    ) {
+      row.foreignBuy = quote.foreign_buy_volume
+    }
+    if (
+      quote.foreign_sell_volume !== undefined &&
+      quote.foreign_sell_volume !== null
+    ) {
+      row.foreignSell = quote.foreign_sell_volume
+    }
+    row.status = calcStockStatus(
+      row.lastPrice,
+      row.refPrice,
+      row.ceilingPrice,
+      row.floorPrice,
+    )
+
+    const bids: { price: number; volume: number }[] = []
+    if (quote.bid_price_1 !== undefined && quote.bid_price_1 !== null) {
+      bids.push({ price: quote.bid_price_1, volume: quote.bid_vol_1 ?? 0 })
+    }
+    if (quote.bid_price_2 !== undefined && quote.bid_price_2 !== null) {
+      bids.push({ price: quote.bid_price_2, volume: quote.bid_vol_2 ?? 0 })
+    }
+    if (quote.bid_price_3 !== undefined && quote.bid_price_3 !== null) {
+      bids.push({ price: quote.bid_price_3, volume: quote.bid_vol_3 ?? 0 })
+    }
+    if (bids.length > 0) row.bidBook = bids
+
+    const asks: { price: number; volume: number }[] = []
+    if (quote.ask_price_1 !== undefined && quote.ask_price_1 !== null) {
+      asks.push({ price: quote.ask_price_1, volume: quote.ask_vol_1 ?? 0 })
+    }
+    if (quote.ask_price_2 !== undefined && quote.ask_price_2 !== null) {
+      asks.push({ price: quote.ask_price_2, volume: quote.ask_vol_2 ?? 0 })
+    }
+    if (quote.ask_price_3 !== undefined && quote.ask_price_3 !== null) {
+      asks.push({ price: quote.ask_price_3, volume: quote.ask_vol_3 ?? 0 })
+    }
+    if (asks.length > 0) row.askBook = asks
+  }
+
+  if (target) {
+    applyQuoteToRow(target)
+  }
+  if (selectedStock.value && selectedStock.value.symbol.toUpperCase() === sym) {
+    applyQuoteToRow(selectedStock.value)
+  }
+}
+
+const handleWsStockSnapshot = (
+  symbol: string,
+  quote: IBoardWSQuoteData | null,
+  ticks: IBoardWSTick[],
+) => {
+  const sym = symbol.toUpperCase()
+  if (quote) {
+    handleWsQuote(sym, quote)
+  }
+  if (
+    selectedStock.value &&
+    selectedStock.value.symbol.toUpperCase() === sym &&
+    ticks &&
+    ticks.length > 0
+  ) {
+    matchedTicks.value = ticks.map((t) => ({
+      time: t.time ? t.time.slice(0, 8) : "--:--:--",
+      price: t.price,
+      volume: t.volume,
+      side: t.side || "U",
+    }))
+  }
+}
+
+const iboardWs = useIBoardWebSocket({
+  onIndex: updateIndexItem,
+  onIndicesSnapshot: handleWsIndicesSnapshot,
+  onTrade: handleWsTrade,
+  onQuote: handleWsQuote,
+  onStockSnapshot: handleWsStockSnapshot,
+})
+
+watch(
+  () => selectedStock.value?.symbol,
+  (newSym, oldSym) => {
+    if (oldSym && oldSym !== newSym) {
+      iboardWs.unsubscribeStock(oldSym)
+    }
+    if (newSym) {
+      iboardWs.subscribeStock(newSym)
+    }
+  },
+)
+
+// Gọi API nạp dữ liệu REST
 const loadIndices = async () => {
   try {
     const res = await StockService.getIBoardIndices()
@@ -458,6 +581,10 @@ const loadBoardData = async () => {
         orderSymbol.value = tableData.value[0].symbol
         orderPrice.value = tableData.value[0].lastPrice.toFixed(2)
       }
+      const symList = tableData.value
+        .slice(0, 60)
+        .map((s) => `stock:${s.symbol}`)
+      iboardWs.subscribe(symList)
     }
   } catch (err) {
     console.warn("Could not fetch board data from backend:", err)
@@ -465,8 +592,6 @@ const loadBoardData = async () => {
     isLoadingBoard.value = false
   }
 }
-
-const isCandlesLoading = ref(false)
 
 const loadCandles = async (symbol: string, tf: string) => {
   isCandlesLoading.value = true
@@ -633,70 +758,34 @@ onMounted(() => {
   }
 
   autoRefreshTimer = setInterval(() => {
-    loadIndices()
-    loadBoardData()
-  }, 6000)
+    if (!iboardWs.isConnected.value) {
+      loadIndices()
+      loadBoardData()
+    }
+  }, 10000)
+
+  marketPulseTimer = setInterval(() => {
+    loadMarketPulse()
+  }, 60000)
 })
 
 onUnmounted(() => {
   if (clockTimer) clearInterval(clockTimer)
   if (autoRefreshTimer) clearInterval(autoRefreshTimer)
+  if (marketPulseTimer) clearInterval(marketPulseTimer)
   if (searchDebounce) clearTimeout(searchDebounce)
 })
 </script>
 
 <template>
   <div class="h-screen bg-surface-abyss text-aave-paper font-sans flex flex-col antialiased select-none overflow-hidden">
-
-    <header class="h-12 bg-aave-inkwell border-b border-white/[0.08] px-4 flex items-center justify-between shrink-0 z-30">
-
-      <div class="flex items-center gap-5">
-        <NuxtLink to="/" class="flex items-center gap-2 group">
-          <div class="flex flex-col">
-            <span class="font-bold text-sm tracking-tight text-white group-hover:text-rose-500 transition-colors">
-              VNSTOCK
-            </span>
-          </div>
-        </NuxtLink>
-
-        <nav class="hidden xl:flex items-center gap-1 text-xs font-medium text-aave-ash">
-          <NuxtLink to="/" class="px-2.5 py-1.5 rounded hover:text-white hover:bg-white/[0.04] transition-colors">
-            <UIcon name="i-heroicons-home" class="w-4 h-4 inline-block" />
-          </NuxtLink>
-          <NuxtLink to="/iboard" class="px-2.5 py-1.5 rounded text-white font-semibold border-b-2 border-rose-500 bg-white/[0.04]">
-            Bảng giá
-          </NuxtLink>
-          <button type="button" class="px-2.5 py-1.5 rounded hover:text-white hover:bg-white/[0.04] transition-colors" @click="rightPanelTab = 'order'; isRightPanelOpen = true">
-            Đặt lệnh
-          </button>
-          <NuxtLink to="/admin" class="px-2.5 py-1.5 rounded hover:text-white hover:bg-white/[0.04] transition-colors">
-            Phân tích
-          </NuxtLink>
-          <NuxtLink to="/admin" class="px-2.5 py-1.5 rounded hover:text-white hover:bg-white/[0.04] transition-colors">
-            Cockpit
-          </NuxtLink>
-        </nav>
-      </div>
-
-      <div class="flex items-center gap-3">
-
-        <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-white/[0.04] border border-white/[0.06] text-xs font-mono text-aave-ash tabular-nums">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{{ currentTime }}</span>
-        </div>
-
-        <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-xs font-mono text-aave-graphite">
-          <UTooltip text="Môi trường kiểm thử giả lập cách ly tuyệt đối khỏi tài khoản tiền thật">
-            <span class="text-emerald-400 font-medium">Mô phỏng Sandbox</span>
-          </UTooltip>
-        </div>
-
-        <NuxtLink to="/admin" class="hidden md:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium transition-colors">
-          <span>Trung tâm định lượng</span>
-          <UIcon name="i-heroicons-arrow-right" class="w-3.5 h-3.5" />
-        </NuxtLink>
-      </div>
-    </header>
+    <!-- Header hệ thống -->
+    <IBoardHeader
+      :current-time="currentTime"
+      :is-ws-connected="iboardWs.isConnected.value"
+      :is-ws-connecting="iboardWs.isConnecting.value"
+      @open-order-form="rightPanelTab = 'order'; isRightPanelOpen = true"
+    />
 
     <!-- Dải chỉ số thị trường (Market Indices Ribbon) -->
     <IBoardIndexRibbon
@@ -706,1007 +795,68 @@ onUnmounted(() => {
       @select-index="handleIndexSelect"
     />
 
-    <div class="bg-aave-inkwell border-b border-white/[0.08] px-4 py-2 flex flex-col gap-2 shrink-0">
+    <!-- Thanh chuyển danh mục & bộ lọc thị trường -->
+    <IBoardCategoryNav
+      v-model:main-category="mainCategory"
+      v-model:listed-sub-basket="listedSubBasket"
+      v-model:sector-sub-basket="sectorSubBasket"
+      v-model:search-query="searchQuery"
+      v-model:price-unit-display="priceUnitDisplay"
+      :sector-list="sectorList"
+      :fluctuation-stats="fluctuationStats"
+    />
 
-      <div class="flex items-center justify-between gap-4 overflow-x-auto">
-        <div class="flex items-center gap-1 text-xs font-medium text-aave-ash">
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-            :class="mainCategory === 'watchlist' ? 'bg-white/[0.08] text-white font-semibold' : 'hover:text-white'"
-            @click="mainCategory = 'watchlist'"
-          >
-            Danh mục của bạn
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-            :class="mainCategory === 'listed' ? 'bg-rose-600 text-white font-semibold' : 'hover:text-white'"
-            @click="mainCategory = 'listed'"
-          >
-            Niêm yết
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-            :class="mainCategory === 'sectors' ? 'bg-rose-600 text-white font-semibold' : 'hover:text-white'"
-            @click="mainCategory = 'sectors'"
-          >
-            Ngành
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-            :class="mainCategory === 'derivatives' ? 'bg-rose-600 text-white font-semibold' : 'hover:text-white'"
-            @click="mainCategory = 'derivatives'"
-          >
-            Phái sinh
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-            :class="mainCategory === 'warrants' ? 'bg-rose-600 text-white font-semibold' : 'hover:text-white'"
-            @click="mainCategory = 'warrants'"
-          >
-            Chứng quyền
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-            :class="mainCategory === 'etf' ? 'bg-rose-600 text-white font-semibold' : 'hover:text-white'"
-            @click="mainCategory = 'etf'"
-          >
-            ETF
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-            :class="mainCategory === 'put_through' ? 'bg-rose-600 text-white font-semibold' : 'hover:text-white'"
-            @click="mainCategory = 'put_through'"
-          >
-            Thỏa thuận
-          </button>
-        </div>
-
-        <div class="hidden lg:flex items-center gap-1.5 text-xs font-mono">
-          <span class="text-aave-graphite mr-1">Thống kê biến động:</span>
-          <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-950/40 border border-purple-800/40 text-purple-400">
-            <UIcon name="i-heroicons-arrow-trending-up" class="w-3 h-3" />
-            <span>{{ fluctuationStats.ceil }}</span>
-          </div>
-          <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-800/40 text-emerald-400">
-            <UIcon name="i-heroicons-arrow-up" class="w-3 h-3" />
-            <span>{{ fluctuationStats.up }}</span>
-          </div>
-          <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-950/40 border border-amber-800/40 text-amber-400">
-            <UIcon name="i-heroicons-minus" class="w-3 h-3" />
-            <span>{{ fluctuationStats.unch }}</span>
-          </div>
-          <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-950/40 border border-rose-800/40 text-rose-500">
-            <UIcon name="i-heroicons-arrow-down" class="w-3 h-3" />
-            <span>{{ fluctuationStats.down }}</span>
-          </div>
-          <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-950/40 border border-cyan-800/40 text-cyan-400">
-            <UIcon name="i-heroicons-arrow-trending-down" class="w-3 h-3" />
-            <span>{{ fluctuationStats.flr }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between gap-3 overflow-x-auto pt-1 border-t border-white/[0.04]">
-        <div class="flex items-center gap-2">
-
-          <div class="relative w-48 shrink-0">
-            <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-aave-graphite" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Tìm mã chứng khoán..."
-              class="w-full bg-surface-abyss border border-white/[0.1] rounded pl-8 pr-2.5 py-1 text-xs text-white placeholder-aave-graphite focus:outline-none focus:border-rose-500 transition-colors uppercase font-mono"
-            >
-          </div>
-
-          <template v-if="mainCategory === 'listed'">
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded text-xs font-semibold transition-colors"
-              :class="listedSubBasket === 'VN30' ? 'bg-rose-600 text-white' : 'bg-surface-abyss text-aave-ash hover:text-white'"
-              @click="listedSubBasket = 'VN30'"
-            >
-              VN30
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded text-xs font-semibold transition-colors"
-              :class="listedSubBasket === 'HSX' ? 'bg-rose-600 text-white' : 'bg-surface-abyss text-aave-ash hover:text-white'"
-              @click="listedSubBasket = 'HSX'"
-            >
-              HSX
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded text-xs font-semibold transition-colors"
-              :class="listedSubBasket === 'HNX' ? 'bg-rose-600 text-white' : 'bg-surface-abyss text-aave-ash hover:text-white'"
-              @click="listedSubBasket = 'HNX'"
-            >
-              HNX
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded text-xs font-semibold transition-colors"
-              :class="listedSubBasket === 'UPCOM' ? 'bg-rose-600 text-white' : 'bg-surface-abyss text-aave-ash hover:text-white'"
-              @click="listedSubBasket = 'UPCOM'"
-            >
-              UPCOM
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded text-xs font-semibold transition-colors"
-              :class="listedSubBasket === 'MARGIN_DISCOUNT' ? 'bg-rose-600 text-white' : 'bg-surface-abyss text-aave-ash hover:text-white'"
-              @click="listedSubBasket = 'MARGIN_DISCOUNT'"
-            >
-              Vay ưu đãi
-            </button>
-          </template>
-
-          <template v-else-if="mainCategory === 'sectors'">
-            <div class="flex items-center gap-1.5 overflow-x-auto">
-              <button
-                v-for="sec in sectorList"
-                :key="sec.id"
-                type="button"
-                class="px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1"
-                :class="sectorSubBasket === sec.id ? 'bg-rose-600 text-white font-semibold' : 'bg-surface-abyss text-aave-ash hover:text-white'"
-                @click="sectorSubBasket = sec.id"
-              >
-                <span>{{ sec.name }}</span>
-                <span
-                  v-if="sec.change"
-                  class="text-xs opacity-90 font-mono"
-                  :class="sec.change.startsWith('+') ? 'text-emerald-400' : 'text-rose-400'"
-                >
-                  {{ sec.change }}
-                </span>
-              </button>
-            </div>
-          </template>
-
-          <template v-else-if="mainCategory === 'derivatives'">
-            <span class="text-xs text-aave-graphite px-2 font-mono">Hợp đồng tương lai chỉ số VN30 và VN100</span>
-          </template>
-
-          <template v-else-if="mainCategory === 'warrants'">
-            <span class="text-xs text-aave-graphite px-2 font-mono">Chứng quyền có bảo đảm niêm yết trên HOSE</span>
-          </template>
-
-          <template v-else-if="mainCategory === 'etf'">
-            <span class="text-xs text-aave-graphite px-2 font-mono">Chứng chỉ quỹ ETF mô phỏng rổ chỉ số chứng khoán</span>
-          </template>
-
-          <template v-else-if="mainCategory === 'watchlist'">
-            <span class="text-xs text-aave-graphite px-2 font-mono">Danh mục cổ phiếu đang theo dõi</span>
-          </template>
-
-          <template v-else-if="mainCategory === 'put_through'">
-            <span class="text-xs text-aave-graphite px-2 font-mono">Giao dịch thỏa thuận khớp lệnh định kỳ</span>
-          </template>
-        </div>
-
-        <div class="flex items-center gap-2 text-xs font-mono">
-          <div class="flex items-center bg-surface-abyss border border-white/[0.08] rounded p-0.5">
-            <button
-              type="button"
-              class="px-2 py-0.5 rounded text-xs transition-colors"
-              :class="priceUnitDisplay === 'percent' ? 'bg-white/[0.1] text-white font-semibold' : 'text-aave-graphite hover:text-white'"
-              @click="priceUnitDisplay = 'percent'"
-            >
-              %
-            </button>
-            <button
-              type="button"
-              class="px-2 py-0.5 rounded text-xs transition-colors"
-              :class="priceUnitDisplay === 'diff' ? 'bg-white/[0.1] text-white font-semibold' : 'text-aave-graphite hover:text-white'"
-              @click="priceUnitDisplay = 'diff'"
-            >
-              +/- Điểm
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <!-- Không gian làm việc chính (Bảng giá / Chi tiết cổ phiếu + Panel phụ) -->
     <div class="flex-1 flex overflow-hidden">
-
+      <!-- Vùng hiển thị dữ liệu bảng hoặc chi tiết mã -->
       <div class="flex-1 flex flex-col overflow-hidden bg-surface-abyss">
+        <!-- Bảng giá niêm yết -->
+        <IBoardTable
+          v-if="!selectedStock"
+          :data="currentTableData"
+          :main-category="mainCategory"
+          :price-unit-display="priceUnitDisplay"
+          :is-loading="isLoadingBoard"
+          @select-stock="openStockDetail"
+          @quick-order="quickFillOrder"
+        />
 
-        <div v-if="!selectedStock" class="flex-1 overflow-auto">
-          <!-- Bang gia rut gon: Do thi va Tuong quan Mua / Ban chu dong -->
-          <table class="w-full text-left border-collapse text-xs">
-            <thead class="sticky top-0 bg-aave-inkwell border-b border-white/[0.08] text-aave-graphite font-medium z-10">
-              <tr>
-                <th class="py-2.5 px-4 font-normal">Mã chứng khoán</th>
-                <th class="py-2.5 px-4 text-right font-normal">Giá khớp</th>
-                <th class="py-2.5 px-4 text-right font-normal">
-                  {{ priceUnitDisplay === 'percent' ? '% Thay đổi' : '+/- Giá trị' }}
-                </th>
-                <th v-if="mainCategory === 'derivatives'" class="py-2.5 px-4 text-center font-normal">Ngày đáo hạn</th>
-                <th class="py-2.5 px-4 text-right font-normal">Tổng khối lượng</th>
-                <th class="py-2.5 px-4 text-center font-normal">Biểu đồ</th>
-                <th class="py-2.5 px-4 text-center font-normal min-w-[140px]">Mua / Bán chủ động</th>
-                <th class="py-2.5 px-3 text-center font-normal w-12" />
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/[0.04]">
-              <tr
-                v-for="stk in currentTableData"
-                :key="stk.symbol"
-                class="hover:bg-white/[0.04] transition-colors cursor-pointer group"
-                @click="openStockDetail(stk)"
-              >
-                <td class="py-2.5 px-4">
-                  <div class="flex items-center gap-2.5">
-                    <div class="flex flex-col">
-                      <div class="flex items-center gap-1.5">
-                        <span
-                          class="font-bold text-sm font-mono tracking-tight"
-                          :class="getPriceColorClass(stk.lastPrice, stk)"
-                        >
-                          {{ stk.symbol }}
-                        </span>
-                      </div>
-                      <span class="text-xs text-aave-graphite truncate max-w-[200px]">{{ stk.name }}</span>
-                    </div>
-                  </div>
-                </td>
-
-                <td class="py-2.5 px-4 text-right font-mono font-bold tabular-nums text-sm"
-                  :class="getPriceColorClass(stk.lastPrice, stk)"
-                >
-                  {{ stk.lastPrice.toFixed(mainCategory === 'derivatives' ? 1 : 2) }}
-                </td>
-
-                <td class="py-2.5 px-4 text-right font-mono font-medium tabular-nums"
-                  :class="getPriceColorClass(stk.lastPrice, stk)"
-                >
-                  <span v-if="priceUnitDisplay === 'percent'">
-                    {{ stk.changePercent > 0 ? '+' : '' }}{{ stk.changePercent.toFixed(2) }}%
-                  </span>
-                  <span v-else>
-                    {{ stk.change > 0 ? '+' : '' }}{{ stk.change.toFixed(2) }}
-                  </span>
-                </td>
-
-                <td v-if="mainCategory === 'derivatives'" class="py-2.5 px-4 text-center font-mono text-aave-ash">
-                  {{ stk.expiryDate || 'Chưa định dạng' }}
-                </td>
-
-                <td class="py-2.5 px-4 text-right font-mono text-aave-ash tabular-nums">
-                  {{ stk.volume.toLocaleString('en-US') }}
-                </td>
-
-                <td class="py-2.5 px-4 text-center">
-                  <div
-                    v-if="getTableSparkline(stk)"
-                    class="w-[72px] h-[26px] mx-auto flex items-center justify-center select-none"
-                  >
-                    <svg class="w-full h-full overflow-hidden" viewBox="0 0 72 26">
-                      <defs>
-                        <clipPath :id="`top-clip-${stk.symbol}`">
-                          <rect x="0" y="0" width="72" height="13" />
-                        </clipPath>
-                        <clipPath :id="`bot-clip-${stk.symbol}`">
-                          <rect x="0" y="13" width="72" height="13" />
-                        </clipPath>
-                      </defs>
-
-                      <!-- Reference Baseline -->
-                      <line
-                        x1="0"
-                        y1="13"
-                        x2="72"
-                        y2="13"
-                        stroke="rgba(255, 255, 255, 0.16)"
-                        stroke-width="0.8"
-                        stroke-dasharray="2 2"
-                      />
-
-                      <!-- Top Shaded Area (Emerald Gain) -->
-                      <path
-                        :d="getTableSparkline(stk).areaPath"
-                        fill="rgba(16, 185, 129, 0.30)"
-                        :clip-path="`url(#top-clip-${stk.symbol})`"
-                      />
-
-                      <!-- Bottom Shaded Area (Burgundy Loss) -->
-                      <path
-                        :d="getTableSparkline(stk).areaPath"
-                        fill="rgba(239, 68, 68, 0.36)"
-                        :clip-path="`url(#bot-clip-${stk.symbol})`"
-                      />
-
-                      <!-- Line Path Green (Above Baseline) -->
-                      <path
-                        fill="none"
-                        stroke="#10b981"
-                        stroke-width="1.3"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        :d="getTableSparkline(stk).linePath"
-                        :clip-path="`url(#top-clip-${stk.symbol})`"
-                      />
-
-                      <!-- Line Path Red (Below Baseline) -->
-                      <path
-                        fill="none"
-                        stroke="#f43f5e"
-                        stroke-width="1.3"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        :d="getTableSparkline(stk).linePath"
-                        :clip-path="`url(#bot-clip-${stk.symbol})`"
-                      />
-
-                      <!-- Live Endpoint Dot -->
-                      <circle
-                        :cx="getTableSparkline(stk).lastPoint.x"
-                        :cy="getTableSparkline(stk).lastPoint.y"
-                        r="1.8"
-                        :fill="stk.change >= 0 ? '#10b981' : '#f43f5e'"
-                      />
-                    </svg>
-                  </div>
-                </td>
-
-                <td class="py-2.5 px-4 text-center">
-                  <div class="flex flex-col gap-1 w-32 mx-auto">
-                    <div class="flex items-center justify-between text-xs font-mono text-aave-graphite">
-                      <span class="text-emerald-400">{{ stk.buyRatio }}%</span>
-                      <span class="text-rose-500">{{ stk.sellRatio }}%</span>
-                    </div>
-                    <div class="w-full h-1.5 rounded-full overflow-hidden flex bg-white/[0.06]">
-                      <div class="bg-emerald-500" :style="{ width: `${stk.buyRatio}%` }" />
-                      <div class="bg-rose-500" :style="{ width: `${stk.sellRatio}%` }" />
-                    </div>
-                  </div>
-                </td>
-
-                <td class="py-2.5 px-3 text-center">
-                  <button
-                    type="button"
-                    class="w-6 h-6 rounded-full bg-white/[0.06] hover:bg-rose-600 text-aave-ash hover:text-white flex items-center justify-center transition-colors"
-                    title="Đặt lệnh nhanh"
-                    @click.stop="quickFillOrder(stk.symbol, stk.lastPrice, 'BUY')"
-                  >
-                    <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-else-if="selectedStock" class="flex-1 flex overflow-hidden">
-
-          <div class="w-64 border-r border-white/[0.08] bg-aave-inkwell flex flex-col shrink-0">
-            <div class="p-2 border-b border-white/[0.08] text-xs font-medium text-aave-graphite flex items-center justify-between">
-              <span>Danh sách mã</span>
-              <span class="font-mono text-xs">{{ currentTableData.length }} mã</span>
-            </div>
-            <div class="flex-1 overflow-y-auto divide-y divide-white/[0.04]">
-              <div
-                v-for="stk in currentTableData"
-                :key="stk.symbol"
-                class="p-2.5 flex items-center justify-between cursor-pointer transition-colors"
-                :class="selectedStock.symbol === stk.symbol ? 'bg-white/[0.08] border-l-2 border-rose-500' : 'hover:bg-white/[0.04]'"
-                @click="selectedStock = stk"
-              >
-                <div class="flex flex-col">
-                  <span class="font-bold text-xs font-mono" :class="stk.change > 0 ? 'text-emerald-400' : stk.change < 0 ? 'text-rose-500' : 'text-amber-400'">
-                    {{ stk.symbol }}
-                  </span>
-                  <span class="text-xs text-aave-graphite font-mono">{{ stk.volume.toLocaleString('en-US') }} CP</span>
-                </div>
-                <div class="flex flex-col items-end font-mono">
-                  <span class="text-xs font-bold" :class="stk.change > 0 ? 'text-emerald-400' : stk.change < 0 ? 'text-rose-500' : 'text-amber-400'">
-                    {{ stk.lastPrice.toFixed(2) }}
-                  </span>
-                  <span class="text-xs" :class="stk.change > 0 ? 'text-emerald-400' : stk.change < 0 ? 'text-rose-500' : 'text-amber-400'">
-                    {{ stk.changePercent > 0 ? '+' : '' }}{{ stk.changePercent.toFixed(2) }}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex-1 flex flex-col overflow-y-auto">
-
-            <div class="p-3 bg-aave-obsidian border-b border-white/[0.08] flex items-center justify-between shrink-0">
-              <div class="flex items-center gap-3">
-                <button
-                  type="button"
-                  class="w-7 h-7 rounded hover:bg-white/[0.08] flex items-center justify-center text-aave-graphite hover:text-white transition-colors"
-                  @click="closeStockDetail"
-                >
-                  <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
-                </button>
-
-                <div class="flex flex-col">
-                  <div class="flex items-center gap-2">
-                    <span class="text-base font-bold font-mono text-white">{{ selectedStock.symbol }}</span>
-                    <span class="text-xs text-aave-ash">{{ selectedStock.exchange }} - {{ selectedStock.name }}</span>
-                    <span v-if="selectedStock.sector" class="text-xs px-2 py-0.5 rounded bg-white/[0.06] text-aave-ash">
-                      {{ selectedStock.sector }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-5">
-                <div class="flex items-center gap-2 font-mono">
-                  <span class="text-xl font-bold tabular-nums" :class="selectedStock.change > 0 ? 'text-emerald-400' : selectedStock.change < 0 ? 'text-rose-500' : 'text-amber-400'">
-                    {{ selectedStock.lastPrice.toFixed(2) }}
-                  </span>
-                  <div class="flex items-center gap-1 text-xs font-medium" :class="selectedStock.change > 0 ? 'text-emerald-400' : selectedStock.change < 0 ? 'text-rose-500' : 'text-amber-400'">
-                    <span>{{ selectedStock.change > 0 ? '+' : '' }}{{ selectedStock.change.toFixed(2) }}</span>
-                    <span>({{ selectedStock.changePercent > 0 ? '+' : '' }}{{ selectedStock.changePercent.toFixed(2) }}%)</span>
-                  </div>
-                </div>
-
-                <div class="hidden md:flex flex-col text-right font-mono text-xs text-aave-graphite">
-                  <span>KL: {{ selectedStock.volume.toLocaleString('en-US') }} CP</span>
-                  <span>GT: {{ selectedStock.valueBillion }} Tỷ</span>
-                </div>
-
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors"
-                    @click="quickFillOrder(selectedStock.symbol, selectedStock.lastPrice, 'BUY')"
-                  >
-                    Mua
-                  </button>
-                  <button
-                    type="button"
-                    class="px-3 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors"
-                    @click="quickFillOrder(selectedStock.symbol, selectedStock.lastPrice, 'SELL')"
-                  >
-                    Bán
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="p-3 bg-surface-abyss border-b border-white/[0.08] flex flex-col h-72 shrink-0">
-
-              <div class="flex items-center justify-between pb-2 border-b border-white/[0.04]">
-                <div class="flex items-center gap-1 text-xs font-mono">
-                  <button
-                    v-for="tf in timeframes"
-                    :key="tf"
-                    type="button"
-                    class="px-2 py-0.5 rounded transition-colors"
-                    :class="selectedTimeframe === tf ? 'bg-white/[0.1] text-white font-bold' : 'text-aave-graphite hover:text-white'"
-                    @click="selectedTimeframe = tf"
-                  >
-                    {{ tf }}
-                  </button>
-                </div>
-                <div class="text-xs font-mono text-aave-graphite">
-                  Khung thời gian phân tích kỹ thuật
-                </div>
-              </div>
-
-              <div class="flex-1 w-full relative pt-2 flex items-center justify-center">
-                <div v-if="isCandlesLoading" class="absolute inset-0 flex items-center justify-center text-xs text-aave-graphite font-mono">
-                  Đang tải nến kỹ thuật...
-                </div>
-                <div v-else-if="chartCandles.length === 0" class="absolute inset-0 flex items-center justify-center text-xs text-aave-graphite font-mono">
-                  Không có dữ liệu nến lịch sử
-                </div>
-                <svg v-else class="w-full h-full" viewBox="0 0 800 200" preserveAspectRatio="none">
-
-                  <line x1="0" y1="50" x2="800" y2="50" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4" />
-                  <line x1="0" y1="100" x2="800" y2="100" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4" />
-                  <line x1="0" y1="150" x2="800" y2="150" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4" />
-
-                  <g v-for="(c, idx) in chartCandles" :key="idx">
-
-                    <line
-                      :x1="c.x"
-                      :y1="c.wickHigh"
-                      :x2="c.x"
-                      :y2="c.wickLow"
-                      :stroke="c.isBull ? '#34d399' : '#f43f5e'"
-                      stroke-width="1.5"
-                    />
-
-                    <rect
-                      :x="c.x - c.halfWidth"
-                      :y="c.bodyTop"
-                      :width="c.width"
-                      :height="c.bodyHeight"
-                      :fill="c.isBull ? '#34d399' : '#f43f5e'"
-                      rx="1"
-                    />
-
-                    <rect
-                      :x="c.x - c.halfWidth"
-                      :y="200 - c.volHeight"
-                      :width="c.width"
-                      :height="c.volHeight"
-                      :fill="c.isBull ? 'rgba(52, 211, 153, 0.4)' : 'rgba(244, 63, 94, 0.4)'"
-                    />
-                  </g>
-                </svg>
-              </div>
-            </div>
-
-            <div class="flex-1 bg-aave-inkwell flex flex-col p-3">
-              <div class="flex items-center justify-between border-b border-white/[0.08] pb-2 mb-3">
-                <div class="flex items-center gap-3 text-xs font-medium">
-                  <button
-                    type="button"
-                    class="pb-1 transition-colors"
-                    :class="selectedDetailTab === 'depth' ? 'text-white border-b-2 border-rose-500 font-bold' : 'text-aave-graphite hover:text-white'"
-                    @click="selectedDetailTab = 'depth'"
-                  >
-                    Bước giá
-                  </button>
-                  <button
-                    type="button"
-                    class="pb-1 transition-colors"
-                    :class="selectedDetailTab === 'overview' ? 'text-white border-b-2 border-rose-500 font-bold' : 'text-aave-graphite hover:text-white'"
-                    @click="selectedDetailTab = 'overview'"
-                  >
-                    Thông tin
-                  </button>
-                  <button
-                    type="button"
-                    class="pb-1 transition-colors"
-                    :class="selectedDetailTab === 'events' ? 'text-white border-b-2 border-rose-500 font-bold' : 'text-aave-graphite hover:text-white'"
-                    @click="selectedDetailTab = 'events'"
-                  >
-                    Sự kiện
-                  </button>
-                </div>
-
-                <div v-if="selectedDetailTab === 'depth'" class="flex items-center gap-2 text-xs font-mono">
-                  <button
-                    type="button"
-                    class="px-2 py-0.5 rounded transition-colors"
-                    :class="selectedDepthSubTab === 'depth' ? 'bg-white/[0.1] text-white font-semibold' : 'text-aave-graphite hover:text-white'"
-                    @click="selectedDepthSubTab = 'depth'"
-                  >
-                    Bước giá
-                  </button>
-                  <button
-                    type="button"
-                    class="px-2 py-0.5 rounded transition-colors"
-                    :class="selectedDepthSubTab === 'time' ? 'bg-white/[0.1] text-white font-semibold' : 'text-aave-graphite hover:text-white'"
-                    @click="selectedDepthSubTab = 'time'"
-                  >
-                    Thời gian
-                  </button>
-                </div>
-              </div>
-
-              <div v-if="selectedDetailTab === 'depth' && selectedDepthSubTab === 'depth'" class="space-y-4">
-
-                <div class="grid grid-cols-2 gap-4">
-
-                  <div class="bg-surface-abyss p-3 rounded border border-white/[0.04]">
-                    <div class="flex items-center justify-between text-xs font-medium text-emerald-400 mb-2 border-b border-white/[0.04] pb-1">
-                      <span>Dư Mua</span>
-                      <span class="font-mono text-xs text-aave-graphite">
-                        Tổng: {{ selectedStock.bidBook.length > 0 ? (selectedStock.bidBook.reduce((acc, b) => acc + b.volume, 0) >= 1000 ? (selectedStock.bidBook.reduce((acc, b) => acc + b.volume, 0) / 1000).toFixed(1) + 'K' : selectedStock.bidBook.reduce((acc, b) => acc + b.volume, 0).toLocaleString('en-US')) : '0' }}
-                      </span>
-                    </div>
-                    <div class="space-y-1.5 text-xs font-mono">
-                      <div
-                        v-for="(bid, idx) in selectedStock.bidBook"
-                        :key="idx"
-                        class="flex items-center justify-between py-1 px-2 rounded hover:bg-white/[0.04] transition-colors"
-                      >
-                        <span class="text-aave-ash">{{ bid.volume.toLocaleString('en-US') }}</span>
-                        <span class="font-bold text-emerald-400">{{ bid.price.toFixed(2) }}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="bg-surface-abyss p-3 rounded border border-white/[0.04]">
-                    <div class="flex items-center justify-between text-xs font-medium text-rose-500 mb-2 border-b border-white/[0.04] pb-1">
-                      <span>Dư Bán</span>
-                      <span class="font-mono text-xs text-aave-graphite">
-                        Tổng: {{ selectedStock.askBook.length > 0 ? (selectedStock.askBook.reduce((acc, a) => acc + a.volume, 0) >= 1000 ? (selectedStock.askBook.reduce((acc, a) => acc + a.volume, 0) / 1000).toFixed(1) + 'K' : selectedStock.askBook.reduce((acc, a) => acc + a.volume, 0).toLocaleString('en-US')) : '0' }}
-                      </span>
-                    </div>
-                    <div class="space-y-1.5 text-xs font-mono">
-                      <div
-                        v-for="(ask, idx) in selectedStock.askBook"
-                        :key="idx"
-                        class="flex items-center justify-between py-1 px-2 rounded hover:bg-white/[0.04] transition-colors"
-                      >
-                        <span class="font-bold text-rose-500">{{ ask.price.toFixed(2) }}</span>
-                        <span class="text-aave-ash">{{ ask.volume.toLocaleString('en-US') }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-6 gap-2 text-center text-xs font-mono">
-                  <div class="p-2 rounded bg-surface-abyss border border-cyan-800/40">
-                    <span class="text-cyan-400 block text-xs">Sàn</span>
-                    <span class="font-bold text-cyan-400">{{ selectedStock.floorPrice.toFixed(2) }}</span>
-                  </div>
-                  <div class="p-2 rounded bg-surface-abyss border border-amber-800/40">
-                    <span class="text-amber-400 block text-xs">TC</span>
-                    <span class="font-bold text-amber-400">{{ selectedStock.refPrice.toFixed(2) }}</span>
-                  </div>
-                  <div class="p-2 rounded bg-surface-abyss border border-purple-800/40">
-                    <span class="text-purple-400 block text-xs">Trần</span>
-                    <span class="font-bold text-purple-400">{{ selectedStock.ceilingPrice.toFixed(2) }}</span>
-                  </div>
-                  <div class="p-2 rounded bg-surface-abyss border border-rose-800/40">
-                    <span class="text-rose-500 block text-xs">Thấp</span>
-                    <span class="font-bold text-rose-500">{{ selectedStock.lowPrice.toFixed(2) }}</span>
-                  </div>
-                  <div class="p-2 rounded bg-surface-abyss border border-white/[0.04]">
-                    <span class="text-amber-400 block text-xs">TB</span>
-                    <span class="font-bold text-amber-400">{{ selectedStock.avgPrice.toFixed(2) }}</span>
-                  </div>
-                  <div class="p-2 rounded bg-surface-abyss border border-emerald-800/40">
-                    <span class="text-emerald-400 block text-xs">Cao</span>
-                    <span class="font-bold text-emerald-400">{{ selectedStock.highPrice.toFixed(2) }}</span>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 p-3 rounded bg-surface-abyss border border-white/[0.04] text-xs font-mono">
-                  <div>
-                    <span class="text-aave-graphite block">Khối ngoại mua</span>
-                    <span class="font-bold text-emerald-400">{{ selectedStock.foreignBuy.toLocaleString('en-US') }} CP</span>
-                  </div>
-                  <div>
-                    <span class="text-aave-graphite block">Khối ngoại bán</span>
-                    <span class="font-bold text-rose-500">{{ selectedStock.foreignSell.toLocaleString('en-US') }} CP</span>
-                  </div>
-                  <div>
-                    <span class="text-aave-graphite block">Room ngoại khả dụng</span>
-                    <span class="font-bold text-white">{{ selectedStock.foreignRoom.toLocaleString('en-US') }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else-if="selectedDetailTab === 'depth' && selectedDepthSubTab === 'time'" class="flex-1 overflow-y-auto">
-                <div v-if="matchedTicks.length === 0" class="p-6 text-center text-xs text-aave-graphite font-mono">
-                  Không có dữ liệu khớp lệnh trong phiên
-                </div>
-                <table v-else class="w-full text-xs font-mono">
-                  <thead class="text-aave-graphite border-b border-white/[0.04]">
-                    <tr>
-                      <th class="py-1 px-2 text-left font-normal">Thời gian</th>
-                      <th class="py-1 px-2 text-center font-normal">M/B</th>
-                      <th class="py-1 px-2 text-right font-normal">Giá</th>
-                      <th class="py-1 px-2 text-right font-normal">Khối lượng</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-white/[0.02]">
-                    <tr v-for="(tick, idx) in matchedTicks" :key="idx" class="hover:bg-white/[0.04]">
-                      <td class="py-1.5 px-2 text-aave-ash">{{ tick.time }}</td>
-                      <td class="py-1.5 px-2 text-center font-bold" :class="tick.side === 'B' ? 'text-emerald-400' : 'text-rose-500'">
-                        {{ tick.side }}
-                      </td>
-                      <td class="py-1.5 px-2 text-right font-bold" :class="tick.side === 'B' ? 'text-emerald-400' : 'text-rose-500'">
-                        {{ tick.price.toFixed(2) }}
-                      </td>
-                      <td class="py-1.5 px-2 text-right text-white">{{ tick.volume.toLocaleString('en-US') }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div v-else-if="selectedDetailTab === 'overview'" class="p-3 text-xs space-y-3">
-                <div v-if="!stockOverview" class="p-6 text-center text-xs text-aave-graphite font-mono">
-                  Chưa có dữ liệu chỉ số tài chính của doanh nghiệp
-                </div>
-                <div v-else class="grid grid-cols-2 gap-3 font-mono">
-                  <div class="p-2.5 rounded bg-surface-abyss border border-white/[0.04]">
-                    <span class="text-aave-graphite block text-xs">Vốn hóa thị trường</span>
-                    <span class="text-white font-bold text-sm">{{ stockOverview.market_cap_billion.toLocaleString('en-US') }} Tỷ VND</span>
-                  </div>
-                  <div class="p-2.5 rounded bg-surface-abyss border border-white/[0.04]">
-                    <span class="text-aave-graphite block text-xs">P/E Hiện tại</span>
-                    <span class="text-white font-bold text-sm">{{ stockOverview.pe.toFixed(2) }}</span>
-                  </div>
-                  <div class="p-2.5 rounded bg-surface-abyss border border-white/[0.04]">
-                    <span class="text-aave-graphite block text-xs">P/B Hiện tại</span>
-                    <span class="text-white font-bold text-sm">{{ stockOverview.pb.toFixed(2) }}</span>
-                  </div>
-                  <div class="p-2.5 rounded bg-surface-abyss border border-white/[0.04]">
-                    <span class="text-aave-graphite block text-xs">ROE 4 quý gần nhất</span>
-                    <span class="text-white font-bold text-sm">{{ stockOverview.roe.toFixed(2) }}%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div v-else-if="selectedDetailTab === 'events'" class="p-3 text-xs text-aave-ash space-y-2">
-                <div v-if="corporateEvents.length === 0" class="p-6 text-center text-xs text-aave-graphite font-mono">
-                  Không có sự kiện doanh nghiệp được ghi nhận
-                </div>
-                <div
-                  v-for="(ev, idx) in corporateEvents"
-                  v-else
-                  :key="idx"
-                  class="p-2 rounded bg-surface-abyss border border-white/[0.04]"
-                >
-                  <span class="text-xs text-aave-graphite font-mono">{{ ev.date }}</span>
-                  <p class="font-medium text-white mt-0.5">{{ ev.title }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Chi tiết cổ phiếu với nến kỹ thuật & sổ lệnh -->
+        <IBoardStockDetail
+          v-else
+          :stock="selectedStock"
+          :stock-list="currentTableData"
+          :candles="rawCandles"
+          :is-candles-loading="isCandlesLoading"
+          :selected-timeframe="selectedTimeframe"
+          :timeframes="timeframes"
+          :matched-ticks="matchedTicks"
+          :stock-overview="stockOverview"
+          :corporate-events="corporateEvents"
+          @close="closeStockDetail"
+          @select-stock="openStockDetail"
+          @update:selected-timeframe="selectedTimeframe = $event"
+          @quick-order="quickFillOrder"
+        />
       </div>
 
-      <div
-        class="bg-aave-inkwell border-l border-white/[0.08] flex flex-col shrink-0 transition-all duration-200"
-        :class="isRightPanelOpen ? 'w-80' : 'w-10'"
-      >
-
-        <div class="h-10 bg-aave-obsidian border-b border-white/[0.08] flex items-center justify-between px-2 shrink-0">
-          <div v-if="isRightPanelOpen" class="flex items-center gap-1 text-xs font-medium">
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded transition-colors whitespace-nowrap"
-              :class="rightPanelTab === 'market' ? 'bg-white/[0.1] text-white font-bold' : 'text-aave-graphite hover:text-white'"
-              @click="rightPanelTab = 'market'"
-            >
-              Thị trường
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded transition-colors whitespace-nowrap"
-              :class="rightPanelTab === 'order' ? 'bg-white/[0.1] text-white font-bold' : 'text-aave-graphite hover:text-white'"
-              @click="rightPanelTab = 'order'"
-            >
-              Đặt lệnh
-            </button>
-            <button
-              type="button"
-              class="px-2.5 py-1 rounded transition-colors whitespace-nowrap"
-              :class="rightPanelTab === 'orders_book' ? 'bg-white/[0.1] text-white font-bold' : 'text-aave-graphite hover:text-white'"
-              @click="rightPanelTab = 'orders_book'"
-            >
-              Sổ lệnh
-            </button>
-          </div>
-
-          <button
-            type="button"
-            class="p-1 rounded hover:bg-white/[0.08] text-aave-graphite hover:text-white transition-colors"
-            :title="isRightPanelOpen ? 'Thu gọn thanh bên' : 'Mở rộng thanh bên'"
-            @click="isRightPanelOpen = !isRightPanelOpen"
-          >
-            <UIcon :name="isRightPanelOpen ? 'i-heroicons-chevron-double-right' : 'i-heroicons-chevron-double-left'" class="w-4 h-4" />
-          </button>
-        </div>
-
-        <div v-if="isRightPanelOpen" class="flex-1 overflow-y-auto p-3 space-y-3.5 scrollbar-thin">
-
-          <template v-if="rightPanelTab === 'market'">
-
-            <div class="p-3 rounded-xl bg-surface-abyss border border-white/[0.06] space-y-2.5">
-              <div class="flex items-center gap-2">
-                <div class="w-5 h-5 rounded-full bg-rose-600 flex items-center justify-center font-bold text-white text-3xs">
-                  AI
-                </div>
-                <span class="text-xs font-bold text-white">Trợ lý định lượng thị trường</span>
-              </div>
-
-              <p class="text-xs text-aave-ash leading-relaxed">
-                {{ aiInsightText || 'Đang cập nhật phân tích định lượng thị trường...' }}
-              </p>
-
-              <button
-                type="button"
-                class="w-full py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-                @click="loadMarketPulse"
-              >
-                <span>Cập nhật nhận định AI</span>
-                <UIcon name="i-heroicons-arrow-path" class="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div class="space-y-2">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
-                <UIcon name="i-heroicons-arrow-trending-up" class="w-4 h-4" />
-                <span>Top cổ phiếu tăng giá</span>
-              </div>
-              <div v-if="topGainers.length === 0" class="p-3 text-center text-xs text-aave-graphite font-mono">
-                Đang tính toán top cổ phiếu tăng giá...
-              </div>
-              <div v-else class="space-y-1.5 max-h-48 overflow-y-auto scrollbar-thin pr-1">
-                <div
-                  v-for="g in topGainers"
-                  :key="g.symbol"
-                  class="p-2 rounded bg-surface-abyss border border-white/[0.04] flex items-center justify-between cursor-pointer hover:bg-white/[0.04] transition-colors"
-                  @click="orderSymbol = g.symbol; orderPrice = g.price; rightPanelTab = 'order'"
-                >
-                  <div class="flex flex-col">
-                    <span class="font-bold text-xs text-white font-mono">{{ g.symbol }}</span>
-                    <span class="text-xs text-aave-graphite truncate max-w-[140px]">{{ g.name }}</span>
-                  </div>
-                  <div class="flex flex-col items-end font-mono">
-                    <span class="font-bold text-xs text-emerald-400">{{ g.price }}</span>
-                    <span class="text-xs text-emerald-400">{{ g.change }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-rose-500">
-                <UIcon name="i-heroicons-arrow-trending-down" class="w-4 h-4" />
-                <span>Top cổ phiếu giảm giá</span>
-              </div>
-              <div v-if="topLosers.length === 0" class="p-3 text-center text-xs text-aave-graphite font-mono">
-                Đang tính toán top cổ phiếu giảm giá...
-              </div>
-              <div v-else class="space-y-1.5 max-h-48 overflow-y-auto scrollbar-thin pr-1">
-                <div
-                  v-for="l in topLosers"
-                  :key="l.symbol"
-                  class="p-2 rounded bg-surface-abyss border border-white/[0.04] flex items-center justify-between cursor-pointer hover:bg-white/[0.04] transition-colors"
-                  @click="orderSymbol = l.symbol; orderPrice = l.price; rightPanelTab = 'order'"
-                >
-                  <div class="flex flex-col">
-                    <span class="font-bold text-xs text-white font-mono">{{ l.symbol }}</span>
-                    <span class="text-xs text-aave-graphite truncate max-w-[140px]">{{ l.name }}</span>
-                  </div>
-                  <div class="flex flex-col items-end font-mono">
-                    <span class="font-bold text-xs text-rose-500">{{ l.price }}</span>
-                    <span class="text-xs text-rose-500">{{ l.change }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <template v-else-if="rightPanelTab === 'order'">
-            <div class="p-3.5 rounded-xl bg-surface-abyss border border-white/[0.06] space-y-4">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-white uppercase tracking-wider">Phiếu Lệnh Mô Phỏng</span>
-                <span class="text-xs px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 font-mono">
-                  Sandbox 100%
-                </span>
-              </div>
-
-              <div class="grid grid-cols-2 gap-1 p-0.5 bg-aave-obsidian rounded-lg border border-white/[0.08]">
-                <button
-                  type="button"
-                  class="py-1.5 rounded-md text-xs font-bold transition-colors"
-                  :class="orderSide === 'BUY' ? 'bg-emerald-600 text-white' : 'text-aave-graphite hover:text-white'"
-                  @click="orderSide = 'BUY'"
-                >
-                  MUA
-                </button>
-                <button
-                  type="button"
-                  class="py-1.5 rounded-md text-xs font-bold transition-colors"
-                  :class="orderSide === 'SELL' ? 'bg-rose-600 text-white' : 'text-aave-graphite hover:text-white'"
-                  @click="orderSide = 'SELL'"
-                >
-                  BÁN
-                </button>
-              </div>
-
-              <div>
-                <label class="block text-xs font-medium text-aave-graphite mb-1">Mã chứng khoán</label>
-                <input
-                  v-model="orderSymbol"
-                  type="text"
-                  placeholder="Nhập mã CK..."
-                  class="w-full bg-aave-obsidian border border-white/[0.1] rounded px-3 py-1.5 text-xs text-white uppercase font-mono font-bold focus:outline-none focus:border-rose-500"
-                >
-              </div>
-
-              <div>
-                <label class="block text-xs font-medium text-aave-graphite mb-1">Loại lệnh</label>
-                <div class="grid grid-cols-4 gap-1">
-                  <button
-                    v-for="ot in (['LO', 'ATO', 'ATC', 'MP'] as const)"
-                    :key="ot"
-                    type="button"
-                    class="py-1 rounded text-xs font-mono font-medium transition-colors"
-                    :class="orderType === ot ? 'bg-white/[0.15] text-white font-bold' : 'bg-aave-obsidian text-aave-graphite hover:text-white'"
-                    @click="orderType = ot"
-                  >
-                    {{ ot }}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-medium text-aave-graphite mb-1">Giá đặt</label>
-                <input
-                  v-model="orderPrice"
-                  type="text"
-                  placeholder="0.00"
-                  class="w-full bg-aave-obsidian border border-white/[0.1] rounded px-3 py-1.5 text-xs text-white font-mono font-bold focus:outline-none focus:border-rose-500"
-                >
-              </div>
-
-              <div>
-                <label class="block text-xs font-medium text-aave-graphite mb-1">Khối lượng</label>
-                <input
-                  v-model.number="orderQuantity"
-                  type="number"
-                  step="100"
-                  class="w-full bg-aave-obsidian border border-white/[0.1] rounded px-3 py-1.5 text-xs text-white font-mono font-bold focus:outline-none focus:border-rose-500"
-                >
-              </div>
-
-              <div class="p-2.5 rounded bg-aave-obsidian border border-white/[0.04] text-xs font-mono">
-                <div class="flex items-center justify-between text-aave-graphite">
-                  <span>Sức mua mô phỏng:</span>
-                  <span class="text-white font-bold">{{ simulatedBalance.toLocaleString('en-US') }} VND</span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                class="w-full py-2.5 rounded-lg text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
-                :class="orderSide === 'BUY' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-rose-600 hover:bg-rose-500'"
-                @click="placeSimulatedOrder"
-              >
-                <span>Xác nhận lệnh {{ orderSide === 'BUY' ? 'Mua' : 'Bán' }} mô phỏng</span>
-              </button>
-            </div>
-          </template>
-
-          <template v-else-if="rightPanelTab === 'orders_book'">
-            <div class="space-y-2">
-              <div class="flex items-center justify-between text-xs font-medium text-aave-graphite pb-1 border-b border-white/[0.04]">
-                <span>Sổ lệnh mô phỏng</span>
-                <span class="font-mono">{{ simulatedOrders.length }} lệnh</span>
-              </div>
-
-              <div v-if="simulatedOrders.length === 0" class="p-6 text-center text-xs text-aave-graphite font-mono">
-                Chưa có lệnh mô phỏng nào trong phiên
-              </div>
-              <div v-else class="space-y-2">
-                <div
-                  v-for="ord in simulatedOrders"
-                  :key="ord.id"
-                  class="p-2.5 rounded-lg bg-surface-abyss border border-white/[0.04] text-xs font-mono space-y-1.5"
-                >
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1.5">
-                      <span class="font-bold text-white">{{ ord.symbol }}</span>
-                      <span
-                        class="px-1.5 py-0.2 rounded text-xs font-bold"
-                        :class="ord.side === 'BUY' ? 'bg-emerald-950/60 text-emerald-400' : 'bg-rose-950/60 text-rose-500'"
-                      >
-                        {{ ord.side }}
-                      </span>
-                    </div>
-                    <span class="text-emerald-400 text-xs font-medium">Đã khớp</span>
-                  </div>
-
-                  <div class="flex items-center justify-between text-aave-ash">
-                    <span>Giá: {{ ord.price }}</span>
-                    <span>KL: {{ ord.quantity }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between text-aave-graphite text-xs pt-1 border-t border-white/[0.04]">
-                    <span>{{ ord.id }}</span>
-                    <span>{{ ord.time }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
+      <!-- Panel bên phải: Thị trường, Phiếu lệnh mô phỏng, Sổ lệnh -->
+      <IBoardRightPanel
+        v-model:is-open="isRightPanelOpen"
+        v-model:active-tab="rightPanelTab"
+        v-model:order-side="orderSide"
+        v-model:order-symbol="orderSymbol"
+        v-model:order-price="orderPrice"
+        v-model:order-quantity="orderQuantity"
+        v-model:order-type="orderType"
+        :ai-insight-text="aiInsightText"
+        :top-gainers="topGainers"
+        :top-losers="topLosers"
+        :simulated-balance="simulatedBalance"
+        :simulated-orders="simulatedOrders"
+        @refresh-pulse="loadMarketPulse"
+        @submit-order="placeSimulatedOrder"
+      />
     </div>
   </div>
 </template>

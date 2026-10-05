@@ -37,6 +37,7 @@ export { useAuth } from '../composables/useAuth';
 export { useCustomToast } from '../composables/useCustomToast';
 export { useDerivativesLive } from '../composables/useDerivativesLive';
 export { useFlowBreadthRadar } from '../composables/useFlowBreadthRadar';
+export { useIBoardWebSocket, IBoardWSIndexData, IBoardWSQuoteData, IBoardWSTradeData, IBoardWSTick, IBoardWSEventHandlers } from '../composables/useIBoardWebSocket';
 export { usePaperTrading } from '../composables/usePaperTrading';
 export { useTradingPhase, useTradingPolling, TradingPhase } from '../composables/useTradingPolling';
 export { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d';

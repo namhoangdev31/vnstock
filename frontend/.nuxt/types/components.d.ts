@@ -18,8 +18,14 @@ interface _GlobalComponents {
   MarkdownViewer: typeof import("../../components/MarkdownViewer.vue")['default']
   QuantPulseCard: typeof import("../../components/QuantPulseCard.vue")['default']
   TestMatrix: typeof import("../../components/TestMatrix.vue")['default']
+  IboardIBoardCategoryNav: typeof import("../../components/iboard/IBoardCategoryNav.vue")['default']
+  IboardIBoardHeader: typeof import("../../components/iboard/IBoardHeader.vue")['default']
   IboardIBoardIndexCard: typeof import("../../components/iboard/IBoardIndexCard.vue")['default']
   IboardIBoardIndexRibbon: typeof import("../../components/iboard/IBoardIndexRibbon.vue")['default']
+  IboardIBoardRightPanel: typeof import("../../components/iboard/IBoardRightPanel.vue")['default']
+  IboardIBoardSparkline: typeof import("../../components/iboard/IBoardSparkline.vue")['default']
+  IboardIBoardStockDetail: typeof import("../../components/iboard/IBoardStockDetail.vue")['default']
+  IboardIBoardTable: typeof import("../../components/iboard/IBoardTable.vue")['default']
   IboardTypes: typeof import("../../components/iboard/types")['default']
   TradingActivePositionsTable: typeof import("../../components/trading/ActivePositionsTable.vue")['default']
   TradingAlphaBasketsRebalanceCard: typeof import("../../components/trading/AlphaBasketsRebalanceCard.vue")['default']
@@ -122,8 +128,14 @@ interface _GlobalComponents {
   LazyMarkdownViewer: LazyComponent<typeof import("../../components/MarkdownViewer.vue")['default']>
   LazyQuantPulseCard: LazyComponent<typeof import("../../components/QuantPulseCard.vue")['default']>
   LazyTestMatrix: LazyComponent<typeof import("../../components/TestMatrix.vue")['default']>
+  LazyIboardIBoardCategoryNav: LazyComponent<typeof import("../../components/iboard/IBoardCategoryNav.vue")['default']>
+  LazyIboardIBoardHeader: LazyComponent<typeof import("../../components/iboard/IBoardHeader.vue")['default']>
   LazyIboardIBoardIndexCard: LazyComponent<typeof import("../../components/iboard/IBoardIndexCard.vue")['default']>
   LazyIboardIBoardIndexRibbon: LazyComponent<typeof import("../../components/iboard/IBoardIndexRibbon.vue")['default']>
+  LazyIboardIBoardRightPanel: LazyComponent<typeof import("../../components/iboard/IBoardRightPanel.vue")['default']>
+  LazyIboardIBoardSparkline: LazyComponent<typeof import("../../components/iboard/IBoardSparkline.vue")['default']>
+  LazyIboardIBoardStockDetail: LazyComponent<typeof import("../../components/iboard/IBoardStockDetail.vue")['default']>
+  LazyIboardIBoardTable: LazyComponent<typeof import("../../components/iboard/IBoardTable.vue")['default']>
   LazyIboardTypes: LazyComponent<typeof import("../../components/iboard/types")['default']>
   LazyTradingActivePositionsTable: LazyComponent<typeof import("../../components/trading/ActivePositionsTable.vue")['default']>
   LazyTradingAlphaBasketsRebalanceCard: LazyComponent<typeof import("../../components/trading/AlphaBasketsRebalanceCard.vue")['default']>

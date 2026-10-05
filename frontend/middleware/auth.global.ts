@@ -14,8 +14,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   ]
 
   const isPublicRoute =
-    publicRoutes.some((route) => to.path === route || to.path === `${route}/`) ||
-    to.path.startsWith("/iboard/")
+    publicRoutes.some(
+      (route) => to.path === route || to.path === `${route}/`,
+    ) || to.path.startsWith("/iboard/")
   const isAuthPage = [
     "/login",
     "/signup",

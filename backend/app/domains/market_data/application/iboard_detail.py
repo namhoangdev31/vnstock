@@ -11,11 +11,10 @@ Tổng hợp thông tin chi tiết một mã:
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from typing import Any
 
 from sqlmodel import Session, col, select
 
-from app.core.models_base import VN_TZ
 from app.domains.fundamental.domain.models import (
     CompanyProfile,
     CorporateEvent,
@@ -39,6 +38,7 @@ from app.domains.market_data.domain.models import (
     StockSymbol,
     StockTickIntraday,
 )
+from app.domains.market_data.infrastructure.dnse import dnse_stream_manager
 from app.domains.market_data.infrastructure.external_indices import (
     IBoardDataGateway,
 )
@@ -57,6 +57,8 @@ class IBoardDetailService:
         timeframe: str = "1D",
     ) -> IBoardStockDetail:
         sym_code = symbol.strip().upper()
+        # Trigger dynamic DNSE stream subscription for this symbol
+        dnse_stream_manager.subscribe_symbols_background([sym_code])
         vn = VnstockService(db_session=session)
 
         sym = session.exec(
@@ -102,88 +104,71 @@ class IBoardDetailService:
             else "Chưa phân ngành",
         )
 
-        # 4. Time & Sales (Dòng khớp lệnh)
+        # 4. Time & Sales (Dòng khớp lệnh ưu tiên DNSE realtime ticks)
         matched_ticks: list[MatchedTickDTO] = []
-        tick_rows = list(
-            session.exec(
-                select(StockTickIntraday)
-                .where(StockTickIntraday.symbol == sym_code)
-                .order_by(col(StockTickIntraday.timestamp).desc())
-                .limit(20)
-            ).all()
-        )
-
-        if tick_rows:
+        dnse_ticks = dnse_stream_manager.normalizer.get_recent_ticks(sym_code, limit=20)
+        if dnse_ticks:
             matched_ticks = [
                 MatchedTickDTO(
-                    time=t.timestamp.strftime("%H:%M:%S"),
-                    price=float(t.price),
-                    volume=int(t.volume),
-                    side="B" if str(t.match_type).upper().startswith("B") else "S",
+                    time=t["time"],
+                    price=float(t["price"]),
+                    volume=int(t["volume"]),
+                    side=str(t["side"]),
                 )
-                for t in tick_rows
+                for t in dnse_ticks
             ]
         else:
-            try:
-                tdf = vn.fetch_tick_orderflow(sym_code, page_size=20)
-                if tdf is not None and not tdf.empty:
-                    new_tick_models: list[StockTickIntraday] = []
-                    seq_counter: dict[datetime, int] = {}
-                    for _, row in tdf.iterrows():
-                        m_time = str(row["time"])
-                        t_str = (
-                            m_time.split(" ")[1][:8] if " " in m_time else m_time[:8]
-                        )
-                        price_val = float(row["price"])
-                        vol_val = int(row["volume"])
-                        side_str = (
-                            "B"
-                            if str(row["match_type"]).upper().startswith("B")
-                            else "S"
-                        )
-                        matched_ticks.append(
-                            MatchedTickDTO(
-                                time=t_str,
-                                price=price_val,
-                                volume=vol_val,
-                                side=side_str,
-                            )
-                        )
-                        try:
-                            t_parsed = datetime.strptime(
-                                m_time[:19], "%Y-%m-%d %H:%M:%S"
-                            ).replace(tzinfo=VN_TZ)
-                        except Exception:
-                            t_parsed = datetime.now(VN_TZ)
-                        seq_num = seq_counter.get(t_parsed, 0)
-                        seq_counter[t_parsed] = seq_num + 1
-                        new_tick_models.append(
-                            StockTickIntraday(
-                                symbol=sym_code,
-                                timestamp=t_parsed,
-                                price=price_val,
-                                volume=vol_val,
-                                match_type=side_str,
-                                sequence_number=seq_num,
-                                source=vn.last_successful_source or "vci",
-                            )
-                        )
-                    try:
-                        with session.begin_nested():
-                            for item in new_tick_models:
-                                session.add(item)
-                            session.flush()
-                        session.commit()
-                    except Exception as tick_err:
-                        logger.debug(
-                            "Bỏ qua lỗi trùng lặp tick %s: %s",
-                            sym_code,
-                            tick_err,
-                        )
-            except Exception as e:
-                logger.info("Không thể tải tick từ vnstock cho %s: %s", sym_code, e)
+            tick_rows = list(
+                session.exec(
+                    select(StockTickIntraday)
+                    .where(StockTickIntraday.symbol == sym_code)
+                    .order_by(col(StockTickIntraday.timestamp).desc())
+                    .limit(20)
+                ).all()
+            )
 
-        # 5. Hồ sơ doanh nghiệp & Tỷ số tài chính
+            if tick_rows:
+                matched_ticks = [
+                    MatchedTickDTO(
+                        time=t.timestamp.strftime("%H:%M:%S"),
+                        price=float(t.price),
+                        volume=int(t.volume),
+                        side="B" if str(t.match_type).upper().startswith("B") else "S",
+                    )
+                    for t in tick_rows
+                ]
+            else:
+                try:
+                    tdf = vn.fetch_tick_orderflow(sym_code, page_size=20)
+                    if tdf is not None and not tdf.empty:
+                        for _, row in tdf.iterrows():
+                            m_time = str(row["time"])
+                            t_str = (
+                                m_time.split(" ")[1][:8]
+                                if " " in m_time
+                                else m_time[:8]
+                            )
+                            price_val = float(row["price"])
+                            vol_val = int(row["volume"])
+                            side_str = (
+                                "B"
+                                if str(row["match_type"]).upper().startswith("B")
+                                else "S"
+                            )
+                            matched_ticks.append(
+                                MatchedTickDTO(
+                                    time=t_str,
+                                    price=price_val,
+                                    volume=vol_val,
+                                    side=side_str,
+                                )
+                            )
+                except Exception as e:
+                    logger.debug(
+                        "Không thể tải tick từ vnstock cho %s: %s", sym_code, e
+                    )
+
+        # 5. Hồ sơ doanh nghiệp & Tỷ số tài chính (Read-Only)
         prof = session.exec(
             select(CompanyProfile).where(CompanyProfile.symbol == sym_code)
         ).first()
@@ -197,31 +182,34 @@ class IBoardDetailService:
             .limit(1)
         ).first()
 
+        live_overview: dict[str, Any] = {}
         if not prof or not ratio:
             try:
-                ov = vn.fetch_company_overview(sym_code)
-                if ov and not prof:
-                    prof = CompanyProfile(
-                        symbol=sym_code,
-                        company_name=str(ov.get("organ_name") or sym_code),
-                        market_cap=float(ov.get("market_cap") or 0),
-                        outstanding_shares=int(ov.get("issue_share") or 0),
-                    )
-                    session.add(prof)
-                    session.commit()
+                live_overview = vn.fetch_company_overview(sym_code) or {}
             except Exception as e:
-                logger.info(
-                    "Không thể đồng bộ hồ sơ doanh nghiệp cho %s: %s",
+                logger.debug(
+                    "Không thể tải hồ sơ doanh nghiệp online cho %s: %s",
                     sym_code,
                     e,
                 )
 
         last_p = blk["last_p"]
-        market_cap_bil = (
-            round(prof.market_cap / 1e9, 2)
+        mcap_raw = (
+            prof.market_cap
             if prof and prof.market_cap
-            else round(last_p * prof.outstanding_shares * 1000 / 1e9, 2)
+            else float(live_overview.get("market_cap") or 0.0)
+        )
+        shares_raw = (
+            prof.outstanding_shares
             if prof and prof.outstanding_shares
+            else int(live_overview.get("issue_share") or 0)
+        )
+
+        market_cap_bil = (
+            round(mcap_raw / 1e9, 2)
+            if mcap_raw > 0
+            else round(last_p * shares_raw * 1000 / 1e9, 2)
+            if shares_raw > 0
             else 0.0
         )
         pe_val = round(float(ratio.pe), 2) if ratio and ratio.pe is not None else 0.0

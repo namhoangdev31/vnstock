@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
 from app.api.deps import SessionDep
 from app.domains.market_data.application.iboard_schemas import (
@@ -15,6 +16,9 @@ from app.domains.market_data.application.iboard_schemas import (
     IBoardStockRow,
 )
 from app.domains.market_data.application.iboard_service import IBoardService
+from app.domains.market_data.application.iboard_ws import iboard_ws_manager
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/iboard", tags=["iboard"])
 
@@ -99,3 +103,25 @@ def get_iboard_market_pulse(
 ) -> Any:
     """Truy xuất nhận định định lượng và top cổ phiếu biến động."""
     return IBoardService.get_market_pulse(session=session)
+
+
+@router.websocket("/ws")
+async def iboard_websocket_endpoint(websocket: WebSocket) -> None:
+    """Realtime WebSocket streaming endpoint for iBoard trading board.
+
+    Supports dynamic channel subscriptions:
+    - `indices`: Real-time market indices updates (VNINDEX, VN30, HNX, HNX30, etc.)
+    - `board`: Live quotes and orderbook changes across tracked symbols
+    - `stock:{symbol}`: Individual stock depth and Time & Sales matched ticks
+    - Bidirectional Ping/Pong heartbeats and instant snapshots
+    """
+    await iboard_ws_manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await iboard_ws_manager.handle_client_message(websocket, data)
+    except WebSocketDisconnect:
+        await iboard_ws_manager.disconnect(websocket)
+    except Exception as e:
+        logger.debug("[IBoardRouter] WebSocket disconnected with error: %s", e)
+        await iboard_ws_manager.disconnect(websocket)
