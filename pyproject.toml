@@ -35,3 +35,7 @@ alls = "alls"
 
 [tool.uv.workspace]
 members = ["backend"]
+
+[[tool.uv.index]]
+name = "vnstocks"
+url = "https://vnstocks.com/api/simple"
