@@ -1,0 +1,63 @@
+{
+	"name": "@vnstock/dnse",
+	"version": "0.1.0",
+	"description": "TypeScript SDK and OpenAPI Client for DNSE Securities Trading & Market Data API",
+	"private": true,
+	"type": "module",
+	"license": "MIT",
+	"sideEffects": false,
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		},
+		"./api": {
+			"types": "./dist/api/index.d.ts",
+			"import": "./dist/api/index.js",
+			"require": "./dist/api/index.cjs"
+		},
+		"./websocket": {
+			"types": "./dist/websocket/index.d.ts",
+			"import": "./dist/websocket/index.js",
+			"require": "./dist/websocket/index.cjs"
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check src",
+		"lint:fix": "biome check --write src",
+		"generate-client": "openapi-ts",
+		"clean": "rm -rf dist"
+	},
+	"keywords": [
+		"vnstock",
+		"dnse",
+		"trading",
+		"stock",
+		"vietnam",
+		"websocket",
+		"openapi",
+		"sdk"
+	],
+	"dependencies": {
+		"axios": "^1.8.2"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.12",
+		"@hey-api/client-axios": "^0.9.1",
+		"@hey-api/openapi-ts": "0.97.3",
+		"@types/node": "^26.5.1",
+		"tsup": "^8.5.1",
+		"typescript": "^5.8.2"
+	}
+}

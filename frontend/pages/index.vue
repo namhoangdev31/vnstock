@@ -9,7 +9,6 @@
           <NuxtLink to="/" class="flex items-center gap-2 group">
             <span class="font-medium tracking-tight text-base text-aave-obsidian flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
               Vnstock
-              <span class="text-xs font-mono uppercase font-medium px-2 py-0.5 rounded-full bg-aave-bone text-aave-iron border border-black/[0.06]">Quants</span>
             </span>
           </NuxtLink>
 
@@ -446,7 +445,6 @@
               <NuxtLink to="/" class="flex items-center gap-2 group">
                 <span class="font-medium tracking-tight text-lg text-white flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
                   Vnstock
-                  <span class="text-xs font-mono uppercase font-medium px-2 py-0.5 rounded-full bg-white/10 text-aave-violet border border-white/[0.1]">Quants</span>
                 </span>
               </NuxtLink>
 

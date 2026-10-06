@@ -14,6 +14,8 @@
     "test:ui": "bun run --filter frontend test:ui",
     "email:dev": "bun run --filter emails dev",
     "email:export": "bun run --filter emails export",
+    "dnse:build": "bun run --filter @vnstock/dnse build",
+    "dnse:generate": "bun run --filter @vnstock/dnse generate-client",
     "stripcomment": "bun scripts/strip-comments.ts"
   },
   "devDependencies": {
