@@ -928,6 +928,12 @@ const _inlineRuntimeConfig = {
       "/__nuxt_error": {
         "cache": false
       },
+      "/dnse-api/**": {
+        "proxy": {
+          "to": "https://openapi.dnse.com.vn/**",
+          "_proxyStripBase": "/dnse-api"
+        }
+      },
       "/api/**": {
         "proxy": {
           "to": "https://vnstock.fastapicloud.dev/api/**",

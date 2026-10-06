@@ -49,6 +49,10 @@ declare global {
   const definePayloadReducer: typeof import('../../../node_modules/nuxt/dist/app/composables/payload').definePayloadReducer
   const definePayloadReviver: typeof import('../../../node_modules/nuxt/dist/app/composables/payload').definePayloadReviver
   const defineShortcuts: typeof import('../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts').defineShortcuts
+  const dnseApi: typeof import('../../composables/useDnse').dnseApi
+  const dnseApiClient: typeof import('../../composables/useDnseApi').dnseApiClient
+  const dnseClient: typeof import('../../composables/useDnse').dnseClient
+  const dnseWsClient: typeof import('../../composables/useDnseWs').dnseWsClient
   const eagerComputed: typeof import('@vueuse/core').eagerComputed
   const effect: typeof import('vue').effect
   const effectScope: typeof import('vue').effectScope
@@ -58,6 +62,7 @@ declare global {
   const getAppManifest: typeof import('../../../node_modules/nuxt/dist/app/composables/manifest').getAppManifest
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
+  const getHistoricalOhlc: typeof import('../../composables/useDnseApi').getHistoricalOhlc
   const getRouteRules: typeof import('../../../node_modules/nuxt/dist/app/composables/manifest').getRouteRules
   const h: typeof import('vue').h
   const hasInjectionContext: typeof import('vue').hasInjectionContext
@@ -226,6 +231,9 @@ declare global {
   const useDevicePixelRatio: typeof import('@vueuse/core').useDevicePixelRatio
   const useDevicesList: typeof import('@vueuse/core').useDevicesList
   const useDisplayMedia: typeof import('@vueuse/core').useDisplayMedia
+  const useDnse: typeof import('../../composables/useDnse').useDnse
+  const useDnseApi: typeof import('../../composables/useDnseApi').useDnseApi
+  const useDnseWs: typeof import('../../composables/useDnseWs').useDnseWs
   const useDocumentVisibility: typeof import('@vueuse/core').useDocumentVisibility
   const useDraggable: typeof import('@vueuse/core').useDraggable
   const useDropZone: typeof import('@vueuse/core').useDropZone
@@ -467,6 +475,9 @@ declare global {
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
+  export type { OhlcCandle, HistoricalOhlcResult } from '../../composables/useDnseApi'
+  import('../../composables/useDnseApi')
+  // @ts-ignore
   export type { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d'
   import('../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d')
 }
@@ -522,6 +533,10 @@ declare module 'vue' {
     readonly definePayloadReducer: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/payload')['definePayloadReducer']>
     readonly definePayloadReviver: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/payload')['definePayloadReviver']>
     readonly defineShortcuts: UnwrapRef<typeof import('../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts')['defineShortcuts']>
+    readonly dnseApi: UnwrapRef<typeof import('../../composables/useDnse')['dnseApi']>
+    readonly dnseApiClient: UnwrapRef<typeof import('../../composables/useDnseApi')['dnseApiClient']>
+    readonly dnseClient: UnwrapRef<typeof import('../../composables/useDnse')['dnseClient']>
+    readonly dnseWsClient: UnwrapRef<typeof import('../../composables/useDnseWs')['dnseWsClient']>
     readonly eagerComputed: UnwrapRef<typeof import('@vueuse/core')['eagerComputed']>
     readonly effect: UnwrapRef<typeof import('vue')['effect']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
@@ -531,6 +546,7 @@ declare module 'vue' {
     readonly getAppManifest: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/manifest')['getAppManifest']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getHistoricalOhlc: UnwrapRef<typeof import('../../composables/useDnseApi')['getHistoricalOhlc']>
     readonly getRouteRules: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/manifest')['getRouteRules']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly hasInjectionContext: UnwrapRef<typeof import('vue')['hasInjectionContext']>
@@ -699,6 +715,9 @@ declare module 'vue' {
     readonly useDevicePixelRatio: UnwrapRef<typeof import('@vueuse/core')['useDevicePixelRatio']>
     readonly useDevicesList: UnwrapRef<typeof import('@vueuse/core')['useDevicesList']>
     readonly useDisplayMedia: UnwrapRef<typeof import('@vueuse/core')['useDisplayMedia']>
+    readonly useDnse: UnwrapRef<typeof import('../../composables/useDnse')['useDnse']>
+    readonly useDnseApi: UnwrapRef<typeof import('../../composables/useDnseApi')['useDnseApi']>
+    readonly useDnseWs: UnwrapRef<typeof import('../../composables/useDnseWs')['useDnseWs']>
     readonly useDocumentVisibility: UnwrapRef<typeof import('@vueuse/core')['useDocumentVisibility']>
     readonly useDraggable: UnwrapRef<typeof import('@vueuse/core')['useDraggable']>
     readonly useDropZone: UnwrapRef<typeof import('@vueuse/core')['useDropZone']>

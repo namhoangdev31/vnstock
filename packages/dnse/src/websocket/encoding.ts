@@ -1,3 +1,4 @@
+import { decode as decodeMsgpack } from "@msgpack/msgpack";
 import { EncodingError } from "./exceptions";
 
 /** Định dạng encoding được hỗ trợ bởi DNSE WebSocket. */
@@ -21,25 +22,55 @@ export class MessageEncoder {
 }
 
 /**
- * Giải mã message nhận từ WebSocket Server DNSE (JSON).
- * Hỗ trợ: string, ArrayBuffer, Buffer (Node.js/Bun).
+ * Giải mã message nhận từ WebSocket Server DNSE.
+ * Tự động nhận diện và giải mã cả JSON (chuỗi text) lẫn MsgPack (nhị phân ArrayBuffer/Buffer/Uint8Array).
  */
 export class MessageDecoder {
-	public readonly encoding: WebSocketEncoding = "json";
+	public readonly encoding: WebSocketEncoding;
+
+	constructor(encoding: WebSocketEncoding = "json") {
+		this.encoding = encoding;
+	}
 
 	public decode<T = Record<string, unknown>>(
-		data: string | ArrayBuffer | Buffer,
+		data: string | ArrayBuffer | Uint8Array | Buffer,
 	): T {
 		try {
-			let text: string;
 			if (typeof data === "string") {
-				text = data;
-			} else if (typeof Buffer !== "undefined" && Buffer.isBuffer(data)) {
-				text = data.toString("utf-8");
-			} else {
-				text = new TextDecoder("utf-8").decode(data as ArrayBuffer);
+				return JSON.parse(data) as T;
 			}
-			return JSON.parse(text) as T;
+
+			let uint8: Uint8Array;
+			if (data instanceof Uint8Array) {
+				uint8 = data;
+			} else if (data instanceof ArrayBuffer) {
+				uint8 = new Uint8Array(data);
+			} else if (typeof Buffer !== "undefined" && Buffer.isBuffer(data)) {
+				const buf = data as unknown as {
+					buffer: ArrayBuffer;
+					byteOffset: number;
+					byteLength: number;
+				};
+				uint8 = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+			} else {
+				uint8 = new Uint8Array(data as ArrayBuffer);
+			}
+
+			if (uint8.length > 0 && (uint8[0] === 0x7b || uint8[0] === 0x5b)) {
+				try {
+					const text = new TextDecoder("utf-8").decode(uint8);
+					return JSON.parse(text) as T;
+				} catch {
+					// Fall  to msgpack decoding
+				}
+			}
+
+			try {
+				return decodeMsgpack(uint8) as T;
+			} catch {
+				const text = new TextDecoder("utf-8").decode(uint8);
+				return JSON.parse(text) as T;
+			}
 		} catch (e: unknown) {
 			throw new EncodingError(
 				`Failed to decode message: ${e instanceof Error ? e.message : String(e)}`,

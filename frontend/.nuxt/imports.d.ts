@@ -34,6 +34,9 @@ export { definePageMeta } from '../../node_modules/nuxt/dist/pages/runtime/compo
 export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
 export { useAuth } from '../composables/useAuth';
 export { useCustomToast } from '../composables/useCustomToast';
+export { useDnse, dnseClient, dnseApi } from '../composables/useDnse';
+export { useDnseApi, dnseApiClient, getHistoricalOhlc, OhlcCandle, HistoricalOhlcResult } from '../composables/useDnseApi';
+export { useDnseWs, dnseWsClient } from '../composables/useDnseWs';
 export { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d';
 export { defineShortcuts } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts';
 export { useProvideButtonGroup, useInjectButtonGroup } from '../../node_modules/@nuxt/ui/dist/runtime/composables/useButtonGroup';

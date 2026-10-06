@@ -9,13 +9,14 @@ import {
 } from "./common";
 
 export interface DNSEClientOptions {
-	apiKey: string;
-	apiSecret: string;
+	apiKey?: string;
+	apiSecret?: string;
 	baseUrl?: string;
 	algorithm?: SupportedAlgorithm;
 	hmacNonceEnabled?: boolean;
 	apiVersion?: string;
 	timeout?: number;
+	dateHeaderName?: string;
 }
 
 export type DNSEClientResponse<T = unknown> = [status: number, body: string] & {
@@ -81,6 +82,25 @@ export interface InstrumentOptions {
 	page?: number;
 }
 
+export interface OhlcQueryOptions {
+	symbol: string;
+	type?: "STOCK" | "DERIVATIVE" | "INDEX" | string;
+	resolution?: "1" | "3" | "5" | "15" | "30" | "1h" | "1D" | "1W" | string;
+	from: number;
+	to: number;
+	[key: string]: unknown;
+}
+
+export interface OhlcResponseData {
+	t: number[];
+	o: number[];
+	h: number[];
+	l: number[];
+	c: number[];
+	v: number[];
+	nextTime?: number;
+}
+
 export class DNSEClient {
 	private readonly _apiKey: string;
 	private readonly _apiSecret: string;
@@ -88,11 +108,12 @@ export class DNSEClient {
 	private readonly _algorithm: SupportedAlgorithm;
 	private readonly _hmacNonceEnabled: boolean;
 	private readonly _apiVersion: string;
+	private readonly _dateHeaderName: string;
 	private readonly _http: AxiosInstance;
 
-	constructor(options: DNSEClientOptions) {
-		this._apiKey = options.apiKey;
-		this._apiSecret = options.apiSecret;
+	constructor(options: DNSEClientOptions = {}) {
+		this._apiKey = options.apiKey || "";
+		this._apiSecret = options.apiSecret || "";
 		this._baseUrl = (options.baseUrl || "https://openapi.dnse.com.vn").replace(
 			/\/+$/,
 			"",
@@ -100,6 +121,9 @@ export class DNSEClient {
 		this._algorithm = options.algorithm || "hmac-sha256";
 		this._hmacNonceEnabled = options.hmacNonceEnabled ?? true;
 		this._apiVersion = options.apiVersion || getApiVersion();
+		this._dateHeaderName =
+			options.dateHeaderName ||
+			(typeof window !== "undefined" ? "X-Aux-Date" : getDateHeaderName());
 
 		this._http = axios.create({
 			baseURL: this._baseUrl,
@@ -426,15 +450,23 @@ export class DNSEClient {
 		);
 	}
 
-	public async getOhlc<T = unknown>(
-		barType: string,
+	public async getOhlc<T = OhlcResponseData>(
+		barTypeOrOptions: string | OhlcQueryOptions,
 		query?: Record<string, unknown>,
 		dryRun = false,
 	): Promise<DNSEClientResponse<T> | null> {
-		const requestQuery: Record<string, unknown> = {
-			...(query || {}),
-			type: barType,
-		};
+		let requestQuery: Record<string, unknown>;
+		if (typeof barTypeOrOptions === "object" && barTypeOrOptions !== null) {
+			requestQuery = {
+				type: barTypeOrOptions.type ?? "DERIVATIVE",
+				...barTypeOrOptions,
+			};
+		} else {
+			requestQuery = {
+				...(query || {}),
+				type: barTypeOrOptions,
+			};
+		}
 		return this._request<T>(
 			"GET",
 			"/price/ohlc",
@@ -820,19 +852,20 @@ export class DNSEClient {
 			typeof process !== "undefined" &&
 			process.env?.DEBUG?.toLowerCase() === "true";
 
-		const { dateValue, signatureHeaderValue } = await this._signatureHeaders(
-			method,
-			path,
-		);
-		const dateHeaderName = getDateHeaderName();
-
 		const reqHeaders: Record<string, string> = {
-			[dateHeaderName]: dateValue,
-			"X-Signature": signatureHeaderValue,
-			"x-api-key": this._apiKey,
 			version: version || this._apiVersion,
 			...(headers || {}),
 		};
+
+		if (this._apiKey && this._apiSecret) {
+			const { dateValue, signatureHeaderValue } = await this._signatureHeaders(
+				method,
+				path,
+			);
+			reqHeaders[this._dateHeaderName] = dateValue;
+			reqHeaders["X-Signature"] = signatureHeaderValue;
+			reqHeaders["x-api-key"] = this._apiKey;
+		}
 
 		if (body !== undefined && body !== null) {
 			reqHeaders["Content-Type"] = "application/json";
@@ -919,7 +952,7 @@ export class DNSEClient {
 			dateValue,
 			this._algorithm,
 			nonce,
-			getDateHeaderName(),
+			this._dateHeaderName,
 		);
 
 		let signatureHeaderValue = `Signature keyId="${this._apiKey}",algorithm="${this._algorithm}",headers="${headersList}",signature="${signature}"`;

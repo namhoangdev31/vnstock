@@ -74,7 +74,7 @@
             to="/admin/trd/phase-1"
             class="btn-aave-ghost-light"
           >
-            <span>Đặc tả Kỹ Thuật TRD</span>
+            <span>Bảng giao dịch</span>
           </NuxtLink>
         </div>
 

@@ -1,11 +1,7 @@
-import { TradingClient } from "@vnstock/dnse";
+export * from "./useDnseWs"
+export * from "./useDnseApi"
 
-const client = new TradingClient({
-  apiKey: "",
-  apiSecret: "",
-  baseUrl: "",
-  autoReconnect: true,
-  maxRetries: 10,
-  heartbeatInterval: 25,
-  timeout: 60,
-})
+// Aliases tương thích ngược
+export { useDnseWs as useDnse } from "./useDnseWs"
+export { dnseWsClient as dnseClient } from "./useDnseWs"
+export { dnseApiClient as dnseApi } from "./useDnseApi"

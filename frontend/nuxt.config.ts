@@ -14,6 +14,9 @@ export default defineNuxtConfig({
         ignored: ["**/dist/**", "**/../backend/app/frontend/**"],
       },
     },
+    optimizeDeps: {
+      exclude: ["@vnstock/dnse"],
+    },
   },
   modules: ["@nuxt/ui", "@vueuse/nuxt"],
   css: ["~/assets/css/main.css"],
@@ -48,12 +51,10 @@ export default defineNuxtConfig({
         "http://127.0.0.1:8000",
       dnseApiKey:
         process.env.DNSE_API_KEY ||
-        process.env.NUXT_PUBLIC_DNSE_API_KEY ||
-        "eyJvcmciOiJkbnNlIiwiaWQiOiI4YWZhNWI1ODg2MWE0ZGNlOTI1ZGFiZmQxMTZiZTFiOCIsImgiOiJtdXJtdXIxMjgifQ==",
+        process.env.NUXT_PUBLIC_DNSE_API_KEY,
       dnseApiSecret:
         process.env.DNSE_API_SECRET ||
-        process.env.NUXT_PUBLIC_DNSE_API_SECRET ||
-        "YWBzI6FjIcaLqYpNUt5a0NTNmpsP-UmPUQn74SCkLFX0NyEQhG_S05hFCtd5y2RZq56IZiG8kzwp5WYfTpW7hA",
+        process.env.NUXT_PUBLIC_DNSE_API_SECRET,
       dnseWsUrl: process.env.DNSE_WS_URL || "wss://ws-openapi.dnse.com.vn",
     },
   },
@@ -63,6 +64,9 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
+    "/dnse-api/**": {
+      proxy: "https://openapi.dnse.com.vn/**",
+    },
     "/api/**": {
       proxy: `${process.env.VITE_API_URL || process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/**`,
     },

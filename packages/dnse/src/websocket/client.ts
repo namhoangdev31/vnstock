@@ -229,7 +229,6 @@ export class TradingClient extends EventEmitter {
 	public readonly apiKey: string;
 	public readonly apiSecret: string;
 	public readonly baseUrl: string;
-	/** Encoding luôn là "json" — lấy từ encoder để build channel name */
 	public get encoding(): WebSocketEncoding {
 		return this._encoder.encoding;
 	}
@@ -320,7 +319,7 @@ export class TradingClient extends EventEmitter {
 			await this._authenticate();
 		} catch (err) {
 			if (this._connection) {
-				await this._connection.close().catch(() => {});
+				await this._connection.close().catch(() => { });
 				this._connection = null;
 			}
 			throw err;
@@ -433,7 +432,7 @@ export class TradingClient extends EventEmitter {
 							try {
 								await this._handleReconnection();
 								reconnectAttempt = 0;
-							} catch {}
+							} catch { }
 						} else {
 							break;
 						}
@@ -482,37 +481,90 @@ export class TradingClient extends EventEmitter {
 		} else if (action === "error") {
 			const errorMsg = String(data.message || data.msg || "Server error");
 			this.emit("error", new Error(errorMsg));
-		} else if (msgType && msgType in MSG_TYPE_MAP) {
-			const { event, parser, field } = MSG_TYPE_MAP[msgType];
-			let targetPayload = data;
+		} else {
+			let mapping: MsgTypeMapping | undefined;
+			let payloadData = data;
 
-			if (field && typeof data[field] === "object" && data[field] !== null) {
-				targetPayload = {
-					...(data[field] as Record<string, unknown>),
+			if (data.data && typeof data.data === "object") {
+				payloadData = {
+					...(data.data as Record<string, unknown>),
 					_receivedAt: data._receivedAt,
 				};
 			}
 
-			const obj = parser(targetPayload);
-			this.emit(event, obj);
-
-			// Phản hồi thêm alias cho đơn hàng và vị thế
-			if (event === "order_event") {
-				this.emit("order", obj);
-			}
-			if (event === "position_event") {
-				this.emit("position", obj);
-			}
-
-			// Đẩy vào async queue nếu không có listener callback
-			if (this.listenerCount(event) === 0) {
-				const q = this._queues.get(event);
-				if (q) {
-					q.push(obj);
+			if (msgType && msgType in MSG_TYPE_MAP) {
+				mapping = MSG_TYPE_MAP[msgType];
+			} else {
+				const channel = String(data.channel || data.c || "");
+				if (channel.startsWith("ohlc_closed")) {
+					mapping = { event: "ohlc_closed", parser: parseOhlc };
+				} else if (channel.startsWith("ohlc")) {
+					mapping = { event: "ohlc", parser: parseOhlc };
+				} else if (channel.startsWith("top_price")) {
+					mapping = { event: "quote", parser: parseQuote };
+				} else if (channel.startsWith("tick_extra")) {
+					mapping = { event: "trade_extra", parser: parseTradeExtra };
+				} else if (channel.startsWith("tick")) {
+					mapping = { event: "trade", parser: parseTrade };
+				} else if (channel.startsWith("security_definition")) {
+					mapping = { event: "security_definition", parser: parseSecurityDefinition };
+				} else if (channel.startsWith("market_index_influence")) {
+					mapping = { event: "market_index_influence", parser: parseIndexInfluence };
+				} else if (channel.startsWith("estimated_market_index")) {
+					mapping = { event: "estimated_market_index", parser: parseEstimatedMarketIndex };
+				} else if (channel.startsWith("market_index")) {
+					mapping = { event: "market_index", parser: parseMarketIndex };
+				} else if (channel.startsWith("foreign")) {
+					mapping = { event: "foreign", parser: parseForeignInvestor };
+				} else if (channel.startsWith("session")) {
+					mapping = { event: "session", parser: parseSession };
+				} else if (channel.startsWith("expected_price")) {
+					mapping = { event: "expected_price", parser: parseExpectedPrice };
+				} else if (channel.startsWith("order")) {
+					mapping = { event: "order_event", parser: parseOrder, field: "order" };
+				} else if (channel.startsWith("position")) {
+					mapping = { event: "position_event", parser: parsePosition, field: "position" };
+				} else if (channel.startsWith("account")) {
+					mapping = { event: "account", parser: parseAccountUpdate };
+				} else if (payloadData.open !== undefined && payloadData.close !== undefined) {
+					mapping = { event: "ohlc", parser: parseOhlc };
+				} else if (payloadData.bestBid !== undefined || payloadData.bestAsk !== undefined) {
+					mapping = { event: "quote", parser: parseQuote };
+				} else if (payloadData.price !== undefined && payloadData.quantity !== undefined) {
+					mapping = { event: "trade", parser: parseTrade };
 				}
-				const generalQ = this._queues.get("*");
-				if (generalQ) {
-					generalQ.push(obj);
+			}
+
+			if (mapping) {
+				const { event, parser, field } = mapping;
+				let targetPayload = payloadData;
+
+				if (field && typeof payloadData[field] === "object" && payloadData[field] !== null) {
+					targetPayload = {
+						...(payloadData[field] as Record<string, unknown>),
+						_receivedAt: data._receivedAt,
+					};
+				}
+
+				const obj = parser(targetPayload);
+				this.emit(event, obj);
+
+				if (event === "order_event") {
+					this.emit("order", obj);
+				}
+				if (event === "position_event") {
+					this.emit("position", obj);
+				}
+
+				if (this.listenerCount(event) === 0) {
+					const q = this._queues.get(event);
+					if (q) {
+						q.push(obj);
+					}
+					const generalQ = this._queues.get("*");
+					if (generalQ) {
+						generalQ.push(obj);
+					}
 				}
 			}
 		}
@@ -567,7 +619,7 @@ export class TradingClient extends EventEmitter {
 			this.emit("reconnected", { sessionId: this._sessionId });
 		} catch (err) {
 			if (this._connection) {
-				await this._connection.close().catch(() => {});
+				await this._connection.close().catch(() => { });
 				this._connection = null;
 			}
 			throw err;
@@ -614,33 +666,44 @@ export class TradingClient extends EventEmitter {
 	 */
 	public async _subscribeChannel(
 		channel: string,
-		symbols: string[],
+		symbols: string | string[],
 		kwargs?: Record<string, unknown>,
 	): Promise<void> {
 		if (!this._isAuthenticated || !this._connection) {
 			throw new SubscriptionError("Must authenticate before subscribing");
 		}
 
+		const symList = (
+			Array.isArray(symbols) ? symbols : symbols ? [symbols] : []
+		).map((s) => s.toUpperCase());
+
 		const subscribeMsg = {
 			action: "subscribe",
-			channels: [{ name: channel, symbols, ...(kwargs ?? {}) }],
+			channels: [{ name: channel, symbols: symList, ...(kwargs ?? {}) }],
 		};
 
 		const encoded = this._encoder.encode(subscribeMsg);
 		await this._connection.send(encoded);
 
-		this._subscriptions.set(channel, { symbols, kwargs });
+		this._subscriptions.set(channel, { symbols: symList, kwargs });
 	}
 
 	/**
 	 * Hủy đăng ký kênh WebSocket
 	 */
-	public async unsubscribe(channel: string, symbols: string[]): Promise<void> {
+	public async unsubscribe(
+		channel: string,
+		symbols: string | string[],
+	): Promise<void> {
 		if (!this._connection) return;
+
+		const symList = (
+			Array.isArray(symbols) ? symbols : symbols ? [symbols] : []
+		).map((s) => s.toUpperCase());
 
 		const unsubscribeMsg = {
 			action: "unsubscribe",
-			channels: [{ name: channel, symbols }],
+			channels: [{ name: channel, symbols: symList }],
 		};
 
 		const encoded = this._encoder.encode(unsubscribeMsg);
@@ -648,7 +711,7 @@ export class TradingClient extends EventEmitter {
 
 		const stored = this._subscriptions.get(channel);
 		if (stored) {
-			stored.symbols = stored.symbols.filter((s) => !symbols.includes(s));
+			stored.symbols = stored.symbols.filter((s) => !symList.includes(s));
 			if (stored.symbols.length === 0) {
 				this._subscriptions.delete(channel);
 			}
@@ -659,7 +722,7 @@ export class TradingClient extends EventEmitter {
 	 * Đăng ký luồng khớp lệnh (Trade)
 	 */
 	public async subscribeTrades(
-		symbols: string[],
+		symbols: string | string[],
 		onTrade?: (trade: Trade) => void,
 		boardId?: string | null,
 	): Promise<void> {
@@ -680,7 +743,7 @@ export class TradingClient extends EventEmitter {
 	 * Đăng ký luồng thông tin khớp lệnh mở rộng (TradeExtra)
 	 */
 	public async subscribeTradeExtra(
-		symbols: string[],
+		symbols: string | string[],
 		onTradeExtra?: (tradeExtra: TradeExtra) => void,
 		boardId?: string | null,
 	): Promise<void> {
@@ -705,7 +768,7 @@ export class TradingClient extends EventEmitter {
 	 * Đăng ký luồng giá dự kiến (Expected Price)
 	 */
 	public async subscribeExpectedPrice(
-		symbols: string[],
+		symbols: string | string[],
 		onExpectedPrice?: (expectedPrice: ExpectedPrice) => void,
 		boardId?: string | null,
 	): Promise<void> {
@@ -803,7 +866,7 @@ export class TradingClient extends EventEmitter {
 	 * channel: security_definition.{board_id}.{encoding}
 	 */
 	public async subscribeSecDef(
-		symbols: string[],
+		symbols: string | string[],
 		onSecDef?: (secDef: SecurityDefinition) => void,
 		boardId?: string | null,
 	): Promise<void> {
@@ -884,7 +947,7 @@ export class TradingClient extends EventEmitter {
 	 * Sàn HOSE hỗ trợ 3 mức giá, HNX/UPCOM hỗ trợ 10 mức giá.
 	 */
 	public async subscribeQuotes(
-		symbols: string[],
+		symbols: string | string[],
 		onQuote?: (quote: Quote) => void,
 		boardId?: string | null,
 	): Promise<void> {
@@ -902,11 +965,22 @@ export class TradingClient extends EventEmitter {
 	}
 
 	/**
+	 * Đăng ký sổ lệnh giá tốt nhất (Alias cho subscribeQuotes)
+	 */
+	public async onDepth(
+		symbols: string | string[],
+		onQuote?: (quote: Quote) => void,
+		boardId?: string | null,
+	): Promise<void> {
+		return this.subscribeQuotes(symbols, onQuote, boardId);
+	}
+
+	/**
 	 * Đăng ký dữ liệu giao dịch nhà đầu tư nước ngoài (Khối ngoại)
 	 * channel: foreign.{board_id}.{encoding}
 	 */
 	public async subscribeForeignTrading(
-		symbols: string[],
+		symbols: string | string[],
 		boardId = "G1",
 		onTrade?: (foreign: ForeignInvestor) => void,
 	): Promise<void> {
@@ -924,12 +998,22 @@ export class TradingClient extends EventEmitter {
 	 * resolution: 1 | 3 | 5 | 15 | 30 | 1H | 1D | 1W
 	 */
 	public async subscribeOhlc(
-		symbols: string[],
-		resolution?: string | null,
+		symbols: string | string[],
+		resolution?: string | null | ((ohlc: Ohlc) => void),
 		onOhlc?: (ohlc: Ohlc) => void,
 	): Promise<void> {
-		const resolutions = resolution
-			? [resolution]
+		let resStr: string | null = null;
+		let callback = onOhlc;
+
+		if (typeof resolution === "function") {
+			callback = resolution;
+			resStr = "1";
+		} else if (typeof resolution === "string") {
+			resStr = resolution;
+		}
+
+		const resolutions = resStr
+			? [resStr]
 			: ["1", "3", "5", "15", "30", "1H", "1D", "1W"];
 
 		for (const res of resolutions) {
@@ -937,8 +1021,8 @@ export class TradingClient extends EventEmitter {
 			await this._subscribeChannel(channel, symbols);
 		}
 
-		if (onOhlc) {
-			this.on("ohlc", onOhlc as (...args: unknown[]) => void);
+		if (callback) {
+			this.on("ohlc", callback as (...args: unknown[]) => void);
 		}
 	}
 
@@ -948,12 +1032,22 @@ export class TradingClient extends EventEmitter {
 	 * resolution: 1 | 3 | 5 | 15 | 30 | 1H | 1D | 1W
 	 */
 	public async subscribeOhlcClosed(
-		symbols: string[],
-		resolution?: string | null,
+		symbols: string | string[],
+		resolution?: string | null | ((ohlc: Ohlc) => void),
 		onOhlc?: (ohlc: Ohlc) => void,
 	): Promise<void> {
-		const resolutions = resolution
-			? [resolution]
+		let resStr: string | null = null;
+		let callback = onOhlc;
+
+		if (typeof resolution === "function") {
+			callback = resolution;
+			resStr = "1";
+		} else if (typeof resolution === "string") {
+			resStr = resolution;
+		}
+
+		const resolutions = resStr
+			? [resStr]
 			: ["1", "3", "5", "15", "30", "1H", "1D", "1W"];
 
 		for (const res of resolutions) {
@@ -961,8 +1055,8 @@ export class TradingClient extends EventEmitter {
 			await this._subscribeChannel(channel, symbols);
 		}
 
-		if (onOhlc) {
-			this.on("ohlc_closed", onOhlc as (...args: unknown[]) => void);
+		if (callback) {
+			this.on("ohlc_closed", callback as (...args: unknown[]) => void);
 		}
 	}
 

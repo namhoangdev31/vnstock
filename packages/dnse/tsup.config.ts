@@ -1,13 +1,9 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-	entry: {
-		index: "src/index.ts",
-		"api/index": "src/api/index.ts",
-		"websocket/index": "src/websocket/index.ts",
-	},
+	entry: ["src/index.ts", "src/api/index.ts", "src/websocket/index.ts"],
 	format: ["cjs", "esm"],
-	dts: true,
+	dts: false,
 	clean: true,
 	sourcemap: true,
 	minify: false,
