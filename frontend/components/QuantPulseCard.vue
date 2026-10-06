@@ -16,6 +16,36 @@ const previousClose = ref<number | null>(null)
 const loadingHistory = ref(false)
 const historyCount = ref(0)
 const selectedTab = ref<"all" | "today" | "previous">("today")
+const viewMode = ref<"chart" | "candles" | "ta">("chart")
+
+// Cấu hình TradingView Chart
+const chartOptions = {
+  theme: "dark",
+  autosize: true,
+  symbol: "HNX:VN30F1M",
+  interval: "1",
+  timezone: "Asia/Ho_Chi_Minh",
+  locale: "vi_VN",
+  style: "1",
+  toolbar_bg: "#09090b",
+  enable_publishing: false,
+  allow_symbol_change: true,
+  details: false,
+  hotlist: false,
+  calendar: false,
+}
+
+// Cấu hình TradingView Phân Tích Kỹ Thuật
+const taOptions = {
+  interval: "15m",
+  width: "100%",
+  isTransparent: true,
+  height: 420,
+  symbol: "HNX:VN30F1M",
+  showIntervalTabs: true,
+  locale: "vi_VN",
+  colorTheme: "dark",
+}
 
 onMounted(async () => {
   loadingHistory.value = true
@@ -87,17 +117,42 @@ onMounted(async () => {
 
 <template>
   <div class="p-4 border border-zinc-800 rounded bg-zinc-950 text-zinc-100 font-mono text-xs space-y-3">
-    <!-- Header thông tin mã & số lượng nến -->
+    <!-- Header thông tin mã & các chế độ xem -->
     <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         <span class="font-bold text-sm text-zinc-100">VN30F1M &middot; Nến 1 Phút</span>
         <span v-if="previousClose !== null" class="text-[11px] text-zinc-400">
           Đóng cửa T-1: <span class="text-zinc-200 font-semibold">{{ previousClose.toFixed(1) }}</span>
         </span>
       </div>
-      <span class="text-zinc-400">
-        {{ loadingHistory ? "Đang nạp lịch sử..." : `Tổng ${historyCount} nến` }}
-      </span>
+
+      <!-- Nút chuyển View Mode -->
+      <div class="flex gap-1 bg-zinc-900 p-0.5 border border-zinc-800 rounded text-[11px]">
+        <button
+          type="button"
+          class="px-2 py-0.5 rounded transition-colors"
+          :class="viewMode === 'chart' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
+          @click="viewMode = 'chart'"
+        >
+          Biểu đồ TradingView
+        </button>
+        <button
+          type="button"
+          class="px-2 py-0.5 rounded transition-colors"
+          :class="viewMode === 'candles' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
+          @click="viewMode = 'candles'"
+        >
+          Bảng Nến DNSE
+        </button>
+        <button
+          type="button"
+          class="px-2 py-0.5 rounded transition-colors"
+          :class="viewMode === 'ta' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
+          @click="viewMode = 'ta'"
+        >
+          Tín Hiệu Kỹ Thuật
+        </button>
+      </div>
     </div>
 
     <!-- Tóm tắt 2 phiên: Phiên hôm trước T-1 và Phiên hôm nay -->
@@ -112,10 +167,10 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Khối cập nhật Realtime từ WebSocket -->
+    <!-- Khối cập nhật Realtime từ WebSocket DNSE -->
     <div class="p-2.5 bg-zinc-900 border border-zinc-800 rounded">
       <div class="flex items-center justify-between text-zinc-400 text-[11px] mb-1">
-        <span>Cập nhật Realtime qua WebSocket:</span>
+        <span>Cập nhật Realtime qua WebSocket DNSE:</span>
         <span v-if="realtimeOhlc" class="text-emerald-400 text-[10px] font-semibold">Đang nhận dữ liệu</span>
       </div>
       <div v-if="realtimeOhlc" class="grid grid-cols-5 gap-2 text-center">
@@ -128,47 +183,60 @@ onMounted(async () => {
       <div v-else class="text-zinc-500 italic">Đang đợi tín hiệu WebSocket...</div>
     </div>
 
-    <!-- Bộ lọc tab xem nến -->
-    <div class="flex gap-1 border-b border-zinc-800 pb-1 text-[11px]">
-      <button
-        type="button"
-        class="px-2 py-1 rounded"
-        :class="selectedTab === 'today' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
-        @click="selectedTab = 'today'"
-      >
-        Hôm nay [{{ todayCandles.length }}]
-      </button>
-      <button
-        type="button"
-        class="px-2 py-1 rounded"
-        :class="selectedTab === 'previous' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
-        @click="selectedTab = 'previous'"
-      >
-        Phiên trước [{{ previousDayCandles.length }}]
-      </button>
-      <button
-        type="button"
-        class="px-2 py-1 rounded"
-        :class="selectedTab === 'all' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
-        @click="selectedTab = 'all'"
-      >
-        Toàn bộ [{{ allCandles.length }}]
-      </button>
+    <!-- VIEW 1: Biểu đồ TradingView -->
+    <div v-if="viewMode === 'chart'" class="h-[520px] w-full border border-zinc-800 rounded overflow-hidden bg-zinc-900">
+      <Chart :options="chartOptions" class="w-full h-full" />
     </div>
 
-    <!-- Danh sách nến hiển thị -->
-    <div class="space-y-1">
-      <div
-        v-for="candle in (selectedTab === 'today' ? todayCandles : selectedTab === 'previous' ? previousDayCandles : allCandles).slice(-8)"
-        :key="candle.time"
-        class="grid grid-cols-6 gap-1 p-1 bg-zinc-900/60 rounded text-[11px]"
-      >
-        <span class="text-zinc-500">{{ candle.datetime }}</span>
-        <span>O: {{ candle.open.toFixed(1) }}</span>
-        <span class="text-emerald-400">H: {{ candle.high.toFixed(1) }}</span>
-        <span class="text-rose-400">L: {{ candle.low.toFixed(1) }}</span>
-        <span class="font-bold">C: {{ candle.close.toFixed(1) }}</span>
-        <span class="text-right text-zinc-400">V: {{ candle.volume.toLocaleString() }}</span>
+    <!-- VIEW 2: Phân tích kỹ thuật TradingView Gauge -->
+    <div v-else-if="viewMode === 'ta'" class="p-4 border border-zinc-800 rounded bg-zinc-900 flex justify-center">
+      <TechnicalAnalysis :options="taOptions" />
+    </div>
+
+    <!-- VIEW 3: Bảng danh sách nến DNSE chi tiết -->
+    <div v-else class="space-y-2">
+      <!-- Bộ lọc tab xem nến -->
+      <div class="flex gap-1 border-b border-zinc-800 pb-1 text-[11px]">
+        <button
+          type="button"
+          class="px-2 py-1 rounded"
+          :class="selectedTab === 'today' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
+          @click="selectedTab = 'today'"
+        >
+          Hôm nay [{{ todayCandles.length }}]
+        </button>
+        <button
+          type="button"
+          class="px-2 py-1 rounded"
+          :class="selectedTab === 'previous' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
+          @click="selectedTab = 'previous'"
+        >
+          Phiên trước [{{ previousDayCandles.length }}]
+        </button>
+        <button
+          type="button"
+          class="px-2 py-1 rounded"
+          :class="selectedTab === 'all' ? 'bg-zinc-800 text-zinc-100 font-semibold' : 'text-zinc-400 hover:text-zinc-200'"
+          @click="selectedTab = 'all'"
+        >
+          Toàn bộ [{{ allCandles.length }}]
+        </button>
+      </div>
+
+      <!-- Danh sách nến hiển thị -->
+      <div class="space-y-1 max-h-[350px] overflow-y-auto pr-1">
+        <div
+          v-for="candle in (selectedTab === 'today' ? todayCandles : selectedTab === 'previous' ? previousDayCandles : allCandles).slice(-15)"
+          :key="candle.time"
+          class="grid grid-cols-6 gap-1 p-1 bg-zinc-900/60 rounded text-[11px]"
+        >
+          <span class="text-zinc-500">{{ candle.datetime }}</span>
+          <span>O: {{ candle.open.toFixed(1) }}</span>
+          <span class="text-emerald-400">H: {{ candle.high.toFixed(1) }}</span>
+          <span class="text-rose-400">L: {{ candle.low.toFixed(1) }}</span>
+          <span class="font-bold">C: {{ candle.close.toFixed(1) }}</span>
+          <span class="text-right text-zinc-400">V: {{ candle.volume.toLocaleString() }}</span>
+        </div>
       </div>
     </div>
   </div>

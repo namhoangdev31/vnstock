@@ -946,7 +946,13 @@ const _inlineRuntimeConfig = {
     "apiUrl": "https://vnstock.fastapicloud.dev",
     "dnseApiKey": "eyJvcmciOiJkbnNlIiwiaWQiOiI4YWZhNWI1ODg2MWE0ZGNlOTI1ZGFiZmQxMTZiZTFiOCIsImgiOiJtdXJtdXIxMjgifQ==",
     "dnseApiSecret": "YWBzI6FjIcaLqYpNUt5a0NTNmpsP-UmPUQn74SCkLFX0NyEQhG_S05hFCtd5y2RZq56IZiG8kzwp5WYfTpW7hA",
-    "dnseWsUrl": "wss://ws-openapi.dnse.com.vn"
+    "dnseWsUrl": "wss://ws-openapi.dnse.com.vn",
+    "tradingview": {
+      "overrideDefaults": true,
+      "experimental": {
+        "anonymousCrossOrigin": false
+      }
+    }
   },
   "icon": {
     "serverKnownCssClasses": []

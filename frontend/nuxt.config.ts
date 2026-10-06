@@ -18,7 +18,7 @@ export default defineNuxtConfig({
       exclude: ["@vnstock/dnse"],
     },
   },
-  modules: ["@nuxt/ui", "@vueuse/nuxt"],
+  modules: ["@nuxt/ui", "@vueuse/nuxt", "nuxt-tradingview"],
   css: ["~/assets/css/main.css"],
   app: {
     head: {
