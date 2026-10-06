@@ -112,7 +112,7 @@ def ingest_macro_indicators(
     trading_date: date | None = None,
 ) -> dict[str, int]:
     """Nạp tỷ giá USD/VND và giá vàng SJC cho ngày trading_date (mặc định hôm nay)."""
-    from app.domains.market_data.infrastructure.vnstock import vnstock_service
+    from app.domains.vnstock import vnstock_service
 
     today = trading_date or datetime.now(VN_TZ).date()
     counts: dict[str, int] = {"usd_vnd": 0, "sjc_buy": 0, "sjc_sell": 0}
@@ -226,7 +226,7 @@ def ingest_market_breadth(
     exchange: str = "HOSE",
 ) -> int:
     """Nạp độ rộng thị trường từ bảng giá VN30 hôm nay."""
-    from app.domains.market_data.infrastructure.vnstock import vnstock_service
+    from app.domains.vnstock import vnstock_service
 
     today = trading_date or datetime.now(VN_TZ).date()
 
@@ -351,7 +351,7 @@ def ingest_institutional_flows(
     symbols: list[str] | None = None,
 ) -> int:
     """Nạp dòng tiền khối ngoại từ Market.equity.quote() cho từng mã VN30."""
-    from app.domains.market_data.infrastructure.vnstock import vnstock_service
+    from app.domains.vnstock import vnstock_service
 
     today = trading_date or datetime.now(VN_TZ).date()
     upserted = 0
@@ -455,7 +455,7 @@ def ingest_institutional_flows(
 
 def backfill_macro_indicators(session: Session, days: int = 30) -> int:
     """Nạp macro history N ngày gần nhất (bỏ qua cuối tuần)."""
-    from app.domains.market_data.infrastructure.vnstock import vnstock_service
+    from app.domains.vnstock import vnstock_service
 
     today = datetime.now(VN_TZ).date()
     total = 0

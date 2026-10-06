@@ -18,7 +18,7 @@ from app.domains.market_data.application.jobs.sync_symbols_job import (
     run_sync_symbols_job as _run_sync_symbols_job,
 )
 from app.domains.market_data.domain.models import DataSyncLog
-from app.domains.market_data.infrastructure.vnstock import vnstock_service
+from app.domains.vnstock import vnstock_service
 
 logger = logging.getLogger(__name__)
 

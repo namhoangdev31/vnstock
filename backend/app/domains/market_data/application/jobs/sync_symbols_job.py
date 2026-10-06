@@ -12,7 +12,7 @@ from sqlmodel import Session
 from app.core.db import engine
 from app.domains.market_data.application.sync_service import DataSyncManager
 from app.domains.market_data.domain.models import DataSyncLog
-from app.domains.market_data.infrastructure.vnstock import (
+from app.domains.vnstock import (
     VnstockService,
     vnstock_service,
 )

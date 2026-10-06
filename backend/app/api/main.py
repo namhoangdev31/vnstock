@@ -15,11 +15,9 @@ from app.api.private_router import router as private_router
 from app.api.system_router import router as system_router
 from app.core.config import settings
 from app.domains.fundamental.presentation.router import fundamental_router
+from app.domains.iboard.presentation.router import router as iboard_router
 from app.domains.identity.presentation.router import identity_router
 from app.domains.market_data.presentation.router import router as market_data_router
-from app.domains.market_data.presentation.vnstock_router import (
-    router as vnstock_router,
-)
 from app.domains.quant.presentation.cockpit_router import router as cockpit_router
 from app.domains.quant.presentation.daemon_router import router as daemon_router
 from app.domains.quant.presentation.forecast_router import router as forecast_router
@@ -28,12 +26,16 @@ from app.domains.quant.presentation.recalibration_router import (
     router as recalibration_router,
 )
 from app.domains.simulation.presentation.router import router as simulation_router
+from app.domains.vnstock.presentation.router import (
+    router as vnstock_router,
+)
 
 api_router = APIRouter()
 api_router.include_router(identity_router)
 api_router.include_router(system_router)
 api_router.include_router(market_data_router)
 api_router.include_router(vnstock_router)
+api_router.include_router(iboard_router)
 api_router.include_router(fundamental_router)
 api_router.include_router(forecast_router)
 api_router.include_router(quant_router)

@@ -12,19 +12,27 @@ from datetime import date, timedelta
 import pytest
 from sqlmodel import Session, SQLModel, col, create_engine, select
 
-from app.domains.market_data.application.iboard_schemas import (
+from app.domains.iboard.application.schemas import (
     IBoardCandleBar,
     IBoardMarketPulse,
     IBoardStockDetail,
     IBoardStockRow,
 )
-from app.domains.market_data.application.iboard_service import (
-    IBoardService,
-    _build_order_book,
-    _eod_price_block,
-    _live_price_block,
-    _price_status,
-    _safe_num,
+from app.domains.iboard.application.service import IBoardService
+from app.domains.iboard.domain.policy import (
+    build_order_book_levels as _build_order_book,
+)
+from app.domains.iboard.domain.policy import (
+    classify_price_status as _price_status,
+)
+from app.domains.iboard.domain.policy import (
+    parse_eod_price_block as _eod_price_block,
+)
+from app.domains.iboard.domain.policy import (
+    parse_live_price_block as _live_price_block,
+)
+from app.domains.iboard.domain.policy import (
+    safe_num as _safe_num,
 )
 from app.domains.market_data.domain.models import (
     DerivativeContract,
@@ -247,11 +255,11 @@ def test_get_board_listed_and_derivatives(
 ):
     """Kiểm tra get_board cho cả hai nhóm cổ phiếu niêm yết và phái sinh."""
     monkeypatch.setattr(
-        "app.domains.market_data.infrastructure.external_indices.IBoardDataGateway.fetch_batch_quotes",
+        "app.domains.iboard.infrastructure.external_indices.IBoardDataGateway.fetch_batch_quotes",
         lambda *args, **kwargs: {},
     )
     monkeypatch.setattr(
-        "app.domains.market_data.infrastructure.external_indices.IBoardDataGateway.backfill_ohlcv_daily",
+        "app.domains.iboard.infrastructure.external_indices.IBoardDataGateway.backfill_ohlcv_daily",
         lambda session, vn, symbol, target_count=100: list(
             session.exec(
                 select(StockOHLCVDaily)
@@ -333,11 +341,11 @@ def test_get_board_listed_and_derivatives(
 def test_get_stock_detail(memory_session: Session, monkeypatch: pytest.MonkeyPatch):
     """Kiểm tra get_stock_detail trả về đầy đủ các trường DTO hợp lệ."""
     monkeypatch.setattr(
-        "app.domains.market_data.infrastructure.external_indices.IBoardDataGateway.fetch_batch_quotes",
+        "app.domains.iboard.infrastructure.external_indices.IBoardDataGateway.fetch_batch_quotes",
         lambda *args, **kwargs: {},
     )
     monkeypatch.setattr(
-        "app.domains.market_data.infrastructure.external_indices.IBoardDataGateway.backfill_ohlcv_daily",
+        "app.domains.iboard.infrastructure.external_indices.IBoardDataGateway.backfill_ohlcv_daily",
         lambda session, vn, symbol, target_count=100: list(
             session.exec(
                 select(StockOHLCVDaily)

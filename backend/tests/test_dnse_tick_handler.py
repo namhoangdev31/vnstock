@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 from dnse.websocket.models import ExpectedPrice, Ohlc, PriceLevel, Quote, Trade
 
 from app.core.cache import realtime_cache
-from app.domains.market_data.infrastructure.dnse.tick_handler import TickNormalizer
+from app.domains.dnse.tick_handler import TickNormalizer
 
 
 def test_on_trade_sets_realtime_cache():

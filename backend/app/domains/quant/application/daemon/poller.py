@@ -369,7 +369,7 @@ class MarketDataPoller:
 
         interval: '1m' cho giao dịch intraday, '1D' cho phân tích overnight/T+1.
         """
-        from app.domains.market_data.infrastructure.vnstock import (
+        from app.domains.vnstock import (
             vnstock_service,
         )
 
@@ -398,7 +398,7 @@ class MarketDataPoller:
 
     def _fetch_intraday(self, symbol: str, limit: int) -> list[Any] | None:
         """Fetch intraday bars via VnstockService with retry + rate-limit."""
-        from app.domains.market_data.infrastructure.vnstock import (
+        from app.domains.vnstock import (
             vnstock_service,
         )
 
@@ -417,7 +417,7 @@ class MarketDataPoller:
 
     def _fetch_order_flow(self, symbol: str, limit: int) -> list[Any] | None:
         """Fetch tick-level order flow (Aggressive Buy/Sell) via VnstockService."""
-        from app.domains.market_data.infrastructure.vnstock import (
+        from app.domains.vnstock import (
             vnstock_service,
         )
 
@@ -460,7 +460,7 @@ class MarketDataPoller:
 
         # ---- Spot price: VN30 index last close ----
         try:
-            from app.domains.market_data.infrastructure.vnstock import (
+            from app.domains.vnstock import (
                 vnstock_service,
             )
 

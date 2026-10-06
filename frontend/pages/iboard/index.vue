@@ -20,6 +20,7 @@ import type {
   FluctuationStats,
   IndexBreadth,
   IndexDisplayItem,
+  LayoutMode,
   ListedSubBasket,
   MainCategory,
   SimulatedOrder,
@@ -86,6 +87,7 @@ const listedSubBasket = ref<ListedSubBasket>("VN30")
 const sectorSubBasket = ref<string>("bank")
 const searchQuery = ref("")
 const priceUnitDisplay = ref<"percent" | "diff">("percent")
+const layoutMode = ref<LayoutMode>("list")
 
 // Dữ liệu bảng giá
 const tableData = ref<StockRowDisplay[]>([])
@@ -195,6 +197,46 @@ const aiInsightText = ref("")
 const topGainers = ref<TopMoverItem[]>([])
 const topLosers = ref<TopMoverItem[]>([])
 
+const computedTopGainers = computed<TopMoverItem[]>(() => {
+  if (topGainers.value.length > 0) return topGainers.value
+  return [...tableData.value]
+    .filter((s) => s.changePercent > 0)
+    .sort((a, b) => b.changePercent - a.changePercent)
+    .slice(0, 5)
+    .map((s) => ({
+      symbol: s.symbol,
+      name: s.name,
+      price: s.lastPrice.toFixed(2),
+      change: `+${s.changePercent.toFixed(2)}%`,
+    }))
+})
+
+const computedTopLosers = computed<TopMoverItem[]>(() => {
+  if (topLosers.value.length > 0) return topLosers.value
+  return [...tableData.value]
+    .filter((s) => s.changePercent < 0)
+    .sort((a, b) => a.changePercent - b.changePercent)
+    .slice(0, 5)
+    .map((s) => ({
+      symbol: s.symbol,
+      name: s.name,
+      price: s.lastPrice.toFixed(2),
+      change: `${s.changePercent.toFixed(2)}%`,
+    }))
+})
+
+const effectiveAiInsightText = computed(() => {
+  if (aiInsightText.value) return aiInsightText.value
+  const f = fluctuationStats.value
+  const total = f.up + f.down + f.unch + f.ceil + f.flr
+  if (total === 0) return "Thị trường đang tổng hợp dữ liệu giao dịch."
+  const sentiment =
+    f.up + f.ceil > f.down + f.flr
+      ? "tích cực với dòng tiền lan tỏa"
+      : "thận trọng với áp lực điều chỉnh"
+  return `Độ rộng thị trường ghi nhận ${f.up + f.ceil} mã tăng và ${f.down + f.flr} mã giảm. Dòng tiền phản ánh trạng thái ${sentiment} trên rổ chỉ số.`
+})
+
 const orderSide = ref<"BUY" | "SELL">("BUY")
 const orderSymbol = ref("")
 const orderPrice = ref("")
@@ -239,12 +281,18 @@ const calcStockStatus = (
   return "ref"
 }
 
-const formatCompactNum = (num: number | null | undefined): string => {
-  if (!num) return "0"
-  if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2)}B`
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`
-  return num.toLocaleString("en-US")
+const formatIndexVolume = (
+  num: number | null | undefined,
+  isDeriv = false,
+): string => {
+  if (!num) return "-"
+  if (isDeriv) return `${Math.round(num).toLocaleString("en-US")} HĐ`
+  return `${(num / 1_000_000).toFixed(2)} Triệu CP`
+}
+
+const formatIndexValue = (num: number | null | undefined): string => {
+  if (!num) return "-"
+  return `${(num / 1_000_000_000).toFixed(2)} Tỷ`
 }
 
 const updateIndexItem = (item: IBoardWSIndexData) => {
@@ -252,6 +300,7 @@ const updateIndexItem = (item: IBoardWSIndexData) => {
   const rawId = item.index.toLowerCase()
   const targetId =
     rawId === "hnxindex" ? "hnx" : rawId === "upindex" ? "upcom" : rawId
+  const isDeriv = targetId.includes("vn30f")
 
   const existing = indices.value.find(
     (idx) =>
@@ -275,11 +324,11 @@ const updateIndexItem = (item: IBoardWSIndexData) => {
       : (existing?.breadth ?? null)
 
   const volStr = item.total_volume
-    ? formatCompactNum(item.total_volume)
-    : existing?.volume || "0"
+    ? formatIndexVolume(item.total_volume, isDeriv)
+    : existing?.volume || "-"
   const valStr = item.total_value
-    ? formatCompactNum(item.total_value)
-    : existing?.value || "0"
+    ? formatIndexValue(item.total_value)
+    : existing?.value || "-"
 
   if (existing) {
     existing.price = val.toFixed(2)
@@ -802,6 +851,7 @@ onUnmounted(() => {
       v-model:sector-sub-basket="sectorSubBasket"
       v-model:search-query="searchQuery"
       v-model:price-unit-display="priceUnitDisplay"
+      v-model:layout-mode="layoutMode"
       :sector-list="sectorList"
       :fluctuation-stats="fluctuationStats"
     />
@@ -810,12 +860,13 @@ onUnmounted(() => {
     <div class="flex-1 flex overflow-hidden">
       <!-- Vùng hiển thị dữ liệu bảng hoặc chi tiết mã -->
       <div class="flex-1 flex flex-col overflow-hidden bg-surface-abyss">
-        <!-- Bảng giá niêm yết -->
+        <!-- Bảng giá niêm yết (hỗ trợ cả dạng Danh sách & Lưới ô thẻ chuẩn DNSE) -->
         <IBoardTable
           v-if="!selectedStock"
           :data="currentTableData"
           :main-category="mainCategory"
           :price-unit-display="priceUnitDisplay"
+          :layout-mode="layoutMode"
           :is-loading="isLoadingBoard"
           @select-stock="openStockDetail"
           @quick-order="quickFillOrder"
@@ -849,9 +900,9 @@ onUnmounted(() => {
         v-model:order-price="orderPrice"
         v-model:order-quantity="orderQuantity"
         v-model:order-type="orderType"
-        :ai-insight-text="aiInsightText"
-        :top-gainers="topGainers"
-        :top-losers="topLosers"
+        :ai-insight-text="effectiveAiInsightText"
+        :top-gainers="computedTopGainers"
+        :top-losers="computedTopLosers"
         :simulated-balance="simulatedBalance"
         :simulated-orders="simulatedOrders"
         @refresh-pulse="loadMarketPulse"

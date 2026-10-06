@@ -11,9 +11,9 @@ import pytest
 from starlette.testclient import TestClient
 
 from app.core.cache import realtime_cache
-from app.domains.market_data.application.iboard_ws import IBoardWSManager
-from app.domains.market_data.infrastructure.dnse.tick_handler import TickNormalizer
-from app.domains.market_data.infrastructure.external_indices import IBoardDataGateway
+from app.domains.dnse.tick_handler import TickNormalizer
+from app.domains.iboard.application.ws_manager import IBoardWSManager
+from app.domains.iboard.infrastructure.external_indices import IBoardDataGateway
 from app.main import app
 
 
@@ -261,7 +261,7 @@ def test_fastapi_websocket_endpoint():
         assert snap_resp.get("symbol") == "HPG"
 
         # Trigger live quote on TickNormalizer and verify broadcast arrives on websocket
-        from app.domains.market_data.infrastructure.dnse import (
+        from app.domains.dnse import (
             get_dnse_stream_manager,
         )
 

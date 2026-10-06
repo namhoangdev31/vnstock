@@ -74,11 +74,11 @@ from app.domains.market_data.domain.models import (
     StockOHLCVIntraday,
     StockSymbol,
 )
-from app.domains.market_data.infrastructure.vnstock import (
+from app.domains.quant.domain.models import InstitutionalFlow
+from app.domains.vnstock import (
     VnstockService,
     VnstockServiceError,
 )
-from app.domains.quant.domain.models import InstitutionalFlow
 
 logger = logging.getLogger(__name__)
 

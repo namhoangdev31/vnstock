@@ -110,7 +110,7 @@ async def lifespan(_app: FastAPI):
         return
     migration_task = asyncio.create_task(asyncio.to_thread(_run_migrations_and_seed))
     try:
-        from app.domains.market_data.infrastructure.vnstock import (
+        from app.domains.vnstock import (
             VnstockService,
         )
 
@@ -127,7 +127,7 @@ async def lifespan(_app: FastAPI):
         await quant_daemon_controller.start()
         if settings.DNSE_WS_ENABLED:
             try:
-                from app.domains.market_data.infrastructure.dnse import (
+                from app.domains.dnse import (
                     dnse_stream_manager,
                 )
 
@@ -144,7 +144,7 @@ async def lifespan(_app: FastAPI):
         if migrations_ready:
             if settings.DNSE_WS_ENABLED:
                 try:
-                    from app.domains.market_data.infrastructure.dnse import (
+                    from app.domains.dnse import (
                         dnse_stream_manager,
                     )
 

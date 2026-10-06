@@ -16,7 +16,7 @@ from sqlmodel import col, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.models_base import VN_TZ
-from app.domains.market_data.application.iboard_service import IBoardService
+from app.domains.iboard import IBoardService
 from app.domains.market_data.domain.models import StockOHLCVDaily
 from app.domains.quant.application.engines.flow_engine import FlowLiquidityEngine
 from app.domains.quant.application.engines.quant_ml_engine import QuantMLEngine

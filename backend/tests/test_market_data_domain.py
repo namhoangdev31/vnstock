@@ -38,7 +38,7 @@ from app.domains.market_data.infrastructure.rate_limiter import (
     RateLimiter,
 )
 from app.domains.market_data.infrastructure.tick_storage import TickStorageService
-from app.domains.market_data.infrastructure.vnstock import (
+from app.domains.vnstock import (
     CapabilityStatus,
     VnstockCapabilityRegistry,
 )

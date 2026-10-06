@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.domains.market_data.infrastructure.vnstock import (
+from app.domains.vnstock import (
     CapabilityStatus,
     DataAvailability,
     ProviderResponse,

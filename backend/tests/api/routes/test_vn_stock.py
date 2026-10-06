@@ -9,7 +9,7 @@ from app.core.config import settings
 
 
 @patch(
-    "app.domains.market_data.presentation.vnstock_router.vnstock_service.fetch_symbols_by_exchange"
+    "app.domains.vnstock.presentation.router.vnstock_service.fetch_symbols_by_exchange"
 )
 def test_get_vnstock_symbols(
     mock_fetch_symbols,
@@ -39,7 +39,7 @@ def test_get_vnstock_symbols(
 
 
 @patch(
-    "app.domains.market_data.presentation.vnstock_router.vnstock_service.fetch_symbols_by_exchange"
+    "app.domains.vnstock.presentation.router.vnstock_service.fetch_symbols_by_exchange"
 )
 def test_get_vnstock_symbols_filter_exchange(
     mock_fetch_symbols,

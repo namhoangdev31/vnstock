@@ -2,7 +2,7 @@
 
 from fastapi.testclient import TestClient
 
-from app.domains.market_data.infrastructure.vnstock import (
+from app.domains.vnstock import (
     CapabilityStatus,
     VnstockCapabilityRegistry,
     VnstockService,

@@ -18,7 +18,7 @@ from app.domains.fundamental.domain.models import (
     InsiderTrading,
 )
 from app.domains.market_data.application.sync_service import DataSyncManager
-from app.domains.market_data.infrastructure.vnstock import vnstock_service
+from app.domains.vnstock import vnstock_service
 
 logger = logging.getLogger(__name__)
 

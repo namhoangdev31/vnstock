@@ -9,11 +9,11 @@ import pytest
 from dnse.websocket.exceptions import AuthenticationError
 from dnse.websocket.exceptions import ConnectionError as DNSEConnectionError
 
-from app.domains.market_data.infrastructure.dnse.config import DNSEStreamConfig
-from app.domains.market_data.infrastructure.dnse.stream_manager import (
+from app.domains.dnse.config import DNSEStreamConfig
+from app.domains.dnse.stream_manager import (
     DNSEStreamManager,
 )
-from app.domains.market_data.infrastructure.dnse.tick_handler import TickNormalizer
+from app.domains.dnse.tick_handler import TickNormalizer
 
 
 def test_config_from_settings(monkeypatch: pytest.MonkeyPatch):
@@ -73,7 +73,7 @@ async def test_start_and_stop_lifecycle():
     mock_client._is_running = True
 
     with patch(
-        "app.domains.market_data.infrastructure.dnse.stream_manager.TradingClient",
+        "app.domains.dnse.stream_manager.TradingClient",
         return_value=mock_client,
     ):
         await mgr.start()
@@ -104,7 +104,7 @@ async def test_auth_error_aborts_without_reconnect():
     mock_client.connect = AsyncMock(side_effect=AuthenticationError("Invalid API key"))
 
     with patch(
-        "app.domains.market_data.infrastructure.dnse.stream_manager.TradingClient",
+        "app.domains.dnse.stream_manager.TradingClient",
         return_value=mock_client,
     ):
         await mgr.start()
@@ -132,7 +132,7 @@ async def test_reconnect_on_connection_error():
     mock_client.connect = AsyncMock(side_effect=DNSEConnectionError("Network drop"))
 
     with patch(
-        "app.domains.market_data.infrastructure.dnse.stream_manager.TradingClient",
+        "app.domains.dnse.stream_manager.TradingClient",
         return_value=mock_client,
     ):
         await mgr.start()

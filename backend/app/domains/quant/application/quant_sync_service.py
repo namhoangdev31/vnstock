@@ -30,11 +30,11 @@ from sqlmodel import Session, select
 from app.core.enums import MacroIndicatorCode
 from app.core.models_base import VN_TZ
 from app.domains.market_data.domain.models import DataSyncLog, StockTickIntraday
-from app.domains.market_data.infrastructure.vnstock import (
+from app.domains.quant.domain.models import MacroIndicator, TickFlowAggregated
+from app.domains.vnstock import (
     VnstockService,
     VnstockServiceError,
 )
-from app.domains.quant.domain.models import MacroIndicator, TickFlowAggregated
 
 logger = logging.getLogger(__name__)
 

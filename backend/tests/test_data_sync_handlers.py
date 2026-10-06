@@ -31,8 +31,8 @@ from app.domains.market_data.domain.models import (
     StockOHLCVDaily,
     StockSymbol,
 )
-from app.domains.market_data.infrastructure.vnstock import VnstockServiceError
 from app.domains.quant.domain.models import InstitutionalFlow
+from app.domains.vnstock import VnstockServiceError
 
 
 @pytest.fixture

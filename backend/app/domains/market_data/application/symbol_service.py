@@ -19,11 +19,11 @@ from app.domains.market_data.application.schemas import (
 )
 from app.domains.market_data.domain.exceptions import SymbolNotFoundError
 from app.domains.market_data.domain.models import IndexConstituent, StockSymbol
-from app.domains.market_data.infrastructure.vnstock import (
+from app.domains.quant.application.schemas import SymbolGroupResponse
+from app.domains.vnstock import (
     VnstockServiceError,
     vnstock_service,
 )
-from app.domains.quant.application.schemas import SymbolGroupResponse
 
 
 class SymbolService:

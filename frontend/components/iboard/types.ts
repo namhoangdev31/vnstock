@@ -105,3 +105,5 @@ export interface SectorItem {
   name: string
   change: string
 }
+
+export type LayoutMode = "list" | "grid"

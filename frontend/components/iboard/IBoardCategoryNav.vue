@@ -1,20 +1,27 @@
 <script setup lang="ts">
 import type {
   FluctuationStats,
+  LayoutMode,
   ListedSubBasket,
   MainCategory,
   SectorItem,
 } from "./types"
 
-const props = defineProps<{
-  mainCategory: MainCategory
-  listedSubBasket: ListedSubBasket
-  sectorSubBasket: string
-  sectorList: SectorItem[]
-  fluctuationStats: FluctuationStats
-  searchQuery: string
-  priceUnitDisplay: "percent" | "diff"
-}>()
+const props = withDefaults(
+  defineProps<{
+    mainCategory: MainCategory
+    listedSubBasket: ListedSubBasket
+    sectorSubBasket: string
+    sectorList: SectorItem[]
+    fluctuationStats: FluctuationStats
+    searchQuery: string
+    priceUnitDisplay: "percent" | "diff"
+    layoutMode?: LayoutMode
+  }>(),
+  {
+    layoutMode: "list",
+  },
+)
 
 const emit = defineEmits<{
   (e: "update:mainCategory", val: MainCategory): void
@@ -22,6 +29,7 @@ const emit = defineEmits<{
   (e: "update:sectorSubBasket", val: string): void
   (e: "update:searchQuery", val: string): void
   (e: "update:priceUnitDisplay", val: "percent" | "diff"): void
+  (e: "update:layoutMode", val: LayoutMode): void
 }>()
 </script>
 
@@ -203,6 +211,28 @@ const emit = defineEmits<{
             @click="emit('update:priceUnitDisplay', 'diff')"
           >
             +/- Điểm
+          </button>
+        </div>
+
+        <!-- Chế độ hiển thị: Danh sách / Lưới ô thẻ chuẩn DNSE -->
+        <div class="flex items-center bg-surface-abyss border border-white/[0.08] rounded p-0.5">
+          <button
+            type="button"
+            class="p-1 rounded text-xs transition-colors flex items-center justify-center"
+            :class="layoutMode === 'list' ? 'bg-white/[0.1] text-white' : 'text-aave-graphite hover:text-white'"
+            title="Dạng bảng danh sách"
+            @click="emit('update:layoutMode', 'list')"
+          >
+            <UIcon name="i-heroicons-bars-3" class="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            class="p-1 rounded text-xs transition-colors flex items-center justify-center"
+            :class="layoutMode === 'grid' ? 'bg-white/[0.1] text-white' : 'text-aave-graphite hover:text-white'"
+            title="Dạng lưới thẻ"
+            @click="emit('update:layoutMode', 'grid')"
+          >
+            <UIcon name="i-heroicons-squares-2x2" class="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
