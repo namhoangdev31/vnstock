@@ -201,6 +201,6 @@
     "../../node_modules/@vueuse/nuxt/node_modules",
     "../../node_modules/runtime/server",
     "../../node_modules/dist/runtime/server",
-    "dev"
+    "../.output"
   ]
 }

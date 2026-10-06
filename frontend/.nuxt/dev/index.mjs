@@ -868,6 +868,7 @@ const inlineAppConfig = {
       "rose",
       "aave",
       "surface",
+      "tv",
       "primary"
     ],
     "strategy": "merge"
@@ -936,7 +937,10 @@ const _inlineRuntimeConfig = {
     }
   },
   "public": {
-    "apiUrl": "https://vnstock.fastapicloud.dev"
+    "apiUrl": "https://vnstock.fastapicloud.dev",
+    "dnseApiKey": "eyJvcmciOiJkbnNlIiwiaWQiOiI4YWZhNWI1ODg2MWE0ZGNlOTI1ZGFiZmQxMTZiZTFiOCIsImgiOiJtdXJtdXIxMjgifQ==",
+    "dnseApiSecret": "YWBzI6FjIcaLqYpNUt5a0NTNmpsP-UmPUQn74SCkLFX0NyEQhG_S05hFCtd5y2RZq56IZiG8kzwp5WYfTpW7hA",
+    "dnseWsUrl": "wss://ws-openapi.dnse.com.vn"
   },
   "icon": {
     "serverKnownCssClasses": []

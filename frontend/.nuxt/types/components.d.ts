@@ -18,30 +18,6 @@ interface _GlobalComponents {
   MarkdownViewer: typeof import("../../components/MarkdownViewer.vue")['default']
   QuantPulseCard: typeof import("../../components/QuantPulseCard.vue")['default']
   TestMatrix: typeof import("../../components/TestMatrix.vue")['default']
-  IboardTypes: typeof import("../../components/iboard/types")['default']
-  TradingActivePositionsTable: typeof import("../../components/trading/ActivePositionsTable.vue")['default']
-  TradingAlphaBasketsRebalanceCard: typeof import("../../components/trading/AlphaBasketsRebalanceCard.vue")['default']
-  TradingAtcImbalanceMonitor: typeof import("../../components/trading/AtcImbalanceMonitor.vue")['default']
-  TradingDerivativesPriceHeader: typeof import("../../components/trading/DerivativesPriceHeader.vue")['default']
-  TradingDerivativesStation: typeof import("../../components/trading/DerivativesStation.vue")['default']
-  TradingEnsembleSignalCard: typeof import("../../components/trading/EnsembleSignalCard.vue")['default']
-  TradingFlowRadar: typeof import("../../components/trading/FlowRadar.vue")['default']
-  TradingForecastLedgerTable: typeof import("../../components/trading/ForecastLedgerTable.vue")['default']
-  TradingInstitutionalFlowChart: typeof import("../../components/trading/InstitutionalFlowChart.vue")['default']
-  TradingInteractiveCandleChart: typeof import("../../components/trading/InteractiveCandleChart.vue")['default']
-  TradingMacroSummaryTicker: typeof import("../../components/trading/MacroSummaryTicker.vue")['default']
-  TradingMarketBreadthGauge: typeof import("../../components/trading/MarketBreadthGauge.vue")['default']
-  TradingMetric: typeof import("../../components/trading/Metric.vue")['default']
-  TradingMonteCarloDistributionChart: typeof import("../../components/trading/MonteCarloDistributionChart.vue")['default']
-  TradingOrderHistoryTable: typeof import("../../components/trading/OrderHistoryTable.vue")['default']
-  TradingOrderPlacementForm: typeof import("../../components/trading/OrderPlacementForm.vue")['default']
-  TradingOrderflowDeltaBar: typeof import("../../components/trading/OrderflowDeltaBar.vue")['default']
-  TradingPaperCockpit: typeof import("../../components/trading/PaperCockpit.vue")['default']
-  TradingPredictionTerminal: typeof import("../../components/trading/PredictionTerminal.vue")['default']
-  TradingSimulationWarningBadge: typeof import("../../components/trading/SimulationWarningBadge.vue")['default']
-  TradingTPlus2PressureMeter: typeof import("../../components/trading/TPlus2PressureMeter.vue")['default']
-  TradingPanel: typeof import("../../components/trading/TradingPanel.vue")['default']
-  TradingVirtualAccountOverview: typeof import("../../components/trading/VirtualAccountOverview.vue")['default']
   UAccordion: typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Accordion.vue")['default']
   UAlert: typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Alert.vue")['default']
   UAvatar: typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Avatar.vue")['default']
@@ -120,30 +96,6 @@ interface _GlobalComponents {
   LazyMarkdownViewer: LazyComponent<typeof import("../../components/MarkdownViewer.vue")['default']>
   LazyQuantPulseCard: LazyComponent<typeof import("../../components/QuantPulseCard.vue")['default']>
   LazyTestMatrix: LazyComponent<typeof import("../../components/TestMatrix.vue")['default']>
-  LazyIboardTypes: LazyComponent<typeof import("../../components/iboard/types")['default']>
-  LazyTradingActivePositionsTable: LazyComponent<typeof import("../../components/trading/ActivePositionsTable.vue")['default']>
-  LazyTradingAlphaBasketsRebalanceCard: LazyComponent<typeof import("../../components/trading/AlphaBasketsRebalanceCard.vue")['default']>
-  LazyTradingAtcImbalanceMonitor: LazyComponent<typeof import("../../components/trading/AtcImbalanceMonitor.vue")['default']>
-  LazyTradingDerivativesPriceHeader: LazyComponent<typeof import("../../components/trading/DerivativesPriceHeader.vue")['default']>
-  LazyTradingDerivativesStation: LazyComponent<typeof import("../../components/trading/DerivativesStation.vue")['default']>
-  LazyTradingEnsembleSignalCard: LazyComponent<typeof import("../../components/trading/EnsembleSignalCard.vue")['default']>
-  LazyTradingFlowRadar: LazyComponent<typeof import("../../components/trading/FlowRadar.vue")['default']>
-  LazyTradingForecastLedgerTable: LazyComponent<typeof import("../../components/trading/ForecastLedgerTable.vue")['default']>
-  LazyTradingInstitutionalFlowChart: LazyComponent<typeof import("../../components/trading/InstitutionalFlowChart.vue")['default']>
-  LazyTradingInteractiveCandleChart: LazyComponent<typeof import("../../components/trading/InteractiveCandleChart.vue")['default']>
-  LazyTradingMacroSummaryTicker: LazyComponent<typeof import("../../components/trading/MacroSummaryTicker.vue")['default']>
-  LazyTradingMarketBreadthGauge: LazyComponent<typeof import("../../components/trading/MarketBreadthGauge.vue")['default']>
-  LazyTradingMetric: LazyComponent<typeof import("../../components/trading/Metric.vue")['default']>
-  LazyTradingMonteCarloDistributionChart: LazyComponent<typeof import("../../components/trading/MonteCarloDistributionChart.vue")['default']>
-  LazyTradingOrderHistoryTable: LazyComponent<typeof import("../../components/trading/OrderHistoryTable.vue")['default']>
-  LazyTradingOrderPlacementForm: LazyComponent<typeof import("../../components/trading/OrderPlacementForm.vue")['default']>
-  LazyTradingOrderflowDeltaBar: LazyComponent<typeof import("../../components/trading/OrderflowDeltaBar.vue")['default']>
-  LazyTradingPaperCockpit: LazyComponent<typeof import("../../components/trading/PaperCockpit.vue")['default']>
-  LazyTradingPredictionTerminal: LazyComponent<typeof import("../../components/trading/PredictionTerminal.vue")['default']>
-  LazyTradingSimulationWarningBadge: LazyComponent<typeof import("../../components/trading/SimulationWarningBadge.vue")['default']>
-  LazyTradingTPlus2PressureMeter: LazyComponent<typeof import("../../components/trading/TPlus2PressureMeter.vue")['default']>
-  LazyTradingPanel: LazyComponent<typeof import("../../components/trading/TradingPanel.vue")['default']>
-  LazyTradingVirtualAccountOverview: LazyComponent<typeof import("../../components/trading/VirtualAccountOverview.vue")['default']>
   LazyUAccordion: LazyComponent<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Accordion.vue")['default']>
   LazyUAlert: LazyComponent<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Alert.vue")['default']>
   LazyUAvatar: LazyComponent<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Avatar.vue")['default']>

@@ -1,8 +1,8 @@
-import { randomUUID } from "node:crypto";
 import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 import {
 	buildSignature,
 	formatDnseDate,
+	generateNonce,
 	getApiVersion,
 	getDateHeaderName,
 	type SupportedAlgorithm,
@@ -820,7 +820,7 @@ export class DNSEClient {
 			typeof process !== "undefined" &&
 			process.env?.DEBUG?.toLowerCase() === "true";
 
-		const { dateValue, signatureHeaderValue } = this._signatureHeaders(
+		const { dateValue, signatureHeaderValue } = await this._signatureHeaders(
 			method,
 			path,
 		);
@@ -905,16 +905,14 @@ export class DNSEClient {
 		}
 	}
 
-	private _signatureHeaders(
+	private async _signatureHeaders(
 		method: string,
 		path: string,
-	): { dateValue: string; signatureHeaderValue: string } {
+	): Promise<{ dateValue: string; signatureHeaderValue: string }> {
 		const dateValue = this._dateHeader();
-		const nonce = this._hmacNonceEnabled
-			? randomUUID().replace(/-/g, "")
-			: null;
+		const nonce = this._hmacNonceEnabled ? generateNonce() : null;
 
-		const { headers: headersList, signature } = buildSignature(
+		const { headers: headersList, signature } = await buildSignature(
 			this._apiSecret,
 			method,
 			path,

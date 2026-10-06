@@ -57,14 +57,17 @@ export interface Trade {
 	boardId: string;
 	isin: string;
 	symbol: string;
+	/** Giá khớp gần nhất */
 	price: number;
+	/** Khối lượng khớp gần nhất */
 	quantity: number;
 	totalVolumeTraded: number;
 	grossTradeAmount: number;
 	highestPrice: number;
 	lowestPrice: number;
 	openPrice: number;
-	tradingSessionId: number;
+	/** Mã phiên giao dịch hiện tại (string, VD: "40") */
+	tradingSessionId: string;
 	time?: string | null;
 	receivedAt?: number | null;
 }
@@ -82,7 +85,7 @@ export function parseTrade(data: Record<string, unknown>): Trade {
 		highestPrice: Number(data.highestPrice ?? 0),
 		lowestPrice: Number(data.lowestPrice ?? 0),
 		openPrice: Number(data.openPrice ?? 0),
-		tradingSessionId: Number(data.tradingSessionId ?? 0),
+		tradingSessionId: String(data.tradingSessionId ?? ""),
 		time: parseTimestamp(data.time),
 		receivedAt: (data._receivedAt as number) ?? null,
 	};
@@ -93,16 +96,20 @@ export interface TradeExtra {
 	boardId: string;
 	isin: string;
 	symbol: string;
+	/** Giá khớp gần nhất */
 	price: number;
+	/** Khối lượng khớp gần nhất */
 	quantity: number;
-	side: number;
+	/** Chiều mua/bán chủ động: "BUY" hoặc "SELL" */
+	side: string;
+	/** Giá khớp trung bình */
 	avgPrice: number;
 	totalVolumeTraded: number;
 	grossTradeAmount: number;
 	highestPrice: number;
 	lowestPrice: number;
 	openPrice: number;
-	tradingSessionId: number;
+	tradingSessionId: string;
 	time?: string | null;
 	receivedAt?: number | null;
 }
@@ -115,14 +122,14 @@ export function parseTradeExtra(data: Record<string, unknown>): TradeExtra {
 		symbol: String(data.symbol ?? ""),
 		price: Number(data.matchPrice ?? data.price ?? 0),
 		quantity: Number(data.matchQtty ?? data.quantity ?? 0),
-		side: Number(data.side ?? 0),
+		side: String(data.side ?? ""),
 		avgPrice: Number(data.avgPrice ?? 0),
 		totalVolumeTraded: Number(data.totalVolumeTraded ?? 0),
 		grossTradeAmount: Number(data.grossTradeAmount ?? 0),
 		highestPrice: Number(data.highestPrice ?? 0),
 		lowestPrice: Number(data.lowestPrice ?? 0),
 		openPrice: Number(data.openPrice ?? 0),
-		tradingSessionId: Number(data.tradingSessionId ?? 0),
+		tradingSessionId: String(data.tradingSessionId ?? ""),
 		time: parseTimestamp(data.time),
 		receivedAt: (data._receivedAt as number) ?? null,
 	};
@@ -181,7 +188,8 @@ export interface MarketIndex {
 	fluctuationSteadinessIssueCount: number;
 	fluctuationDownIssueCount: number;
 	fluctuationUpIssueCount: number;
-	fluctuationLowerLimitIssueCount: number;
+	/** Số lượng mã giảm sàn (có thể null) */
+	fluctuationLowerLimitIssueCount: number | null;
 	fluctuationUpperLimitIssueCount: number;
 	fluctuationDownIssueVolume: number;
 	fluctuationUpIssueVolume: number;
@@ -198,9 +206,12 @@ export interface MarketIndex {
 	blkTrdAccTrdVol: number;
 	grossTradeAmount: number;
 	totalVolumeTraded: number;
-	marketIndexClass: number;
-	marketId: number;
-	tradingSessionId: number;
+	/** Phân loại chỉ số (string, VD: "HSX") */
+	marketIndexClass: string;
+	/** Mã thị trường (string, VD: "STO") */
+	marketId: string;
+	/** Mã phiên giao dịch hiện tại (string, VD: "40") */
+	tradingSessionId: string;
 	transactTime?: string | null;
 	receivedAt?: number | null;
 }
@@ -215,9 +226,10 @@ export function parseMarketIndex(data: Record<string, unknown>): MarketIndex {
 		),
 		fluctuationDownIssueCount: Number(data.fluctuationDownIssueCount ?? 0),
 		fluctuationUpIssueCount: Number(data.fluctuationUpIssueCount ?? 0),
-		fluctuationLowerLimitIssueCount: Number(
-			data.fluctuationLowerLimitIssueCount ?? 0,
-		),
+		fluctuationLowerLimitIssueCount:
+			data.fluctuationLowerLimitIssueCount != null
+				? Number(data.fluctuationLowerLimitIssueCount)
+				: null,
 		fluctuationUpperLimitIssueCount: Number(
 			data.fluctuationUpperLimitIssueCount ?? 0,
 		),
@@ -238,9 +250,9 @@ export function parseMarketIndex(data: Record<string, unknown>): MarketIndex {
 		blkTrdAccTrdVol: Number(data.blkTrdAccTrdVol ?? 0),
 		grossTradeAmount: Number(data.grossTradeAmount ?? 0),
 		totalVolumeTraded: Number(data.totalVolumeTraded ?? 0),
-		marketIndexClass: Number(data.marketIndexClass ?? 0),
-		marketId: Number(data.marketId ?? 0),
-		tradingSessionId: Number(data.tradingSessionId ?? 0),
+		marketIndexClass: String(data.marketIndexClass ?? ""),
+		marketId: String(data.marketId ?? ""),
+		tradingSessionId: String(data.tradingSessionId ?? ""),
 		transactTime: parseTimestamp(data.transactTime),
 		receivedAt: (data._receivedAt as number) ?? null,
 	};
@@ -281,15 +293,25 @@ export function parseEstimatedMarketIndex(
 }
 
 export interface IndexInfluenceItem {
+	/** Thời gian cập nhật dữ liệu của cổ phiếu từ sàn */
 	time?: string | null;
+	/** Mã cổ phiếu */
 	symbol: string;
+	/** Số điểm đóng góp vào chỉ số (dương: kéo tăng, âm: kéo giảm) */
 	influence: number;
+	/** Tỷ lệ (%) đóng góp vào biến động của chỉ số */
 	influenceRatio: number;
+	/** Tỷ trọng vốn hóa của mã trong rổ chỉ số (%) */
 	proportion: number;
+	/** Tỷ lệ (%) thay đổi giá so với giá tham chiếu */
 	changeRatio: number;
+	/** Mức thay đổi giá tuyệt đối so với giá tham chiếu */
 	changeValue: number;
+	/** Giá khớp hiện tại (hoặc giá đóng cửa gần nhất) */
 	price: number;
+	/** Tổng giá trị giao dịch tích lũy trong khung thời gian (VND) */
 	grossTradeAmount: number;
+	/** Tổng khối lượng giao dịch tích lũy trong khung thời gian */
 	totalVolumeTraded: number;
 }
 
@@ -304,7 +326,8 @@ export function parseIndexInfluence(
 ): IndexInfluence {
 	const rawList = (data.Data ?? data.data ?? []) as Record<string, unknown>[];
 	const items: IndexInfluenceItem[] = rawList.map((item) => ({
-		time: item.time ? String(item.time) : null,
+		// time là object {Seconds, Nanos} theo docs
+		time: parseTimestamp(item.time),
 		symbol: String(item.symbol ?? ""),
 		influence: Number(item.influence ?? 0),
 		influenceRatio: Number(item.influenceRatio ?? 0),
@@ -578,8 +601,11 @@ export function parseOhlc(data: Record<string, unknown>): Ohlc {
 export interface Session {
 	marketId: string;
 	boardId: string;
+	/** Mã sự kiện chuyển trạng thái phiên giao dịch (VD: "AB2") */
 	eventId: string;
-	tradingSessionId: number;
+	/** Mã phiên giao dịch hiện tại (string, VD: "40") */
+	tradingSessionId: string;
+	/** Mã nhóm sản phẩm thị trường (VD: "STO", "FIO") */
 	tscProdGrpId: string;
 	time?: string | null;
 	receivedAt?: number | null;
@@ -590,9 +616,10 @@ export function parseSession(data: Record<string, unknown>): Session {
 		marketId: String(data.marketId ?? ""),
 		boardId: String(data.boardId ?? ""),
 		eventId: String(data.eventId ?? ""),
-		tradingSessionId: Number(data.tradingSessionId ?? 0),
+		tradingSessionId: String(data.tradingSessionId ?? ""),
 		tscProdGrpId: String(data.tscProdGrpId ?? ""),
-		time: parseTimestamp(data.sendingTime),
+		// docs dùng "time", không phải "sendingTime"
+		time: parseTimestamp(data.time),
 		receivedAt: (data._receivedAt as number) ?? null,
 	};
 }

@@ -1,6 +1,22 @@
-import { createHmac, randomUUID } from "node:crypto";
-
 export const DEFAULT_API_VERSION = "2026-07-23";
+
+/**
+ * Tạo chuỗi UUID/Nonce ngẫu nhiên an toàn trên mọi runtime (Browser, Node, Bun).
+ */
+export function generateNonce(): string {
+	if (typeof globalThis.crypto?.randomUUID === "function") {
+		return globalThis.crypto.randomUUID().replace(/-/g, "");
+	}
+	const bytes = new Uint8Array(16);
+	if (globalThis.crypto?.getRandomValues) {
+		globalThis.crypto.getRandomValues(bytes);
+	} else {
+		for (let i = 0; i < 16; i++) {
+			bytes[i] = Math.floor(Math.random() * 256);
+		}
+	}
+	return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 /**
  * Lấy tên header ngày tháng (mặc định 'Date' hoặc cấu hình qua env DATE_HEADER)
@@ -60,9 +76,10 @@ export type SupportedAlgorithm =
 	| "hmac-sha1";
 
 /**
- * Xây dựng chữ ký HMAC xác thực yêu cầu gửi lên DNSE API
+ * Xây dựng chữ ký HMAC xác thực yêu cầu gửi lên DNSE API.
+ * Hoạt động 100% Isomorphic/Universal trên Web Crypto API chuẩn.
  */
-export function buildSignature(
+export async function buildSignature(
 	secret: string,
 	method: string,
 	path: string,
@@ -70,7 +87,7 @@ export function buildSignature(
 	algorithm: SupportedAlgorithm = "hmac-sha256",
 	nonce?: string | null,
 	headerName?: string,
-): { headers: string; signature: string } {
+): Promise<{ headers: string; signature: string }> {
 	const actualHeaderName = headerName || getDateHeaderName();
 	const headerKey = actualHeaderName.toLowerCase();
 	const headers = `(request-target) ${headerKey}`;
@@ -80,19 +97,39 @@ export function buildSignature(
 		signatureString += `\nnonce: ${nonce}`;
 	}
 
-	let hashAlgo = "sha256";
+	let hashAlgo = "SHA-256";
 	if (algorithm === "hmac-sha384") {
-		hashAlgo = "sha384";
+		hashAlgo = "SHA-384";
 	} else if (algorithm === "hmac-sha512") {
-		hashAlgo = "sha512";
+		hashAlgo = "SHA-512";
 	} else if (algorithm === "hmac-sha1") {
-		hashAlgo = "sha1";
+		hashAlgo = "SHA-1";
 	}
 
-	const mac = createHmac(hashAlgo, Buffer.from(secret, "utf-8"));
-	mac.update(Buffer.from(signatureString, "utf-8"));
-	const encoded = mac.digest("base64");
-	const escaped = encodeURIComponent(encoded);
+	const enc = new TextEncoder();
+	const key = await globalThis.crypto.subtle.importKey(
+		"raw",
+		enc.encode(secret),
+		{ name: "HMAC", hash: hashAlgo },
+		false,
+		["sign"],
+	);
+	const sig = await globalThis.crypto.subtle.sign(
+		"HMAC",
+		key,
+		enc.encode(signatureString),
+	);
+	const bytes = new Uint8Array(sig);
+	let binary = "";
+	const len = bytes.byteLength;
+	for (let i = 0; i < len; i++) {
+		binary += String.fromCharCode(bytes[i]);
+	}
+	const base64 =
+		typeof btoa !== "undefined"
+			? btoa(binary)
+			: Buffer.from(binary, "binary").toString("base64");
+	const escaped = encodeURIComponent(base64);
 
 	return { headers, signature: escaped };
 }
@@ -139,8 +176,8 @@ export async function sendSignedRequest(
 	const dateValue = formatDnseDate();
 	const dateHeaderName = getDateHeaderName();
 
-	const nonce = hmacNonceEnabled ? randomUUID().replace(/-/g, "") : null;
-	const { headers: headersList, signature } = buildSignature(
+	const nonce = hmacNonceEnabled ? generateNonce() : null;
+	const { headers: headersList, signature } = await buildSignature(
 		apiSecret,
 		method,
 		path,

@@ -1,4 +1,69 @@
-import { EventEmitter } from "node:events";
+export type EventListener = (...args: unknown[]) => void;
+
+/**
+ * Universal EventEmitter chạy được 100% trên cả Node.js, Bun và Browser.
+ */
+export class EventEmitter {
+	private _events: Map<string, Set<EventListener>> = new Map();
+
+	public on(event: string, listener: EventListener): this {
+		let listeners = this._events.get(event);
+		if (!listeners) {
+			listeners = new Set();
+			this._events.set(event, listeners);
+		}
+		listeners.add(listener);
+		return this;
+	}
+
+	public once(event: string, listener: EventListener): this {
+		const wrapper: EventListener = (...args: unknown[]) => {
+			this.off(event, wrapper);
+			listener(...args);
+		};
+		return this.on(event, wrapper);
+	}
+
+	public off(event: string, listener: EventListener): this {
+		const listeners = this._events.get(event);
+		if (listeners) {
+			listeners.delete(listener);
+			if (listeners.size === 0) {
+				this._events.delete(event);
+			}
+		}
+		return this;
+	}
+
+	public emit(event: string, ...args: unknown[]): boolean {
+		const listeners = this._events.get(event);
+		if (!listeners || listeners.size === 0) {
+			return false;
+		}
+		for (const listener of Array.from(listeners)) {
+			try {
+				listener(...args);
+			} catch (err) {
+				console.error(`[TradingClient] Error in listener for "${event}":`, err);
+			}
+		}
+		return true;
+	}
+
+	public listenerCount(event: string): number {
+		return this._events.get(event)?.size ?? 0;
+	}
+
+	public removeAllListeners(event?: string): this {
+		if (event) {
+			this._events.delete(event);
+		} else {
+			this._events.clear();
+		}
+		return this;
+	}
+}
+
 import { AuthManager } from "./auth";
 import { WebSocketConnection } from "./connection";
 import {
@@ -43,17 +108,13 @@ import {
 	type TradeExtra,
 } from "./models";
 
-export const DEFAULT_BOARDS = [
-	"G1",
-	"G3",
-	"G4",
-	"G7",
-	"T1",
-	"T2",
-	"T3",
-	"T4",
-	"T6",
-];
+/**
+ * Board IDs theo tài liệu DNSE WebSocket:
+ * G1: Lô chẵn | G3: PLO (sau giờ) | G4: Lô lẻ
+ * T1: Thỏa thuận lô chẵn 9h-14h45 | T3: Thỏa thuận lô chẵn 14h45-15h
+ * T4: Thỏa thuận lô lẻ 9h-14h45   | T6: Thỏa thuận lô lẻ 14h45-15h
+ */
+export const DEFAULT_BOARDS = ["G1", "G3", "G4", "T1", "T3", "T4", "T6"];
 
 interface MsgTypeMapping {
 	event: string;
@@ -143,7 +204,6 @@ export interface TradingClientOptions {
 	apiKey: string;
 	apiSecret: string;
 	baseUrl?: string;
-	encoding?: WebSocketEncoding;
 	autoReconnect?: boolean;
 	maxRetries?: number;
 	heartbeatInterval?: number;
@@ -169,7 +229,10 @@ export class TradingClient extends EventEmitter {
 	public readonly apiKey: string;
 	public readonly apiSecret: string;
 	public readonly baseUrl: string;
-	public readonly encoding: WebSocketEncoding;
+	/** Encoding luôn là "json" — lấy từ encoder để build channel name */
+	public get encoding(): WebSocketEncoding {
+		return this._encoder.encoding;
+	}
 	public readonly autoReconnect: boolean;
 	public readonly maxRetries: number;
 	public readonly heartbeatInterval: number;
@@ -197,15 +260,14 @@ export class TradingClient extends EventEmitter {
 		this.apiKey = options.apiKey;
 		this.apiSecret = options.apiSecret;
 		this.baseUrl = options.baseUrl ?? "wss://ws-openapi.dnse.com.vn";
-		this.encoding = options.encoding ?? "json";
 		this.autoReconnect = options.autoReconnect ?? true;
 		this.maxRetries = options.maxRetries ?? 10;
 		this.heartbeatInterval = options.heartbeatInterval ?? 25.0;
 		this.timeout = options.timeout ?? 60.0;
 
 		this._authManager = new AuthManager(this.apiKey, this.apiSecret);
-		this._encoder = new MessageEncoder(this.encoding);
-		this._decoder = new MessageDecoder(this.encoding);
+		this._encoder = new MessageEncoder();
+		this._decoder = new MessageDecoder();
 	}
 
 	public get isAuthenticated(): boolean {
@@ -247,14 +309,22 @@ export class TradingClient extends EventEmitter {
 			maxRetries: this.maxRetries,
 		});
 
-		await this._connection.connect();
+		try {
+			await this._connection.connect();
 
-		const welcome = await this._connection.receive(this.timeout * 1000);
-		const welcomeData = this._decoder.decode<Record<string, unknown>>(welcome);
-		this._sessionId =
-			(welcomeData.session_id as string) || (welcomeData.sid as string) || null;
+			const welcome = await this._connection.receive(this.timeout * 1000);
+			const welcomeData = this._decoder.decode<Record<string, unknown>>(welcome);
+			this._sessionId =
+				(welcomeData.session_id as string) || (welcomeData.sid as string) || null;
 
-		await this._authenticate();
+			await this._authenticate();
+		} catch (err) {
+			if (this._connection) {
+				await this._connection.close().catch(() => {});
+				this._connection = null;
+			}
+			throw err;
+		}
 
 		this._isDispatcherRunning = true;
 		this._lastPongTime = Date.now();
@@ -277,7 +347,7 @@ export class TradingClient extends EventEmitter {
 			throw new ConnectionError("Connection not initialized");
 		}
 
-		const authMsg = this._authManager.createAuthMessage();
+		const authMsg = await this._authManager.createAuthMessage();
 		const encoded = this._encoder.encode(authMsg);
 		await this._connection.send(encoded);
 
@@ -495,6 +565,12 @@ export class TradingClient extends EventEmitter {
 
 			this._lastPongTime = Date.now();
 			this.emit("reconnected", { sessionId: this._sessionId });
+		} catch (err) {
+			if (this._connection) {
+				await this._connection.close().catch(() => {});
+				this._connection = null;
+			}
+			throw err;
 		} finally {
 			this._reconnectLoopActive = false;
 		}
@@ -585,13 +661,12 @@ export class TradingClient extends EventEmitter {
 	public async subscribeTrades(
 		symbols: string[],
 		onTrade?: (trade: Trade) => void,
-		encoding: WebSocketEncoding = "json",
 		boardId?: string | null,
 	): Promise<void> {
 		const boards = boardId ? [boardId] : DEFAULT_BOARDS;
 
 		for (const board of boards) {
-			const channel = `tick.${board}.${encoding}`;
+			const channel = `tick.${board}.${this.encoding}`;
 			await this._subscribeChannel(channel, symbols);
 		}
 
@@ -607,13 +682,12 @@ export class TradingClient extends EventEmitter {
 	public async subscribeTradeExtra(
 		symbols: string[],
 		onTradeExtra?: (tradeExtra: TradeExtra) => void,
-		encoding: WebSocketEncoding = "json",
 		boardId?: string | null,
 	): Promise<void> {
 		const boards = boardId ? [boardId] : DEFAULT_BOARDS;
 
 		for (const board of boards) {
-			const channel = `tick_extra.${board}.${encoding}`;
+			const channel = `tick_extra.${board}.${this.encoding}`;
 			await this._subscribeChannel(channel, symbols);
 		}
 
@@ -633,13 +707,12 @@ export class TradingClient extends EventEmitter {
 	public async subscribeExpectedPrice(
 		symbols: string[],
 		onExpectedPrice?: (expectedPrice: ExpectedPrice) => void,
-		encoding: WebSocketEncoding = "json",
 		boardId?: string | null,
 	): Promise<void> {
 		const boards = boardId ? [boardId] : DEFAULT_BOARDS;
 
 		for (const board of boards) {
-			const channel = `expected_price.${board}.${encoding}`;
+			const channel = `expected_price.${board}.${this.encoding}`;
 			await this._subscribeChannel(channel, symbols);
 		}
 
@@ -655,13 +728,13 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký sự kiện lệnh tài khoản cá nhân
+	 * channel: order.{market_type}.{encoding}
 	 */
 	public async subscribeOrderEvent(
 		marketType = "STOCK",
 		onOrderEvent?: (order: Order) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `order.${marketType}.${encoding}`;
+		const channel = `order.${marketType}.${this.encoding}`;
 		await this._subscribeChannel(channel, []);
 
 		if (onOrderEvent) {
@@ -671,14 +744,14 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký sự kiện lệnh tài khoản môi giới
+	 * channel: order.broker.{market_type}.{investor_id}.{encoding}
 	 */
 	public async subscribeBrokerOrderEvent(
 		investorId: string,
 		marketType = "STOCK",
 		onOrderEvent?: (order: Order) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `order.broker.${marketType}.${investorId}.${encoding}`;
+		const channel = `order.broker.${marketType}.${investorId}.${this.encoding}`;
 		await this._subscribeChannel(channel, []);
 
 		if (onOrderEvent) {
@@ -688,13 +761,13 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký sự kiện vị thế phái sinh/cổ phiếu
+	 * channel: position.{market_type}.{encoding}
 	 */
 	public async subscribePositionEvent(
 		marketType = "STOCK",
 		onPositionEvent?: (position: Position) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `position.${marketType}.${encoding}`;
+		const channel = `position.${marketType}.${this.encoding}`;
 		await this._subscribeChannel(channel, []);
 
 		if (onPositionEvent) {
@@ -707,14 +780,14 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký sự kiện vị thế tài khoản môi giới
+	 * channel: position.broker.{market_type}.{investor_id}.{encoding}
 	 */
 	public async subscribeBrokerPositionEvent(
 		investorId: string,
 		marketType = "STOCK",
 		onPositionEvent?: (position: Position) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `position.broker.${marketType}.${investorId}.${encoding}`;
+		const channel = `position.broker.${marketType}.${investorId}.${this.encoding}`;
 		await this._subscribeChannel(channel, []);
 
 		if (onPositionEvent) {
@@ -727,17 +800,17 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký định nghĩa chứng khoán (Security Definition)
+	 * channel: security_definition.{board_id}.{encoding}
 	 */
 	public async subscribeSecDef(
 		symbols: string[],
 		onSecDef?: (secDef: SecurityDefinition) => void,
-		encoding: WebSocketEncoding = "json",
 		boardId?: string | null,
 	): Promise<void> {
 		const boards = boardId ? [boardId] : DEFAULT_BOARDS;
 
 		for (const board of boards) {
-			const channel = `security_definition.${board}.${encoding}`;
+			const channel = `security_definition.${board}.${this.encoding}`;
 			await this._subscribeChannel(channel, symbols);
 		}
 
@@ -749,13 +822,13 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký biến động chỉ số thị trường (Market Index)
+	 * channel: market_index.{market_index}.{encoding}
 	 */
 	public async subscribeMarketIndex(
 		marketIndex: string,
 		onMarketIndex?: (marketIndex: MarketIndex) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `market_index.${marketIndex}.${encoding}`;
+		const channel = `market_index.${marketIndex}.${this.encoding}`;
 		await this._subscribeChannel(channel, []);
 
 		if (onMarketIndex) {
@@ -764,16 +837,16 @@ export class TradingClient extends EventEmitter {
 	}
 
 	/**
-	 * Đăng ký chỉ số thị trường ước tính (Estimated Market Index)
+	 * Đăng ký chỉ số thị trường ước tính (Estimated Market Index / VN30)
+	 * channel: estimated_market_index.{market_index}.{encoding}
 	 */
 	public async subscribeEstimatedMarketIndex(
 		estimatedMarketIndex: string,
 		onEstimatedMarketIndex?: (
 			estimatedMarketIndex: EstimatedMarketIndex,
 		) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `estimated_market_index.${estimatedMarketIndex}.${encoding}`;
+		const channel = `estimated_market_index.${estimatedMarketIndex}.${this.encoding}`;
 		await this._subscribeChannel(channel, []);
 
 		if (onEstimatedMarketIndex) {
@@ -786,14 +859,15 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký ảnh hưởng của cổ phiếu tới chỉ số (Market Index Influence)
+	 * channel: market_index_influence.{market_index}.{resolution}.{encoding}
+	 * resolution: 1 (trong ngày) | 7 | 14 | 30 ngày — VNINDEX/HNX chỉ hỗ trợ resolution=1
 	 */
 	public async subscribeMarketIndexInfluence(
 		indexName: string,
 		resolution = 1,
 		onMarketIndexInfluence?: (influence: IndexInfluence) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `market_index_influence.${indexName}.${resolution}.${encoding}`;
+		const channel = `market_index_influence.${indexName}.${resolution}.${this.encoding}`;
 		await this._subscribeChannel(channel, []);
 
 		if (onMarketIndexInfluence) {
@@ -806,19 +880,18 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký sổ lệnh giá tốt nhất (Quote - Top price)
+	 * channel: top_price.{board_id}.{encoding}
+	 * Sàn HOSE hỗ trợ 3 mức giá, HNX/UPCOM hỗ trợ 10 mức giá.
 	 */
 	public async subscribeQuotes(
 		symbols: string[],
 		onQuote?: (quote: Quote) => void,
-		encoding: WebSocketEncoding = "json",
 		boardId?: string | null,
 	): Promise<void> {
-		const boards = boardId
-			? [boardId]
-			: ["G1", "G2", "G3", "G4", "G5", "G6", "G7"];
+		const boards = boardId ? [boardId] : DEFAULT_BOARDS;
 
 		for (const board of boards) {
-			const channel = `top_price.${board}.${encoding}`;
+			const channel = `top_price.${board}.${this.encoding}`;
 			await this._subscribeChannel(channel, symbols);
 		}
 
@@ -830,14 +903,14 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký dữ liệu giao dịch nhà đầu tư nước ngoài (Khối ngoại)
+	 * channel: foreign.{board_id}.{encoding}
 	 */
 	public async subscribeForeignTrading(
 		symbols: string[],
-		boardId = "*",
+		boardId = "G1",
 		onTrade?: (foreign: ForeignInvestor) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `foreign.${boardId}.${encoding}`;
+		const channel = `foreign.${boardId}.${this.encoding}`;
 		await this._subscribeChannel(channel, symbols);
 
 		if (onTrade) {
@@ -846,20 +919,21 @@ export class TradingClient extends EventEmitter {
 	}
 
 	/**
-	 * Đăng ký nến OHLC trực tiếp
+	 * Đăng ký nến OHLC đang hình thành (realtime)
+	 * channel: ohlc.{resolution}.{encoding}
+	 * resolution: 1 | 3 | 5 | 15 | 30 | 1H | 1D | 1W
 	 */
 	public async subscribeOhlc(
 		symbols: string[],
 		resolution?: string | null,
 		onOhlc?: (ohlc: Ohlc) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
 		const resolutions = resolution
 			? [resolution]
 			: ["1", "3", "5", "15", "30", "1H", "1D", "1W"];
 
 		for (const res of resolutions) {
-			const channel = `ohlc.${res}.${encoding}`;
+			const channel = `ohlc.${res}.${this.encoding}`;
 			await this._subscribeChannel(channel, symbols);
 		}
 
@@ -869,20 +943,21 @@ export class TradingClient extends EventEmitter {
 	}
 
 	/**
-	 * Đăng ký nến OHLC khi đóng nến
+	 * Đăng ký nến OHLC đã đóng (periodic)
+	 * channel: ohlc_closed.{resolution}.{encoding}
+	 * resolution: 1 | 3 | 5 | 15 | 30 | 1H | 1D | 1W
 	 */
 	public async subscribeOhlcClosed(
 		symbols: string[],
 		resolution?: string | null,
 		onOhlc?: (ohlc: Ohlc) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
 		const resolutions = resolution
 			? [resolution]
 			: ["1", "3", "5", "15", "30", "1H", "1D", "1W"];
 
 		for (const res of resolutions) {
-			const channel = `ohlc_closed.${res}.${encoding}`;
+			const channel = `ohlc_closed.${res}.${this.encoding}`;
 			await this._subscribeChannel(channel, symbols);
 		}
 
@@ -893,14 +968,15 @@ export class TradingClient extends EventEmitter {
 
 	/**
 	 * Đăng ký sự kiện phiên giao dịch (Session state)
+	 * channel: session.{tsc_prod_grp_id}.{board_id}.{encoding}
+	 * tsc_prod_grp_id: STO | STX | UPX | FIO | FBX | HCX
 	 */
 	public async subscribeSession(
 		productGroupId: string,
-		boardId = "*",
+		boardId = "G1",
 		onSession?: (session: Session) => void,
-		encoding: WebSocketEncoding = "json",
 	): Promise<void> {
-		const channel = `session.${productGroupId}.${boardId}.${encoding}`;
+		const channel = `session.${productGroupId}.${boardId}.${this.encoding}`;
 		await this._subscribeChannel(channel, []);
 
 		if (onSession) {

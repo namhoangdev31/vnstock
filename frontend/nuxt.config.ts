@@ -46,6 +46,15 @@ export default defineNuxtConfig({
         process.env.VITE_API_URL ||
         process.env.NUXT_PUBLIC_API_URL ||
         "http://127.0.0.1:8000",
+      dnseApiKey:
+        process.env.DNSE_API_KEY ||
+        process.env.NUXT_PUBLIC_DNSE_API_KEY ||
+        "eyJvcmciOiJkbnNlIiwiaWQiOiI4YWZhNWI1ODg2MWE0ZGNlOTI1ZGFiZmQxMTZiZTFiOCIsImgiOiJtdXJtdXIxMjgifQ==",
+      dnseApiSecret:
+        process.env.DNSE_API_SECRET ||
+        process.env.NUXT_PUBLIC_DNSE_API_SECRET ||
+        "YWBzI6FjIcaLqYpNUt5a0NTNmpsP-UmPUQn74SCkLFX0NyEQhG_S05hFCtd5y2RZq56IZiG8kzwp5WYfTpW7hA",
+      dnseWsUrl: process.env.DNSE_WS_URL || "wss://ws-openapi.dnse.com.vn",
     },
   },
   nitro: {

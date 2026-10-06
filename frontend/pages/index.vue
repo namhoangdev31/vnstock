@@ -22,10 +22,10 @@
           <div class="flex items-center gap-3">
             <template v-if="token">
               <NuxtLink
-                to="/iboard"
+                to="/app"
                 class="btn-aave-dark text-sm !py-2.5 !px-5"
               >
-                <span>Bảng giá</span>
+                <span>Vào Ứng Dụng</span>
                 <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
               </NuxtLink>
             </template>
@@ -40,7 +40,7 @@
                 to="/signup"
                 class="btn-aave-dark text-sm !py-2.5 !px-5"
               >
-                <span>Mở Sandbox</span>
+                <span>Đăng ký</span>
               </NuxtLink>
             </template>
           </div>
@@ -63,18 +63,18 @@
 
         <div class="flex flex-wrap items-center justify-center gap-4 mt-8">
           <NuxtLink
-            to="/admin"
+            to="/app"
             class="btn-aave-violet shadow-sm"
           >
-            <span>Vào Cockpit</span>
+            <span>Vào Ứng Dụng</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
 
           <NuxtLink
-            to="/iboard"
+            to="/admin/trd/phase-1"
             class="btn-aave-ghost-light"
           >
-            <span>Bảng giá chứng khoán</span>
+            <span>Đặc tả Kỹ Thuật TRD</span>
           </NuxtLink>
         </div>
 
@@ -100,16 +100,16 @@
 
         <div class="flex items-center justify-center gap-4 mt-8">
           <NuxtLink
-            to="/admin"
+            to="/app"
             class="btn-aave-white"
           >
-            <span>Mở Cockpit</span>
+            <span>Mở Ứng Dụng</span>
           </NuxtLink>
           <NuxtLink
-            to="/admin/stock"
+            to="/admin/trd/phase-1"
             class="btn-aave-ghost-dark"
           >
-            <span>Tra Cứu Cổ Phiếu</span>
+            <span>Đặc Tả Hệ Thống</span>
           </NuxtLink>
         </div>
       </section>
@@ -128,10 +128,10 @@
             </p>
           </div>
           <NuxtLink
-            to="/admin"
+            to="/app"
             class="btn-aave-outline-violet self-start md:self-auto text-sm !py-2.5 !px-5"
           >
-            <span>Xem Cockpit</span>
+            <span>Khám Phá Ứng Dụng</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
         </div>
@@ -264,10 +264,10 @@
             </p>
           </div>
           <NuxtLink
-            to="/admin/stock"
+            to="/admin/trd/phase-2"
             class="btn-aave-outline-violet self-start md:self-auto text-sm !py-2.5 !px-5"
           >
-            <span>Tra Cứu Bảng Giá</span>
+            <span>Đặc Tả Động Cơ Phân Tích</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
         </div>
@@ -419,7 +419,6 @@
           <div class="space-y-1.5 max-w-2xl">
             <div class="text-xs font-mono font-medium text-aave-violet flex items-center gap-2">
               <UIcon name="i-heroicons-shield-check" class="w-5 h-5 text-aave-violet" />
-              <span>MÔ HÌNH MÔ PHỎNG SANDBOX</span>
             </div>
             <p class="text-xs text-aave-ash leading-relaxed">
               Môi trường nghiên cứu độc lập. Không kết nối tài khoản chứng khoán và không đặt lệnh tiền thật.
@@ -427,10 +426,10 @@
           </div>
 
           <NuxtLink
-            to="/admin"
+            to="/app"
             class="btn-aave-violet shrink-0"
           >
-            <span>Vào Cockpit</span>
+            <span>Vào Ứng Dụng</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
         </div>
@@ -457,7 +456,7 @@
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
                 </span>
-                <span>Vận hành liên tục · Mô phỏng Sandbox 100%</span>
+                <span>Vận hành liên tục · Mô phỏng 100%</span>
               </div>
             </div>
 
@@ -502,7 +501,10 @@
                   <a href="#chien-luoc" class="hover:text-white transition-colors">Giá Trị Cơ Bản Quý</a>
                 </li>
                 <li>
-                  <NuxtLink to="/admin/stock" class="hover:text-white transition-colors">Bảng Giá Thị Trường</NuxtLink>
+                  <NuxtLink to="/admin/trd/phase-1" class="hover:text-white transition-colors">TRD Phase 1: Nền tảng Dữ liệu</NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/admin/trd/phase-2" class="hover:text-white transition-colors">TRD Phase 2: Tri-Engine Core</NuxtLink>
                 </li>
               </ul>
             </div>
@@ -513,19 +515,19 @@
               </div>
               <ul class="space-y-2 text-xs">
                 <li>
-                  <NuxtLink to="/admin" class="hover:text-white transition-colors">Trạm Cockpit</NuxtLink>
+                  <NuxtLink to="/app" class="hover:text-white transition-colors">Ứng Dụng Sandbox</NuxtLink>
                 </li>
                 <li>
-                  <NuxtLink to="/admin/stock" class="hover:text-white transition-colors">Tra Cứu Cổ Phiếu</NuxtLink>
+                  <NuxtLink to="/admin/trd/phase-3" class="hover:text-white transition-colors">TRD Phase 3: Daemon 24/7</NuxtLink>
                 </li>
                 <li>
-                  <NuxtLink to="/admin/items" class="hover:text-white transition-colors">Danh Mục Tài Sản</NuxtLink>
+                  <NuxtLink to="/admin/trd/phase-4" class="hover:text-white transition-colors">TRD Phase 4: Paper Trading</NuxtLink>
                 </li>
                 <li>
-                  <NuxtLink to="/admin/settings" class="hover:text-white transition-colors">Cấu Hình Tham Số</NuxtLink>
+                  <NuxtLink to="/admin/trd/phase-5" class="hover:text-white transition-colors">TRD Phase 5: Sổ cái Dự báo</NuxtLink>
                 </li>
                 <li>
-                  <NuxtLink to="/login" class="hover:text-white transition-colors">Đăng Nhập Sandbox</NuxtLink>
+                  <NuxtLink to="/login" class="hover:text-white transition-colors">Đăng Nhập</NuxtLink>
                 </li>
               </ul>
             </div>

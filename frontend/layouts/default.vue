@@ -24,54 +24,28 @@
 
         <div>
           <div class="px-3 mb-2 text-[10px] font-mono font-medium uppercase tracking-wider text-aave-graphite">
-            01 // Tổng quan
+            01 // Không gian làm việc
           </div>
           <nav class="space-y-1">
             <NuxtLink
+              to="/app"
+              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group"
+              :class="route.path.startsWith('/app') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
+            >
+              <UIcon name="i-heroicons-cpu-chip" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-aave-violet" />
+              <span>Ứng Dụng Sandbox</span>
+            </NuxtLink>
+
+            <NuxtLink
+              v-if="user?.is_superuser"
               to="/admin"
               class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group"
               :class="route.path === '/admin' ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
             >
               <UIcon name="i-heroicons-squares-2x2" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-              <span>Dashboard Cockpit</span>
+              <span>Tổng quan TRD</span>
             </NuxtLink>
 
-            <NuxtLink
-              to="/admin/stock"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group"
-              :class="route.path.startsWith('/admin/stock') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
-            >
-              <UIcon name="i-heroicons-chart-bar" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-              <span>Thị trường cổ phiếu</span>
-            </NuxtLink>
-
-            <NuxtLink
-              to="/trading"
-              class="flex items-center gap-3 rounded-xl px-3 py-2 text-xs"
-              :class="route.path.startsWith('/trading') ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
-              @click="mobileOpen = false"
-            >
-              <UIcon name="i-heroicons-chart-bar-square" class="h-4 w-4" />
-              <span>Trading Cockpit</span>
-            </NuxtLink>
-
-            <NuxtLink
-              to="/trading"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all"
-              :class="route.path.startsWith('/trading') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
-            >
-              <UIcon name="i-heroicons-chart-bar-square" class="w-4 h-4 shrink-0" />
-              <span>Trading Cockpit</span>
-            </NuxtLink>
-
-            <NuxtLink
-              to="/admin/items"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all group"
-              :class="route.path.startsWith('/admin/items') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium shadow-sm' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
-            >
-              <UIcon name="i-heroicons-archive-box" class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-              <span>Danh mục Items</span>
-            </NuxtLink>
 
             <NuxtLink
               to="/"
@@ -87,9 +61,9 @@
           </nav>
         </div>
 
-        <div>
+        <div v-if="user?.is_superuser">
           <div class="px-3 mb-2 text-[10px] font-mono font-medium uppercase tracking-wider text-aave-graphite flex items-center justify-between">
-            <span>02 // Đặc tả TRD</span>
+            <span>02 // Quản trị & Đặc tả TRD</span>
             <span class="text-[9px] text-aave-violet font-mono">6 Phases</span>
           </div>
           <nav class="space-y-1">
@@ -102,22 +76,6 @@
             >
               <UIcon :name="phase.icon" class="w-3.5 h-3.5 shrink-0 opacity-80" />
               <span class="truncate">{{ phase.title }}</span>
-            </NuxtLink>
-          </nav>
-        </div>
-
-        <div v-if="user?.is_superuser">
-          <div class="px-3 mb-2 text-[10px] font-mono font-medium uppercase tracking-wider text-aave-violet/80">
-            03 // Quản trị hệ thống
-          </div>
-          <nav class="space-y-1">
-            <NuxtLink
-              to="/admin/users"
-              class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-xl transition-all"
-              :class="route.path.startsWith('/admin/users') ? 'bg-aave-violet/15 text-aave-violet border-l-2 border-aave-violet font-medium' : 'text-aave-graphite hover:text-aave-paper hover:bg-white/[0.04]'"
-            >
-              <UIcon name="i-heroicons-shield-check" class="w-4 h-4 shrink-0" />
-              <span>Quản lý người dùng</span>
             </NuxtLink>
           </nav>
         </div>
@@ -136,13 +94,6 @@
               {{ user?.is_superuser ? 'Superuser' : 'Quant Analyst' }}
             </p>
           </div>
-          <NuxtLink
-            to="/admin/settings"
-            title="Cài đặt tài khoản"
-            class="p-1.5 text-aave-graphite hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors"
-          >
-            <UIcon name="i-heroicons-cog-6-tooth" class="w-4 h-4" />
-          </NuxtLink>
           <button
             title="Đăng xuất"
             class="p-1.5 text-aave-graphite hover:text-rose-400 rounded-lg hover:bg-white/[0.05] transition-colors"
@@ -159,11 +110,11 @@
         <div>
           <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
             <NuxtLink to="/admin" class="flex flex-col" @click="mobileOpen = false">
-              <span class="font-medium text-white font-sans text-sm tracking-tight flex items-center gap-1.5">
-                VNSTOCK QUANTS
+              <span class="font-medium text-sm text-white flex items-center gap-1.5">
+                VNSTOCK
                 <span class="text-[9px] uppercase font-mono font-bold px-1.5 py-0.2 rounded-full bg-aave-violet/15 text-aave-violet border border-aave-violet/30">PRO</span>
               </span>
-              <span class="text-[10px] text-aave-graphite font-mono">QUANT DESK 24/7</span>
+              <span class="text-[10px] text-aave-graphite font-mono">Quantitative & Analytics</span>
             </NuxtLink>
             <UButton
               color="gray"
@@ -175,33 +126,24 @@
 
           <div class="mt-4 space-y-4">
             <NuxtLink
+              to="/app"
+              class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs"
+              :class="route.path.startsWith('/app') ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
+              @click="mobileOpen = false"
+            >
+              <UIcon name="i-heroicons-cpu-chip" class="w-4 h-4 text-aave-violet" />
+              <span>Ứng Dụng Sandbox</span>
+            </NuxtLink>
+
+            <NuxtLink
+              v-if="user?.is_superuser"
               to="/admin"
               class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs"
               :class="route.path === '/admin' ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-squares-2x2" class="w-4 h-4" />
-              <span>Dashboard Cockpit</span>
-            </NuxtLink>
-
-            <NuxtLink
-              to="/admin/stock"
-              class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs"
-              :class="route.path.startsWith('/admin/stock') ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
-              @click="mobileOpen = false"
-            >
-              <UIcon name="i-heroicons-chart-bar" class="w-4 h-4" />
-              <span>Thị trường cổ phiếu</span>
-            </NuxtLink>
-
-            <NuxtLink
-              to="/admin/items"
-              class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs"
-              :class="route.path.startsWith('/admin/items') ? 'bg-aave-violet/15 text-aave-violet font-medium' : 'text-aave-graphite'"
-              @click="mobileOpen = false"
-            >
-              <UIcon name="i-heroicons-archive-box" class="w-4 h-4" />
-              <span>Danh mục Items</span>
+              <span>Tổng quan TRD</span>
             </NuxtLink>
 
             <NuxtLink
@@ -210,10 +152,10 @@
               @click="mobileOpen = false"
             >
               <UIcon name="i-heroicons-globe-alt" class="w-4 h-4" />
-              <span>Landing Page (Trang chủ)</span>
+              <span>Landing Page</span>
             </NuxtLink>
 
-            <div class="pt-2 border-t border-white/[0.06]">
+            <div v-if="user?.is_superuser" class="pt-2 border-t border-white/[0.06]">
               <p class="text-[10px] uppercase text-aave-graphite font-mono font-medium mb-2">Đặc tả TRD 6 Phases</p>
               <NuxtLink
                 v-for="phase in trdPhases"
@@ -231,9 +173,9 @@
         </div>
 
         <div class="pt-4 border-t border-white/[0.06] flex justify-between items-center">
-          <NuxtLink to="/admin/settings" class="text-xs text-aave-graphite hover:text-white" @click="mobileOpen = false">
-            Cài đặt tài khoản
-          </NuxtLink>
+          <span class="text-xs text-aave-graphite">
+            {{ user?.full_name || 'Quant Analyst' }}
+          </span>
           <button class="text-xs text-rose-400 hover:underline" @click="logout">
             Đăng xuất
           </button>
@@ -275,17 +217,25 @@
           </div>
 
           <NuxtLink
-            to="/admin/stock"
+            v-if="user?.is_superuser && !route.path.startsWith('/admin')"
+            to="/admin"
             class="hidden md:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono text-aave-graphite hover:text-white rounded-full bg-aave-obsidian hover:bg-white/[0.05] transition-colors border border-white/[0.06]"
           >
-            <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-aave-graphite" />
-            <span>Tra cứu mã CK</span>
-            <kbd class="px-1.5 py-0.5 text-[9px] rounded-full bg-white/[0.06] text-aave-graphite font-mono">Ctrl+K</kbd>
+            <UIcon name="i-heroicons-shield-check" class="w-3.5 h-3.5 text-aave-violet" />
+            <span>Khu Vực Quản Trị</span>
           </NuxtLink>
 
           <NuxtLink
-            to="/admin/settings"
-            class="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-aave-obsidian border border-white/[0.06] hover:bg-white/[0.05] transition-colors"
+            v-if="route.path.startsWith('/admin')"
+            to="/app"
+            class="hidden md:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono text-aave-graphite hover:text-white rounded-full bg-aave-obsidian hover:bg-white/[0.05] transition-colors border border-white/[0.06]"
+          >
+            <UIcon name="i-heroicons-cpu-chip" class="w-3.5 h-3.5 text-aave-violet" />
+            <span>Vào Ứng Dụng</span>
+          </NuxtLink>
+
+          <div
+            class="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-aave-obsidian border border-white/[0.06]"
           >
             <div class="w-6 h-6 rounded-full bg-aave-violet text-aave-charcoal font-mono font-bold text-[10px] flex items-center justify-center">
               {{ userInitials }}
@@ -293,7 +243,7 @@
             <span class="text-xs font-medium text-white max-w-[120px] truncate hidden sm:inline">
               {{ user?.full_name || user?.email?.split('@')[0] || 'Tài khoản' }}
             </span>
-          </NuxtLink>
+          </div>
         </div>
       </header>
 
@@ -408,7 +358,7 @@ const trdPhases = [
   },
   {
     path: "/admin/trd/phase-6",
-    title: "Phase 6: Trạm Cockpit",
+    title: "Phase 6: Giao diện Ứng dụng",
     icon: "i-heroicons-computer-desktop",
   },
 ]

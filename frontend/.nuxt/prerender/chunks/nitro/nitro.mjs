@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname as dirname$1, resolve as resolve$1, basename } from 'file:///Volumes/developer101/code/vnstock/node_modules/pathe/dist/index.mjs';
 import { getIcons } from 'file:///Volumes/developer101/code/vnstock/node_modules/@iconify/utils/lib/index.mjs';
 import { consola } from 'file:///Volumes/developer101/code/vnstock/node_modules/consola/dist/index.mjs';
+import { createRequire } from 'node:module';
 
 const serverAssets = [{"baseName":"server","dir":"/Volumes/developer101/code/vnstock/frontend/server/assets"}];
 
@@ -848,6 +849,7 @@ const inlineAppConfig = {
       "rose",
       "aave",
       "surface",
+      "tv",
       "primary"
     ],
     "strategy": "merge"
@@ -897,7 +899,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "2aa2e8da-bc38-4be2-b778-c770a0e263b6",
+    "buildId": "a5f7752b-b30a-4ba9-b1ed-3069433a83e6",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -921,7 +923,10 @@ const _inlineRuntimeConfig = {
     }
   },
   "public": {
-    "apiUrl": "https://vnstock.fastapicloud.dev"
+    "apiUrl": "https://vnstock.fastapicloud.dev",
+    "dnseApiKey": "eyJvcmciOiJkbnNlIiwiaWQiOiI4YWZhNWI1ODg2MWE0ZGNlOTI1ZGFiZmQxMTZiZTFiOCIsImgiOiJtdXJtdXIxMjgifQ==",
+    "dnseApiSecret": "YWBzI6FjIcaLqYpNUt5a0NTNmpsP-UmPUQn74SCkLFX0NyEQhG_S05hFCtd5y2RZq56IZiG8kzwp5WYfTpW7hA",
+    "dnseWsUrl": "wss://ws-openapi.dnse.com.vn"
   },
   "icon": {
     "serverKnownCssClasses": []
@@ -1414,6 +1419,8 @@ function publicAssetsURL(...path) {
 	const publicBase = app.cdnURL || app.baseURL;
 	return path.length ? joinRelativeURL(publicBase, ...path) : publicBase;
 }
+
+createRequire(globalThis._importMeta_.url);
 
 const collections = {
 };

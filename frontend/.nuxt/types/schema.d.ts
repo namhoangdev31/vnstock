@@ -21,6 +21,12 @@ import { NuxtModule, ModuleDependencyMeta } from '@nuxt/schema'
   }
   interface SharedPublicRuntimeConfig {
    apiUrl: string,
+
+   dnseApiKey: string,
+
+   dnseApiSecret: string,
+
+   dnseWsUrl: string,
   }
 declare module '@nuxt/schema' {
   interface ModuleDependencies {

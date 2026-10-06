@@ -1,10 +1,9 @@
 <template>
   <div class="space-y-6">
-    <header><div class="flex items-center gap-2 text-xs text-aave-graphite"><NuxtLink to="/admin" class="hover:text-aave-violet">Dashboard</NuxtLink><span>/</span><span class="text-aave-violet">TRD Phase 6</span></div><h1 class="mt-2 flex items-center gap-2 text-2xl font-semibold text-aave-paper"><UIcon name="i-heroicons-chart-pie" class="h-7 w-7 text-aave-violet" />Phase 6: Frontend Dashboards và Quantitative Trading Cockpit</h1><p class="mt-1 text-sm text-aave-graphite">Tài liệu đặc tả và ma trận kiểm thử. Mở Trading Cockpit để sử dụng workspace dữ liệu thật và paper trading.</p></header>
+    <header><div class="flex items-center gap-2 text-xs text-aave-graphite"><NuxtLink to="/admin" class="hover:text-aave-violet">Dashboard</NuxtLink><span>/</span><span class="text-aave-violet">TRD Phase 6</span></div><h1 class="mt-2 flex items-center gap-2 text-2xl font-semibold text-aave-paper"><UIcon name="i-heroicons-chart-pie" class="h-7 w-7 text-aave-violet" />Phase 6: Frontend Dashboards và Quantitative Analytics Cockpit</h1><p class="mt-1 text-sm text-aave-graphite">Tài liệu đặc tả kiến trúc và ma trận kiểm thử hệ thống Dashboard.</p></header>
     <div class="flex gap-1 border-b border-white/[0.08]" role="tablist" aria-label="Tài liệu Phase 6"><button v-for="tab in tabs" :key="tab.id" class="min-h-11 px-3 text-xs font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-aave-violet" :class="activeTab === tab.id ? 'border-b-2 border-aave-violet text-aave-violet' : 'text-aave-graphite hover:text-aave-ash'" @click="activeTab = tab.id">{{ tab.label }}</button></div>
     <MarkdownViewer v-if="activeTab === 'spec'" :content="phase6Markdown" filename="trd-phase-6-cockpit.md" />
     <TestMatrix v-else :tests="testCases" />
-    <NuxtLink to="/trading" class="inline-flex min-h-11 items-center rounded-lg bg-aave-violet px-4 text-sm font-semibold text-aave-charcoal">Mở Trading Cockpit</NuxtLink>
   </div>
 </template>
 <script setup lang="ts">

@@ -24,6 +24,16 @@
     --surface-midnight: #221d1d;
     --surface-abyss: #0f0f10;
 
+    --color-tv-canvas: #131722;
+    --color-tv-surface: #181c27;
+    --color-tv-card: #1e222d;
+    --color-tv-border: #2a2e39;
+    --color-tv-text-primary: #d1d4dc;
+    --color-tv-text-secondary: #787b86;
+    --color-tv-bull: #089981;
+    --color-tv-bear: #f23645;
+    --color-tv-gold: #f59e0b;
+
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, monospace;
   }

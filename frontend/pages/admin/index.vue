@@ -22,11 +22,11 @@
 
         <div class="flex flex-wrap items-center gap-3 shrink-0">
           <NuxtLink
-            to="/admin/stock"
+            to="/admin/trd/phase-1"
             class="btn-aave-violet !py-3 !px-5 text-xs font-mono font-medium"
           >
-            <UIcon name="i-heroicons-chart-bar" class="w-4 h-4" />
-            <span>Thị trường CK</span>
+            <UIcon name="i-heroicons-document-text" class="w-4 h-4" />
+            <span>Đặc tả kỹ thuật TRD</span>
           </NuxtLink>
 
           <NuxtLink
@@ -269,7 +269,7 @@
 
 <script setup lang="ts">
 useHead({
-  title: "Dashboard Cockpit - Vnstock Quants & Analytics 24/7",
+  title: "Bảng Điều Khiển Quản Trị - Vnstock TRD 24/7",
 })
 
 const phases = [
@@ -316,9 +316,9 @@ const phases = [
   {
     id: 6,
     path: "/admin/trd/phase-6",
-    title: "Frontend Cockpit & Alpha Basket",
+    title: "Giao Diện Ứng Dụng & Alpha Basket",
     desc: "Giao diện trạm điều hành lượng hóa, kiểm soát luồng dữ liệu thời gian thực và phân bổ rổ danh mục cổ phiếu Tuần/Tháng.",
-    tech: "Nuxt 3 Cockpit",
+    tech: "Nuxt 3 App",
     status: "Hoàn tất 100%",
   },
 ]

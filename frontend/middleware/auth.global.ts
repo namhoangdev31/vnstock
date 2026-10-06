@@ -6,17 +6,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const publicRoutes = [
     "/",
-    "/iboard",
     "/login",
     "/signup",
     "/recover-password",
     "/reset-password",
   ]
 
-  const isPublicRoute =
-    publicRoutes.some(
-      (route) => to.path === route || to.path === `${route}/`,
-    ) || to.path.startsWith("/iboard/")
+  const isPublicRoute = publicRoutes.some(
+    (route) => to.path === route || to.path === `${route}/`,
+  )
   const isAuthPage = [
     "/login",
     "/signup",
@@ -25,7 +23,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   ].includes(to.path)
 
   if (token.value && isAuthPage) {
-    return navigateTo("/admin")
+    if (!user.value) {
+      await fetchUser()
+    }
+    return navigateTo(user.value?.is_superuser ? "/admin" : "/app")
   }
 
   if (isPublicRoute) {
@@ -40,7 +41,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     await fetchUser()
   }
 
-  if (to.path.startsWith("/admin/users") && !user.value?.is_superuser) {
-    return navigateTo("/admin")
+  // /admin is strictly for admin / superuser only. Normal users go to /app
+  if (to.path.startsWith("/admin") && !user.value?.is_superuser) {
+    return navigateTo("/app")
   }
 })

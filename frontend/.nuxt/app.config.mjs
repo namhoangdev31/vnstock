@@ -221,6 +221,7 @@ const inlineConfig = {
       "rose",
       "aave",
       "surface",
+      "tv",
       "primary"
     ],
     "strategy": "merge"
