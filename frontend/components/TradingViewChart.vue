@@ -72,8 +72,8 @@ function initChart() {
         backgroundColor: "#09090b",
         foregroundColor: "#10b981",
       },
-      disabled_features: ["use_localstorage_for_settings"],
-      enabled_features: ["study_templates"],
+      disabled_features: ["use_localstorage_for_settings", "study_templates"],
+      enabled_features: [],
       overrides: {
         "paneProperties.background": "#09090b",
         "paneProperties.backgroundType": "solid",

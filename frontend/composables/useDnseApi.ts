@@ -33,10 +33,7 @@ export const useDnseApi = (): DNSEClient => {
   if (!_apiClient) {
     let apiKey = ""
     let apiSecret = ""
-    let baseUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/dnse-api`
-        : "https://openapi.dnse.com.vn"
+    let baseUrl = "https://openapi.dnse.com.vn"
 
     try {
       const config = useRuntimeConfig()
