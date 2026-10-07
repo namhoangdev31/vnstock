@@ -20,6 +20,7 @@ declare global {
   const controlledComputed: typeof import('@vueuse/core').controlledComputed
   const controlledRef: typeof import('@vueuse/core').controlledRef
   const createDisposableDirective: typeof import('@vueuse/core').createDisposableDirective
+  const createDnseDatafeed: typeof import('../../composables/useDnseDatafeed').createDnseDatafeed
   const createError: typeof import('../../../node_modules/nuxt/dist/app/composables/error').createError
   const createEventHook: typeof import('@vueuse/core').createEventHook
   const createGenericProjection: typeof import('../../../node_modules/@vueuse/math/index').createGenericProjection
@@ -49,6 +50,7 @@ declare global {
   const definePayloadReducer: typeof import('../../../node_modules/nuxt/dist/app/composables/payload').definePayloadReducer
   const definePayloadReviver: typeof import('../../../node_modules/nuxt/dist/app/composables/payload').definePayloadReviver
   const defineShortcuts: typeof import('../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts').defineShortcuts
+  const detectDnseSymbolType: typeof import('../../composables/useDnseApi').detectDnseSymbolType
   const dnseApi: typeof import('../../composables/useDnse').dnseApi
   const dnseApiClient: typeof import('../../composables/useDnseApi').dnseApiClient
   const dnseClient: typeof import('../../composables/useDnse').dnseClient
@@ -478,6 +480,9 @@ declare global {
   export type { OhlcCandle, HistoricalOhlcResult } from '../../composables/useDnseApi'
   import('../../composables/useDnseApi')
   // @ts-ignore
+  export type { DatafeedBar, DatafeedPeriodParams, DatafeedHistoryMetadata, DatafeedSymbolInfo, DatafeedConfiguration } from '../../composables/useDnseDatafeed'
+  import('../../composables/useDnseDatafeed')
+  // @ts-ignore
   export type { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d'
   import('../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d')
 }
@@ -504,6 +509,7 @@ declare module 'vue' {
     readonly controlledComputed: UnwrapRef<typeof import('@vueuse/core')['controlledComputed']>
     readonly controlledRef: UnwrapRef<typeof import('@vueuse/core')['controlledRef']>
     readonly createDisposableDirective: UnwrapRef<typeof import('@vueuse/core')['createDisposableDirective']>
+    readonly createDnseDatafeed: UnwrapRef<typeof import('../../composables/useDnseDatafeed')['createDnseDatafeed']>
     readonly createError: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/error')['createError']>
     readonly createEventHook: UnwrapRef<typeof import('@vueuse/core')['createEventHook']>
     readonly createGenericProjection: UnwrapRef<typeof import('../../../node_modules/@vueuse/math/index')['createGenericProjection']>
@@ -533,6 +539,7 @@ declare module 'vue' {
     readonly definePayloadReducer: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/payload')['definePayloadReducer']>
     readonly definePayloadReviver: UnwrapRef<typeof import('../../../node_modules/nuxt/dist/app/composables/payload')['definePayloadReviver']>
     readonly defineShortcuts: UnwrapRef<typeof import('../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts')['defineShortcuts']>
+    readonly detectDnseSymbolType: UnwrapRef<typeof import('../../composables/useDnseApi')['detectDnseSymbolType']>
     readonly dnseApi: UnwrapRef<typeof import('../../composables/useDnse')['dnseApi']>
     readonly dnseApiClient: UnwrapRef<typeof import('../../composables/useDnseApi')['dnseApiClient']>
     readonly dnseClient: UnwrapRef<typeof import('../../composables/useDnse')['dnseClient']>

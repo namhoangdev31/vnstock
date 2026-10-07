@@ -113,7 +113,7 @@
         "../../node_modules/@nuxt/ui/dist/runtime/*"
       ],
       "#ui-colors": [
-        "./ui.colors"
+        "./ui.colors.mjs"
       ],
       "#color-mode-options": [
         "./color-mode-options.mjs"
@@ -129,9 +129,6 @@
       ],
       "#tailwind-config": [
         "./tailwind/expose"
-      ],
-      "#tailwind-config/*": [
-        "./tailwind/expose/*"
       ],
       "#app-manifest": [
         "../../node_modules/mocked-exports/lib/proxy.d.mts"
@@ -199,7 +196,6 @@
     "../../node_modules/@nuxtjs/tailwindcss/node_modules",
     "../../node_modules/@nuxt/ui/node_modules",
     "../../node_modules/@vueuse/nuxt/node_modules",
-    "../../node_modules/nuxt-tradingview/node_modules",
     "../../node_modules/runtime/server",
     "../../node_modules/dist/runtime/server",
     "../.output"

@@ -18,6 +18,7 @@ interface _GlobalComponents {
   MarkdownViewer: typeof import("../../components/MarkdownViewer.vue")['default']
   QuantPulseCard: typeof import("../../components/QuantPulseCard.vue")['default']
   TestMatrix: typeof import("../../components/TestMatrix.vue")['default']
+  TradingViewChart: typeof import("../../components/TradingViewChart.vue")['default']
   UAccordion: typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Accordion.vue")['default']
   UAlert: typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Alert.vue")['default']
   UAvatar: typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Avatar.vue")['default']
@@ -81,27 +82,6 @@ interface _GlobalComponents {
   NuxtPicture: typeof import("../../../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtPicture']
   Icon: typeof import("../../../node_modules/@nuxt/icon/dist/runtime/components/index")['default']
   ColorScheme: typeof import("../../../node_modules/@nuxtjs/color-mode/dist/runtime/component.vue3.vue")['default']
-  SingleTicker: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/SingleTicker.vue")['default']
-  Ticker: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/Ticker.vue")['default']
-  SymbolInfo: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/SymbolInfo.vue")['default']
-  StockMarket: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/StockMarket.vue")['default']
-  StockHeatMap: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/StockHeatMap.vue")['default']
-  Screener: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/Screener.vue")['default']
-  MiniChart: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/MiniChart.vue")['default']
-  MarketOverview: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/MarketOverview.vue")['default']
-  MarketData: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/MarketData.vue")['default']
-  TickerTape: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/TickerTape.vue")['default']
-  FundamentalData: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/FundamentalData.vue")['default']
-  ForexHeatMap: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/ForexHeatMap.vue")['default']
-  ForexCrossRates: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/ForexCrossRates.vue")['default']
-  EconomicCalendar: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/EconomicCalendar.vue")['default']
-  TechnicalAnalysis: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/TechnicalAnalysis.vue")['default']
-  CryptoMarket: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/CryptoMarket.vue")['default']
-  CryptoHeatMap: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/CryptoHeatMap.vue")['default']
-  CompanyProfile: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/CompanyProfile.vue")['default']
-  Chart: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/Chart.vue")['default']
-  SymbolOverview: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/SymbolOverview.vue")['default']
-  TopStories: typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/TopStories.vue")['default']
   NuxtPage: typeof import("../../../node_modules/nuxt/dist/pages/runtime/page")['default']
   NoScript: typeof import("../../../node_modules/nuxt/dist/head/runtime/components")['NoScript']
   Link: typeof import("../../../node_modules/nuxt/dist/head/runtime/components")['Link']
@@ -117,6 +97,7 @@ interface _GlobalComponents {
   LazyMarkdownViewer: LazyComponent<typeof import("../../components/MarkdownViewer.vue")['default']>
   LazyQuantPulseCard: LazyComponent<typeof import("../../components/QuantPulseCard.vue")['default']>
   LazyTestMatrix: LazyComponent<typeof import("../../components/TestMatrix.vue")['default']>
+  LazyTradingViewChart: LazyComponent<typeof import("../../components/TradingViewChart.vue")['default']>
   LazyUAccordion: LazyComponent<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Accordion.vue")['default']>
   LazyUAlert: LazyComponent<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Alert.vue")['default']>
   LazyUAvatar: LazyComponent<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/components/elements/Avatar.vue")['default']>
@@ -180,27 +161,6 @@ interface _GlobalComponents {
   LazyNuxtPicture: LazyComponent<typeof import("../../../node_modules/nuxt/dist/app/components/nuxt-stubs")['NuxtPicture']>
   LazyIcon: LazyComponent<typeof import("../../../node_modules/@nuxt/icon/dist/runtime/components/index")['default']>
   LazyColorScheme: LazyComponent<typeof import("../../../node_modules/@nuxtjs/color-mode/dist/runtime/component.vue3.vue")['default']>
-  LazySingleTicker: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/SingleTicker.vue")['default']>
-  LazyTicker: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/Ticker.vue")['default']>
-  LazySymbolInfo: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/SymbolInfo.vue")['default']>
-  LazyStockMarket: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/StockMarket.vue")['default']>
-  LazyStockHeatMap: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/StockHeatMap.vue")['default']>
-  LazyScreener: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/Screener.vue")['default']>
-  LazyMiniChart: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/MiniChart.vue")['default']>
-  LazyMarketOverview: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/MarketOverview.vue")['default']>
-  LazyMarketData: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/MarketData.vue")['default']>
-  LazyTickerTape: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/TickerTape.vue")['default']>
-  LazyFundamentalData: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/FundamentalData.vue")['default']>
-  LazyForexHeatMap: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/ForexHeatMap.vue")['default']>
-  LazyForexCrossRates: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/ForexCrossRates.vue")['default']>
-  LazyEconomicCalendar: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/EconomicCalendar.vue")['default']>
-  LazyTechnicalAnalysis: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/TechnicalAnalysis.vue")['default']>
-  LazyCryptoMarket: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/CryptoMarket.vue")['default']>
-  LazyCryptoHeatMap: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/CryptoHeatMap.vue")['default']>
-  LazyCompanyProfile: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/CompanyProfile.vue")['default']>
-  LazyChart: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/Chart.vue")['default']>
-  LazySymbolOverview: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/SymbolOverview.vue")['default']>
-  LazyTopStories: LazyComponent<typeof import("../../../node_modules/nuxt-tradingview/dist/runtime/components/TopStories.vue")['default']>
   LazyNuxtPage: LazyComponent<typeof import("../../../node_modules/nuxt/dist/pages/runtime/page")['default']>
   LazyNoScript: LazyComponent<typeof import("../../../node_modules/nuxt/dist/head/runtime/components")['NoScript']>
   LazyLink: LazyComponent<typeof import("../../../node_modules/nuxt/dist/head/runtime/components")['Link']>

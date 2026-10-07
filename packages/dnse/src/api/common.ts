@@ -42,9 +42,10 @@ export function getApiVersion(): string {
 }
 
 /**
- * Format ngày tháng theo chuẩn RFC 2822 UTC (+0000) giống hệt Python datetime.strftime('%a, %d %b %Y %H:%M:%S %z')
+ * Format ngày tháng theo chuẩn RFC 2822 / RFC 1123 múi giờ Việt Nam UTC+7 (GMT+7)
  */
 export function formatDnseDate(date: Date = new Date()): string {
+	const vnTime = new Date(date.getTime() + 7 * 60 * 60 * 1000);
 	const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 	const months = [
 		"Jan",
@@ -61,15 +62,15 @@ export function formatDnseDate(date: Date = new Date()): string {
 		"Dec",
 	];
 
-	const dayName = days[date.getUTCDay()];
-	const day = String(date.getUTCDate()).padStart(2, "0");
-	const monthName = months[date.getUTCMonth()];
-	const year = date.getUTCFullYear();
-	const hours = String(date.getUTCHours()).padStart(2, "0");
-	const minutes = String(date.getUTCMinutes()).padStart(2, "0");
-	const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+	const dayName = days[vnTime.getUTCDay()];
+	const day = String(vnTime.getUTCDate()).padStart(2, "0");
+	const monthName = months[vnTime.getUTCMonth()];
+	const year = vnTime.getUTCFullYear();
+	const hours = String(vnTime.getUTCHours()).padStart(2, "0");
+	const minutes = String(vnTime.getUTCMinutes()).padStart(2, "0");
+	const seconds = String(vnTime.getUTCSeconds()).padStart(2, "0");
 
-	return `${dayName}, ${day} ${monthName} ${year} ${hours}:${minutes}:${seconds} +0000`;
+	return `${dayName}, ${day} ${monthName} ${year} ${hours}:${minutes}:${seconds} GMT+7`;
 }
 
 export type SupportedAlgorithm =

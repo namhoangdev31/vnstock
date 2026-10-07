@@ -1,6 +1,6 @@
-import { DNSEClient, type OhlcResponseData } from "@vnstock/dnse";
+import { DNSEClient, type OhlcResponseData } from "@vnstock/dnse"
 
-let _apiClient: DNSEClient | null = null;
+let _apiClient: DNSEClient | null = null
 
 export interface OhlcCandle {
   time: number
@@ -17,6 +17,7 @@ export interface HistoricalOhlcResult {
   symbol: string
   count: number
   candles: OhlcCandle[]
+  allCandles: OhlcCandle[]
   todayCandles: OhlcCandle[]
   previousDayCandles: OhlcCandle[]
   todayDate: string
@@ -77,17 +78,65 @@ export const dnseApiClient = new Proxy({} as DNSEClient, {
  * Lấy lịch sử nến OHLC:
  * Tải nến 1m của ngày hôm nay (từ thời điểm mở phiên đến hiện tại) kèm toàn bộ nến 1m của 1 ngày giao dịch liền trước (T-1).
  */
+const KNOWN_INDICES = new Set([
+  "VNINDEX",
+  "VN30",
+  "HNX",
+  "UPCOM",
+  "HNX30",
+  "VN100",
+  "VNALL",
+  "VNCOND",
+  "VNCONS",
+  "VNENE",
+  "VNFIN",
+  "VNHEAL",
+  "VNIND",
+  "VNIT",
+  "VNMAT",
+  "VNMID",
+  "VNREAL",
+  "VNSI",
+  "VNSML",
+  "VNUTI",
+])
+
+export function detectDnseSymbolType(
+  symbol: string,
+): "DERIVATIVE" | "INDEX" | "STOCK" {
+  const upper = symbol.toUpperCase().trim()
+  if (
+    upper === "VN30F1M" ||
+    upper === "VN30F2M" ||
+    upper === "VN30F1Q" ||
+    upper === "VN30F2Q" ||
+    upper === "V100F1M" ||
+    upper === "V100F2M" ||
+    upper === "V100F1Q" ||
+    upper === "V100F2Q" ||
+    /^VN30F\d{4}$/.test(upper)
+  ) {
+    return "DERIVATIVE"
+  }
+  if (KNOWN_INDICES.has(upper) || upper.endsWith("INDEX")) {
+    return "INDEX"
+  }
+  return "STOCK"
+}
+
+/**
+ * Lấy nến lịch sử OHLC và lọc nến theo phiên T-1 và T-0 (mặc định cho VN30F1M)
+ */
 export const getHistoricalOhlc = async (options?: {
   symbol?: string
   type?: "DERIVATIVE" | "STOCK" | "INDEX" | string
   resolution?: "1" | "3" | "5" | "15" | "30" | "1h" | "1D" | "1W" | string
   from?: number
   to?: number
+  all?: boolean
 }): Promise<HistoricalOhlcResult | null> => {
   const symbol = (options?.symbol ?? "VN30F1M").toUpperCase()
-  const type =
-    options?.type ??
-    (symbol.includes("F") || symbol.includes("1M") ? "DERIVATIVE" : "STOCK")
+  const type = options?.type ?? detectDnseSymbolType(symbol)
   const resolution = options?.resolution ?? "1"
 
   const to = options?.to ?? Math.floor(Date.now() / 1000)
@@ -101,7 +150,7 @@ export const getHistoricalOhlc = async (options?: {
     to,
   })
 
-  if (!res || !res.data || !Array.isArray(res.data.t) || res.data.t.length === 0) {
+  if (!res?.data || !Array.isArray(res.data.t) || res.data.t.length === 0) {
     return null
   }
 
@@ -167,13 +216,18 @@ export const getHistoricalOhlc = async (options?: {
     }
   }
 
-  // Danh sách nến kết hợp: toàn bộ nến T-1 + nến T-0
-  const combinedCandles = [...previousDayCandles, ...todayCandles]
+  // Danh sách nến: Nếu options?.all = true hoặc options?.from được truyền vào thì lấy toàn bộ allCandles,
+  // ngược lại mặc định lấy 2 phiên gần nhất (T-1 + T-0).
+  const combinedCandles =
+    options?.all || (options?.from !== undefined && options?.to !== undefined)
+      ? allCandles
+      : [...previousDayCandles, ...todayCandles]
 
   return {
     symbol,
     count: combinedCandles.length,
     candles: combinedCandles,
+    allCandles,
     todayCandles,
     previousDayCandles,
     todayDate,

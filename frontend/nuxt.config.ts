@@ -18,7 +18,7 @@ export default defineNuxtConfig({
       exclude: ["@vnstock/dnse"],
     },
   },
-  modules: ["@nuxt/ui", "@vueuse/nuxt", "nuxt-tradingview"],
+  modules: ["@nuxt/ui", "@vueuse/nuxt"],
   css: ["~/assets/css/main.css"],
   app: {
     head: {
@@ -50,11 +50,9 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_API_URL ||
         "http://127.0.0.1:8000",
       dnseApiKey:
-        process.env.DNSE_API_KEY ||
-        process.env.NUXT_PUBLIC_DNSE_API_KEY,
+        process.env.DNSE_API_KEY || process.env.NUXT_PUBLIC_DNSE_API_KEY,
       dnseApiSecret:
-        process.env.DNSE_API_SECRET ||
-        process.env.NUXT_PUBLIC_DNSE_API_SECRET,
+        process.env.DNSE_API_SECRET || process.env.NUXT_PUBLIC_DNSE_API_SECRET,
       dnseWsUrl: process.env.DNSE_WS_URL || "wss://ws-openapi.dnse.com.vn",
     },
   },
