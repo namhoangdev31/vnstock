@@ -183,20 +183,10 @@ app = FastAPI(
     },
 )
 
-cors_origins = [
-    settings.FRONTEND_HOST,
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://vnstock.fastapicloud.dev",
-]
-cors_origins = list(dict.fromkeys(cors_origins))
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$",
+    allow_origins=["*"],
+    allow_origin_regex=".*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

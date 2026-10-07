@@ -14,6 +14,7 @@ from fastapi import APIRouter
 from app.api.private_router import router as private_router
 from app.api.system_router import router as system_router
 from app.core.config import settings
+from app.domains.dnse.presentation.router import router as dnse_router
 from app.domains.fundamental.presentation.router import fundamental_router
 from app.domains.iboard.presentation.router import router as iboard_router
 from app.domains.identity.presentation.router import identity_router
@@ -36,6 +37,7 @@ api_router.include_router(system_router)
 api_router.include_router(market_data_router)
 api_router.include_router(vnstock_router)
 api_router.include_router(iboard_router)
+api_router.include_router(dnse_router)
 api_router.include_router(fundamental_router)
 api_router.include_router(forecast_router)
 api_router.include_router(quant_router)
