@@ -19,16 +19,13 @@ export function generateNonce(): string {
 }
 
 /**
- * Lấy tên header ngày tháng (mặc định 'X-Aux-Date' trên Browser, 'Date' trên Server hoặc qua env DATE_HEADER)
+ * Lấy tên header ngày tháng (mặc định 'X-Aux-Date', hoặc qua env DATE_HEADER)
  */
 export function getDateHeaderName(): string {
-	if (typeof window !== "undefined") {
-		return "X-Aux-Date";
-	}
 	if (typeof process !== "undefined" && process.env?.DATE_HEADER) {
 		return process.env.DATE_HEADER;
 	}
-	return "Date";
+	return "X-Aux-Date";
 }
 
 /**

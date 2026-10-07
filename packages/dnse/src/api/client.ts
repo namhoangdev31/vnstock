@@ -121,9 +121,7 @@ export class DNSEClient {
 		this._algorithm = options.algorithm || "hmac-sha256";
 		this._hmacNonceEnabled = options.hmacNonceEnabled ?? true;
 		this._apiVersion = options.apiVersion || getApiVersion();
-		this._dateHeaderName =
-			options.dateHeaderName ||
-			(typeof window !== "undefined" ? "X-Aux-Date" : getDateHeaderName());
+		this._dateHeaderName = options.dateHeaderName || getDateHeaderName() || "X-Aux-Date";
 
 		this._http = axios.create({
 			baseURL: this._baseUrl,
