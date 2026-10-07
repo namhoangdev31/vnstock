@@ -1,4 +1,4 @@
-import{h as C,u as V,c as u,a as n,b as e,w as _,d as a,F as A,B as F,p as i,A as T,I as f,t as p,l as I,k as $,r as g,e as D,o as m,m as R,z as y}from"./BYBdRK-J.js";import{_ as O,a as w}from"./C5BlbTxZ.js";import{_ as G}from"./BKHEdzUL.js";import{_ as H}from"./DSDqkd69.js";const B=`# TRD Phase 4: Paper Trading Engine & Multi-Horizon Equity Portfolio
+import{h as C,u as V,c as u,a as n,b as e,w as _,d as a,F as A,B as F,p as i,A as T,I as f,t as p,l as I,k as $,r as g,e as D,o as m,m as R,z as y}from"./WPUU6VfZ.js";import{_ as O,a as w}from"./Dd-5l10-.js";import{_ as G}from"./D7qHZAIq.js";import{_ as H}from"./Cl_avYTq.js";const B=`# TRD Phase 4: Paper Trading Engine & Multi-Horizon Equity Portfolio
 ## Hệ Thống Giả Lập Giao Dịch Phái Sinh & Sàng Lọc Cổ Phiếu Đa Khung Thời Gian (T+2)
 
 > **Tài liệu đặc tả kỹ thuật chi tiết dành cho kỹ sư phát triển backend (Self-Implementation Blueprint)**  

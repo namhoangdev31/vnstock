@@ -1,4 +1,4 @@
-import{h as B,u as I,c as v,a as n,b as s,w,d as p,F as G,B as O,p as e,t as o,C as T,E,I as _,A as x,k as q,r as m,e as U,o as f,m as H,z as S}from"./BYBdRK-J.js";import{_ as K,a as W}from"./C5BlbTxZ.js";import{_ as Q}from"./DSDqkd69.js";import"./BKHEdzUL.js";const j=`# Đặc Tả Kỹ Thuật (TRD) Phase 2: Tri-Engine Analytics Core & Ensemble Decision System
+import{h as B,u as I,c as v,a as n,b as s,w,d as p,F as G,B as O,p as e,t as o,C as T,E,I as _,A as x,k as q,r as m,e as U,o as f,m as H,z as S}from"./WPUU6VfZ.js";import{_ as K,a as W}from"./Dd-5l10-.js";import{_ as Q}from"./Cl_avYTq.js";import"./D7qHZAIq.js";const j=`# Đặc Tả Kỹ Thuật (TRD) Phase 2: Tri-Engine Analytics Core & Ensemble Decision System
 
 Tài liệu này xác định chi tiết **Yêu cầu kỹ thuật (Technical Requirements)**, **Kiến trúc Workflow & Thuật toán (Architectural Workflow & Algorithms)**, **Sơ đồ luồng xử lý (Dataflow Diagram)**, **Mô hình Cơ sở Dữ liệu (Database Models)**, **Tiêu chuẩn nghiệm thu (Definition of Done - DoD)** và **Ma trận kịch bản kiểm thử (Test Matrix)** cho Phase 2 của hệ sinh thái Quantitative Research & Simulation Engine vnstock.
 

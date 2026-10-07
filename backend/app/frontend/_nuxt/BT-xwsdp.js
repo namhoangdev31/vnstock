@@ -1,4 +1,4 @@
-import{h as S,u as E,y as C,c as r,a as t,b as i,w as p,d as o,F as g,B as m,p as h,k as O,e as M,r as b,o as c,m as w,A as _,t as a}from"./BYBdRK-J.js";import{_ as R,a as F}from"./C5BlbTxZ.js";import{_ as $}from"./DSDqkd69.js";import"./BKHEdzUL.js";const D=`# TRD Phase 5: Sổ Nhật Ký Dự Báo (Forecast Journal) & Vòng Lặp Tự Học Có Kiểm Soát
+import{h as S,u as E,y as C,c as r,a as t,b as i,w as p,d as o,F as g,B as m,p as h,k as O,e as M,r as b,o as c,m as w,A as _,t as a}from"./WPUU6VfZ.js";import{_ as R,a as F}from"./Dd-5l10-.js";import{_ as $}from"./Cl_avYTq.js";import"./D7qHZAIq.js";const D=`# TRD Phase 5: Sổ Nhật Ký Dự Báo (Forecast Journal) & Vòng Lặp Tự Học Có Kiểm Soát
 ## Hệ Thống Lưu Vết 100% Tín Hiệu, Tự Động Chấm Điểm Sai Số & Hiệu Chuẩn Trọng Số Engine
 
 > **Tài liệu đặc tả kỹ thuật chi tiết dành cho kỹ sư phát triển backend (Self-Implementation Blueprint)**  
