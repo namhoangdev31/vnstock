@@ -3,13 +3,15 @@ FROM oven/bun:1 AS frontend-build
 WORKDIR /app
 
 COPY package.json bun.lock /app/
-COPY frontend/package.json /app/frontend/
-
-WORKDIR /app/frontend
+COPY packages /app/packages/
+COPY frontend /app/frontend/
 
 RUN bun install
 
-COPY ./frontend /app/frontend
+WORKDIR /app/packages/dnse
+RUN bun run build
+
+WORKDIR /app/frontend
 
 ARG VITE_API_URL=
 
