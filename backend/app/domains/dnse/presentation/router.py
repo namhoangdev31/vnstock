@@ -4,12 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-import urllib.error
-import urllib.parse
-import urllib.request
-from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Query, status
 
@@ -49,69 +44,45 @@ async def get_dnse_ohlc(
             detail="DNSE API credentials are not configured on server",
         )
 
-    query_params = {
-        "symbol": symbol.strip().upper(),
-        "resolution": resolution,
-        "from": from_ts,
-        "to": to_ts,
-        "type": sec_type,
-    }
-    encoded_query = urllib.parse.urlencode(query_params)
-    path = f"/price/ohlc?{encoded_query}"
-    url = f"https://openapi.dnse.com.vn{path}"
-
     try:
-        from dnse.api.common import (
-            build_signature,
-            get_api_version,
-            get_date_header_name,
+        from dnse import DNSEClient
+
+        client = DNSEClient(
+            api_key=settings.DNSE_API_KEY,
+            api_secret=settings.DNSE_API_SECRET,
         )
-
-        date_val = datetime.now(UTC).strftime("%a, %d %b %Y %H:%M:%S %z")
-        date_header_name = get_date_header_name()
-        nonce = uuid4().hex
-
-        headers_list, signature = build_signature(
-            settings.DNSE_API_SECRET,
-            "GET",
-            "/price/ohlc",
-            date_val,
-            "hmac-sha256",
-            nonce=nonce,
-            header_name=date_header_name,
+        # Bổ sung User-Agent chuẩn trình duyệt để WAF DNSE không reset connection
+        headers_dict = dict(client._http.headers)
+        headers_dict["User-Agent"] = (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/131.0.0.0 Safari/537.36"
         )
+        client._http.headers = headers_dict
 
-        sig_val = (
-            f'Signature keyId="{settings.DNSE_API_KEY}",'
-            f'algorithm="hmac-sha256",'
-            f'headers="{headers_list}",'
-            f'signature="{signature}",'
-            f'nonce="{nonce}"'
-        )
+        query = {
+            "symbol": symbol.strip().upper(),
+            "resolution": resolution,
+            "from": from_ts,
+            "to": to_ts,
+        }
+        res_status, body_text = client.get_ohlc(sec_type, query=query)
 
-        req = urllib.request.Request(url, method="GET")
-        req.add_header(date_header_name, date_val)
-        req.add_header("X-Signature", sig_val)
-        req.add_header("X-API-Key", settings.DNSE_API_KEY)
-        req.add_header("version", get_api_version())
-        req.add_header("Accept", "application/json")
+        if 200 <= res_status < 300 and body_text:
+            return json.loads(body_text)
 
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            content = resp.read().decode("utf-8")
-            return json.loads(content)
-
-    except urllib.error.HTTPError as http_err:
-        err_msg = http_err.read().decode("utf-8") if http_err.fp else str(http_err)
         logger.warning(
             "[DNSEProxy] DNSE API returned HTTP %s for %s: %s",
-            http_err.code,
+            res_status,
             symbol,
-            err_msg,
+            body_text,
         )
         raise HTTPException(
-            status_code=http_err.code,
-            detail=f"DNSE API error: {err_msg}",
-        ) from http_err
+            status_code=res_status,
+            detail=f"DNSE API error: {body_text}",
+        )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("[DNSEProxy] Failed to query DNSE OHLC for %s: %s", symbol, e)
         raise HTTPException(
