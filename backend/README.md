@@ -48,9 +48,8 @@ $ docker compose watch
 
 The application is available at `http://localhost:8000`.
 
-### Docker Compose Override
-
-The `compose.override.yml` file contains local settings for published ports, source synchronization, automatic image rebuilds, and backend reloads. Docker Compose applies it automatically when you run `docker compose` without an explicit file list.
+### Docker Compose
+The unified `compose.yml` file contains settings for published ports, source synchronization, automatic image rebuilds, and backend reloads (`docker compose watch`).
 
 To open a shell in the backend container:
 

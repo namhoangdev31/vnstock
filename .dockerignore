@@ -1,10 +1,36 @@
+# Version control & OS
 .git
+.gitignore
+.gitattributes
+**/.DS_Store
+**/._*
+*.log
+
+# Python caches & virtualenvs
 **/__pycache__
+**/*.pyc
+**/*.pyo
 **/.venv
+.venv
+.ruff_cache
+.pytest_cache
+.mypy_cache
 backend/htmlcov
-frontend/blob-report
+
+# Node & Frontend artifacts
+node_modules
+**/node_modules
 frontend/dist
-frontend/node_modules
+frontend/.output
+frontend/.nuxt
+frontend/blob-report
 frontend/playwright-report
 frontend/test-results
-node_modules
+dist
+
+# IDE & cloud metadata
+.idea
+.vscode
+.fastapicloud
+.claude
+.agents

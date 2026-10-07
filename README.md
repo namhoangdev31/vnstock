@@ -67,17 +67,9 @@ Backend docs: [backend/README.md](./backend/README.md).
 
 Frontend docs: [frontend/README.md](./frontend/README.md).
 
-## Deployment
+## Development & Deployment
 
-FastAPI Cloud deployment: [deployment.md](./deployment.md).
-
-Self-hosted deployment with Docker Compose: [deployment-docker-compose.md](./deployment-docker-compose.md).
-
-## Development
-
-General development docs: [development.md](./development.md).
-
-This includes the local FastAPI and Vite workflow, Docker Compose services, `.env` configuration, and more.
+Comprehensive guide for local development (macOS & Docker Compose) and production deployment (Docker Compose & Cloud): [development.md](./development.md).
 
 ## Release Notes
 

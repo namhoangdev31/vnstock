@@ -263,9 +263,7 @@
       "AGENTS.md": "Master project charter, 3-engine specification, zero-tolerance prohibitions, vnstock v4 library mapping",
       "pyproject.toml": "Python workspace configuration, dependencies, ruff, mypy settings",
       "package.json": "Frontend & root scripts (dev, build, lint, format)",
-      "compose.yml": "Docker compose multi-container definition (PostgreSQL, FastAPI backend, Vite frontend)",
-      "compose.override.yml": "Local development Docker overrides",
-      "compose.deploy.yml": "Production Docker deployment settings"
+      "compose.yml": "Unified Docker compose multi-container definition (PostgreSQL, FastAPI backend, Traefik proxy for Dev and Prod)"
     }
   }
 }
