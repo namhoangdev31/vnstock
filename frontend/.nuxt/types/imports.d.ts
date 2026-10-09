@@ -282,6 +282,7 @@ declare global {
   const useLocalStorage: typeof import('@vueuse/core').useLocalStorage
   const useMagicKeys: typeof import('@vueuse/core').useMagicKeys
   const useManualRefHistory: typeof import('@vueuse/core').useManualRefHistory
+  const useMarketTicker: typeof import('../../composables/useMarketTicker').useMarketTicker
   const useMath: typeof import('../../../node_modules/@vueuse/math/index').useMath
   const useMax: typeof import('../../../node_modules/@vueuse/math/index').useMax
   const useMediaControls: typeof import('@vueuse/core').useMediaControls
@@ -482,6 +483,9 @@ declare global {
   // @ts-ignore
   export type { DatafeedBar, DatafeedPeriodParams, DatafeedHistoryMetadata, DatafeedSymbolInfo, DatafeedConfiguration } from '../../composables/useDnseDatafeed'
   import('../../composables/useDnseDatafeed')
+  // @ts-ignore
+  export type { MarketTickerItem } from '../../composables/useMarketTicker'
+  import('../../composables/useMarketTicker')
   // @ts-ignore
   export type { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d'
   import('../../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d')
@@ -771,6 +775,7 @@ declare module 'vue' {
     readonly useLocalStorage: UnwrapRef<typeof import('@vueuse/core')['useLocalStorage']>
     readonly useMagicKeys: UnwrapRef<typeof import('@vueuse/core')['useMagicKeys']>
     readonly useManualRefHistory: UnwrapRef<typeof import('@vueuse/core')['useManualRefHistory']>
+    readonly useMarketTicker: UnwrapRef<typeof import('../../composables/useMarketTicker')['useMarketTicker']>
     readonly useMath: UnwrapRef<typeof import('../../../node_modules/@vueuse/math/index')['useMath']>
     readonly useMax: UnwrapRef<typeof import('../../../node_modules/@vueuse/math/index')['useMax']>
     readonly useMediaControls: UnwrapRef<typeof import('@vueuse/core')['useMediaControls']>

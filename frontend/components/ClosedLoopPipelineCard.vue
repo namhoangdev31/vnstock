@@ -50,7 +50,7 @@
             <div class="text-aave-violet font-medium mt-0.5">68.4%</div>
           </div>
           <div class="p-2 rounded-[10px] bg-white/[0.03] border border-white/[0.04] col-span-2 sm:col-span-1">
-            <div class="text-aave-graphite text-xs">Tỷ Trọng Trụ Cột</div>
+            <div class="text-aave-graphite text-xs">Tỷ Trọng Mô Hình</div>
             <div class="text-aave-ash mt-0.5">38% · 32% · 30%</div>
           </div>
         </div>

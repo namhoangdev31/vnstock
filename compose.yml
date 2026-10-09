@@ -61,6 +61,8 @@ services:
           target: /app/backend
           ignore:
             - .venv
+            - app/frontend
+            - "app/frontend/**"
             - "**/__pycache__"
             - "**/*.pyc"
             - .pytest_cache
@@ -69,19 +71,13 @@ services:
             - .git
             - "**/.DS_Store"
             - "**/._*"
+        - path: ./backend/app/frontend
+          action: sync
+          target: /app/backend/app/frontend
         - path: ./backend/pyproject.toml
           action: rebuild
-        - path: ./frontend
-          action: rebuild
-          ignore:
-            - ./frontend/node_modules
-            - ./frontend/dist
-            - ./frontend/.output
-            - ./frontend/.nuxt
-            - ./frontend/blob-report
-            - ./frontend/test-results
-            - "**/.DS_Store"
-            - "**/._*"
+    env_file:
+      - .env
     environment:
       FASTAPI_ENV: ${FASTAPI_ENV:-development}
       PROJECT_NAME: ${PROJECT_NAME:?Variable not set}
@@ -91,6 +87,14 @@ services:
       FRONTEND_HOST: ${FRONTEND_HOST:-http://${DOMAIN:-localhost}}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:-changethis}@db:5432/app}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      DNSE_API_KEY: ${DNSE_API_KEY:-}
+      DNSE_API_SECRET: ${DNSE_API_SECRET:-}
+      DNSE_API_KEY_SANDBOX: ${DNSE_API_KEY_SANDBOX:-}
+      DNSE_API_SECRET_SANDBOX: ${DNSE_API_SECRET_SANDBOX:-}
+      DNSE_WS_ENABLED: ${DNSE_WS_ENABLED:-True}
+      VNSTOCK_API_KEY: ${VNSTOCK_API_KEY:-}
+      VNSTOCK_APIKEY: ${VNSTOCK_APIKEY:-}
+      CRON_SECRET_KEY: ${CRON_SECRET_KEY:-}
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
       TZ: "Asia/Ho_Chi_Minh"

@@ -98,7 +98,7 @@
 <script setup lang="ts">
 import { phase3Markdown } from "~/data/trd/phase3SpecContent"
 useHead({
-  title: "TRD Phase 3: 24/7 Autonomous Daemon - Vnstock Quants",
+  title: "TRD Phase 3: 24/7 Autonomous Daemon - Vistock Quants",
 })
 
 const activeTab = ref<"spec" | "tests" | "timeline">("spec")

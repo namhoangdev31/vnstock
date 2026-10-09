@@ -139,19 +139,60 @@ export const getHistoricalOhlc = async (options?: {
   const to = options?.to ?? Math.floor(Date.now() / 1000)
   const from = options?.from ?? to - 5 * 86400
 
-  const client = useDnseApi()
-  const res = await client.getOhlc<OhlcResponseData>(type, {
-    symbol,
-    resolution,
-    from,
-    to,
-  })
+  let raw: OhlcResponseData | null = null
 
-  if (!res?.data || !Array.isArray(res.data.t) || res.data.t.length === 0) {
-    return null
+  // 1. Ưu tiên gọi qua Backend Proxy (/api/v1/dnse/price/ohlc) để tránh triệt để lỗi CORS trên trình duyệt
+  try {
+    const config = useRuntimeConfig()
+    const apiBase = import.meta.client
+      ? ""
+      : (config.public?.apiUrl as string) || ""
+    const queryParams = new URLSearchParams({
+      symbol,
+      resolution,
+      from: String(from),
+      to: String(to),
+      type,
+    })
+    const url = `${apiBase}/api/v1/dnse/price/ohlc?${queryParams.toString()}`
+    const backendRes = await $fetch<OhlcResponseData>(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    })
+    if (backendRes && Array.isArray(backendRes.t) && backendRes.t.length > 0) {
+      raw = backendRes
+    }
+  } catch (backendErr) {
+    console.warn(
+      "[getHistoricalOhlc] Backend proxy call failed, falling back to direct DNSEClient:",
+      backendErr,
+    )
   }
 
-  const raw = res.data
+  // 2. Fallback nếu backend proxy không khả dụng
+  if (!raw) {
+    try {
+      const client = useDnseApi()
+      const res = await client.getOhlc<OhlcResponseData>(type, {
+        symbol,
+        resolution,
+        from,
+        to,
+      })
+      if (res?.data && Array.isArray(res.data.t) && res.data.t.length > 0) {
+        raw = res.data
+      }
+    } catch (directErr) {
+      console.error(
+        "[getHistoricalOhlc] Direct DNSEClient fetch failed:",
+        directErr,
+      )
+    }
+  }
+
+  if (!raw || !Array.isArray(raw.t) || raw.t.length === 0) {
+    return null
+  }
 
   const allCandles: OhlcCandle[] = []
   const groupedByDate: Record<string, OhlcCandle[]> = {}

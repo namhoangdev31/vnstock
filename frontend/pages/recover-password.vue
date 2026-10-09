@@ -49,7 +49,7 @@ definePageMeta({
 })
 
 useHead({
-  title: "Khôi phục mật khẩu - Vnstock Quants",
+  title: "Khôi phục mật khẩu - Vistock Quants",
 })
 
 const { showSuccessToast, showErrorToast } = useCustomToast()

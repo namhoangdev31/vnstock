@@ -9,7 +9,7 @@
       <div class="text-center space-y-2">
         <NuxtLink to="/" class="inline-block hover:opacity-90 transition-opacity">
           <h1 class="text-2xl font-medium tracking-[-0.6px] text-white">
-            Vnstock Quants Engine
+            Vistock Quants Engine
           </h1>
         </NuxtLink>
         <p class="text-xs text-aave-graphite">

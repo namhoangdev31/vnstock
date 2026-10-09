@@ -34,8 +34,53 @@
     --color-tv-bear: #f23645;
     --color-tv-gold: #f59e0b;
 
+    --color-quant-petrol: #04333c;
+    --color-quant-border: #06424e;
+    --color-quant-badge: #c4e4e4;
+    --color-quant-badge-text: #021e23;
+    --color-quant-text: rgba(220, 239, 239, 0.95);
+    --color-quant-bull: #35c07b;
+    --color-quant-bear: #ff6b5e;
+
+    /* Ticker Semantic Theme Tokens */
+    --ticker-bg: var(--color-paper);
+    --ticker-border: rgba(34, 29, 29, 0.06);
+    --ticker-hover: rgba(34, 29, 29, 0.04);
+    --ticker-symbol: var(--color-obsidian);
+    --ticker-price: var(--color-charcoal);
+    --ticker-muted: var(--color-graphite);
+
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  .dark {
+    --ticker-bg: var(--surface-midnight);
+    --ticker-border: rgba(255, 255, 255, 0.06);
+    --ticker-hover: rgba(255, 255, 255, 0.06);
+    --ticker-symbol: var(--color-paper);
+    --ticker-price: var(--color-bone);
+    --ticker-muted: var(--color-pewter);
+  }
+
+  [data-theme="light"],
+  .theme-light {
+    --ticker-bg: var(--color-paper);
+    --ticker-border: rgba(34, 29, 29, 0.06);
+    --ticker-hover: rgba(34, 29, 29, 0.04);
+    --ticker-symbol: var(--color-obsidian);
+    --ticker-price: var(--color-charcoal);
+    --ticker-muted: var(--color-graphite);
+  }
+
+  [data-theme="dark"],
+  .theme-dark {
+    --ticker-bg: var(--surface-midnight);
+    --ticker-border: rgba(255, 255, 255, 0.06);
+    --ticker-hover: rgba(255, 255, 255, 0.06);
+    --ticker-symbol: var(--color-paper);
+    --ticker-price: var(--color-bone);
+    --ticker-muted: var(--color-pewter);
   }
 
   body {

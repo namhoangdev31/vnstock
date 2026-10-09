@@ -15,7 +15,9 @@ type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {},
 
 
 export const ClosedLoopPipelineCard: typeof import("../components/ClosedLoopPipelineCard.vue")['default']
+export const FactorPerformanceSection: typeof import("../components/FactorPerformanceSection.vue")['default']
 export const MarkdownViewer: typeof import("../components/MarkdownViewer.vue")['default']
+export const MarketTickerBar: typeof import("../components/MarketTickerBar.vue")['default']
 export const QuantPulseCard: typeof import("../components/QuantPulseCard.vue")['default']
 export const TestMatrix: typeof import("../components/TestMatrix.vue")['default']
 export const TradingViewChart: typeof import("../components/TradingViewChart.vue")['default']
@@ -94,7 +96,9 @@ export const Html: typeof import("../../node_modules/nuxt/dist/head/runtime/comp
 export const Body: typeof import("../../node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-island")['default']
 export const LazyClosedLoopPipelineCard: LazyComponent<typeof import("../components/ClosedLoopPipelineCard.vue")['default']>
+export const LazyFactorPerformanceSection: LazyComponent<typeof import("../components/FactorPerformanceSection.vue")['default']>
 export const LazyMarkdownViewer: LazyComponent<typeof import("../components/MarkdownViewer.vue")['default']>
+export const LazyMarketTickerBar: LazyComponent<typeof import("../components/MarketTickerBar.vue")['default']>
 export const LazyQuantPulseCard: LazyComponent<typeof import("../components/QuantPulseCard.vue")['default']>
 export const LazyTestMatrix: LazyComponent<typeof import("../components/TestMatrix.vue")['default']>
 export const LazyTradingViewChart: LazyComponent<typeof import("../components/TradingViewChart.vue")['default']>

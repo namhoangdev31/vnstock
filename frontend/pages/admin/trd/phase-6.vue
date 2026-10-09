@@ -8,7 +8,7 @@
 </template>
 <script setup lang="ts">
 import { phase6Markdown } from "~/data/trd/phase6SpecContent"
-useHead({ title: "TRD Phase 6 - Vnstock Quants" })
+useHead({ title: "TRD Phase 6 - Vistock Quants" })
 const activeTab = shallowRef<"spec" | "tests">("spec")
 const tabs = [
   { id: "spec", label: "Tài liệu đặc tả" },

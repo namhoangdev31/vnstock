@@ -81,7 +81,7 @@
 <script setup lang="ts">
 import { phase1Markdown } from "~/data/trd/phase1SpecContent"
 useHead({
-  title: "TRD Phase 1: Nền tảng & Persistence - Vnstock Quants",
+  title: "TRD Phase 1: Nền tảng & Persistence - Vistock Quants",
 })
 
 const activeTab = ref<"spec" | "tests" | "schema">("spec")

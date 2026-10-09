@@ -31,11 +31,11 @@
             vue: (content) => {
               return [
                 ...defaultExtractor(content),
-                ...customSafelistExtractor("U", content, ["red","orange","amber","yellow","lime","green","emerald","teal","cyan","sky","blue","indigo","violet","purple","fuchsia","pink","rose","aave","surface","tv","primary"], ["primary"])
+                ...customSafelistExtractor("U", content, ["red","orange","amber","yellow","lime","green","emerald","teal","cyan","sky","blue","indigo","violet","purple","fuchsia","pink","rose","aave","surface","tv","quant","ticker","primary"], ["primary"])
               ]
             }
           }
         },
-        safelist: generateSafelist(["primary"], ["red","orange","amber","yellow","lime","green","emerald","teal","cyan","sky","blue","indigo","violet","purple","fuchsia","pink","rose","aave","surface","tv","primary"]),
+        safelist: generateSafelist(["primary"], ["red","orange","amber","yellow","lime","green","emerald","teal","cyan","sky","blue","indigo","violet","purple","fuchsia","pink","rose","aave","surface","tv","quant","ticker","primary"]),
       }
     

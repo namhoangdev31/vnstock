@@ -1,6 +1,6 @@
 export const phase1Markdown = `# Đặc Tả Chi Tiết Phase 1: Data Layer & Persistence Architecture
 
-Tài liệu này xác định chi tiết **Yêu cầu kỹ thuật**, **Mục tiêu hoàn thành (Definition of Done)** và **Danh sách Test Issues / Kịch bản kiểm thử** cho Phase 1 của dự án Vnstock Quants & Simulation Engine.
+Tài liệu này xác định chi tiết **Yêu cầu kỹ thuật**, **Mục tiêu hoàn thành (Definition of Done)** và **Danh sách Test Issues / Kịch bản kiểm thử** cho Phase 1 của dự án Vistock Quants & Simulation Engine.
 
 ---
 

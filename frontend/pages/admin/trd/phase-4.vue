@@ -155,7 +155,7 @@
 <script setup lang="ts">
 import { phase4Markdown } from "~/data/trd/phase4SpecContent"
 useHead({
-  title: "TRD Phase 4: Paper Trading & T+2 - Vnstock Quants",
+  title: "TRD Phase 4: Paper Trading & T+2 - Vistock Quants",
 })
 
 const activeTab = ref<"spec" | "tests" | "simulator">("spec")

@@ -1,1 +1,1 @@
-export default ["red","orange","amber","yellow","lime","green","emerald","teal","cyan","sky","blue","indigo","violet","purple","fuchsia","pink","rose","aave","surface","tv","primary"];
+export default ["red","orange","amber","yellow","lime","green","emerald","teal","cyan","sky","blue","indigo","violet","purple","fuchsia","pink","rose","aave","surface","tv","quant","ticker","primary"];

@@ -2,27 +2,50 @@ import path from "node:path"
 
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
-  devtools: { enabled: false },
+  devtools: { enabled: true },
   telemetry: false,
   ssr: false,
+  typescript: {
+    typeCheck: false,
+  },
   experimental: {
     appManifest: false,
   },
   vite: {
     server: {
+      hmr: {
+        overlay: true,
+      },
       watch: {
-        ignored: ["**/dist/**", "**/../backend/app/frontend/**"],
+        usePolling: false,
+        ignored: [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.output/**",
+          "**/dist/**",
+          "**/../backend/**",
+        ],
       },
     },
     optimizeDeps: {
+      include: [
+        "@vueuse/core",
+        "axios",
+        "lucide-vue-next",
+        "markdown-it",
+        "@msgpack/msgpack",
+      ],
       exclude: ["@vnstock/dnse"],
     },
   },
   modules: ["@nuxt/ui", "@vueuse/nuxt"],
+  tailwindcss: {
+    viewer: false,
+  },
   css: ["~/assets/css/main.css"],
   app: {
     head: {
-      title: "Vnstock Quants & Predictive Analytics Engine",
+      title: "Vistock Quants & Predictive Analytics Engine",
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },

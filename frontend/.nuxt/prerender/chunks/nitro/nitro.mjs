@@ -849,6 +849,8 @@ const inlineAppConfig = {
       "aave",
       "surface",
       "tv",
+      "quant",
+      "ticker",
       "primary"
     ],
     "strategy": "merge"
@@ -898,7 +900,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "239cf1ce-0a76-4308-963a-da347dfb3f6d",
+    "buildId": "540ca18c-f9fd-46b3-ab0f-27bc00e6ea6f",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -916,7 +918,7 @@ const _inlineRuntimeConfig = {
       },
       "/api/**": {
         "proxy": {
-          "to": "https://vnstock.fastapicloud.dev/api/**",
+          "to": "http://localhost:8000/api/**",
           "_proxyStripBase": "/api"
         }
       },
@@ -928,7 +930,7 @@ const _inlineRuntimeConfig = {
     }
   },
   "public": {
-    "apiUrl": "https://vnstock.fastapicloud.dev",
+    "apiUrl": "http://localhost:8000",
     "dnseApiKey": "eyJvcmciOiJkbnNlIiwiaWQiOiI4YWZhNWI1ODg2MWE0ZGNlOTI1ZGFiZmQxMTZiZTFiOCIsImgiOiJtdXJtdXIxMjgifQ==",
     "dnseApiSecret": "YWBzI6FjIcaLqYpNUt5a0NTNmpsP-UmPUQn74SCkLFX0NyEQhG_S05hFCtd5y2RZq56IZiG8kzwp5WYfTpW7hA",
     "dnseWsUrl": "wss://ws-openapi.dnse.com.vn"

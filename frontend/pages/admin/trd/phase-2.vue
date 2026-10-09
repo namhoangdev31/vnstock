@@ -220,7 +220,7 @@
 <script setup lang="ts">
 import { phase2Markdown } from "~/data/trd/phase2SpecContent"
 useHead({
-  title: "TRD Phase 2: Tri-Engine Architecture - Vnstock Quants",
+  title: "TRD Phase 2: Tri-Engine Architecture - Vistock Quants",
 })
 
 const activeTab = ref<"spec" | "tests" | "simulator">("spec")

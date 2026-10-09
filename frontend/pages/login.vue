@@ -76,7 +76,7 @@ definePageMeta({
 })
 
 useHead({
-  title: "Đăng nhập - Vnstock Quants",
+  title: "Đăng nhập - Vistock Quants",
 })
 
 const { login, isLoading } = useAuth()

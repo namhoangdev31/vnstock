@@ -8,7 +8,7 @@
       <div class="h-16 flex items-center justify-between px-5 border-b border-white/[0.06]">
         <NuxtLink to="/admin" class="flex flex-col group">
           <span class="font-medium tracking-[-0.3px] text-sm text-white flex items-center gap-1.5 font-sans group-hover:text-aave-violet transition-colors">
-            VNSTOCK
+            VISTOCK
             <span class="text-[9px] uppercase font-mono font-bold px-1.5 py-0.2 rounded-full bg-aave-violet/15 text-aave-violet border border-aave-violet/30">PRO</span>
           </span>
           <span class="text-[10px] text-aave-graphite font-mono tracking-tight mt-0.5">Quantitative & Analytics</span>
@@ -111,7 +111,7 @@
           <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
             <NuxtLink to="/admin" class="flex flex-col" @click="mobileOpen = false">
               <span class="font-medium text-sm text-white flex items-center gap-1.5">
-                VNSTOCK
+                VISTOCK
                 <span class="text-[9px] uppercase font-mono font-bold px-1.5 py-0.2 rounded-full bg-aave-violet/15 text-aave-violet border border-aave-violet/30">PRO</span>
               </span>
               <span class="text-[10px] text-aave-graphite font-mono">Quantitative & Analytics</span>
@@ -247,6 +247,8 @@
         </div>
       </header>
 
+      <MarketTickerBar />
+
       <main class="flex-1 p-4 lg:p-8 overflow-y-auto">
         <div class="mx-auto max-w-[1200px]">
           <slot />
@@ -256,7 +258,7 @@
       <footer class="border-t border-white/[0.06] bg-aave-inkwell px-6 py-4 text-xs text-aave-graphite flex flex-col sm:flex-row items-center justify-between gap-3">
         <div class="flex items-center gap-2 text-[11px] text-aave-graphite">
           <UIcon name="i-heroicons-lock-closed" class="w-3.5 h-3.5 text-aave-graphite shrink-0" />
-          <span>Vnstock Quantitative Research & Simulation Engine (Tuân thủ T+2 & Khớp lệnh ATO/ATC). Dữ liệu phục vụ nghiên cứu & mô phỏng.</span>
+          <span>Vistock Quantitative Research & Simulation Engine (Tuân thủ T+2 & Khớp lệnh ATO/ATC). Dữ liệu phục vụ nghiên cứu & mô phỏng.</span>
         </div>
         <div class="flex items-center gap-3 text-[11px] font-mono shrink-0">
           <span class="flex items-center gap-1.5 text-aave-violet">

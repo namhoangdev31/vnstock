@@ -7,7 +7,10 @@
 
     <form class="space-y-4" @submit.prevent="handleReset">
       <div>
-        <label class="block text-xs font-medium text-slate-300 mb-1.5">Mật khẩu mới (tối thiểu 8 ký tự)</label>
+        <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+          <span>Mật khẩu mới</span>
+          <span class="text-[10px] text-aave-graphite font-normal">Tối thiểu 8 ký tự</span>
+        </label>
         <UInput
           v-model="password"
           type="password"
@@ -67,7 +70,7 @@ definePageMeta({
 })
 
 useHead({
-  title: "Đặt lại mật khẩu - Vnstock Quants",
+  title: "Đặt lại mật khẩu - Vistock Quants",
 })
 
 const route = useRoute()

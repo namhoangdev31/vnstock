@@ -161,6 +161,7 @@
     "../../node_modules/@nuxtjs/tailwindcss/node_modules",
     "../../node_modules/@nuxt/ui/node_modules",
     "../../node_modules/@vueuse/nuxt/node_modules",
+    "../../node_modules/@nuxt/devtools/node_modules",
     "../dist"
   ]
 }

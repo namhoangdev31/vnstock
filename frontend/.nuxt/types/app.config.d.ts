@@ -223,6 +223,8 @@ declare const inlineConfig = {
       "aave",
       "surface",
       "tv",
+      "quant",
+      "ticker",
       "primary"
     ],
     "strategy": "merge"

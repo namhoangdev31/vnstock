@@ -1,51 +1,50 @@
 <template>
   <div class="min-h-screen font-sans selection:bg-aave-violet selection:text-aave-charcoal relative overflow-x-hidden antialiased">
 
-    <div class="bg-aave-paper text-aave-obsidian relative">
+    <div class="bg-aave-paper text-aave-obsidian relative theme-light" data-theme="light">
       <div class="absolute inset-0 bg-surface-lavender opacity-35 pointer-events-none" />
 
-      <header class="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-black/[0.06] transition-colors">
-        <div class="max-w-[1200px] mx-auto px-6 py-2 h-18 flex items-center justify-between">
-          <NuxtLink to="/" class="flex items-center gap-2 group">
-            <span class="font-medium tracking-tight text-base text-aave-obsidian flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
-              Vnstock
-            </span>
-          </NuxtLink>
+      <div class="sticky top-0 z-50">
+        <header class="backdrop-blur-xl bg-ticker-bg/95 border-b border-ticker-border transition-colors">
+          <div class="max-w-[1200px] mx-auto px-6 py-2 h-18 flex items-center justify-between">
+            <NuxtLink to="/" class="flex items-center gap-2 group">
+              <span class="font-semibold tracking-tight text-base text-aave-obsidian flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
+                Vistock
+              </span>
+            </NuxtLink>
 
-          <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-aave-iron">
-            <a href="#tru-cot" class="hover:text-aave-obsidian transition-colors">Trụ Cột Phân Tích</a>
-            <a href="#phien-giao-dich" class="hover:text-aave-obsidian transition-colors">Chu Kỳ Phiên</a>
-            <a href="#chien-luoc" class="hover:text-aave-obsidian transition-colors">Chiến Lược</a>
-            <a href="#quan-tri-rui-ro" class="hover:text-aave-obsidian transition-colors">Quản Trị Rủi Ro</a>
-          </nav>
+            <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-aave-iron">
+              <a href="/" class="hover:text-aave-obsidian transition-colors">Trang chủ</a>
+              <a href="#mo-hinh" class="hover:text-aave-obsidian transition-colors">Mô hình</a>
+              <a href="#phien-giao-dich" class="hover:text-aave-obsidian transition-colors">Chu kỳ</a>
+              <a href="#chien-luoc" class="hover:text-aave-obsidian transition-colors">Chiến lược</a>
+              <a href="#yeu-to" class="hover:text-aave-obsidian transition-colors">Yếu tố</a>
+            </nav>
 
-          <div class="flex items-center gap-3">
-            <template v-if="token">
-              <NuxtLink
-                to="/app"
-                class="btn-aave-dark text-sm !py-2.5 !px-5"
-              >
-                <span>Vào Ứng Dụng</span>
-                <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
-              </NuxtLink>
-            </template>
-            <template v-else>
-              <NuxtLink
-                to="/login"
-                class="text-sm font-medium text-aave-iron hover:text-aave-obsidian px-3 py-2 transition-colors"
-              >
-                Đăng nhập
-              </NuxtLink>
-              <NuxtLink
-                to="/signup"
-                class="btn-aave-dark text-sm !py-2.5 !px-5"
-              >
-                <span>Đăng ký</span>
-              </NuxtLink>
-            </template>
+            <div class="flex items-center gap-3">
+              <template v-if="token">
+                <NuxtLink
+                  to="/app"
+                  class="btn-aave-dark text-sm !py-2.5 !px-5"
+                >
+                  <span>Vào Ứng Dụng</span>
+                  <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
+                </NuxtLink>
+              </template>
+              <template v-else>
+                <NuxtLink
+                  to="/login"
+                  class="btn-aave-dark text-sm !py-2.5 !px-5"
+                >
+                  <span>Đăng nhập</span>
+                </NuxtLink>
+              </template>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+
+        <MarketTickerBar />
+      </div>
 
       <section class="relative z-10 max-w-[1200px] mx-auto px-6 pt-16 pb-24 text-center">
         <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-aave-bone border border-black/[0.06] text-xs font-medium text-aave-obsidian mb-6">
@@ -70,12 +69,12 @@
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
 
-          <NuxtLink
-            to="/admin/trd/phase-1"
+          <a
+            href="#mo-hinh"
             class="btn-aave-ghost-light"
           >
-            <span>Bảng giao dịch</span>
-          </NuxtLink>
+            <span>Tìm Hiểu Mô Hình</span>
+          </a>
         </div>
 
         <QuantPulseCard />
@@ -103,93 +102,126 @@
             to="/app"
             class="btn-aave-white"
           >
-            <span>Mở Ứng Dụng</span>
+            <span>Bảng giá</span>
           </NuxtLink>
-          <NuxtLink
-            to="/admin/trd/phase-1"
+          <a
+            href="#mo-hinh"
             class="btn-aave-ghost-dark"
           >
-            <span>Đặc Tả Hệ Thống</span>
-          </NuxtLink>
+            <span>Mô Hình Định Lượng</span>
+          </a>
         </div>
       </section>
 
-      <section id="tru-cot" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div>
-            <div class="text-xs font-mono font-medium text-aave-violet mb-2">
-              TRỤ CỘT ĐỊNH LƯỢNG
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-tight">
-              Trụ Cột Phân Tích Cốt Lõi
+      <section id="mo-hinh" class="scroll-mt-20 border-t border-white/[0.08] bg-surface-midnight py-20 md:py-28">
+        <div class="mx-auto max-w-4xl px-6 md:px-8">
+          <!-- Section Header (VietQuant Style) -->
+          <div class="mx-auto max-w-3xl text-center">
+            <span class="text-xs font-mono font-semibold uppercase tracking-wider text-aave-violet">
+              Phương Pháp & Mô Hình Định Lượng
+            </span>
+            <h2 class="mt-3 text-balance text-2xl sm:text-3xl md:text-4xl font-semibold text-white tracking-tight leading-tight">
+              Từ Dữ Liệu Vi Cấu Trúc Đến Mô Hình Định Lượng & Thực Thi
             </h2>
-            <p class="text-sm text-aave-graphite mt-2 max-w-lg">
-              Kết hợp hành vi giá, dòng vốn tổ chức và độ lệch phái sinh để tìm kiếm lợi thế thống kê.
+            <div class="mx-auto my-5 h-0.5 w-16 bg-aave-violet/40" />
+            <p class="text-sm text-aave-ash leading-relaxed max-w-xl mx-auto">
+              Chuỗi quy trình định lượng khép kín được xây dựng trên cơ sở dữ liệu lệnh thực tế, mô hình xác suất đa tầng và cơ chế tự động tái hiệu chỉnh 24/7.
             </p>
           </div>
-          <NuxtLink
-            to="/app"
-            class="btn-aave-outline-violet self-start md:self-auto text-sm !py-2.5 !px-5"
-          >
-            <span>Khám Phá Ứng Dụng</span>
-            <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
-          </NuxtLink>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Timeline Steps with Connecting Vertical Line (VietQuant Style) -->
+          <div class="relative mx-auto mt-16 max-w-2xl md:mt-24">
+            <!-- Background vertical track line -->
+            <div class="absolute left-[70px] top-6 bottom-6 w-0.5 bg-white/10 md:left-[88px]" />
+            <!-- Active colored vertical line -->
+            <div class="absolute left-[70px] top-6 bottom-6 w-0.5 origin-top bg-aave-violet md:left-[88px]" />
+            <!-- Glowing indicator dot at top -->
+            <div class="absolute left-[70.5px] top-6 z-20 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-aave-violet shadow-sm ring-4 ring-aave-violet/25 md:left-[88.5px]" />
 
-          <div class="card-aave-dark flex flex-col justify-between space-y-5">
-            <div class="space-y-3">
-              <div class="text-xs font-mono font-medium text-aave-violet">
-                TRỤ CỘT 01
+            <div class="space-y-12 md:space-y-20">
+              <!-- Step 01 -->
+              <div class="relative flex items-start gap-4 md:gap-6">
+                <div class="w-8 shrink-0 pt-2.5 text-right font-mono text-sm md:text-base font-bold transition-colors duration-500 md:w-10">
+                  <span class="text-aave-violet">01</span>
+                </div>
+                <div class="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-aave-violet text-white shadow-md shadow-aave-violet/20 ring-4 ring-aave-violet/15 md:h-12 md:w-12">
+                  <UIcon name="i-heroicons-circle-stack" class="w-5 h-5" />
+                </div>
+                <div class="flex-1 pt-1 pl-2 md:pl-3">
+                  <h3 class="text-lg md:text-xl font-semibold text-white tracking-tight">
+                    Thu Thập & Chuẩn Hóa Vi Cấu Trúc
+                  </h3>
+                  <p class="mt-2 text-sm leading-relaxed text-aave-ash md:max-w-xl">
+                    Khai thác dữ liệu qua <code class="text-aave-violet font-mono text-xs px-1 py-0.5 rounded bg-white/[0.05]">vnstock</code>, xử lý lệnh khớp từng tick, delta khối lượng và chuỗi nến đa khung thời gian.
+                  </p>
+                </div>
               </div>
-              <h3 class="text-lg font-medium text-white tracking-tight">
-                Hành Vi Giá & Lực Khớp Lệnh
-              </h3>
-              <p class="text-sm text-aave-ash leading-relaxed">
-                Chuỗi nến đa khung, lực mua bán chủ động tức thì và giá bình quân VWAP.
-              </p>
-            </div>
-            <div class="pt-4 border-t border-white/[0.06] text-xs text-aave-graphite font-mono flex items-center justify-between">
-              <span>Lực Mua Bán</span>
-              <span class="text-aave-violet">Giá Bình Quân VWAP</span>
+
+              <!-- Step 02 -->
+              <div class="relative flex items-start gap-4 md:gap-6">
+                <div class="w-8 shrink-0 pt-2.5 text-right font-mono text-sm md:text-base font-bold transition-colors duration-500 md:w-10">
+                  <span class="text-aave-violet">02</span>
+                </div>
+                <div class="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-aave-violet text-white shadow-md shadow-aave-violet/20 ring-4 ring-aave-violet/15 md:h-12 md:w-12">
+                  <UIcon name="i-heroicons-cpu-chip" class="w-5 h-5" />
+                </div>
+                <div class="flex-1 pt-1 pl-2 md:pl-3">
+                  <h3 class="text-lg md:text-xl font-semibold text-white tracking-tight">
+                    Mô Hình Hồi Quy & Tách Lọc Tín Hiệu
+                  </h3>
+                  <p class="mt-2 text-sm leading-relaxed text-aave-ash md:max-w-xl">
+                    Ứng dụng mô hình Linear Regression và phân tích đa biến nhằm đo lường tương quan giữa hành vi giá, dòng tiền và độ lệch Basis.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Step 03 -->
+              <div class="relative flex items-start gap-4 md:gap-6">
+                <div class="w-8 shrink-0 pt-2.5 text-right font-mono text-sm md:text-base font-bold transition-colors duration-500 md:w-10">
+                  <span class="text-aave-violet">03</span>
+                </div>
+                <div class="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-aave-violet text-white shadow-md shadow-aave-violet/20 ring-4 ring-aave-violet/15 md:h-12 md:w-12">
+                  <UIcon name="i-heroicons-scale" class="w-5 h-5" />
+                </div>
+                <div class="flex-1 pt-1 pl-2 md:pl-3">
+                  <h3 class="text-lg md:text-xl font-semibold text-white tracking-tight">
+                    Mô Hình Hóa Xác Suất & Cân Bằng Phiên ATC
+                  </h3>
+                  <p class="mt-2 text-sm leading-relaxed text-aave-ash md:max-w-xl">
+                    Tổng hợp tín hiệu Ensemble dự báo khoảng trống mở cửa ATO, phân bổ xác suất biến động và mức giá cân bằng phiên ATC.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Step 04 -->
+              <div class="relative flex items-start gap-4 md:gap-6">
+                <div class="w-8 shrink-0 pt-2.5 text-right font-mono text-sm md:text-base font-bold transition-colors duration-500 md:w-10">
+                  <span class="text-aave-violet">04</span>
+                </div>
+                <div class="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-aave-violet text-white shadow-md shadow-aave-violet/20 ring-4 ring-aave-violet/15 md:h-12 md:w-12">
+                  <UIcon name="i-heroicons-arrow-path-rounded-square" class="w-5 h-5" />
+                </div>
+                <div class="flex-1 pt-1 pl-2 md:pl-3">
+                  <h3 class="text-lg md:text-xl font-semibold text-white tracking-tight">
+                    Mô Phỏng Paper Trading & Tự Động Tái Hiệu Chỉnh
+                  </h3>
+                  <p class="mt-2 text-sm leading-relaxed text-aave-ash md:max-w-xl">
+                    Mô phỏng vị thế phái sinh và danh mục độc lập, ghi nhận sổ cái dự báo và tự động tối ưu trọng số qua kiểm định Walk-Forward.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="card-aave-dark flex flex-col justify-between space-y-5">
-            <div class="space-y-3">
-              <div class="text-xs font-mono font-medium text-aave-violet">
-                TRỤ CỘT 02
-              </div>
-              <h3 class="text-lg font-medium text-white tracking-tight">
-                Vốn Khối Ngoại & Chu Kỳ T+2
-              </h3>
-              <p class="text-sm text-aave-ash leading-relaxed">
-                Giao dịch ròng Khối ngoại, Tự doanh và thanh khoản hàng về phiên chiều T+2.
-              </p>
-            </div>
-            <div class="pt-4 border-t border-white/[0.06] text-xs text-aave-graphite font-mono flex items-center justify-between">
-              <span>Chu Kỳ T+2</span>
-              <span class="text-aave-violet">Dòng Tiền Khối Ngoại</span>
-            </div>
-          </div>
-
-          <div class="card-aave-dark flex flex-col justify-between space-y-5">
-            <div class="space-y-3">
-              <div class="text-xs font-mono font-medium text-aave-violet">
-                TRỤ CỘT 03
-              </div>
-              <h3 class="text-lg font-medium text-white tracking-tight">
-                Độ Lệch Basis & Cân Bằng ATC
-              </h3>
-              <p class="text-sm text-aave-ash leading-relaxed">
-                Chênh lệch Basis phái sinh với VN30, mở cửa ATO và khối lượng cân bằng ATC.
-              </p>
-            </div>
-            <div class="pt-4 border-t border-white/[0.06] text-xs text-aave-graphite font-mono flex items-center justify-between">
-              <span>Độ Lệch Basis</span>
-              <span class="text-aave-violet">Cân Bằng ATC</span>
-            </div>
+          <!-- Bottom Navigation Link (VietQuant Style) -->
+          <div class="mt-14 flex justify-center md:mt-20">
+            <a
+              href="#phien-giao-dich"
+              class="btn-aave-outline-violet text-sm !py-2.5 !px-6 inline-flex items-center gap-2"
+            >
+              <span>Xem 5 Pha Chu Kỳ Giao Dịch</span>
+              <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
+            </a>
           </div>
         </div>
       </section>
@@ -264,10 +296,10 @@
             </p>
           </div>
           <NuxtLink
-            to="/admin/trd/phase-2"
+            to="/app"
             class="btn-aave-outline-violet self-start md:self-auto text-sm !py-2.5 !px-5"
           >
-            <span>Đặc Tả Động Cơ Phân Tích</span>
+            <span>Khám Phá Mô Phỏng</span>
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
           </NuxtLink>
         </div>
@@ -364,195 +396,149 @@
         </div>
       </section>
 
-      <section id="quan-tri-rui-ro" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div class="space-y-6">
-            <div class="text-xs font-mono font-medium text-aave-violet">
-              QUẢN TRỊ RỦI RO
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-medium text-white tracking-tight">
-              Sổ Cái Vị Thế & Hiệu Chỉnh Tỷ Trọng
-            </h2>
-            <p class="text-sm text-aave-graphite leading-relaxed">
-              Ghi nhận kịch bản trước phiên, đối soát kết quả sau phiên để hiệu chỉnh tỷ trọng có kỷ luật.
-            </p>
+      <FactorPerformanceSection />
 
-            <div class="space-y-3 pt-1">
-              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
-                <div class="text-sm font-medium text-white flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-aave-violet" />
-                  <div class="flex items-center gap-1.5">
-                    <span>Kiểm định ngoài mẫu 30 phiên</span>
-                    <UTooltip text="Tự động điều chỉnh tỷ trọng khi vượt qua các ngưỡng thẩm định rủi ro">
-                      <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-aave-graphite cursor-help" />
-                    </UTooltip>
-                  </div>
-                </div>
-                <p class="text-xs text-aave-graphite">
-                  Đo lường sai số và tỷ lệ đúng hướng trên dữ liệu thực tế.
-                </p>
-              </div>
-
-              <div class="p-3.5 rounded-[14px] bg-aave-obsidian border border-white/[0.05] space-y-1">
-                <div class="text-sm font-medium text-white flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                  <div class="flex items-center gap-1.5">
-                    <span>Cơ chế ngắt mạch bảo vệ</span>
-                    <UTooltip text="Khóa cập nhật tỷ trọng và hoàn nguyên về phân bổ phòng thủ khi thị trường biến động vượt ngưỡng">
-                      <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-aave-graphite cursor-help" />
-                    </UTooltip>
-                  </div>
-                </div>
-                <p class="text-xs text-aave-graphite">
-                  Tự động dừng áp dụng khi biến động thị trường vượt ngưỡng.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <ClosedLoopPipelineCard />
-        </div>
-      </section>
-
-      <section class="max-w-[1200px] mx-auto px-6 py-12">
-        <div class="rounded-[20px] bg-surface-midnight border border-aave-violet/30 p-7 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div class="space-y-1.5 max-w-2xl">
-            <div class="text-xs font-mono font-medium text-aave-violet flex items-center gap-2">
-              <UIcon name="i-heroicons-shield-check" class="w-5 h-5 text-aave-violet" />
-            </div>
-            <p class="text-xs text-aave-ash leading-relaxed">
-              Môi trường nghiên cứu độc lập. Không kết nối tài khoản chứng khoán và không đặt lệnh tiền thật.
-            </p>
-          </div>
-
-          <NuxtLink
-            to="/app"
-            class="btn-aave-violet shrink-0"
-          >
-            <span>Vào Ứng Dụng</span>
-            <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
-          </NuxtLink>
-        </div>
-      </section>
-
-      <footer class="border-t border-white/[0.08] bg-surface-midnight pt-14 pb-10 text-xs text-aave-graphite">
+      <footer class="border-t border-white/[0.08] bg-surface-midnight pt-16 pb-12 text-xs text-aave-graphite">
         <div class="max-w-[1200px] mx-auto px-6">
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pb-10">
-
-            <div class="lg:col-span-2 space-y-3">
-              <NuxtLink to="/" class="flex items-center gap-2 group">
-                <span class="font-medium tracking-tight text-lg text-white flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
-                  Vnstock
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] gap-10 lg:gap-12 pb-8">
+            <!-- Brand & Institutional Intro Column -->
+            <div class="space-y-4">
+              <NuxtLink to="/" class="inline-flex items-center gap-2 group">
+                <span class="font-semibold tracking-tight text-xl text-white font-sans group-hover:text-aave-violet transition-colors">
+                  Vistock
                 </span>
               </NuxtLink>
 
               <p class="text-xs text-aave-ash leading-relaxed max-w-sm">
-                Nền tảng phân tích định lượng, dự báo phiên ATC và mô phỏng giao dịch phái sinh VN30F1M cùng rổ cổ phiếu.
+                Nền tảng nghiên cứu và phân tích định lượng chuyên sâu cho thị trường chứng khoán Việt Nam. Chúng tôi kết hợp vi cấu trúc thị trường, phân tích dữ liệu lệnh khớp thực tế và mô hình hóa danh mục đa chu kỳ.
               </p>
 
-              <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.08] text-xs font-mono text-aave-ash">
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                </span>
-                <span>Vận hành liên tục · Mô phỏng 100%</span>
+              <!-- Quick Access Links -->
+              <div class="pt-2 flex items-center gap-2.5">
+                <a
+                  href="https://github.com/thinh-vu/vnstock"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub Repository"
+                  class="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/5 text-aave-ash hover:border-white/20 hover:bg-white/10 hover:text-white transition-all"
+                >
+                  <UIcon name="i-heroicons-code-bracket" class="w-4 h-4" />
+                </a>
+                <NuxtLink
+                  to="/app"
+                  aria-label="Ứng dụng định lượng"
+                  class="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/5 text-aave-ash hover:border-white/20 hover:bg-white/10 hover:text-white transition-all"
+                >
+                  <UIcon name="i-heroicons-chart-bar" class="w-4 h-4" />
+                </NuxtLink>
+                <NuxtLink
+                  to="/login"
+                  aria-label="Đăng nhập hệ thống"
+                  class="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/5 text-aave-ash hover:border-white/20 hover:bg-white/10 hover:text-white transition-all"
+                >
+                  <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4" />
+                </NuxtLink>
               </div>
             </div>
 
-            <div class="space-y-2.5">
-              <div class="text-xs font-mono font-semibold uppercase text-aave-violet tracking-wider">
-                Trụ Cột Phân Tích
-              </div>
-              <ul class="space-y-2 text-xs">
-                <li>
-                  <a href="#tru-cot" class="hover:text-white transition-colors">Giá & Lực Khớp Lệnh</a>
-                </li>
-                <li>
-                  <a href="#tru-cot" class="hover:text-white transition-colors">Dòng Tiền Khối Ngoại</a>
-                </li>
-                <li>
-                  <a href="#tru-cot" class="hover:text-white transition-colors">Chu Kỳ Thanh Toán T+2</a>
-                </li>
-                <li>
-                  <a href="#tru-cot" class="hover:text-white transition-colors">Độ Lệch Basis</a>
-                </li>
-                <li>
-                  <a href="#phien-giao-dich" class="hover:text-white transition-colors">Cân Bằng Phiên ATC</a>
-                </li>
-              </ul>
-            </div>
 
-            <div class="space-y-2.5">
-              <div class="text-xs font-mono font-semibold uppercase text-aave-violet tracking-wider">
-                Danh Mục Đầu Tư
-              </div>
-              <ul class="space-y-2 text-xs">
-                <li>
-                  <a href="#chien-luoc" class="hover:text-white transition-colors">Phái Sinh VN30F1M T+0</a>
-                </li>
-                <li>
-                  <a href="#chien-luoc" class="hover:text-white transition-colors">Đà Tăng Trưởng Tuần</a>
-                </li>
-                <li>
-                  <a href="#chien-luoc" class="hover:text-white transition-colors">Luân Chuyển Ngành</a>
-                </li>
-                <li>
-                  <a href="#chien-luoc" class="hover:text-white transition-colors">Giá Trị Cơ Bản Quý</a>
-                </li>
-                <li>
-                  <NuxtLink to="/admin/trd/phase-1" class="hover:text-white transition-colors">TRD Phase 1: Nền tảng Dữ liệu</NuxtLink>
-                </li>
-                <li>
-                  <NuxtLink to="/admin/trd/phase-2" class="hover:text-white transition-colors">TRD Phase 2: Tri-Engine Core</NuxtLink>
-                </li>
-              </ul>
-            </div>
-
-            <div class="space-y-2.5">
-              <div class="text-xs font-mono font-semibold uppercase text-aave-violet tracking-wider">
-                Điều Hành
-              </div>
-              <ul class="space-y-2 text-xs">
-                <li>
-                  <NuxtLink to="/app" class="hover:text-white transition-colors">Ứng Dụng Sandbox</NuxtLink>
-                </li>
-                <li>
-                  <NuxtLink to="/admin/trd/phase-3" class="hover:text-white transition-colors">TRD Phase 3: Daemon 24/7</NuxtLink>
-                </li>
-                <li>
-                  <NuxtLink to="/admin/trd/phase-4" class="hover:text-white transition-colors">TRD Phase 4: Paper Trading</NuxtLink>
-                </li>
-                <li>
-                  <NuxtLink to="/admin/trd/phase-5" class="hover:text-white transition-colors">TRD Phase 5: Sổ cái Dự báo</NuxtLink>
-                </li>
-                <li>
-                  <NuxtLink to="/login" class="hover:text-white transition-colors">Đăng Nhập</NuxtLink>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="p-3.5 rounded-[12px] bg-white/[0.02] border border-white/[0.06] mb-6">
-            <div class="flex items-start gap-2.5">
-              <UIcon name="i-heroicons-shield-exclamation" class="w-4 h-4 text-aave-violet shrink-0 mt-0.5" />
-              <p class="text-xs text-aave-ash leading-relaxed">
-                Cảnh báo rủi ro: Mọi kịch bản dự báo và lệnh mô phỏng chỉ phục vụ mục đích nghiên cứu học thuật. Nền tảng không phải công ty chứng khoán, không giao dịch tiền thật và không khuyến nghị đầu tư.
-              </p>
-            </div>
-          </div>
-
-          <div class="pt-5 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-mono text-aave-iron">
             <div>
-              © 2026 Vnstock Quants.
+              <h4 class="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-white">
+                Chiến Lược & Danh Mục
+              </h4>
+              <ul class="m-0 flex list-none flex-col gap-2.5 p-0 text-xs">
+                <li>
+                  <a href="#chien-luoc" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Phái Sinh VN30F1M
+                  </a>
+                </li>
+                <li>
+                  <a href="#chien-luoc" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Đà Tăng Trưởng
+                  </a>
+                </li>
+                <li>
+                  <a href="#chien-luoc" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Luân Chuyển Ngành
+                  </a>
+                </li>
+                <li>
+                  <a href="#chien-luoc" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Giá Trị Cơ Bản
+                  </a>
+                </li>
+                <li>
+                  <a href="#mo-hinh" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Mô Hình Quyết Định Đa Tầng
+                  </a>
+                </li>
+              </ul>
             </div>
 
-            <div class="flex items-center gap-3">
-              <span>Chứng khoán Việt Nam</span>
+            <!-- Column 3: Điều Hành & Hệ Thống -->
+            <div>
+              <h4 class="mb-4 text-xs font-semibold uppercase tracking-[0.12em] text-white">
+                Điều Hành & Hệ Thống
+              </h4>
+              <ul class="m-0 flex list-none flex-col gap-2.5 p-0 text-xs">
+                <li>
+                  <NuxtLink to="/app" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Ứng Dụng
+                  </NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/app" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Mô Phỏng Paper Trading
+                  </NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/login" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Đăng Nhập Hệ Thống
+                  </NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/signup" class="text-aave-ash hover:text-white transition-colors duration-150 inline-block">
+                    Đăng Ký Tài Khoản
+                  </NuxtLink>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Institutional Disclaimer Section (Inspired by VietQuant) -->
+          <div id="tuyen-bo-mien-tru" class="mt-10 scroll-mt-24 border-t border-white/10 pt-8 pb-3">
+            <h4 class="mb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+              Lưu Ý Quan Trọng & Tuyên Bố Miễn Trừ
+            </h4>
+            <p class="mb-2 max-w-5xl text-xs leading-relaxed text-aave-iron">
+              Vistock chỉ vận hành như một nền tảng nghiên cứu định lượng độc lập và môi trường giả lập Paper Trading. Hệ thống không huy động vốn, không nhận ủy thác đầu tư dưới bất kỳ hình thức nào và tuyệt đối không kết nối tài khoản chứng khoán thực để tự động đặt lệnh.
+            </p>
+            <p class="mb-2 max-w-5xl text-xs leading-relaxed text-aave-iron">
+              Số liệu thị trường, bảng yếu tố định lượng và các biểu đồ hiệu suất mô phỏng trên nền tảng nhằm minh họa phương pháp luận nghiên cứu thuật toán. Kết quả trong quá khứ hoặc trong môi trường mô phỏng không đảm bảo cho kết quả giao dịch thực tế trong tương lai.
+            </p>
+            <p class="max-w-5xl text-xs leading-relaxed text-aave-iron">
+              Toàn bộ nội dung hiển thị không phải khuyến nghị mua, bán hoặc nắm giữ bất kỳ loại chứng khoán hay hợp đồng tương lai nào. Nhà đầu tư tự chịu hoàn toàn trách nhiệm đối với các quyết định phân bổ vốn và mức độ chấp nhận rủi ro của mình.
+            </p>
+          </div>
+
+          <!-- Bottom Footer Bar -->
+          <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-5 text-xs font-mono text-aave-iron">
+            <div>
+              © 2026 Vistock Quants. Bảo lưu mọi quyền.
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-4">
+              <span>Thị Trường Việt Nam</span>
               <span>·</span>
-              <span>Chu kỳ T+2 & Phái sinh T+0</span>
+              <span>VN30F1M & Rổ VN30</span>
               <span>·</span>
-              <span>Chuẩn Thiết Kế Tối Giản</span>
+              <span>Chu Kỳ Settlement T+2</span>
+              <span>·</span>
+              <span>Paper Trading Engine</span>
+              <span>·</span>
+              <a href="#tuyen-bo-mien-tru" class="hover:text-white transition-colors">Điều khoản</a>
+              <span>·</span>
+              <a href="#tuyen-bo-mien-tru" class="hover:text-white transition-colors">Bảo mật</a>
             </div>
           </div>
         </div>
@@ -567,7 +553,7 @@ definePageMeta({
 })
 
 useHead({
-  title: "Vnstock Quants - Phân Tích Định Lượng & Dự Báo Giao Dịch",
+  title: "Vistock Quants - Phân Tích Định Lượng & Dự Báo Giao Dịch",
   meta: [
     {
       name: "description",

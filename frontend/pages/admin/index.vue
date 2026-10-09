@@ -269,7 +269,7 @@
 
 <script setup lang="ts">
 useHead({
-  title: "Bảng Điều Khiển Quản Trị - Vnstock TRD 24/7",
+  title: "Bảng Điều Khiển Quản Trị - Vistock TRD 24/7",
 })
 
 const phases = [
