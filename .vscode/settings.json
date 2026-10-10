@@ -8,5 +8,9 @@
     "${workspaceFolder}/backend"
   ],
   "css.lint.unknownAtRules": "ignore",
-  "biome.configurationPath": "frontend/biome.json"
+  "biome.configurationPath": "biome.json",
+  "cSpell.words": [
+    "uniwind",
+    "vnstock"
+  ]
 }

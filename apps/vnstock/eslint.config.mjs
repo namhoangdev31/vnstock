@@ -42,6 +42,7 @@ export default antfu(
       'uniwind-types.d.ts',
       'public/*',
       'migration/*',
+      'DESIGN.md',
     ],
   },
 

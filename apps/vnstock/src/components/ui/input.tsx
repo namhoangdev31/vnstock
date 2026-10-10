@@ -9,27 +9,27 @@ import { Text } from './text';
 
 const inputTv = tv({
   slots: {
-    container: 'mb-2',
-    label: 'text-grey-100 mb-1 text-sm font-medium text-aave-graphite dark:text-aave-graphite',
+    container: 'mb-3',
+    label: 'mb-1.5 text-sm font-semibold text-midnight dark:text-pure-white',
     input:
-      'font-inter mt-0 rounded-xl border border-neutral-300 bg-neutral-100 px-4 py-3 text-base/5 font-medium text-aave-obsidian dark:border-white/8 dark:bg-aave-obsidian dark:text-aave-paper',
+      'font-inter rounded-xl border border-pewter bg-pure-white px-4 py-3.5 text-base font-normal text-midnight dark:border-white/10 dark:bg-charcoal dark:text-pure-white',
   },
 
   variants: {
     focused: {
       true: {
-        input: 'border-aave-violet dark:border-aave-violet',
+        input: 'border-coinbase-blue dark:border-coinbase-blue',
       },
     },
     error: {
       true: {
-        input: 'border-tv-bear dark:border-tv-bear',
-        label: 'text-tv-bear dark:text-tv-bear',
+        input: 'border-negative-red dark:border-negative-red',
+        label: 'text-negative-red dark:text-negative-red',
       },
     },
     disabled: {
       true: {
-        input: 'bg-neutral-200 dark:bg-aave-obsidian/50',
+        input: 'bg-frost dark:bg-charcoal/50',
       },
     },
   },
@@ -99,7 +99,7 @@ export function Input({ ref, ...props }: NInputProps & { ref?: React.Ref<NTextIn
       {error && (
         <Text
           testID={testID ? `${testID}-error` : undefined}
-          className="mt-1 text-xs text-tv-bear"
+          className="mt-1 text-xs text-negative-red"
         >
           {error}
         </Text>

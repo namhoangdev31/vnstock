@@ -49,14 +49,7 @@
   --radius-badge: 6px;
   --radius-full: 9999px;
 
-  /* Mobile Spacing & Touch Ergonomics */
-  --spacing-4: 4px;
-  --spacing-8: 8px;
-  --spacing-12: 12px;
-  --spacing-16: 16px;
-  --spacing-20: 20px;
-  --spacing-24: 24px;
-  --spacing-32: 32px;
+  /* Mobile Spacing Tokens */
   --spacing-mobile-gutter: 16px;
 
   /* Primary action palette centered on #0052ff */

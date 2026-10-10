@@ -58,7 +58,9 @@
     "Flashlist",
     "Lato",
     "Pressable",
-    "Vistock"
+    "Vistock",
+    "uniwind",
+    "vnstock"
   ],
   "i18n-ally.localesPaths": ["src/translations/"],
   "i18n-ally.keystyle": "nested",
