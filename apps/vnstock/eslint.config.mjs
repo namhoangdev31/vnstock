@@ -39,6 +39,8 @@ export default antfu(
       'docs/',
       'cli/',
       'expo-env.d.ts',
+      'uniwind-types.d.ts',
+      'public/*',
       'migration/*',
     ],
   },

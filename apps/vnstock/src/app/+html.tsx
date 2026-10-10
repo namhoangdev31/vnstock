@@ -29,7 +29,18 @@ export default function Root({ children }: { children: React.ReactNode }) {
         {/* Using raw CSS styles as an escape-hatch to ensure the background color never flickers in dark-mode. */}
         {/* eslint-disable-next-line react-dom/no-dangerously-set-innerhtml */}
         <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
-        {/* Add any additional <head> elements that you want globally available on web... */}
+
+        {/* PWA Manifest & App Icons */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Vnstock" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="application-name" content="Vnstock" />
+        <meta name="theme-color" content="#0B0E14" />
       </head>
       <body>{children}</body>
     </html>

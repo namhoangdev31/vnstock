@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>%WEB_TITLE%</title>
+
+    <!-- PWA Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Icons & Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+
+    <!-- Apple Touch Icons & Web App Capability -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Vnstock" />
+
+    <!-- Android & Windows PWA Metas -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Vnstock" />
+    <meta name="theme-color" content="#0B0E14" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="msapplication-TileColor" content="#0B0E14" />
+    <meta name="msapplication-TileImage" content="/icon-192.png" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <!-- SEO & Description -->
+    <meta name="description" content="Nền tảng phân tích định lượng, dự báo ATC và vị thế phái sinh VN30F1M thời gian thực" />
+
+    <!-- The `react-native-web` recommended style reset -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #0B0E14;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        user-select: none;
+      }
+      /* Prevent overscroll bounce on mobile safari for native feel */
+      body {
+        overflow: hidden;
+        overscroll-behavior-y: none;
+      }
+      /* Root full-height flex container */
+      #root {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+
+    <!-- Service Worker Registration & PWA Utilities -->
+    <script>
+      (function() {
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+              .then(function(reg) {
+                console.log('[Vnstock PWA] Service Worker registered with scope:', reg.scope);
+                reg.onupdatefound = function() {
+                  var installingWorker = reg.installing;
+                  if (!installingWorker) return;
+                  installingWorker.onstatechange = function() {
+                    if (installingWorker.state === 'installed') {
+                      if (navigator.serviceWorker.controller) {
+                        console.log('[Vnstock PWA] New update available.');
+                        window.dispatchEvent(new CustomEvent('pwa-update-available'));
+                      } else {
+                        console.log('[Vnstock PWA] Content cached for offline use.');
+                      }
+                    }
+                  };
+                };
+              })
+              .catch(function(err) {
+                console.warn('[Vnstock PWA] Service Worker registration failed:', err);
+              });
+          });
+        }
+
+        // Capture PWA install prompt event
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          window.__pwaInstallPrompt = e;
+          window.dispatchEvent(new CustomEvent('pwa-installable'));
+        });
+
+        window.addEventListener('appinstalled', function() {
+          window.__pwaInstallPrompt = null;
+          console.log('[Vnstock PWA] App installed successfully');
+          window.dispatchEvent(new CustomEvent('pwa-installed'));
+        });
+      })();
+    </script>
+  </body>
+</html>

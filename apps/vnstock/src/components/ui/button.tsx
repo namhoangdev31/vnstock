@@ -109,28 +109,28 @@ export function Button({ ref, label: text, loading = false, variant = 'default',
     >
       {props.children
         ? (
-          props.children
-        )
+            props.children
+          )
         : (
-          <>
-            {loading
-              ? (
-                <ActivityIndicator
-                  size="small"
-                  className={styles.indicator()}
-                  testID={testID ? `${testID}-activity-indicator` : undefined}
-                />
-              )
-              : (
-                <Text
-                  testID={testID ? `${testID}-label` : undefined}
-                  className={styles.label({ className: textClassName })}
-                >
-                  {text}
-                </Text>
-              )}
-          </>
-        )}
+            <>
+              {loading
+                ? (
+                    <ActivityIndicator
+                      size="small"
+                      className={styles.indicator()}
+                      testID={testID ? `${testID}-activity-indicator` : undefined}
+                    />
+                  )
+                : (
+                    <Text
+                      testID={testID ? `${testID}-label` : undefined}
+                      className={styles.label({ className: textClassName })}
+                    >
+                      {text}
+                    </Text>
+                  )}
+            </>
+          )}
     </Pressable>
   );
 }
