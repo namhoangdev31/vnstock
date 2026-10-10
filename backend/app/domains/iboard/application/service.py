@@ -26,11 +26,13 @@ from app.domains.iboard.application.board_service import IBoardTableService
 from app.domains.iboard.application.candles_service import IBoardCandlesService
 from app.domains.iboard.application.detail_service import IBoardDetailService
 from app.domains.iboard.application.indices_service import IBoardIndicesService
+from app.domains.iboard.application.news_service import IBoardNewsService
 from app.domains.iboard.application.pulse_service import IBoardPulseService
 from app.domains.iboard.application.schemas import (
     IBoardCandleBar,
     IBoardIndexItem,
     IBoardMarketPulse,
+    IBoardNewsItem,
     IBoardStockDetail,
     IBoardStockRow,
 )
@@ -93,6 +95,15 @@ class IBoardService:
     def get_market_pulse(cls, session: Session) -> IBoardMarketPulse:
         return IBoardPulseService.get_market_pulse(session)
 
+    # 6. Real-time Market News Ticker (T & T-1) Use Case
+    @classmethod
+    def get_news(
+        cls, session: Session, limit: int = 30, randomize: bool = False
+    ) -> list[IBoardNewsItem]:
+        return IBoardNewsService.get_recent_news(
+            session=session, limit=limit, randomize=randomize
+        )
+
     @classmethod
     def _get_index_intraday_sparkline(
         cls,
@@ -117,6 +128,7 @@ __all__ = [
     "IBoardCandleBar",
     "IBoardIndexItem",
     "IBoardMarketPulse",
+    "IBoardNewsItem",
     "IBoardService",
     "IBoardStockDetail",
     "IBoardStockRow",

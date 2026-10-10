@@ -27,7 +27,7 @@ const getLineWidth = (id: string): number => {
 <template>
   <section id="yeu-to" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
     <!-- Section Header -->
-    <div class="mx-auto max-w-3xl text-center mb-10">
+    <div class="mx-auto max-w-3xl text-center mb-10 reveal-item">
       <p class="inline-flex items-center gap-2.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-aave-violet">
         <span aria-hidden="true" class="h-0.5 w-6 shrink-0 bg-current" />
         <span>Dữ liệu</span>
@@ -41,7 +41,7 @@ const getLineWidth = (id: string): number => {
     <!-- Cards Grid -->
     <div class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 items-start">
       <!-- Factor Table Card -->
-      <div class="overflow-hidden rounded-2xl border border-white/[0.08] bg-aave-obsidian shadow-sm transition-all duration-300">
+      <div class="reveal-left overflow-hidden rounded-2xl border border-white/[0.08] bg-aave-obsidian shadow-sm transition-all duration-300 hover:border-aave-violet/30">
         <div class="flex items-center justify-between border-b border-white/[0.06] bg-surface-midnight px-5 py-4">
           <h3 class="text-sm sm:text-base font-bold text-white tracking-tight">
             Bảng theo dõi yếu tố
@@ -74,7 +74,8 @@ const getLineWidth = (id: string): number => {
                 <td class="px-4 sm:px-5 py-3.5 font-medium text-white">
                   <span class="inline-flex items-center gap-2.5">
                     <span
-                      class="h-2 w-2 rounded-full shrink-0"
+                      class="h-2 w-2 rounded-full shrink-0 transition-transform duration-200"
+                      :class="(hoveredFactorId === item.id || activeFactorId === item.id) ? 'scale-125' : 'scale-100'"
                       :style="{ backgroundColor: item.color }"
                     />
                     <span>{{ item.code }} · {{ item.name }}</span>
@@ -93,7 +94,7 @@ const getLineWidth = (id: string): number => {
       </div>
 
       <!-- Chart Card -->
-      <div class="overflow-hidden rounded-2xl border border-white/[0.08] bg-aave-obsidian shadow-sm transition-all duration-300">
+      <div class="reveal-right overflow-hidden rounded-2xl border border-white/[0.08] bg-aave-obsidian shadow-sm transition-all duration-300 hover:border-aave-violet/30" style="--reveal-delay: 150ms">
         <div class="flex items-center justify-between border-b border-white/[0.06] bg-surface-midnight px-5 py-4">
           <h3 class="text-sm sm:text-base font-bold text-white tracking-tight">
             Hiệu suất tích lũy
@@ -139,6 +140,8 @@ const getLineWidth = (id: string): number => {
                 <path
                   :d="item.path"
                   fill="none"
+                  pathLength="100"
+                  class="chart-line-path"
                   :stroke="item.color"
                   :stroke-width="getLineWidth(item.id)"
                   stroke-linecap="round"

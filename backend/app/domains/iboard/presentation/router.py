@@ -12,6 +12,7 @@ from app.domains.iboard.application.schemas import (
     IBoardCandleBar,
     IBoardIndexItem,
     IBoardMarketPulse,
+    IBoardNewsItem,
     IBoardStockDetail,
     IBoardStockRow,
 )
@@ -103,6 +104,16 @@ def get_iboard_market_pulse(
 ) -> Any:
     """Truy xuất nhận định định lượng và top cổ phiếu biến động."""
     return IBoardService.get_market_pulse(session=session)
+
+
+@router.get("/news", response_model=list[IBoardNewsItem])
+def get_iboard_news(
+    session: SessionDep,
+    limit: int = Query(default=30, ge=5, le=100),
+    randomize: bool = Query(default=False),
+) -> Any:
+    """Truy xuất danh sách tin tức tài chính trong ngày hoặc ngày hôm trước (T & T-1)."""
+    return IBoardService.get_news(session=session, limit=limit, randomize=randomize)
 
 
 @router.websocket("/ws")

@@ -327,6 +327,16 @@ export async function getIBoardMarketPulse(): Promise<IBoardMarketPulse> {
 	return res.data;
 }
 
+export async function getIBoardNews(options?: {
+	query?: { limit?: number; randomize?: boolean };
+}): Promise<IBoardNewsItem[]> {
+	const res = await client.get<IBoardNewsItem[], unknown, true>({
+		url: "/api/v1/stock/iboard/news",
+		query: options?.query,
+	});
+	return res.data;
+}
+
 export async function placeSimulationOrder(payload: {
 	portfolio_id: string;
 	symbol: string;
@@ -392,6 +402,7 @@ export const StockService = {
 	getIBoardStockDetail,
 	getIBoardCandles,
 	getIBoardMarketPulse,
+	getIBoardNews,
 	placeSimulationOrder,
 	listSimulationOrders,
 	listSimulationPositions,
@@ -505,6 +516,15 @@ export interface IBoardMarketPulse {
 	top_gainers: TopMoverItem[];
 	top_losers: TopMoverItem[];
 	sector_performance?: Record<string, number>;
+}
+
+export interface IBoardNewsItem {
+	symbol: string;
+	title: string;
+	published_at: string;
+	url?: string | null;
+	source?: string;
+	is_today?: boolean;
 }
 
 export interface SimulationOrderDTO {

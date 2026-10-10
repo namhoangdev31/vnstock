@@ -1,4 +1,4 @@
-import{h as E,u as O,c as o,a as t,b as i,w as m,d as g,F as d,m as T,q as a,k as I,e as P,o as h,x as v,n as p,t as s,r as _}from"./lJLvjrxi.js";import{_ as x,b as M,a as f}from"./WWfF0Y3x.js";import"./CD_VVAJ6.js";const D=`# TRD Phase 3: Background Session Daemon (24/7 Continuous Engine)
+import{h as E,u as O,c as o,a as t,b as i,w as m,d as g,F as d,m as T,q as a,k as I,e as P,o as h,y as v,n as p,t as s,r as _}from"./DWnrnrh2.js";import{_ as x,b as M,a as f}from"./1aWv43P7.js";import"./DsKMCceQ.js";const D=`# TRD Phase 3: Background Session Daemon (24/7 Continuous Engine)
 ## Vòng Lặp Giám Sát Tự Động Bám Sát Chu Kỳ Phiên Giao Dịch Thực Tế
 
 > **Tài liệu đặc tả kỹ thuật chi tiết dành cho kỹ sư phát triển backend (Self-Implementation Blueprint)**  

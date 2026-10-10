@@ -111,6 +111,15 @@ class IBoardMarketPulse(SQLModel):
     sector_performance: dict[str, float] = {}
 
 
+class IBoardNewsItem(SQLModel):
+    symbol: str
+    title: str
+    published_at: str
+    url: str | None = None
+    source: str = "CafeF"
+    is_today: bool = False
+
+
 __all__ = [
     "CompanyOverviewDTO",
     "CorporateEventDTO",
@@ -118,6 +127,7 @@ __all__ = [
     "IBoardIndexBreadth",
     "IBoardIndexItem",
     "IBoardMarketPulse",
+    "IBoardNewsItem",
     "IBoardStockDetail",
     "IBoardStockRow",
     "MatchedTickDTO",

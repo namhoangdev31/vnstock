@@ -10,6 +10,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     "/signup",
     "/recover-password",
     "/reset-password",
+    "/iboard"
   ]
 
   const isPublicRoute = publicRoutes.some(
@@ -18,6 +19,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = [
     "/login",
     "/signup",
+    "/iboard",
     "/recover-password",
     "/reset-password",
   ].includes(to.path)
