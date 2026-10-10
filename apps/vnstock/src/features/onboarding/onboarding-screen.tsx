@@ -1,20 +1,20 @@
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Animated, Platform, StyleSheet, View } from 'react-native';
+import { Animated, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button, FocusAwareStatusBar, Text } from '@/components/ui';
+import { Button, FocusAwareStatusBar, Text, View } from '@/components/ui';
 import { useIsFirstTime } from '@/lib/hooks';
 import { usePWA } from '@/lib/hooks/use-pwa';
 
 const features = [
-  { icon: '📊', label: 'Phân tích định lượng 3 Engine' },
-  { icon: '⚡', label: 'Dự báo ATC & T+1 thời gian thực' },
-  { icon: '📈', label: 'Theo dõi VN30F1M toàn phiên' },
-  { icon: '🛡️', label: 'Paper trading an toàn, không rủi ro' },
+  { step: '01', label: 'Phân tích định lượng 3 Engine' },
+  { step: '02', label: 'Dự báo ATC và T+1 thời gian thực' },
+  { step: '03', label: 'Theo dõi VN30F1M toàn phiên' },
+  { step: '04', label: 'Paper trading an toàn không rủi ro' },
 ];
 
-function FeatureRow({ icon, label, delay }: { icon: string; label: string; delay: number }) {
+function FeatureRow({ step, label, delay }: { step: string; label: string; delay: number }) {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(20)).current;
 
@@ -30,12 +30,13 @@ function FeatureRow({ icon, label, delay }: { icon: string; label: string; delay
 
   return (
     <Animated.View
-      style={[styles.featureRow, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
+      className="flex-row items-center gap-3.5"
+      style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
     >
-      <View style={styles.featureIcon}>
-        <Text style={styles.featureIconText}>{icon}</Text>
+      <View className="size-9 items-center justify-center rounded-[10px] border border-aave-violet/30 bg-aave-violet/15">
+        <Text className="font-mono text-xs font-bold text-aave-violet">{step}</Text>
       </View>
-      <Text style={styles.featureLabel}>{label}</Text>
+      <Text className="text-sm font-medium text-aave-bone">{label}</Text>
     </Animated.View>
   );
 }
@@ -68,56 +69,56 @@ export function OnboardingScreen() {
   }, [installPWA, setIsFirstTime, router]);
 
   return (
-    <View style={styles.container}>
+    <View className="relative flex-1 bg-aave-inkwell">
       <FocusAwareStatusBar />
 
       {/* Background accent */}
-      <View style={styles.bgAccent} />
+      <View className="absolute -top-30 -right-20 size-80 rounded-full bg-aave-violet/6" />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView className="flex-1 px-6 pb-4">
         {/* Header brand */}
-        <Animated.View style={[styles.header, { opacity: titleAnim }]}>
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoText}>V</Text>
+        <Animated.View className="mb-10 flex-row items-center gap-3 pt-3" style={{ opacity: titleAnim }}>
+          <View className="size-11 items-center justify-center rounded-xl bg-aave-violet">
+            <Text className="text-[22px] font-extrabold text-aave-charcoal">V</Text>
           </View>
           <View>
-            <Text style={styles.brandName}>Vnstock Terminal</Text>
-            <Text style={styles.brandTagline}>Phân tích thị trường Việt Nam</Text>
+            <Text className="text-base font-bold text-aave-paper">Vnstock Terminal</Text>
+            <Text className="mt-0.5 text-xs text-aave-graphite">Phân tích thị trường Việt Nam</Text>
           </View>
         </Animated.View>
 
         {/* Hero section */}
-        <View style={styles.hero}>
+        <View className="flex-1 justify-center gap-4">
           <Animated.View style={{ opacity: titleAnim }}>
-            <Text style={styles.heroTitle}>
+            <Text className="text-[38px]/11.5 font-extrabold tracking-tight text-aave-paper">
               {`Nắm bắt thị trường\n`}
-              <Text style={styles.heroTitleAccent}>
+              <Text className="text-aave-violet">
                 trong tầm tay
               </Text>
             </Text>
           </Animated.View>
 
           <Animated.View style={{ opacity: subtitleAnim }}>
-            <Text style={styles.heroSubtitle}>
+            <Text className="text-[15px]/6 text-aave-graphite">
               Hệ thống nghiên cứu định lượng 24/7 — dự báo ATC, tối ưu phái sinh VN30F1M và lựa chọn cổ phiếu alpha.
             </Text>
           </Animated.View>
         </View>
 
         {/* Feature list */}
-        <View style={styles.featureList}>
+        <View className="mb-8 gap-3">
           {features.map((f, i) => (
-            <FeatureRow key={f.label} icon={f.icon} label={f.label} delay={300 + i * 100} />
+            <FeatureRow key={f.step} step={f.step} label={f.label} delay={300 + i * 100} />
           ))}
         </View>
 
         {/* CTA */}
-        <View style={styles.ctaContainer}>
+        <View className="gap-2">
           {isWeb && canInstall
             ? (
                 <>
                   <Button
-                    label="Cài đặt & Bắt đầu"
+                    label="Cài đặt và Bắt đầu"
                     onPress={handleInstallAndStart}
                     variant="default"
                   />
@@ -135,7 +136,7 @@ export function OnboardingScreen() {
                   variant="default"
                 />
               )}
-          <Text style={styles.disclaimer}>
+          <Text className="mt-2 text-center text-[11px] text-aave-iron">
             Chỉ phân tích thông tin — không tự động khớp lệnh thật
           </Text>
         </View>
@@ -143,108 +144,3 @@ export function OnboardingScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0B0E14',
-  },
-  bgAccent: {
-    position: 'absolute',
-    top: -120,
-    right: -80,
-    width: 320,
-    height: 320,
-    borderRadius: 160,
-    backgroundColor: 'rgba(255, 108, 0, 0.08)',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingTop: 12,
-    marginBottom: 40,
-  },
-  logoContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#FF6C00',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  brandName: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  brandTagline: {
-    color: '#737373',
-    fontSize: 12,
-    marginTop: 1,
-  },
-  hero: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 16,
-  },
-  heroTitle: {
-    color: '#ffffff',
-    fontSize: 38,
-    fontWeight: '800',
-    lineHeight: 46,
-    letterSpacing: -0.5,
-  },
-  heroTitleAccent: {
-    color: '#FF6C00',
-  },
-  heroSubtitle: {
-    color: '#a3a3a3',
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  featureList: {
-    gap: 12,
-    marginBottom: 32,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  featureIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 108, 0, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureIconText: {
-    fontSize: 18,
-  },
-  featureLabel: {
-    color: '#e5e5e5',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  ctaContainer: {
-    gap: 8,
-  },
-  disclaimer: {
-    color: '#525252',
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-});

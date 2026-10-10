@@ -56,11 +56,11 @@ export function AddPostScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Add Post',
-          headerBackTitle: 'Feed',
+          title: 'Tạo bài viết',
+          headerBackTitle: 'Bảng Tin',
         }}
       />
-      <View className="flex-1 p-4">
+      <View className="flex-1 bg-aave-inkwell p-4">
         <form.Field
           name="title"
           children={field => (

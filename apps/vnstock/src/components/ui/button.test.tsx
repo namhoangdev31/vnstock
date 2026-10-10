@@ -82,7 +82,7 @@ describe('button component ', () => {
     const button = screen.getByTestId('button');
     // TODO: should be fixed to use haveStyle instead of comparing the class name
     const expectedStyle
-      = 'font-inter font-semibold text-white dark:text-black text-xl';
+      = 'font-inter font-semibold text-aave-charcoal dark:text-aave-charcoal text-xl';
     const receivedStyle
       = button.props.children[0].props.children.props.className;
     expect(receivedStyle).toContain(expectedStyle);

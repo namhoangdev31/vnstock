@@ -1,12 +1,11 @@
 import { useForm } from '@tanstack/react-form';
-
 import * as React from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as z from 'zod';
 
-import { Button, Input, Text } from '@/components/ui';
+import { Button, Input, Text, View } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
 
 const schema = z.object({
@@ -28,20 +27,20 @@ export type LoginFormProps = {
 
 function LoginBrand() {
   return (
-    <View style={styles.header}>
-      <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>V</Text>
+    <View className="flex-row items-center gap-2.5">
+      <View className="size-10 items-center justify-center rounded-[10px] bg-aave-violet">
+        <Text className="text-xl font-extrabold text-aave-charcoal">V</Text>
       </View>
-      <Text style={styles.brandName}>Vnstock Terminal</Text>
+      <Text className="text-[15px] font-bold text-aave-paper">Vnstock Terminal</Text>
     </View>
   );
 }
 
 function LoginTitle() {
   return (
-    <View style={styles.titleSection}>
-      <Text style={styles.title}>Đăng nhập</Text>
-      <Text style={styles.subtitle}>
+    <View className="gap-2">
+      <Text testID="form-title" className="text-3xl font-extrabold tracking-tight text-aave-paper">Đăng nhập</Text>
+      <Text className="text-sm/5.5 text-aave-graphite">
         Demo — nhập bất kỳ email và mật khẩu để tiếp tục
       </Text>
     </View>
@@ -61,24 +60,26 @@ export function LoginForm({ onSubmit = () => {} }: LoginFormProps) {
 
   const form = useForm({
     defaultValues: { email: '', password: '' },
-    validators: { onChange: schema as any },
-    onSubmit: async ({ value }) => { onSubmit(value); },
+    validators: { onChange: schema },
+    onSubmit: async ({ value }) => {
+      onSubmit(value);
+    },
   });
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={10}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <View style={styles.container}>
-          <View style={styles.bgAccent} />
+    <KeyboardAvoidingView className="flex-1" behavior="padding" keyboardVerticalOffset={10}>
+      <SafeAreaView className="flex-1">
+        <View className="relative flex-1 justify-center bg-aave-inkwell px-6">
+          <View className="absolute -bottom-25 -left-20 size-70 rounded-full bg-aave-violet/6" />
           <Animated.View
-            style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
+            className="gap-8"
+            style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
           >
             <LoginBrand />
             <LoginTitle />
-            <View style={styles.formSection}>
-              <form.Field
-                name="email"
-                children={field => (
+            <View className="gap-1">
+              <form.Field name="email">
+                {field => (
                   <Input
                     testID="email-input"
                     label="Email"
@@ -91,10 +92,9 @@ export function LoginForm({ onSubmit = () => {} }: LoginFormProps) {
                     autoComplete="email"
                   />
                 )}
-              />
-              <form.Field
-                name="password"
-                children={field => (
+              </form.Field>
+              <form.Field name="password">
+                {field => (
                   <Input
                     testID="password-input"
                     label="Mật khẩu"
@@ -107,13 +107,17 @@ export function LoginForm({ onSubmit = () => {} }: LoginFormProps) {
                     autoComplete="password"
                   />
                 )}
-              />
-              <form.Subscribe
-                selector={state => [state.isSubmitting]}
-                children={([isSubmitting]) => (
-                  <Button testID="login-button" label="Đăng nhập" onPress={form.handleSubmit} loading={isSubmitting} />
+              </form.Field>
+              <form.Subscribe selector={state => [state.isSubmitting]}>
+                {([isSubmitting]) => (
+                  <Button
+                    testID="login-button"
+                    label="Đăng nhập"
+                    onPress={form.handleSubmit}
+                    loading={isSubmitting}
+                  />
                 )}
-              />
+              </form.Subscribe>
             </View>
           </Animated.View>
         </View>
@@ -121,41 +125,3 @@ export function LoginForm({ onSubmit = () => {} }: LoginFormProps) {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0B0E14',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  bgAccent: {
-    position: 'absolute',
-    bottom: -100,
-    left: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: 'rgba(255, 108, 0, 0.06)',
-  },
-  content: { gap: 32 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  logoContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#FF6C00',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: { color: '#fff', fontSize: 20, fontWeight: '800' },
-  brandName: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
-  titleSection: { gap: 8 },
-  title: { color: '#ffffff', fontSize: 32, fontWeight: '800', letterSpacing: -0.5 },
-  subtitle: { color: '#737373', fontSize: 14, lineHeight: 22 },
-  formSection: { gap: 4 },
-});

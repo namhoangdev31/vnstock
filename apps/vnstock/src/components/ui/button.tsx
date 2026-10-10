@@ -15,34 +15,34 @@ const button = tv({
   variants: {
     variant: {
       default: {
-        container: 'bg-black dark:bg-white',
-        label: 'text-white dark:text-black',
-        indicator: 'text-white dark:text-black',
+        container: 'bg-aave-violet active:opacity-90',
+        label: 'text-aave-charcoal dark:text-aave-charcoal',
+        indicator: 'text-aave-charcoal dark:text-aave-charcoal',
       },
       secondary: {
-        container: 'bg-primary-600',
+        container: 'border border-white/8 bg-aave-obsidian active:bg-white/8',
         label: 'text-secondary-600',
         indicator: 'text-white',
       },
       outline: {
-        container: 'border border-neutral-400',
-        label: 'text-black dark:text-neutral-100',
-        indicator: 'text-black dark:text-neutral-100',
+        container: 'border border-aave-violet bg-transparent active:bg-aave-violet/10',
+        label: 'text-aave-violet dark:text-aave-violet',
+        indicator: 'text-aave-violet dark:text-aave-violet',
       },
       destructive: {
-        container: 'bg-red-600',
+        container: 'bg-tv-bear active:opacity-90',
         label: 'text-white',
         indicator: 'text-white',
       },
       ghost: {
-        container: 'bg-transparent',
-        label: 'text-black underline dark:text-white',
-        indicator: 'text-black dark:text-white',
+        container: 'bg-transparent active:bg-white/5',
+        label: 'text-aave-paper underline dark:text-aave-paper',
+        indicator: 'text-aave-paper dark:text-aave-paper',
       },
       link: {
         container: 'bg-transparent',
-        label: 'text-black',
-        indicator: 'text-black',
+        label: 'text-aave-violet',
+        indicator: 'text-aave-violet',
       },
     },
     size: {

@@ -4,10 +4,10 @@ import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
-import { StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { View } from '@/components/ui';
 import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { hydrateAuth } from '@/features/auth/use-auth-store';
 
@@ -49,26 +49,24 @@ function Providers({ children }: { children: React.ReactNode }) {
   const theme = useThemeConfig();
   return (
     <GestureHandlerRootView
-      style={styles.container}
+      style={{ flex: 1 }}
       // eslint-disable-next-line better-tailwindcss/no-unknown-classes
       className={theme.dark ? `dark` : undefined}
     >
       <KeyboardProvider>
         <ThemeProvider value={theme}>
           <APIProvider>
-            <BottomSheetModalProvider>
-              {children}
-              <FlashMessage position="top" />
-            </BottomSheetModalProvider>
+            <View className="w-full flex-1 items-center justify-center bg-surface-canvas dark:bg-aave-inkwell">
+              <View className="relative w-full max-w-[480px] flex-1 overflow-hidden border-black/6 bg-surface-canvas sm:border-x dark:border-white/6 dark:bg-aave-inkwell">
+                <BottomSheetModalProvider>
+                  {children}
+                  <FlashMessage position="top" />
+                </BottomSheetModalProvider>
+              </View>
+            </View>
           </APIProvider>
         </ThemeProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

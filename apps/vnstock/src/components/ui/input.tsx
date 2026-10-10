@@ -10,26 +10,26 @@ import { Text } from './text';
 const inputTv = tv({
   slots: {
     container: 'mb-2',
-    label: 'text-grey-100 mb-1 text-lg dark:text-neutral-100',
+    label: 'text-grey-100 mb-1 text-sm font-medium text-aave-graphite dark:text-aave-graphite',
     input:
-      'font-inter mt-0 rounded-xl border-[0.5px] border-neutral-300 bg-neutral-100 px-4 py-3 text-base/5 font-medium dark:border-neutral-700 dark:bg-neutral-800 dark:text-white',
+      'font-inter mt-0 rounded-xl border border-neutral-300 bg-neutral-100 px-4 py-3 text-base/5 font-medium text-aave-obsidian dark:border-white/8 dark:bg-aave-obsidian dark:text-aave-paper',
   },
 
   variants: {
     focused: {
       true: {
-        input: 'border-neutral-400 dark:border-neutral-300',
+        input: 'border-aave-violet dark:border-aave-violet',
       },
     },
     error: {
       true: {
-        input: 'border-danger-600',
-        label: 'text-danger-600 dark:text-danger-600',
+        input: 'border-tv-bear dark:border-tv-bear',
+        label: 'text-tv-bear dark:text-tv-bear',
       },
     },
     disabled: {
       true: {
-        input: 'bg-neutral-200',
+        input: 'bg-neutral-200 dark:bg-aave-obsidian/50',
       },
     },
   },
@@ -85,7 +85,7 @@ export function Input({ ref, ...props }: NInputProps & { ref?: React.Ref<NTextIn
       <NTextInput
         testID={testID}
         ref={ref}
-        placeholderTextColor={colors.neutral[400]}
+        placeholderTextColor={colors.aave.iron}
         className={styles.input()}
         onBlur={onBlur}
         onFocus={onFocus}
@@ -99,7 +99,7 @@ export function Input({ ref, ...props }: NInputProps & { ref?: React.Ref<NTextIn
       {error && (
         <Text
           testID={testID ? `${testID}-error` : undefined}
-          className="text-sm text-danger-400 dark:text-danger-600"
+          className="mt-1 text-xs text-tv-bear"
         >
           {error}
         </Text>

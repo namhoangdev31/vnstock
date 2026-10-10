@@ -1,4 +1,3 @@
-/* eslint-disable better-tailwindcss/no-unknown-classes */
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { PressableProps } from 'react-native';
 import type { SvgProps } from 'react-native-svg';
@@ -22,28 +21,28 @@ import { Text } from './text';
 const selectTv = tv({
   slots: {
     container: 'mb-4',
-    label: 'text-grey-100 mb-1 text-lg dark:text-neutral-100',
+    label: 'mb-1 text-sm font-medium text-aave-graphite dark:text-aave-graphite',
     input:
-      'border-grey-50 mt-0 flex-row items-center justify-center rounded-xl border-[0.5px] p-3 dark:border-neutral-500 dark:bg-neutral-800',
-    inputValue: 'dark:text-neutral-100',
+      'mt-0 flex-row items-center justify-center rounded-xl border border-neutral-300 bg-neutral-100 p-3 dark:border-white/8 dark:bg-aave-obsidian',
+    inputValue: 'text-aave-obsidian dark:text-aave-paper',
   },
 
   variants: {
     focused: {
       true: {
-        input: 'border-neutral-600',
+        input: 'border-aave-violet dark:border-aave-violet',
       },
     },
     error: {
       true: {
-        input: 'border-danger-600',
-        label: 'text-danger-600 dark:text-danger-600',
-        inputValue: 'text-danger-600',
+        input: 'border-tv-bear dark:border-tv-bear',
+        label: 'text-tv-bear dark:text-tv-bear',
+        inputValue: 'text-tv-bear',
       },
     },
     disabled: {
       true: {
-        input: 'bg-neutral-200',
+        input: 'bg-neutral-200 opacity-60 dark:bg-aave-obsidian/50',
       },
     },
   },
@@ -93,7 +92,7 @@ export function Options({ ref, options, onSelect, value, testID }: OptionsProps 
       index={0}
       snapPoints={snapPoints}
       backgroundStyle={{
-        backgroundColor: isDark ? colors.neutral[800] : colors.white,
+        backgroundColor: isDark ? colors.aave.obsidian : colors.surface.canvas,
       }}
     >
       <List
@@ -118,10 +117,10 @@ const Option = React.memo(
   }) => {
     return (
       <Pressable
-        className="flex-row items-center border-b border-neutral-300 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+        className="flex-row items-center border-b border-neutral-200 bg-white p-3 dark:border-white/6 dark:bg-aave-obsidian"
         {...props}
       >
-        <Text className="flex-1 dark:text-neutral-100">{label}</Text>
+        <Text className="flex-1 text-aave-obsidian dark:text-aave-paper">{label}</Text>
         {selected && <Check />}
       </Pressable>
     );

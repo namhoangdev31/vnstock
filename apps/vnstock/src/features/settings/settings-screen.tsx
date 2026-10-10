@@ -20,14 +20,14 @@ export function SettingsScreen() {
   const signOut = useAuth.use.signOut();
   const { theme } = useUniwind();
   const iconColor
-    = theme === 'dark' ? colors.neutral[400] : colors.neutral[500];
+    = theme === 'dark' ? colors.aave.graphite : colors.aave.iron;
   return (
     <>
       <FocusAwareStatusBar />
 
       <ScrollView>
         <View className="flex-1 px-4 pt-16">
-          <Text className="text-xl font-bold">
+          <Text className="text-xl font-bold text-aave-obsidian dark:text-aave-paper">
             {translate('settings.title')}
           </Text>
           <SettingsContainer title="settings.generale">

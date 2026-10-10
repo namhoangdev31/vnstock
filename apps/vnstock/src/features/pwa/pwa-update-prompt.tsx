@@ -39,10 +39,10 @@ export function PWAUpdatePrompt() {
           alignItems: 'center',
           paddingHorizontal: 16,
           paddingVertical: 14,
-          backgroundColor: '#1a1f2e',
+          backgroundColor: '#221d1d',
           borderRadius: 12,
           borderWidth: 1,
-          borderColor: '#404040',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
           gap: 12,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
@@ -62,20 +62,20 @@ export function PWAUpdatePrompt() {
           >
             Có phiên bản mới
           </Text>
-          <Text style={{ color: '#a3a3a3', fontSize: 12 }}>
+          <Text style={{ color: '#858387', fontSize: 12 }}>
             Tải lại để áp dụng cập nhật mới nhất
           </Text>
         </View>
         <Pressable
           onPress={applyUpdate}
           style={({ pressed }) => ({
-            backgroundColor: pressed ? '#1a3a1a' : '#166534',
+            backgroundColor: pressed ? '#8374f8' : '#998eff',
             paddingHorizontal: 14,
             paddingVertical: 8,
             borderRadius: 8,
           })}
         >
-          <Text style={{ color: '#4ADE80', fontSize: 13, fontWeight: '700' }}>
+          <Text style={{ color: '#000000', fontSize: 13, fontWeight: '700' }}>
             Cập nhật
           </Text>
         </Pressable>

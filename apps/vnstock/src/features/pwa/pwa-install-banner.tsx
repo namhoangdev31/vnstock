@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Animated, Platform, Pressable, Text, View } from 'react-native';
+import { Animated, Platform } from 'react-native';
 
+import { Pressable, Text, View } from '@/components/ui';
 import { usePWA } from '@/lib/hooks/use-pwa';
 
 export function PWAInstallBanner() {
@@ -14,33 +15,16 @@ export function PWAInstallBanner() {
   React.useEffect(() => {
     if (shouldShow) {
       Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 80,
-          friction: 12,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
+        Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 80, friction: 12 }),
+        Animated.timing(opacityAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
       ]).start();
     }
   }, [shouldShow, slideAnim, opacityAnim]);
 
   const handleDismiss = React.useCallback(() => {
     Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: -80,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
+      Animated.timing(slideAnim, { toValue: -80, duration: 200, useNativeDriver: true }),
+      Animated.timing(opacityAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
     ]).start(() => setDismissed(true));
   }, [slideAnim, opacityAnim]);
 
@@ -55,64 +39,22 @@ export function PWAInstallBanner() {
 
   return (
     <Animated.View
-      style={{
-        transform: [{ translateY: slideAnim }],
-        opacity: opacityAnim,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 999,
-      }}
+      className="absolute inset-x-0 top-0 z-999"
+      style={{ transform: [{ translateY: slideAnim }], opacity: opacityAnim }}
     >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          backgroundColor: '#1a1f2e',
-          borderBottomWidth: 1,
-          borderBottomColor: '#FF6C00',
-          gap: 12,
-        }}
-      >
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              color: '#ffffff',
-              fontSize: 13,
-              fontWeight: '700',
-              marginBottom: 2,
-            }}
-          >
-            Cài đặt Vnstock
-          </Text>
-          <Text style={{ color: '#a3a3a3', fontSize: 12 }}>
-            Trải nghiệm mượt mà hơn trên màn hình chính
-          </Text>
+      <View className="flex-row items-center gap-3 border-b border-white/6 bg-aave-obsidian px-4 py-3">
+        <View className="flex-1">
+          <Text className="mb-0.5 text-[13px] font-bold text-aave-paper">Cài đặt Vistock</Text>
+          <Text className="text-xs text-aave-graphite">Trải nghiệm mượt mà hơn trên màn hình chính</Text>
         </View>
         <Pressable
           onPress={handleInstall}
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? '#E56100' : '#FF6C00',
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            borderRadius: 8,
-          })}
+          className="rounded-lg bg-aave-violet px-3.5 py-2 active:opacity-90"
         >
-          <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '700' }}>
-            Cài đặt
-          </Text>
+          <Text className="text-[13px] font-bold text-aave-charcoal">Cài đặt</Text>
         </Pressable>
-        <Pressable
-          onPress={handleDismiss}
-          hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-          style={{ padding: 4 }}
-        >
-          <Text style={{ color: '#737373', fontSize: 18, lineHeight: 18 }}>
-            ✕
-          </Text>
+        <Pressable onPress={handleDismiss} hitSlop={10} className="p-1">
+          <Text className="text-lg/4.5 text-aave-graphite">✕</Text>
         </Pressable>
       </View>
     </Animated.View>

@@ -133,6 +133,12 @@
       "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
       "computedHash": "e14e276241805c97dbcfe40dcbea1a3035269cc7293cac4b1832dda41a835e60"
     },
+    "uniwind": {
+      "source": "uni-stack/uniwind",
+      "sourceType": "github",
+      "skillPath": "skills/uniwind/SKILL.md",
+      "computedHash": "d886797a7bf8989393c3f784b48242e4d6baeb9ad85ef765143010f893ea3656"
+    },
     "vite": {
       "source": "onmax/nuxt-skills",
       "sourceType": "github",

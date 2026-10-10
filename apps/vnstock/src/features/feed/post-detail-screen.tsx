@@ -18,8 +18,8 @@ export function PostDetailScreen() {
 
   if (isPending) {
     return (
-      <View className="flex-1 justify-center p-3">
-        <Stack.Screen options={{ title: 'Post', headerBackTitle: 'Feed' }} />
+      <View className="flex-1 justify-center bg-aave-inkwell p-4">
+        <Stack.Screen options={{ title: 'Bài viết', headerBackTitle: 'Bảng Tin' }} />
         <FocusAwareStatusBar />
         <ActivityIndicator />
       </View>
@@ -27,23 +27,24 @@ export function PostDetailScreen() {
   }
   if (isError) {
     return (
-      <View className="flex-1 justify-center p-3">
-        <Stack.Screen options={{ title: 'Post', headerBackTitle: 'Feed' }} />
+      <View className="flex-1 justify-center bg-aave-inkwell p-4">
+        <Stack.Screen options={{ title: 'Bài viết', headerBackTitle: 'Bảng Tin' }} />
         <FocusAwareStatusBar />
-        <Text className="text-center">Error loading post</Text>
+        <Text className="text-center text-aave-graphite">Không thể tải bài viết</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 p-3">
-      <Stack.Screen options={{ title: 'Post', headerBackTitle: 'Feed' }} />
+    <View className="flex-1 bg-aave-inkwell p-4">
+      <Stack.Screen options={{ title: 'Bài viết', headerBackTitle: 'Bảng Tin' }} />
       <FocusAwareStatusBar />
-      <Text className="text-xl">{data.title}</Text>
-      <Text>
-        {data.body}
-        {' '}
-      </Text>
+      <View className="gap-3 rounded-2xl border border-white/6 bg-aave-obsidian p-5">
+        <Text className="text-xl font-bold text-aave-paper">{data.title}</Text>
+        <Text className="text-sm/6 text-aave-graphite">
+          {data.body}
+        </Text>
+      </View>
     </View>
   );
 }

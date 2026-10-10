@@ -79,7 +79,7 @@ export function Modal({ ref, snapPoints: _snapPoints = ['60%'] as (string | numb
   const renderHandleComponent = React.useCallback(
     () => (
       <>
-        <View className="mt-2 mb-8 h-1 w-12 self-center rounded-lg bg-gray-400 dark:bg-gray-700" />
+        <View className="mt-2 mb-8 h-1 w-12 self-center rounded-lg bg-neutral-300 dark:bg-aave-iron" />
         <ModalHeader title={title} dismiss={modal.dismiss} />
       </>
     ),
@@ -153,7 +153,7 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
         <View className="flex-row px-2 py-4">
           <View className="size-6" />
           <View className="flex-1">
-            <Text className="text-center text-[16px] font-bold text-[#26313D] dark:text-white">
+            <Text className="text-center text-[16px] font-bold text-aave-obsidian dark:text-aave-paper">
               {title}
             </Text>
           </View>

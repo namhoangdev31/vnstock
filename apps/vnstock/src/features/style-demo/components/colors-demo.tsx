@@ -22,12 +22,12 @@ function Color({ name }: { name: ColorName }) {
     return null;
   return (
     <View className="pt-2">
-      <Text className="font-medium">{name.toUpperCase()}</Text>
+      <Text className="font-medium text-aave-paper">{name.toUpperCase()}</Text>
       <View className="flex-row flex-wrap content-between justify-around">
         {Object.entries(colors[name]).map(([key, value]) => {
           return (
             <ColorCard
-              key={`${colors[name]}-${key}`}
+              key={`${name}-${key}`}
               value={key}
               color={value}
             />
@@ -40,12 +40,12 @@ function Color({ name }: { name: ColorName }) {
 
 function ColorCard({ color, value }: { value: string; color: string }) {
   return (
-    <View className="flex-1">
+    <View className="m-1 min-w-[70px] flex-1">
       <View
-        className="h-14 w-full rounded-sm"
+        className="h-14 w-full rounded-md border border-white/8"
         style={{ backgroundColor: color }}
       />
-      <Text className="text-sm">{value}</Text>
+      <Text className="mt-1 text-xs text-aave-graphite">{value}</Text>
     </View>
   );
 }

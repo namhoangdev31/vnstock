@@ -1,7 +1,7 @@
 import type { LoginFormProps } from './components/login-form';
+
 import { useRouter } from 'expo-router';
 
-import * as React from 'react';
 import { FocusAwareStatusBar, View } from '@/components/ui';
 import { LoginForm } from './components/login-form';
 import { useAuthStore } from './use-auth-store';
@@ -17,7 +17,7 @@ export function LoginScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'primary', padding: 'auto' }}>
+    <View className="flex-1">
       <FocusAwareStatusBar />
       <LoginForm onSubmit={onSubmit} />
     </View>

@@ -40,7 +40,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="apple-mobile-web-app-title" content="Vnstock" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="Vnstock" />
-        <meta name="theme-color" content="#0B0E14" />
+        <meta name="theme-color" content="#0f0f10" />
       </head>
       <body>{children}</body>
     </html>
@@ -53,6 +53,6 @@ body {
 }
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: #000;
+    background-color: #0f0f10;
   }
 }`;
