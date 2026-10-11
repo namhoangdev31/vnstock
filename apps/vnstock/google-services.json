@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "474776785188",
+    "firebase_url": "https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "coinmarket-13f98",
+    "storage_bucket": "coinmarket-13f98.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474776785188:android:3caf0c6ed65faf8dd9e3b1",
+        "android_client_info": {
+          "package_name": "com.vnstock"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMls3RqQkpNmfP0zW425TKrENi-VGFahs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474776785188-4k22gf4av77f81lpsq4j60po12hjb0le.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "474776785188-m68p7a2sho2opot7jc47ie2p37gpnfhc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vnstock"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,6 @@
 import type {
   Body_login_login_access_token as AccessToken,
+  SocialLogin,
   UserPublic,
   UserRegister,
 } from "~/client"
@@ -85,6 +86,45 @@ export const useAuth = () => {
     }
   }
 
+  const loginSocial = async (payload: SocialLogin) => {
+    try {
+      isLoading.value = true
+      const response = await LoginService.loginSocial({
+        body: payload,
+      })
+
+      const accessToken = response.data.access_token
+      if (process.client) {
+        localStorage.setItem("access_token", accessToken)
+      }
+      token.value = accessToken
+
+      await fetchUser()
+      showSuccessToast(
+        "Đăng nhập thành công!",
+        `Chào mừng ${user.value?.full_name || user.value?.email || "bạn"}.`,
+      )
+      const route = useRoute()
+      const defaultTarget = user.value?.is_superuser ? "/admin" : "/app"
+      const rawTarget = (route.query.redirect as string) || defaultTarget
+      const redirectTarget =
+        !user.value?.is_superuser && rawTarget.startsWith("/admin")
+          ? "/app"
+          : rawTarget
+      await router.push(redirectTarget)
+    } catch (err: unknown) {
+      const error = err as { body?: { detail?: string }; message?: string }
+      const message =
+        error?.body?.detail ||
+        error?.message ||
+        "Đăng nhập qua mạng xã hội thất bại."
+      showErrorToast("Lỗi xác thực", message)
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const signup = async (data: UserRegister) => {
     try {
       isLoading.value = true
@@ -124,6 +164,7 @@ export const useAuth = () => {
     initToken,
     fetchUser,
     login,
+    loginSocial,
     signup,
     logout,
   }

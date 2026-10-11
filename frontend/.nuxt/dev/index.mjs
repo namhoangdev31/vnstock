@@ -948,7 +948,15 @@ const _inlineRuntimeConfig = {
     "apiUrl": "http://localhost:8000",
     "dnseApiKey": "eyJvcmciOiJkbnNlIiwiaWQiOiI4YWZhNWI1ODg2MWE0ZGNlOTI1ZGFiZmQxMTZiZTFiOCIsImgiOiJtdXJtdXIxMjgifQ==",
     "dnseApiSecret": "YWBzI6FjIcaLqYpNUt5a0NTNmpsP-UmPUQn74SCkLFX0NyEQhG_S05hFCtd5y2RZq56IZiG8kzwp5WYfTpW7hA",
-    "dnseWsUrl": "wss://ws-openapi.dnse.com.vn"
+    "dnseWsUrl": "wss://ws-openapi.dnse.com.vn",
+    "firebaseApiKey": "AIzaSyCVtGTJdBjguVaVM4eQ06oz1RTj2tS4jCM",
+    "firebaseAuthDomain": "coinmarket-13f98.firebaseapp.com",
+    "firebaseProjectId": "coinmarket-13f98",
+    "firebaseStorageBucket": "coinmarket-13f98.firebasestorage.app",
+    "firebaseMessagingSenderId": "474776785188",
+    "firebaseAppId": "1:474776785188:web:ade5350b32800d10d9e3b1",
+    "firebaseMeasurementId": "G-E1J4ETBKS7",
+    "firebaseDatabaseUrl": "https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app"
   },
   "icon": {
     "serverKnownCssClasses": []

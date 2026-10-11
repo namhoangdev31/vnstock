@@ -46,6 +46,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: Env.EXPO_PUBLIC_BUNDLE_ID,
+    googleServicesFile: './GoogleService-Info.plist',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -59,6 +60,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: '#0052FF',
     },
     package: Env.EXPO_PUBLIC_PACKAGE,
+    googleServicesFile: './google-services.json',
   },
   web: {
     favicon: './assets/favicon.png',

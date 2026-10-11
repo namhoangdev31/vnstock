@@ -1,13 +1,21 @@
-import type { TokenType } from '@/lib/auth/utils';
+import type { TokenType, UserProfile } from '@/lib/auth/utils';
 
 import { create } from 'zustand';
-import { getToken, removeToken, setToken } from '@/lib/auth/utils';
+import {
+  getToken,
+  getUserProfile,
+  removeToken,
+  removeUserProfile,
+  setToken,
+  setUserProfile,
+} from '@/lib/auth/utils';
 import { createSelectors } from '@/lib/utils';
 
 type AuthState = {
   token: TokenType | null;
+  user: UserProfile | null;
   status: 'idle' | 'signOut' | 'signIn';
-  signIn: (data: TokenType) => void;
+  signIn: (data: TokenType, user?: UserProfile) => void;
   signOut: () => void;
   hydrate: () => void;
 };
@@ -15,19 +23,29 @@ type AuthState = {
 const _useAuthStore = create<AuthState>((set, get) => ({
   status: 'idle',
   token: null,
-  signIn: (token) => {
+  user: null,
+  signIn: (token, user) => {
     setToken(token);
-    set({ status: 'signIn', token });
+    if (user) {
+      setUserProfile(user);
+      set({ status: 'signIn', token, user });
+    }
+    else {
+      const existingUser = getUserProfile() ?? null;
+      set({ status: 'signIn', token, user: existingUser });
+    }
   },
   signOut: () => {
     removeToken();
-    set({ status: 'signOut', token: null });
+    removeUserProfile();
+    set({ status: 'signOut', token: null, user: null });
   },
   hydrate: () => {
     try {
       const userToken = getToken();
       if (userToken !== null) {
-        get().signIn(userToken);
+        const userProfile = getUserProfile() ?? undefined;
+        get().signIn(userToken, userProfile);
       }
       else {
         get().signOut();
@@ -44,6 +62,12 @@ const _useAuthStore = create<AuthState>((set, get) => ({
 
 export const useAuthStore = createSelectors(_useAuthStore);
 
-export const signOut = () => _useAuthStore.getState().signOut();
-export const signIn = (token: TokenType) => _useAuthStore.getState().signIn(token);
-export const hydrateAuth = () => _useAuthStore.getState().hydrate();
+export function signOut() {
+  return _useAuthStore.getState().signOut();
+}
+export function signIn(token: TokenType, user?: UserProfile) {
+  return _useAuthStore.getState().signIn(token, user);
+}
+export function hydrateAuth() {
+  return _useAuthStore.getState().hydrate();
+}

@@ -16,6 +16,46 @@ import { SettingsContainer } from './components/settings-container';
 import { SettingsItem } from './components/settings-item';
 import { ThemeItem } from './components/theme-item';
 
+function UserProfileBanner() {
+  const user = useAuth.use.user();
+  if (!user) {
+    return null;
+  }
+
+  const providerLabel = {
+    google: 'Google SSO',
+    apple: 'Apple ID',
+    passkey: 'Passkey',
+    email: 'Email Account',
+    guest: 'Guest Session',
+  }[user.provider ?? 'email'];
+
+  return (
+    <View className="mb-6 rounded-2xl border border-pewter bg-frost p-4 dark:border-white/10 dark:bg-charcoal">
+      <View className="flex-row items-center gap-3">
+        <View className="size-11 items-center justify-center rounded-full bg-coinbase-blue">
+          <Text className="text-base font-bold text-pure-white">
+            {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          </Text>
+        </View>
+        <View className="flex-1">
+          <Text className="text-base font-semibold text-midnight dark:text-pure-white">
+            {user.name}
+          </Text>
+          <Text className="text-sm text-slate">
+            {user.email}
+          </Text>
+        </View>
+        <View className="rounded-full bg-cloud px-2.5 py-1 dark:bg-white/10">
+          <Text className="text-xs font-medium text-slate dark:text-ash">
+            {providerLabel}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export function SettingsScreen() {
   const signOut = useAuth.use.signOut();
   const { theme } = useUniwind();
@@ -27,9 +67,10 @@ export function SettingsScreen() {
 
       <ScrollView>
         <View className="flex-1 px-4 pt-16">
-          <Text className="text-xl font-bold text-aave-obsidian dark:text-aave-paper">
+          <Text className="mb-4 text-xl font-bold text-aave-obsidian dark:text-aave-paper">
             {translate('settings.title')}
           </Text>
+          <UserProfileBanner />
           <SettingsContainer title="settings.generale">
             <LanguageItem />
             <ThemeItem />

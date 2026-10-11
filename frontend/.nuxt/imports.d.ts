@@ -38,6 +38,7 @@ export { useDnse, dnseClient, dnseApi } from '../composables/useDnse';
 export { useDnseApi, dnseApiClient, detectDnseSymbolType, getHistoricalOhlc, OhlcCandle, HistoricalOhlcResult } from '../composables/useDnseApi';
 export { createDnseDatafeed, DatafeedBar, DatafeedPeriodParams, DatafeedHistoryMetadata, DatafeedSymbolInfo, DatafeedConfiguration } from '../composables/useDnseDatafeed';
 export { useDnseWs, dnseWsClient } from '../composables/useDnseWs';
+export { useFirebase } from '../composables/useFirebase';
 export { useMarketTicker, MarketTickerItem } from '../composables/useMarketTicker';
 export { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d';
 export { defineShortcuts } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts';
@@ -53,3 +54,4 @@ export { useTimer } from '../../node_modules/@nuxt/ui/dist/runtime/composables/u
 export { useToast } from '../../node_modules/@nuxt/ui/dist/runtime/composables/useToast';
 export { useUI } from '../../node_modules/@nuxt/ui/dist/runtime/composables/useUI';
 export { useColorMode } from '../../node_modules/@nuxtjs/color-mode/dist/runtime/composables';
+export { useNuxtDevTools } from '../../node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools';

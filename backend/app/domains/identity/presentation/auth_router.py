@@ -14,7 +14,9 @@ from app.domains.identity.application import crud
 from app.domains.identity.application.schemas import (
     Message,
     NewPassword,
+    SocialLogin,
     Token,
+    UserCreate,
     UserPublic,
     UserUpdate,
 )
@@ -40,6 +42,47 @@ def login_access_token(
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    return Token(
+        access_token=security.create_access_token(
+            user.id, expires_delta=access_token_expires
+        )
+    )
+
+
+@router.post("/login/social")
+def login_social(session: SessionDep, body: SocialLogin) -> Token:
+    """OAuth social login: exchange verified Google/Apple/Firebase payload for application JWT token."""
+    clean_email = str(body.email).strip().lower()
+
+    # Xác thực mật mã an toàn nếu client gửi Firebase ID Token
+    from app.core.firebase import verify_firebase_id_token
+
+    verified_claims = verify_firebase_id_token(body.token)
+    if verified_claims:
+        token_email = verified_claims.get("email")
+        if token_email and str(token_email).strip().lower() != clean_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Token email does not match requested email",
+            )
+        if not body.full_name and verified_claims.get("name"):
+            body.full_name = str(verified_claims.get("name"))
+
+    user = crud.get_user_by_email(session=session, email=clean_email)
+    if not user:
+        import secrets
+
+        user_create = UserCreate(
+            email=clean_email,
+            password=secrets.token_urlsafe(32),
+            full_name=body.full_name,
+            is_active=True,
+        )
+        user = crud.create_user(session=session, user_create=user_create)
+    elif not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return Token(
         access_token=security.create_access_token(

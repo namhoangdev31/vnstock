@@ -2,6 +2,7 @@ import type { AnyFieldApi } from '@tanstack/react-form';
 import { useForm } from '@tanstack/react-form';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
+import { ActivityIndicator } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as z from 'zod';
@@ -35,6 +36,10 @@ export type LoginFormProps = {
   onSubmit?: (data: FormType) => void;
   onCancel?: () => void;
   initialMode?: 'signIn' | 'signUp';
+  onGoogleSelect?: () => void;
+  onAppleSelect?: () => void;
+  onPasskeySelect?: () => void;
+  loadingProvider?: 'google' | 'apple' | 'passkey' | null;
 };
 
 function AuthHeader({ onCancel }: { onCancel: () => void }) {
@@ -170,10 +175,18 @@ function FormInputs({
 }
 
 function SocialAuthSection({
-  onSocialSelect,
+  onGoogleSelect,
+  onAppleSelect,
+  onPasskeySelect,
+  loadingProvider,
 }: {
-  onSocialSelect: (provider: string) => void;
+  onGoogleSelect?: () => void;
+  onAppleSelect?: () => void;
+  onPasskeySelect?: () => void;
+  loadingProvider?: 'google' | 'apple' | 'passkey' | null;
 }) {
+  const isLoading = loadingProvider != null;
+
   return (
     <View className="w-full gap-3">
       <View className="my-3 flex-row items-center">
@@ -183,33 +196,63 @@ function SocialAuthSection({
       </View>
 
       <Pressable
-        className="h-[50px] w-full flex-row items-center justify-center gap-3 rounded-full border border-pewter bg-pure-white active:bg-frost"
-        onPress={() => onSocialSelect('google')}
+        testID="google-login-button"
+        disabled={isLoading}
+        className="h-12 w-full flex-row items-center justify-center gap-3 rounded-full border border-pewter bg-pure-white active:bg-frost"
+        onPress={onGoogleSelect}
       >
-        <Google size={20} />
-        <Text className="text-body font-semibold text-midnight">
-          Sign in with Google
-        </Text>
+        {loadingProvider === 'google'
+          ? (
+              <ActivityIndicator size="small" color="#0A0B0D" />
+            )
+          : (
+              <>
+                <Google size={20} />
+                <Text className="text-body font-semibold text-midnight">
+                  Sign in with Google
+                </Text>
+              </>
+            )}
       </Pressable>
 
       <Pressable
-        className="h-[50px] w-full flex-row items-center justify-center gap-3 rounded-full bg-cloud active:bg-pewter"
-        onPress={() => onSocialSelect('apple')}
+        testID="apple-login-button"
+        disabled={isLoading}
+        className="h-12 w-full flex-row items-center justify-center gap-3 rounded-full bg-cloud active:bg-pewter"
+        onPress={onAppleSelect}
       >
-        <Apple size={20} color="#0A0B0D" />
-        <Text className="text-body font-semibold text-midnight">
-          Sign in with Apple
-        </Text>
+        {loadingProvider === 'apple'
+          ? (
+              <ActivityIndicator size="small" color="#0A0B0D" />
+            )
+          : (
+              <>
+                <Apple size={20} color="#0A0B0D" />
+                <Text className="text-body font-semibold text-midnight">
+                  Sign in with Apple
+                </Text>
+              </>
+            )}
       </Pressable>
 
       <Pressable
-        className="h-[50px] w-full flex-row items-center justify-center gap-3 rounded-full bg-cloud active:bg-pewter"
-        onPress={() => onSocialSelect('passkey')}
+        testID="passkey-login-button"
+        disabled={isLoading}
+        className="h-12 w-full flex-row items-center justify-center gap-3 rounded-full bg-cloud active:bg-pewter"
+        onPress={onPasskeySelect}
       >
-        <Passkey size={20} color="#0A0B0D" />
-        <Text className="text-body font-semibold text-midnight">
-          Sign in with Passkey
-        </Text>
+        {loadingProvider === 'passkey'
+          ? (
+              <ActivityIndicator size="small" color="#0A0B0D" />
+            )
+          : (
+              <>
+                <Passkey size={20} color="#0A0B0D" />
+                <Text className="text-body font-semibold text-midnight">
+                  Sign in with Passkey
+                </Text>
+              </>
+            )}
       </Pressable>
     </View>
   );
@@ -251,6 +294,10 @@ export function LoginForm({
   onSubmit = () => {},
   onCancel,
   initialMode = 'signIn',
+  onGoogleSelect,
+  onAppleSelect,
+  onPasskeySelect,
+  loadingProvider,
 }: LoginFormProps) {
   const router = useRouter();
   const [mode, setMode] = React.useState<'signIn' | 'signUp'>(initialMode);
@@ -275,16 +322,6 @@ export function LoginForm({
       onSubmit(value);
     },
   });
-
-  const handleSocialSelect = React.useCallback(
-    (provider: string) => {
-      onSubmit({
-        email: `${provider}.user@vistock.com`,
-        password: 'sso_authenticated_user',
-      });
-    },
-    [onSubmit],
-  );
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-pure-white" behavior="padding" keyboardVerticalOffset={10}>
@@ -315,7 +352,12 @@ export function LoginForm({
               )}
             </form.Subscribe>
 
-            <SocialAuthSection onSocialSelect={handleSocialSelect} />
+            <SocialAuthSection
+              onGoogleSelect={onGoogleSelect}
+              onAppleSelect={onAppleSelect}
+              onPasskeySelect={onPasskeySelect}
+              loadingProvider={loadingProvider}
+            />
 
             <ModeToggle
               mode={mode}

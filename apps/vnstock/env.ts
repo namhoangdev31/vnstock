@@ -15,6 +15,19 @@ const envSchema = z.object({
   EXPO_PUBLIC_VAR_NUMBER: z.number(),
   EXPO_PUBLIC_VAR_BOOL: z.boolean(),
 
+  // OAuth Client IDs (Optional - Required only when enabling Social Sign In)
+  EXPO_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),
+  EXPO_PUBLIC_APPLE_CLIENT_ID: z.string().optional(),
+
+  // Firebase Configuration (App + Web)
+  EXPO_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_APP_ID: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
+
   // only available for app.config.ts usage
   APP_BUILD_ONLY_VAR: z.string().optional(),
 });
@@ -58,6 +71,15 @@ const _env: z.infer<typeof envSchema> = {
   EXPO_PUBLIC_ASSOCIATED_DOMAIN: process.env.EXPO_PUBLIC_ASSOCIATED_DOMAIN,
   EXPO_PUBLIC_VAR_NUMBER: Number(process.env.EXPO_PUBLIC_VAR_NUMBER ?? 0),
   EXPO_PUBLIC_VAR_BOOL: process.env.EXPO_PUBLIC_VAR_BOOL === 'true',
+  EXPO_PUBLIC_GOOGLE_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+  EXPO_PUBLIC_APPLE_CLIENT_ID: process.env.EXPO_PUBLIC_APPLE_CLIENT_ID,
+  EXPO_PUBLIC_FIREBASE_API_KEY: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  EXPO_PUBLIC_FIREBASE_PROJECT_ID: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  EXPO_PUBLIC_FIREBASE_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
   APP_BUILD_ONLY_VAR: process.env.APP_BUILD_ONLY_VAR,
 };
 

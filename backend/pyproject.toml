@@ -28,6 +28,7 @@ dependencies = [
   "vnstock>=4.0.6",
   "dnse-sdk-openapi>=2.4.1",
   "msgpack>=1.2.3",
+  "firebase-admin>=7.7.0",
 ]
 
 [dependency-groups]

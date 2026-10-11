@@ -289,7 +289,10 @@ export function OnboardingScreen() {
 
   const handleBrowseAssets = React.useCallback(() => {
     setIsFirstTime(false);
-    signIn({ access: 'guest-preview-token', refresh: 'guest-preview-token' });
+    signIn(
+      { access: 'guest_session', refresh: '' },
+      { email: '', name: 'Khách vãng lai', provider: 'guest' },
+    );
     router.replace('/(app)');
   }, [setIsFirstTime, router, signIn]);
 

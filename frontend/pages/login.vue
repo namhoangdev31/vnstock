@@ -61,6 +61,30 @@
       </UButton>
     </form>
 
+    <div class="relative my-6">
+      <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-slate-800" />
+      </div>
+      <div class="relative flex justify-center text-xs uppercase">
+        <span class="bg-surface-canvas px-2 text-slate-500">Hoặc tiếp tục với</span>
+      </div>
+    </div>
+
+    <UButton
+      type="button"
+      block
+      size="md"
+      variant="outline"
+      :loading="isGoogleLoading"
+      class="font-medium !rounded-full border-slate-700 text-slate-200 hover:bg-slate-800 active:scale-[0.99] transition-all"
+      @click="handleGoogleSignIn"
+    >
+      <template #leading>
+        <UIcon name="i-logos-google-icon" class="w-4 h-4 mr-1" />
+      </template>
+      Đăng nhập bằng Google
+    </UButton>
+
     <div class="mt-6 text-center text-xs text-slate-400">
       Chưa có tài khoản?
       <NuxtLink to="/signup" class="text-aave-violet font-medium hover:underline ml-1">
@@ -79,8 +103,10 @@ useHead({
   title: "Đăng nhập - Vistock Quants",
 })
 
-const { login, isLoading } = useAuth()
+const { login, loginSocial, isLoading } = useAuth()
+const { signInWithGoogle } = useFirebase()
 const showPassword = ref(false)
+const isGoogleLoading = ref(false)
 
 const form = reactive({
   username: "",
@@ -95,5 +121,25 @@ const handleLogin = async () => {
       password: form.password,
     })
   } catch {}
+}
+
+const handleGoogleSignIn = async () => {
+  try {
+    isGoogleLoading.value = true
+    const googleUser = await signInWithGoogle()
+    await loginSocial({
+      provider: "google",
+      token: googleUser.idToken,
+      email: googleUser.email,
+      full_name: googleUser.displayName || undefined,
+    })
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string }
+    if (error?.code !== "auth/popup-closed-by-user") {
+      // Error handling is managed by loginSocial toast
+    }
+  } finally {
+    isGoogleLoading.value = false
+  }
 }
 </script>

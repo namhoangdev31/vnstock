@@ -124,3 +124,12 @@ class TokenPayload(SQLModel):
     """Nội dung định danh giải mã được từ JWT token."""
 
     sub: str | None = None
+
+
+class SocialLogin(SQLModel):
+    """Payload đăng nhập hoặc đăng ký thông qua mạng xã hội (Google, Apple)."""
+
+    provider: str
+    token: str
+    email: EmailStr
+    full_name: str | None = None
