@@ -38,15 +38,15 @@ const EXPO_PUBLIC_APP_ENV = (process.env.EXPO_PUBLIC_APP_ENV
   ?? 'development') as z.infer<typeof envSchema>['EXPO_PUBLIC_APP_ENV'];
 
 const BUNDLE_IDS = {
-  development: 'com.vnstock.development',
-  preview: 'com.vnstock.preview',
-  production: 'com.vnstock',
+  development: 'vn.vistock.pro.development',
+  preview: 'vn.vistock.pro.preview',
+  production: 'vn.vistock.pro',
 } as const;
 
 const PACKAGES = {
-  development: 'com.vnstock.development',
-  preview: 'com.vnstock.preview',
-  production: 'com.vnstock',
+  development: 'vn.vistock.pro.development',
+  preview: 'vn.vistock.pro.preview',
+  production: 'vn.vistock.pro',
 } as const;
 
 const SCHEMES = {

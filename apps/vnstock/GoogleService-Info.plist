@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>108549582747-egakr5lkemnnl1qkdrbo4o7rjurfd5ns.apps.googleusercontent.com</string>
+	<string>108549582747-bf5nvooir6ohm3k1k0hgvf9i7an3dok8.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.108549582747-egakr5lkemnnl1qkdrbo4o7rjurfd5ns</string>
+	<string>com.googleusercontent.apps.108549582747-bf5nvooir6ohm3k1k0hgvf9i7an3dok8</string>
 	<key>API_KEY</key>
 	<string>AIzaSyAgXWe8tox-6LxfNf94Quq5M80_vkUdBiY</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.vnstock</string>
+	<string>vn.vistock.pro</string>
 	<key>PROJECT_ID</key>
 	<string>vistock-pro</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:108549582747:ios:61b60446fd33db26ff7b3e</string>
+	<string>1:108549582747:ios:ff283ddb82e3f669ff7b3e</string>
 </dict>
 </plist>

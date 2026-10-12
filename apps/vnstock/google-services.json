@@ -31,10 +31,46 @@
               "client_type": 3
             },
             {
-              "client_id": "108549582747-egakr5lkemnnl1qkdrbo4o7rjurfd5ns.apps.googleusercontent.com",
+              "client_id": "108549582747-bf5nvooir6ohm3k1k0hgvf9i7an3dok8.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.vnstock"
+                "bundle_id": "vn.vistock.pro"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:108549582747:android:0d85192d64f8ef7dff7b3e",
+        "android_client_info": {
+          "package_name": "vn.vistock.pro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "108549582747-uu1fo5ueg19ki48v7huqqmpvadq2r2a8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmoFiPO5B_FICft8piqw7RhPU2Z3kkic4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "108549582747-uu1fo5ueg19ki48v7huqqmpvadq2r2a8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "108549582747-bf5nvooir6ohm3k1k0hgvf9i7an3dok8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "vn.vistock.pro"
               }
             }
           ]
