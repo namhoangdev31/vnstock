@@ -12,6 +12,7 @@ export type FirebaseConfig = {
   messagingSenderId?: string;
   appId?: string;
   measurementId?: string;
+  databaseURL?: string;
 };
 
 export const firebaseConfig: FirebaseConfig = {
@@ -22,6 +23,7 @@ export const firebaseConfig: FirebaseConfig = {
   messagingSenderId: Env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: Env.EXPO_PUBLIC_FIREBASE_APP_ID,
   measurementId: Env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  databaseURL: Env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
 export function isFirebaseConfigured(): boolean {
@@ -45,6 +47,7 @@ export function getFirebaseApp(): FirebaseApp | null {
     messagingSenderId: firebaseConfig.messagingSenderId,
     appId: firebaseConfig.appId,
     measurementId: firebaseConfig.measurementId,
+    databaseURL: firebaseConfig.databaseURL,
   });
 }
 

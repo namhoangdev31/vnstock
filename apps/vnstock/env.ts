@@ -27,6 +27,7 @@ const envSchema = z.object({
   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().optional(),
   EXPO_PUBLIC_FIREBASE_APP_ID: z.string().optional(),
   EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
+  EXPO_PUBLIC_FIREBASE_DATABASE_URL: z.string().optional(),
 
   // only available for app.config.ts usage
   APP_BUILD_ONLY_VAR: z.string().optional(),
@@ -80,6 +81,7 @@ const _env: z.infer<typeof envSchema> = {
   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   EXPO_PUBLIC_FIREBASE_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
   EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  EXPO_PUBLIC_FIREBASE_DATABASE_URL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
   APP_BUILD_ONLY_VAR: process.env.APP_BUILD_ONLY_VAR,
 };
 
