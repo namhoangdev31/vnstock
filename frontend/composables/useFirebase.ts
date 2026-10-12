@@ -4,8 +4,10 @@ import { getApp, getApps, initializeApp } from "firebase/app"
 import {
   GoogleAuthProvider,
   OAuthProvider,
+  createUserWithEmailAndPassword,
   getAuth,
   signInWithPopup,
+  updateProfile,
 } from "firebase/auth"
 
 export const useFirebase = () => {
@@ -36,6 +38,35 @@ export const useFirebase = () => {
     const app = getFirebaseApp()
     if (!app) return null
     return getAuth(app)
+  }
+
+  const registerWithEmailPassword = async (
+    email: string,
+    password: string,
+    fullName?: string,
+  ) => {
+    const auth = getFirebaseAuth()
+    if (!auth) return null
+
+    try {
+      const credential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      )
+      if (fullName && credential.user) {
+        await updateProfile(credential.user, { displayName: fullName })
+      }
+      const idToken = await credential.user.getIdToken()
+      return {
+        idToken,
+        email: credential.user.email ?? email,
+        displayName: credential.user.displayName,
+      }
+    } catch (err: unknown) {
+      console.warn("Tự động tạo tài khoản Firebase (Web):", err)
+      return null
+    }
   }
 
   const signInWithGoogle = async () => {
@@ -105,6 +136,7 @@ export const useFirebase = () => {
   return {
     getFirebaseApp,
     getFirebaseAuth,
+    registerWithEmailPassword,
     signInWithGoogle,
     signInWithApple,
   }

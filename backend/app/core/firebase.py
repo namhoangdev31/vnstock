@@ -81,3 +81,37 @@ def verify_firebase_id_token(id_token: str) -> dict[str, Any] | None:
     except Exception as e:
         logger.warning("Firebase ID token verification failed: %s", e)
         return None
+
+
+def create_or_sync_firebase_user(
+    email: str,
+    password: str | None = None,
+    display_name: str | None = None,
+) -> dict[str, Any] | None:
+    """Tự động tạo hoặc đồng bộ user trên Firebase Authentication."""
+    app = get_firebase_app()
+    if not app:
+        return None
+
+    clean_email = email.strip().lower()
+    try:
+        user_record = auth.get_user_by_email(clean_email, app=app)
+        return {"uid": user_record.uid, "email": user_record.email}
+    except auth.UserNotFoundError:
+        try:
+            kwargs: dict[str, Any] = {"email": clean_email, "app": app}
+            if password and len(password) >= 6:
+                kwargs["password"] = password
+            if display_name:
+                kwargs["display_name"] = display_name
+            user_record = auth.create_user(**kwargs)
+            logger.info(
+                "Tự động tạo user trên Firebase thành công: %s", user_record.uid
+            )
+            return {"uid": user_record.uid, "email": user_record.email}
+        except Exception as exc:
+            logger.warning("Không thể tạo user trên Firebase: %s", exc)
+            return None
+    except Exception as exc:
+        logger.warning("Firebase kiểm tra user thất bại: %s", exc)
+        return None

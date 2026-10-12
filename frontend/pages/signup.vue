@@ -148,7 +148,8 @@ useHead({
 })
 
 const { signup, loginSocial, isLoading } = useAuth()
-const { signInWithGoogle, signInWithApple } = useFirebase()
+const { registerWithEmailPassword, signInWithGoogle, signInWithApple } =
+  useFirebase()
 const { showErrorToast } = useCustomToast()
 const showPassword = ref(false)
 const isGoogleLoading = ref(false)
@@ -173,6 +174,9 @@ const handleSignup = async () => {
     return
   }
   try {
+    // Tự động đăng ký người dùng lên Firebase Authentication
+    await registerWithEmailPassword(form.email, form.password, form.full_name)
+
     await signup({
       email: form.email,
       full_name: form.full_name,

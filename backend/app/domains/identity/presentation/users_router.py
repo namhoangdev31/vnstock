@@ -156,6 +156,16 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     user_create = UserCreate.model_validate(user_in)
     user_create.email = clean_email
     user = crud.create_user(session=session, user_create=user_create)
+
+    # Tự động đăng ký người dùng lên Firebase Authentication
+    from app.core.firebase import create_or_sync_firebase_user
+
+    create_or_sync_firebase_user(
+        email=clean_email,
+        password=user_in.password,
+        display_name=user_create.full_name,
+    )
+
     return user
 
 

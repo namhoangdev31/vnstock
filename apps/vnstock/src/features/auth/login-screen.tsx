@@ -7,6 +7,7 @@ import { showMessage } from 'react-native-flash-message';
 
 import { FocusAwareStatusBar, View } from '@/components/ui';
 import { client } from '@/lib/api';
+import { registerWithFirebaseEmail } from '@/lib/firebase';
 import { LoginForm } from './components/login-form';
 import { useAuthStore } from './use-auth-store';
 import { useSocialAuth } from './use-social-auth';
@@ -31,6 +32,12 @@ export function LoginScreen() {
   const onSubmit: LoginFormProps['onSubmit'] = async (data) => {
     try {
       if (mode === 'signUp') {
+        await registerWithFirebaseEmail(
+          data.email,
+          data.password,
+          data.email.split('@')[0],
+        );
+
         await client.post('/users/signup', {
           email: data.email,
           password: data.password,

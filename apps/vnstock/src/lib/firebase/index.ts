@@ -2,7 +2,14 @@ import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import Env from 'env';
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithPopup,
+  updateProfile,
+} from 'firebase/auth';
 
 export type FirebaseConfig = {
   apiKey?: string;
@@ -120,4 +127,31 @@ export async function signInWithFirebaseApple(): Promise<{
     displayName: user.displayName,
     photoURL: user.photoURL,
   };
+}
+
+export async function registerWithFirebaseEmail(
+  email: string,
+  password: string,
+  fullName?: string,
+): Promise<{ idToken: string; email: string } | null> {
+  const auth = getFirebaseAuth();
+  if (!auth) {
+    return null;
+  }
+
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    if (fullName && result.user) {
+      await updateProfile(result.user, { displayName: fullName });
+    }
+    const idToken = await result.user.getIdToken();
+    return {
+      idToken,
+      email: result.user.email ?? email,
+    };
+  }
+  catch (err: unknown) {
+    console.warn('Tự động tạo tài khoản Firebase (Mobile):', err);
+    return null;
+  }
 }
