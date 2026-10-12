@@ -1,0 +1,18 @@
+# Dependency and cache directories
+node_modules/
+.expo/
+dist/
+build/
+web-build/
+
+# Native folders (managed CNG)
+ios/
+android/
+
+# Testing & Coverage
+coverage/
+.jest/
+
+# Logs & OS files
+*.log
+.DS_Store
