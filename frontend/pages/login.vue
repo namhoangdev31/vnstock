@@ -70,20 +70,37 @@
       </div>
     </div>
 
-    <UButton
-      type="button"
-      block
-      size="md"
-      variant="outline"
-      :loading="isGoogleLoading"
-      class="font-medium !rounded-full border-slate-700 text-slate-200 hover:bg-slate-800 active:scale-[0.99] transition-all"
-      @click="handleGoogleSignIn"
-    >
-      <template #leading>
-        <UIcon name="i-logos-google-icon" class="w-4 h-4 mr-1" />
-      </template>
-      Đăng nhập bằng Google
-    </UButton>
+    <div class="space-y-2.5">
+      <UButton
+        type="button"
+        block
+        size="md"
+        variant="outline"
+        :loading="isGoogleLoading"
+        class="font-medium !rounded-full border-slate-700 text-slate-200 hover:bg-slate-800 active:scale-[0.99] transition-all"
+        @click="handleGoogleSignIn"
+      >
+        <template #leading>
+          <UIcon name="i-logos-google-icon" class="w-4 h-4 mr-1" />
+        </template>
+        Đăng nhập bằng Google
+      </UButton>
+
+      <UButton
+        type="button"
+        block
+        size="md"
+        variant="outline"
+        :loading="isAppleLoading"
+        class="font-medium !rounded-full border-slate-700 text-slate-200 hover:bg-slate-800 active:scale-[0.99] transition-all"
+        @click="handleAppleSignIn"
+      >
+        <template #leading>
+          <UIcon name="i-simple-icons-apple" class="w-4 h-4 mr-1 text-white" />
+        </template>
+        Đăng nhập bằng Apple
+      </UButton>
+    </div>
 
     <div class="mt-6 text-center text-xs text-slate-400">
       Chưa có tài khoản?
@@ -104,9 +121,10 @@ useHead({
 })
 
 const { login, loginSocial, isLoading } = useAuth()
-const { signInWithGoogle } = useFirebase()
+const { signInWithGoogle, signInWithApple } = useFirebase()
 const showPassword = ref(false)
 const isGoogleLoading = ref(false)
+const isAppleLoading = ref(false)
 
 const form = reactive({
   username: "",
@@ -140,6 +158,26 @@ const handleGoogleSignIn = async () => {
     }
   } finally {
     isGoogleLoading.value = false
+  }
+}
+
+const handleAppleSignIn = async () => {
+  try {
+    isAppleLoading.value = true
+    const appleUser = await signInWithApple()
+    await loginSocial({
+      provider: "apple",
+      token: appleUser.idToken,
+      email: appleUser.email,
+      full_name: appleUser.displayName || undefined,
+    })
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string }
+    if (error?.code !== "auth/popup-closed-by-user") {
+      // Error handling is managed by loginSocial toast
+    }
+  } finally {
+    isAppleLoading.value = false
   }
 }
 </script>

@@ -4,10 +4,10 @@ import * as React from 'react';
 import { Platform } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 import { client } from '@/lib/api';
-import { isFirebaseConfigured, signInWithFirebaseGoogle } from '@/lib/firebase';
+import { isFirebaseConfigured, signInWithFirebaseApple, signInWithFirebaseGoogle } from '@/lib/firebase';
 import { useAuthStore } from './use-auth-store';
 
-export type SocialProvider = 'google' | 'apple' | 'passkey';
+export type SocialProvider = 'google' | 'apple';
 
 type GoogleUserInfo = {
   sub: string;
@@ -155,6 +155,32 @@ async function authenticateWithFirebaseGoogle(
   router.replace('/(app)');
 }
 
+async function authenticateWithFirebaseApple(
+  signIn: (token: { access: string; refresh: string }, user: UserProfile) => void,
+  router: ReturnType<typeof useRouter>,
+) {
+  const firebaseResult = await signInWithFirebaseApple();
+  const { accessToken, user } = await exchangeSocialToken({
+    provider: 'apple',
+    token: firebaseResult.idToken,
+    email: firebaseResult.email,
+    fullName: firebaseResult.displayName ?? undefined,
+  });
+
+  if (firebaseResult.photoURL) {
+    user.avatar = firebaseResult.photoURL;
+  }
+
+  signIn({ access: accessToken, refresh: '' }, user);
+  showMessage({
+    message: 'Đăng nhập Apple thành công',
+    description: `Chào mừng ${user.name}`,
+    type: 'success',
+    duration: 3000,
+  });
+  router.replace('/(app)');
+}
+
 function redirectToGoogleOAuth() {
   const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
   if (!googleClientId) {
@@ -186,33 +212,6 @@ function redirectToAppleOAuth() {
     )}&response_type=code%20id_token&scope=name%20email&response_mode=fragment`;
 
     window.location.href = authUrl;
-  }
-}
-
-async function authenticatePasskey() {
-  if (typeof window === 'undefined' || !window.PublicKeyCredential) {
-    showMessage({
-      message: 'Passkey không khả dụng',
-      description: 'Trình duyệt hoặc thiết bị của bạn không hỗ trợ WebAuthn / Passkey.',
-      type: 'warning',
-      duration: 4000,
-    });
-    return;
-  }
-
-  const challenge = new Uint8Array(32);
-  window.crypto.getRandomValues(challenge);
-
-  const credential = await navigator.credentials.get({
-    publicKey: {
-      challenge,
-      timeout: 60000,
-      userVerification: 'preferred',
-    },
-  });
-
-  if (!credential) {
-    throw new Error('Không nhận được thông tin xác thực từ Passkey');
   }
 }
 
@@ -251,31 +250,35 @@ export function useSocialAuth() {
   }, [signIn, router]);
 
   const handleAppleLogin = React.useCallback(async () => {
-    redirectToAppleOAuth();
-  }, []);
-
-  const handlePasskeyLogin = React.useCallback(async () => {
     try {
-      setLoadingProvider('passkey');
-      await authenticatePasskey();
+      setLoadingProvider('apple');
+
+      if (isFirebaseConfigured() && Platform.OS === 'web') {
+        await authenticateWithFirebaseApple(signIn, router);
+        return;
+      }
+
+      redirectToAppleOAuth();
     }
     catch (err: unknown) {
-      showMessage({
-        message: 'Xác thực Passkey thất bại',
-        description: err instanceof Error ? err.message : 'Thao tác Passkey bị từ chối hoặc đã huỷ.',
-        type: 'danger',
-        duration: 4000,
-      });
+      const errorMsg = err instanceof Error ? err.message : 'Đăng nhập Apple thất bại';
+      if (!errorMsg.includes('auth/popup-closed-by-user')) {
+        showMessage({
+          message: 'Đăng nhập Apple thất bại',
+          description: errorMsg,
+          type: 'danger',
+          duration: 4000,
+        });
+      }
     }
     finally {
       setLoadingProvider(null);
     }
-  }, []);
+  }, [signIn, router]);
 
   return {
     loadingProvider,
     handleGoogleLogin,
     handleAppleLogin,
-    handlePasskeyLogin,
   };
 }

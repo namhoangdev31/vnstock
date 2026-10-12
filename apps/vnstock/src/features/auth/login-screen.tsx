@@ -20,7 +20,6 @@ export function LoginScreen() {
     loadingProvider,
     handleGoogleLogin,
     handleAppleLogin,
-    handlePasskeyLogin,
   } = useSocialAuth();
 
   React.useEffect(() => {
@@ -96,7 +95,6 @@ export function LoginScreen() {
         onCancel={onCancel}
         onGoogleSelect={handleGoogleLogin}
         onAppleSelect={handleAppleLogin}
-        onPasskeySelect={handlePasskeyLogin}
         loadingProvider={loadingProvider}
       />
     </View>

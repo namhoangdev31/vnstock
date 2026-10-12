@@ -1,33 +1,37 @@
 {
   "project_info": {
-    "project_number": "474776785188",
-    "firebase_url": "https://coinmarket-13f98-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "coinmarket-13f98",
-    "storage_bucket": "coinmarket-13f98.firebasestorage.app"
+    "project_number": "108549582747",
+    "project_id": "vistock-pro",
+    "storage_bucket": "vistock-pro.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:474776785188:android:3caf0c6ed65faf8dd9e3b1",
+        "mobilesdk_app_id": "1:108549582747:android:f09aae10018aa1b2ff7b3e",
         "android_client_info": {
           "package_name": "com.vnstock"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "108549582747-uu1fo5ueg19ki48v7huqqmpvadq2r2a8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAMls3RqQkpNmfP0zW425TKrENi-VGFahs"
+          "current_key": "AIzaSyAmoFiPO5B_FICft8piqw7RhPU2Z3kkic4"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "474776785188-4k22gf4av77f81lpsq4j60po12hjb0le.apps.googleusercontent.com",
+              "client_id": "108549582747-uu1fo5ueg19ki48v7huqqmpvadq2r2a8.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "474776785188-m68p7a2sho2opot7jc47ie2p37gpnfhc.apps.googleusercontent.com",
+              "client_id": "108549582747-egakr5lkemnnl1qkdrbo4o7rjurfd5ns.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
                 "bundle_id": "com.vnstock"

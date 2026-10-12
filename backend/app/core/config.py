@@ -83,9 +83,9 @@ class Settings(BaseSettings):
     ENABLE_INPROCESS_CRON: bool = False
 
     # Firebase Admin configuration
-    FIREBASE_PROJECT_ID: str | None = "coinmarket-13f98"
+    FIREBASE_PROJECT_ID: str | None = "vistock-pro"
     FIREBASE_DATABASE_URL: str | None = None
-    FIREBASE_STORAGE_BUCKET: str | None = None
+    FIREBASE_STORAGE_BUCKET: str | None = "vistock-pro.firebasestorage.app"
     FIREBASE_CREDENTIALS_PATH: str | None = None
     FIREBASE_CREDENTIALS_JSON: str | None = None
 

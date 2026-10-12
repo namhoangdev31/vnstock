@@ -2,7 +2,7 @@ import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import Env from 'env';
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup } from 'firebase/auth';
 
 export type FirebaseConfig = {
   apiKey?: string;
@@ -82,6 +82,38 @@ export async function signInWithFirebaseGoogle(): Promise<{
   return {
     idToken,
     email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+  };
+}
+
+export async function signInWithFirebaseApple(): Promise<{
+  idToken: string;
+  email: string;
+  displayName: string | null;
+  photoURL: string | null;
+}> {
+  const auth = getFirebaseAuth();
+  if (!auth) {
+    throw new Error('Firebase chưa được cấu hình. Vui lòng thêm cấu hình Firebase vào file .env.');
+  }
+
+  const provider = new OAuthProvider('apple.com');
+  provider.addScope('email');
+  provider.addScope('name');
+
+  const result = await signInWithPopup(auth, provider);
+  const user = result.user;
+  const idToken = await user.getIdToken();
+
+  const email = user.email || (result as { _tokenResponse?: { email?: string } })?._tokenResponse?.email;
+  if (!email) {
+    throw new Error('Tài khoản Apple không trả về email.');
+  }
+
+  return {
+    idToken,
+    email,
     displayName: user.displayName,
     photoURL: user.photoURL,
   };

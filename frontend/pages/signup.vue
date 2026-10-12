@@ -88,6 +88,47 @@
       </UButton>
     </form>
 
+    <div class="relative my-6">
+      <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-slate-800" />
+      </div>
+      <div class="relative flex justify-center text-xs uppercase">
+        <span class="bg-surface-canvas px-2 text-slate-500">Hoặc tiếp tục với</span>
+      </div>
+    </div>
+
+    <div class="space-y-2.5">
+      <UButton
+        type="button"
+        block
+        size="md"
+        variant="outline"
+        :loading="isGoogleLoading"
+        class="font-medium !rounded-full border-slate-700 text-slate-200 hover:bg-slate-800 active:scale-[0.99] transition-all"
+        @click="handleGoogleSignUp"
+      >
+        <template #leading>
+          <UIcon name="i-logos-google-icon" class="w-4 h-4 mr-1" />
+        </template>
+        Đăng ký với Google
+      </UButton>
+
+      <UButton
+        type="button"
+        block
+        size="md"
+        variant="outline"
+        :loading="isAppleLoading"
+        class="font-medium !rounded-full border-slate-700 text-slate-200 hover:bg-slate-800 active:scale-[0.99] transition-all"
+        @click="handleAppleSignUp"
+      >
+        <template #leading>
+          <UIcon name="i-simple-icons-apple" class="w-4 h-4 mr-1 text-white" />
+        </template>
+        Đăng ký với Apple
+      </UButton>
+    </div>
+
     <div class="mt-6 text-center text-xs text-slate-400">
       Đã có tài khoản?
       <NuxtLink to="/login" class="text-aave-violet font-medium hover:underline ml-1">
@@ -106,9 +147,12 @@ useHead({
   title: "Đăng ký tài khoản - Vistock Quants",
 })
 
-const { signup, isLoading } = useAuth()
+const { signup, loginSocial, isLoading } = useAuth()
+const { signInWithGoogle, signInWithApple } = useFirebase()
 const { showErrorToast } = useCustomToast()
 const showPassword = ref(false)
+const isGoogleLoading = ref(false)
+const isAppleLoading = ref(false)
 
 const form = reactive({
   full_name: "",
@@ -135,5 +179,45 @@ const handleSignup = async () => {
       password: form.password,
     })
   } catch {}
+}
+
+const handleGoogleSignUp = async () => {
+  try {
+    isGoogleLoading.value = true
+    const googleUser = await signInWithGoogle()
+    await loginSocial({
+      provider: "google",
+      token: googleUser.idToken,
+      email: googleUser.email,
+      full_name: googleUser.displayName || undefined,
+    })
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string }
+    if (error?.code !== "auth/popup-closed-by-user") {
+      // Error handled by toast
+    }
+  } finally {
+    isGoogleLoading.value = false
+  }
+}
+
+const handleAppleSignUp = async () => {
+  try {
+    isAppleLoading.value = true
+    const appleUser = await signInWithApple()
+    await loginSocial({
+      provider: "apple",
+      token: appleUser.idToken,
+      email: appleUser.email,
+      full_name: appleUser.displayName || undefined,
+    })
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string }
+    if (error?.code !== "auth/popup-closed-by-user") {
+      // Error handled by toast
+    }
+  } finally {
+    isAppleLoading.value = false
+  }
 }
 </script>

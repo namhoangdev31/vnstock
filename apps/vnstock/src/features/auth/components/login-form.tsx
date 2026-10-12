@@ -17,7 +17,7 @@ import {
   View,
 } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
-import { Apple, Eye, EyeOff, Google, Passkey } from '@/components/ui/icons';
+import { Apple, Eye, EyeOff, Google } from '@/components/ui/icons';
 
 const schema = z.object({
   email: z
@@ -38,8 +38,7 @@ export type LoginFormProps = {
   initialMode?: 'signIn' | 'signUp';
   onGoogleSelect?: () => void;
   onAppleSelect?: () => void;
-  onPasskeySelect?: () => void;
-  loadingProvider?: 'google' | 'apple' | 'passkey' | null;
+  loadingProvider?: 'google' | 'apple' | null;
 };
 
 function AuthHeader({ onCancel }: { onCancel: () => void }) {
@@ -175,16 +174,17 @@ function FormInputs({
 }
 
 function SocialAuthSection({
+  mode = 'signIn',
   onGoogleSelect,
   onAppleSelect,
-  onPasskeySelect,
   loadingProvider,
 }: {
+  mode?: 'signIn' | 'signUp';
   onGoogleSelect?: () => void;
   onAppleSelect?: () => void;
-  onPasskeySelect?: () => void;
-  loadingProvider?: 'google' | 'apple' | 'passkey' | null;
+  loadingProvider?: 'google' | 'apple' | null;
 }) {
+  const isSignIn = mode === 'signIn';
   const isLoading = loadingProvider != null;
 
   return (
@@ -209,7 +209,7 @@ function SocialAuthSection({
               <>
                 <Google size={20} />
                 <Text className="text-body font-semibold text-midnight">
-                  Sign in with Google
+                  {isSignIn ? 'Sign in with Google' : 'Sign up with Google'}
                 </Text>
               </>
             )}
@@ -229,27 +229,7 @@ function SocialAuthSection({
               <>
                 <Apple size={20} color="#0A0B0D" />
                 <Text className="text-body font-semibold text-midnight">
-                  Sign in with Apple
-                </Text>
-              </>
-            )}
-      </Pressable>
-
-      <Pressable
-        testID="passkey-login-button"
-        disabled={isLoading}
-        className="h-12 w-full flex-row items-center justify-center gap-3 rounded-full bg-cloud active:bg-pewter"
-        onPress={onPasskeySelect}
-      >
-        {loadingProvider === 'passkey'
-          ? (
-              <ActivityIndicator size="small" color="#0A0B0D" />
-            )
-          : (
-              <>
-                <Passkey size={20} color="#0A0B0D" />
-                <Text className="text-body font-semibold text-midnight">
-                  Sign in with Passkey
+                  {isSignIn ? 'Sign in with Apple' : 'Sign up with Apple'}
                 </Text>
               </>
             )}
@@ -296,7 +276,6 @@ export function LoginForm({
   initialMode = 'signIn',
   onGoogleSelect,
   onAppleSelect,
-  onPasskeySelect,
   loadingProvider,
 }: LoginFormProps) {
   const router = useRouter();
@@ -353,9 +332,9 @@ export function LoginForm({
             </form.Subscribe>
 
             <SocialAuthSection
+              mode={mode}
               onGoogleSelect={onGoogleSelect}
               onAppleSelect={onAppleSelect}
-              onPasskeySelect={onPasskeySelect}
               loadingProvider={loadingProvider}
             />
 
