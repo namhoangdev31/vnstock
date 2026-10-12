@@ -11,6 +11,8 @@ import Env from './env';
 const EXPO_ACCOUNT_OWNER = 'vistock-pro';
 const EAS_PROJECT_ID = '75d230f4-3b22-4909-bf2a-e1fd3c27e537';
 
+const appVersion = String(Env?.EXPO_PUBLIC_VERSION || '0.0.1');
+
 const appIconBadgeConfig: AppIconBadgeConfig = {
   enabled: Env.EXPO_PUBLIC_APP_ENV !== 'production',
   badges: [
@@ -20,7 +22,7 @@ const appIconBadgeConfig: AppIconBadgeConfig = {
       color: 'white',
     },
     {
-      text: Env.EXPO_PUBLIC_VERSION.toString(),
+      text: appVersion,
       type: 'ribbon',
       color: 'white',
     },
@@ -34,7 +36,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   owner: EXPO_ACCOUNT_OWNER,
   scheme: Env.EXPO_PUBLIC_SCHEME,
   slug: 'vistock',
-  version: Env.EXPO_PUBLIC_VERSION.toString(),
+  version: appVersion,
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
