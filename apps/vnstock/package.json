@@ -18,7 +18,6 @@
     "serve:web": "npx serve dist",
     "xcode": "xed -b ios",
     "doctor": "npx expo-doctor@latest",
-    "preinstall": "npx only-allow pnpm",
     "start:preview": "cross-env EXPO_PUBLIC_APP_ENV=preview pnpm run start",
     "prebuild:preview": "cross-env EXPO_PUBLIC_APP_ENV=preview STRICT_ENV_VALIDATION=1 pnpm run prebuild",
     "prebuild:development": "cross-env EXPO_PUBLIC_APP_ENV=development STRICT_ENV_VALIDATION=1 pnpm run prebuild",

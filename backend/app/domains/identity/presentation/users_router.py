@@ -157,7 +157,6 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     user_create.email = clean_email
     user = crud.create_user(session=session, user_create=user_create)
 
-    # Tự động đăng ký người dùng lên Firebase Authentication
     from app.core.firebase import create_or_sync_firebase_user
 
     create_or_sync_firebase_user(
