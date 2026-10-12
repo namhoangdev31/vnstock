@@ -1,0 +1,36 @@
+# Native folders (managed Continuous Native Generation)
+ios/
+android/
+apps/*/ios/
+apps/*/android/
+
+# Dependencies and caches
+node_modules/
+apps/*/node_modules/
+packages/*/node_modules/
+frontend/node_modules/
+.expo/
+apps/*/.expo/
+dist/
+build/
+web-build/
+.nuxt/
+frontend/.nuxt/
+.output/
+frontend/.output/
+
+# Backend and AI directories not needed for mobile build
+backend/
+.venv/
+ai/
+
+# Lockfile deduplication (bun.lock is used by EAS)
+pnpm-lock.yaml
+apps/*/pnpm-lock.yaml
+uv.lock
+
+# Logs, tests & OS files
+coverage/
+.jest/
+*.log
+.DS_Store
