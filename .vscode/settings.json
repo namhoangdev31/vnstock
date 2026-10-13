@@ -4,13 +4,8 @@
   "biome.lsp.bin": "./node_modules/.bin/biome",
   "ty.interpreter": ["${workspaceFolder}/.venv/bin/python"],
   "python-envs.defaultEnvManager": "ms-python.python:system",
-  "cursorpyright.analysis.extraPaths": [
-    "${workspaceFolder}/backend"
-  ],
+  "cursorpyright.analysis.extraPaths": ["${workspaceFolder}/backend"],
   "css.lint.unknownAtRules": "ignore",
   "biome.configurationPath": "biome.json",
-  "cSpell.words": [
-    "uniwind",
-    "vnstock"
-  ]
+  "cSpell.words": ["iboard", "Nuxt", "uniwind", "vistock", "vnstock"]
 }

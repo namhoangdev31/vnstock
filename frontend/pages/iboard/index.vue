@@ -1,43 +1,41 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue"
+import { computed, ref, watch } from "vue";
 
 definePageMeta({
   layout: false,
-})
+});
 
-const { user, token, logout } = useAuth()
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
-// Market mode: 'underlying' (Cổ phiếu cơ sở) vs 'derivatives' (Thị trường phái sinh)
 const currentMarket = ref<"underlying" | "derivatives">(
   route.query.market === "derivatives" ? "derivatives" : "underlying",
-)
+);
 
-const isDerivatives = computed(() => currentMarket.value === "derivatives")
+const isDerivatives = computed(() => currentMarket.value === "derivatives");
 
 const toggleMarket = () => {
   const nextMarket =
-    currentMarket.value === "underlying" ? "derivatives" : "underlying"
-  currentMarket.value = nextMarket
+    currentMarket.value === "underlying" ? "derivatives" : "underlying";
+  currentMarket.value = nextMarket;
   router.replace({
     query: {
       ...route.query,
       market: nextMarket === "derivatives" ? "derivatives" : undefined,
     },
-  })
-}
+  });
+};
 
 watch(
   () => route.query.market,
   (val) => {
     if (val === "derivatives" && currentMarket.value !== "derivatives") {
-      currentMarket.value = "derivatives"
+      currentMarket.value = "derivatives";
     } else if (val !== "derivatives" && currentMarket.value !== "underlying") {
-      currentMarket.value = "underlying"
+      currentMarket.value = "underlying";
     }
   },
-)
+);
 
 useHead({
   title: computed(() =>
@@ -45,124 +43,11 @@ useHead({
       ? "Bảng giá phái sinh VN30F1M - Vistocks"
       : "Bảng giá cổ phiếu cơ sở - Vistocks",
   ),
-})
-
-// Active dropdown menu state with hover grace period
-const activeMenu = ref<string | null>(null)
-let menuTimer: ReturnType<typeof setTimeout> | null = null
-
-const openMenu = (menu: string) => {
-  if (menuTimer) clearTimeout(menuTimer)
-  activeMenu.value = menu
-}
-
-const scheduleCloseMenu = () => {
-  menuTimer = setTimeout(() => {
-    activeMenu.value = null
-  }, 150)
-}
-
-const toggleMenu = (menu: string) => {
-  activeMenu.value = activeMenu.value === menu ? null : menu
-}
-
-const closeMenu = () => {
-  if (menuTimer) clearTimeout(menuTimer)
-  activeMenu.value = null
-}
-
-// User initials for authenticated avatar
-const userInitials = computed(() => {
-  if (user.value?.full_name) {
-    const parts = user.value.full_name.trim().split(" ")
-    return parts.length > 1
-      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-      : parts[0].slice(0, 2).toUpperCase()
-  }
-  if (user.value?.email) {
-    return user.value.email.slice(0, 2).toUpperCase()
-  }
-  return "U"
-})
-
-// Realtime system clock (HH:mm:ss)
-const currentTime = ref("")
-const updateClock = () => {
-  const now = new Date()
-  currentTime.value = now.toLocaleTimeString("vi-VN", { hour12: false })
-}
-
-let clockTimer: ReturnType<typeof setInterval> | null = null
-
-interface NewsHeadline {
-  symbol: string
-  title: string
-  published_at?: string
-  url?: string | null
-  source?: string
-  is_today?: boolean
-}
-
-// Rotating financial news headlines (today or yesterday)
-const newsItems = ref<NewsHeadline[]>([])
-const currentNewsIndex = ref(0)
-let newsTimer: ReturnType<typeof setInterval> | null = null
-
-const currentNews = computed<NewsHeadline | null>(() => {
-  if (newsItems.value.length === 0) return null
-  return newsItems.value[currentNewsIndex.value] || null
-})
-
-const pickNextRandomNews = () => {
-  if (newsItems.value.length <= 1) return
-  let nextIndex = currentNewsIndex.value
-  const maxAttempts = 10
-  for (let i = 0; i < maxAttempts; i++) {
-    const candidate = Math.floor(Math.random() * newsItems.value.length)
-    if (candidate !== currentNewsIndex.value) {
-      nextIndex = candidate
-      break
-    }
-  }
-  currentNewsIndex.value = nextIndex
-}
-
-const loadMarketNews = async () => {
-  try {
-    const data = await $fetch<NewsHeadline[]>("/api/v1/stock/iboard/news", {
-      params: { limit: 40, randomize: true },
-    })
-    if (Array.isArray(data) && data.length > 0) {
-      newsItems.value = data
-      currentNewsIndex.value = Math.floor(Math.random() * data.length)
-    }
-  } catch {
-    // Keep empty if network error
-  }
-}
-
-// Mobile menu toggle
-const mobileOpen = ref(false)
-
-onMounted(() => {
-  updateClock()
-  clockTimer = setInterval(updateClock, 1000)
-
-  // Fetch real-time news from today or yesterday
-  loadMarketNews()
-
-  // Rotate randomly every 4500ms
-  newsTimer = setInterval(pickNextRandomNews, 4500)
-})
-
-onUnmounted(() => {
-  if (clockTimer) clearInterval(clockTimer)
-  if (newsTimer) clearInterval(newsTimer)
-  if (menuTimer) clearTimeout(menuTimer)
-})
+});
 </script>
 
 <template>
+<<<<<<< HEAD
   <div class="min-h-screen bg-surface-abyss text-aave-paper font-sans select-none flex flex-col">
     <!-- Top Navigation Header (DNSE Style) -->
     <header class="sticky top-0 z-50 h-12 bg-surface-midnight border-b border-white/[0.08] text-white flex items-center justify-between px-3 sm:px-4 text-xs font-sans">
@@ -636,18 +521,41 @@ onUnmounted(() => {
     </div>
 
     <!-- Main Workspace Content for iBoard -->
+=======
+  <div
+    class="min-h-screen bg-surface-abyss text-aave-paper font-sans select-none flex flex-col"
+  >
+    <IBoardHeader
+      :is-derivatives="isDerivatives"
+      @toggle-market="toggleMarket"
+    />
+
+>>>>>>> 90c00da (feat: add IBoardHeader component and update configuration settings)
     <main class="flex-1 p-3 sm:p-4 overflow-y-auto">
       <div class="w-full h-full">
-        <!-- Placeholder for iBoard trading grid -->
-        <div class="rounded-xl border border-white/[0.06] bg-surface-midnight p-8 text-center text-aave-graphite">
+        <div
+          class="rounded-xl border border-white/[0.06] bg-surface-midnight p-8 text-center text-aave-graphite"
+        >
           <div class="flex flex-col items-center justify-center gap-3 py-16">
             <UIcon
-              :name="isDerivatives ? 'i-heroicons-bolt' : 'i-heroicons-chart-bar-square'"
+              :name="
+                isDerivatives
+                  ? 'i-heroicons-bolt'
+                  : 'i-heroicons-chart-bar-square'
+              "
               class="w-12 h-12 text-rose-500/70"
             />
             <div class="flex items-center gap-2">
               <h2 class="text-base font-semibold text-white">
+<<<<<<< HEAD
                 {{ isDerivatives ? 'Bảng giá phái sinh VN30F1M' : 'Bảng giá cổ phiếu cơ sở Vistocks' }}
+=======
+                {{
+                  isDerivatives
+                    ? "Bảng giá phái sinh VN30F1M"
+                    : "Bảng giá cổ phiếu cơ sở Vistock"
+                }}
+>>>>>>> 90c00da (feat: add IBoardHeader component and update configuration settings)
               </h2>
               <span
                 class="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase"
@@ -657,14 +565,14 @@ onUnmounted(() => {
                     : 'bg-white/10 text-aave-ash border border-white/10'
                 "
               >
-                {{ isDerivatives ? 'Phái sinh' : 'Cơ sở' }}
+                {{ isDerivatives ? "Phái sinh" : "Cơ sở" }}
               </span>
             </div>
             <p class="text-xs text-aave-graphite max-w-md">
               {{
                 isDerivatives
-                  ? 'Không gian theo dõi hợp đồng tương lai chỉ số VN30, độ lệch Basis và sổ lệnh khớp liên tục thời gian thực.'
-                  : 'Không gian hiển thị bảng giá khớp lệnh thời gian thực cho các mã HOSE, HNX, UPCOM và rổ chỉ số VN30.'
+                  ? "Không gian theo dõi hợp đồng tương lai chỉ số VN30, độ lệch Basis và sổ lệnh khớp liên tục thời gian thực."
+                  : "Không gian hiển thị bảng giá khớp lệnh thời gian thực cho các mã HOSE, HNX, UPCOM và rổ chỉ số VN30."
               }}
             </p>
           </div>
