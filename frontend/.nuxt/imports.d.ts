@@ -39,7 +39,10 @@ export { useDnseApi, dnseApiClient, detectDnseSymbolType, getHistoricalOhlc, Ohl
 export { createDnseDatafeed, DatafeedBar, DatafeedPeriodParams, DatafeedHistoryMetadata, DatafeedSymbolInfo, DatafeedConfiguration } from '../composables/useDnseDatafeed';
 export { useDnseWs, dnseWsClient } from '../composables/useDnseWs';
 export { useFirebase } from '../composables/useFirebase';
+export { useIndexWsChannel, MiniChartIndexData } from '../composables/useIndexWsChannel';
+export { MarketExchange, MarketIndexSymbol } from '../composables/useMarketEnums';
 export { useMarketTicker, MarketTickerItem } from '../composables/useMarketTicker';
+export { loadTradingViewScript } from '../composables/useTradingViewScript';
 export { ShortcutConfig, ShortcutsConfig, ShortcutsOptions } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts.d';
 export { defineShortcuts } from '../../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts';
 export { useProvideButtonGroup, useInjectButtonGroup } from '../../node_modules/@nuxt/ui/dist/runtime/composables/useButtonGroup';

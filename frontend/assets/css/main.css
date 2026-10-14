@@ -6,7 +6,6 @@
 
 @layer base {
   :root {
-
     --color-aave-violet: #998eff;
     --color-obsidian: #221d1d;
     --color-inkwell: #0f0f10;
@@ -42,7 +41,6 @@
     --color-quant-bull: #35c07b;
     --color-quant-bear: #ff6b5e;
 
-    /* Ticker Semantic Theme Tokens */
     --ticker-bg: var(--color-paper);
     --ticker-border: rgba(34, 29, 29, 0.06);
     --ticker-hover: rgba(34, 29, 29, 0.04);
@@ -268,10 +266,6 @@
   box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 20px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px;
 }
 
-/* ==========================================================================
-   Quantitative Landing Page Animation & Motion System
-   ========================================================================== */
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -336,7 +330,6 @@
   }
 }
 
-/* Entrance Animations */
 .animate-fade-in-up {
   animation: fadeInUp 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -361,7 +354,6 @@
   animation: pingSlow 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
-/* Interactive Card & Row Micro-interactions */
 .interactive-card {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               border-color 0.25s ease,
@@ -383,7 +375,6 @@
   transform: translateX(3px);
 }
 
-/* Scroll Reveal Orchestration */
 .reveal-init .reveal-item {
   opacity: 0;
   transform: translate3d(0, 24px, 0);
@@ -440,7 +431,6 @@
   transform: translate3d(0, 0, 0);
 }
 
-/* Timeline Track Vertical Animation */
 .reveal-init .timeline-line-animated {
   transform: scaleY(0);
   transform-origin: top;
@@ -452,7 +442,6 @@
   transform: scaleY(1);
 }
 
-/* Factor SVG Chart Line Animation */
 .chart-line-path {
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
@@ -465,7 +454,6 @@
   stroke-dashoffset: 0;
 }
 
-/* Accessibility: Respect Reduced Motion Preferences */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -488,4 +476,3 @@
     stroke-dashoffset: 0 !important;
   }
 }
-

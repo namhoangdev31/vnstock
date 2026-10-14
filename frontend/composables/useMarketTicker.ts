@@ -1,4 +1,5 @@
 import { ref } from "vue"
+import { MarketExchange, MarketIndexSymbol } from "~/types/market"
 
 export interface MarketTickerItem {
   id: string
@@ -132,8 +133,9 @@ export const useMarketTicker = () => {
     if (msg.type === "index" && msg.index && msg.data) {
       lastRealTickTime = Date.now()
       let sym = String(msg.index).toUpperCase()
-      if (sym === "HOSE") sym = "VNINDEX"
-      if (sym === "HNXINDEX") sym = "HNX"
+      if (sym === MarketExchange.HOSE || sym === MarketIndexSymbol.HOSE)
+        sym = MarketIndexSymbol.VNINDEX
+      if (sym === MarketIndexSymbol.HNXINDEX) sym = MarketIndexSymbol.HNX
 
       const val = parseNum(msg.data.value)
       const chg = parseNum(msg.data.change)
@@ -178,9 +180,7 @@ export const useMarketTicker = () => {
       if (ws) {
         try {
           ws.close()
-        } catch {
-          // Ignore
-        }
+        } catch {}
         ws = null
       }
 
@@ -223,21 +223,18 @@ export const useMarketTicker = () => {
     }
   }
 
-  // Khởi động nhịp nhảy giá realtime (Real-time live tick jitter)
   const startRealtimeJitter = () => {
     if (jitterInterval) clearInterval(jitterInterval)
 
     jitterInterval = setInterval(() => {
       if (isPaused.value || items.value.length === 0) return
 
-      // Nếu vừa nhận tick thật trong 2 giây qua thì để tick thật làm chủ
       if (Date.now() - lastRealTickTime < 2000) return
 
-      // Chọn ngẫu nhiên 1 mã để nhảy giá (ưu tiên phái sinh và top bluechips)
       const priorityPool = [
-        "VN30F1M",
-        "VN30",
-        "VNINDEX",
+        MarketIndexSymbol.VN30F1M,
+        MarketIndexSymbol.VN30,
+        MarketIndexSymbol.VNINDEX,
         "HPG",
         "FPT",
         "VCB",
@@ -260,11 +257,13 @@ export const useMarketTicker = () => {
       const item = items.value.find((i) => i.symbol === targetSym)
       if (!item) return
 
-      // Xác định bước giá (tick step) thực tế thị trường
       let step = 0.05
-      if (targetSym === "VN30F1M") {
+      if (targetSym === MarketIndexSymbol.VN30F1M) {
         step = Math.random() > 0.5 ? 0.1 : 0.2
-      } else if (targetSym === "VNINDEX" || targetSym === "VN30") {
+      } else if (
+        targetSym === MarketIndexSymbol.VNINDEX ||
+        targetSym === MarketIndexSymbol.VN30
+      ) {
         step = Number((Math.random() * 0.25 + 0.05).toFixed(2))
       } else if (item.price >= 50) {
         step = 0.1
@@ -272,13 +271,11 @@ export const useMarketTicker = () => {
         step = 0.2
       }
 
-      // Hướng dao động ngẫu nhiên có độ lệch nhẹ theo xu hướng hiện tại
       const goUp = Math.random() > (item.change >= 0 ? 0.45 : 0.55)
       const delta = goUp ? step : -step
       const newPrice = Number((item.price + delta).toFixed(2))
       const newChange = Number((item.change + delta).toFixed(2))
 
-      // Tính lại tỷ lệ thay đổi phần trăm
       const baseRef = item.refPrice || item.price - item.change
       const newPct =
         baseRef > 0
@@ -298,7 +295,7 @@ export const useMarketTicker = () => {
       const [indicesRes, boardRes] = await Promise.allSettled([
         $fetch<RawIndexItem[]>("/api/v1/stock/iboard/indices"),
         $fetch<RawStockRow[]>("/api/v1/stock/iboard/board", {
-          params: { group: "VN30", limit: 30 },
+          params: { group: MarketIndexSymbol.VN30, limit: 30 },
         }),
       ])
 
@@ -317,7 +314,8 @@ export const useMarketTicker = () => {
           const isUnch = raw.is_unchanged ?? change === 0
 
           let sym = raw.name
-          if (raw.name === "HNX-INDEX") sym = "HNX"
+          if (raw.name === MarketIndexSymbol.HNX_INDEX)
+            sym = MarketIndexSymbol.HNX
           if (raw.id === "dji") continue
 
           parsedIndices.push({
@@ -330,7 +328,8 @@ export const useMarketTicker = () => {
             isPositive: isPos,
             isUnchanged: isUnch,
             volume: raw.volume,
-            category: sym === "VN30F1M" ? "derivative" : "index",
+            category:
+              sym === MarketIndexSymbol.VN30F1M ? "derivative" : "index",
             refPrice: price - change,
           })
         }
@@ -359,15 +358,31 @@ export const useMarketTicker = () => {
       }
 
       const primaryIndices = parsedIndices.filter((i) =>
-        ["VNINDEX", "VN30", "VN30F1M"].includes(i.symbol),
+        [
+          MarketIndexSymbol.VNINDEX,
+          MarketIndexSymbol.VN30,
+          MarketIndexSymbol.VN30F1M,
+        ].includes(i.symbol as MarketIndexSymbol),
       )
       primaryIndices.sort((a, b) => {
-        const order = ["VNINDEX", "VN30", "VN30F1M"]
-        return order.indexOf(a.symbol) - order.indexOf(b.symbol)
+        const order = [
+          MarketIndexSymbol.VNINDEX,
+          MarketIndexSymbol.VN30,
+          MarketIndexSymbol.VN30F1M,
+        ]
+        return (
+          order.indexOf(a.symbol as MarketIndexSymbol) -
+          order.indexOf(b.symbol as MarketIndexSymbol)
+        )
       })
 
       const secondaryIndices = parsedIndices.filter(
-        (i) => !["VNINDEX", "VN30", "VN30F1M"].includes(i.symbol),
+        (i) =>
+          ![
+            MarketIndexSymbol.VNINDEX,
+            MarketIndexSymbol.VN30,
+            MarketIndexSymbol.VN30F1M,
+          ].includes(i.symbol as MarketIndexSymbol),
       )
 
       const prioritySymbols = [
@@ -412,7 +427,6 @@ export const useMarketTicker = () => {
     initWebSocket()
     startRealtimeJitter()
 
-    // Đồng bộ lại định kỳ mỗi 15 giây với REST API
     if (pollInterval) clearInterval(pollInterval)
     pollInterval = setInterval(() => {
       fetchTickerData()
@@ -423,9 +437,7 @@ export const useMarketTicker = () => {
     if (ws) {
       try {
         ws.close()
-      } catch {
-        // Ignore
-      }
+      } catch {}
       ws = null
     }
     if (reconnectTimeout) {

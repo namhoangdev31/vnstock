@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue"
 import { createDnseDatafeed } from "~/composables/useDnseDatafeed"
+import { loadTradingViewScript } from "~/composables/useTradingViewScript"
 
 interface Props {
   symbol?: string
@@ -19,31 +20,6 @@ const loadError = ref<string | null>(null)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let tvWidget: any = null
-
-function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof window !== "undefined" && (window as any).TradingView?.widget) {
-      resolve()
-      return
-    }
-
-    const existing = document.querySelector(`script[src="${src}"]`)
-    if (existing) {
-      existing.addEventListener("load", () => resolve())
-      existing.addEventListener("error", (e) => reject(e))
-      return
-    }
-
-    const script = document.createElement("script")
-    script.src = src
-    script.type = "text/javascript"
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () =>
-      reject(new Error(`Không thể nạp tệp thư viện: ${src}`))
-    document.head.appendChild(script)
-  })
-}
 
 function initChart() {
   const TradingView = (window as any).TradingView
@@ -101,7 +77,7 @@ function initChart() {
 
 onMounted(async () => {
   try {
-    await loadScript("/charting_library/charting_library.standalone.js")
+    await loadTradingViewScript()
     initChart()
   } catch (err) {
     console.error("[TradingViewChart] Không thể tải thư viện TradingView:", err)
@@ -124,10 +100,9 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="relative w-full h-full min-h-[500px] bg-zinc-950 rounded overflow-hidden">
-    <!-- Vùng hiển thị biểu đồ -->
+
     <div :id="containerId" ref="chartContainerRef" class="w-full h-full min-h-[500px]" />
 
-    <!-- Trạng thái đang tải -->
     <div
       v-if="isLoading"
       class="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/80 z-10 font-mono text-xs text-zinc-400 gap-2"
@@ -136,7 +111,6 @@ onBeforeUnmount(() => {
       <span>Đang khởi tạo biểu đồ TradingView...</span>
     </div>
 
-    <!-- Trạng thái lỗi -->
     <div
       v-if="loadError"
       class="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 z-20 font-mono text-xs text-rose-400 p-4 text-center gap-2"

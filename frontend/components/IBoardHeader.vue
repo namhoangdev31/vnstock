@@ -1,139 +1,130 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue"
 
 interface Props {
-  isDerivatives?: boolean;
+  isDerivatives?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isDerivatives: false,
-});
+})
 
 const emit = defineEmits<{
-  (e: "toggle-market"): void;
-  (e: "update:isDerivatives", val: boolean): void;
-}>();
+  (e: "toggle-market"): void
+  (e: "update:isDerivatives", val: boolean): void
+}>()
 
-const { user, token, logout } = useAuth();
+const { user, token, logout } = useAuth()
 
-// Active dropdown menu state with hover grace period
-const activeMenu = ref<string | null>(null);
-let menuTimer: ReturnType<typeof setTimeout> | null = null;
+const activeMenu = ref<string | null>(null)
+let menuTimer: ReturnType<typeof setTimeout> | null = null
 
 const openMenu = (menu: string) => {
-  if (menuTimer) clearTimeout(menuTimer);
-  activeMenu.value = menu;
-};
+  if (menuTimer) clearTimeout(menuTimer)
+  activeMenu.value = menu
+}
 
 const scheduleCloseMenu = () => {
   menuTimer = setTimeout(() => {
-    activeMenu.value = null;
-  }, 150);
-};
-
-const toggleMenu = (menu: string) => {
-  activeMenu.value = activeMenu.value === menu ? null : menu;
-};
-
-const closeMenu = () => {
-  if (menuTimer) clearTimeout(menuTimer);
-  activeMenu.value = null;
-};
-
-// User initials for authenticated avatar
-const userInitials = computed(() => {
-  if (user.value?.full_name) {
-    const parts = user.value.full_name.trim().split(" ");
-    return parts.length > 1
-      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-      : parts[0].slice(0, 2).toUpperCase();
-  }
-  if (user.value?.email) {
-    return user.value.email.slice(0, 2).toUpperCase();
-  }
-  return "U";
-});
-
-// Realtime system clock (HH:mm:ss)
-const currentTime = ref("");
-const updateClock = () => {
-  const now = new Date();
-  currentTime.value = now.toLocaleTimeString("vi-VN", { hour12: false });
-};
-
-let clockTimer: ReturnType<typeof setInterval> | null = null;
-
-interface NewsHeadline {
-  symbol: string;
-  title: string;
-  published_at?: string;
-  url?: string | null;
-  source?: string;
-  is_today?: boolean;
+    activeMenu.value = null
+  }, 150)
 }
 
-// Rotating financial news headlines (today or yesterday)
-const newsItems = ref<NewsHeadline[]>([]);
-const currentNewsIndex = ref(0);
-let newsTimer: ReturnType<typeof setInterval> | null = null;
+const toggleMenu = (menu: string) => {
+  activeMenu.value = activeMenu.value === menu ? null : menu
+}
+
+const closeMenu = () => {
+  if (menuTimer) clearTimeout(menuTimer)
+  activeMenu.value = null
+}
+
+const userInitials = computed(() => {
+  if (user.value?.full_name) {
+    const parts = user.value.full_name.trim().split(" ")
+    return parts.length > 1
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : parts[0].slice(0, 2).toUpperCase()
+  }
+  if (user.value?.email) {
+    return user.value.email.slice(0, 2).toUpperCase()
+  }
+  return "U"
+})
+
+const currentTime = ref("")
+const updateClock = () => {
+  const now = new Date()
+  currentTime.value = now.toLocaleTimeString("vi-VN", { hour12: false })
+}
+
+let clockTimer: ReturnType<typeof setInterval> | null = null
+
+interface NewsHeadline {
+  symbol: string
+  title: string
+  published_at?: string
+  url?: string | null
+  source?: string
+  is_today?: boolean
+}
+
+const newsItems = ref<NewsHeadline[]>([])
+const currentNewsIndex = ref(0)
+let newsTimer: ReturnType<typeof setInterval> | null = null
 
 const currentNews = computed<NewsHeadline | null>(() => {
-  if (newsItems.value.length === 0) return null;
-  return newsItems.value[currentNewsIndex.value] || null;
-});
+  if (newsItems.value.length === 0) return null
+  return newsItems.value[currentNewsIndex.value] || null
+})
 
 const pickNextRandomNews = () => {
-  if (newsItems.value.length <= 1) return;
-  let nextIndex = currentNewsIndex.value;
-  const maxAttempts = 10;
+  if (newsItems.value.length <= 1) return
+  let nextIndex = currentNewsIndex.value
+  const maxAttempts = 10
   for (let i = 0; i < maxAttempts; i++) {
-    const candidate = Math.floor(Math.random() * newsItems.value.length);
+    const candidate = Math.floor(Math.random() * newsItems.value.length)
     if (candidate !== currentNewsIndex.value) {
-      nextIndex = candidate;
-      break;
+      nextIndex = candidate
+      break
     }
   }
-  currentNewsIndex.value = nextIndex;
-};
+  currentNewsIndex.value = nextIndex
+}
 
 const loadMarketNews = async () => {
   try {
     const data = await $fetch<NewsHeadline[]>("/api/v1/stock/iboard/news", {
       params: { limit: 40, randomize: true },
-    });
+    })
     if (Array.isArray(data) && data.length > 0) {
-      newsItems.value = data;
-      currentNewsIndex.value = Math.floor(Math.random() * data.length);
+      newsItems.value = data
+      currentNewsIndex.value = Math.floor(Math.random() * data.length)
     }
-  } catch {
-    // Keep empty if network error
-  }
-};
+  } catch {}
+}
 
 const toggleMarket = () => {
-  emit("toggle-market");
-  emit("update:isDerivatives", !props.isDerivatives);
-};
+  emit("toggle-market")
+  emit("update:isDerivatives", !props.isDerivatives)
+}
 
-// Mobile menu toggle
-const mobileOpen = ref(false);
+const mobileOpen = ref(false)
 
 onMounted(() => {
-  updateClock();
-  clockTimer = setInterval(updateClock, 1000);
+  updateClock()
+  clockTimer = setInterval(updateClock, 1000)
 
-  // Fetch real-time news from today or yesterday
-  loadMarketNews();
+  loadMarketNews()
 
-  // Rotate randomly every 4500ms
-  newsTimer = setInterval(pickNextRandomNews, 4500);
-});
+  newsTimer = setInterval(pickNextRandomNews, 4500)
+})
 
 onUnmounted(() => {
-  if (clockTimer) clearInterval(clockTimer);
-  if (newsTimer) clearInterval(newsTimer);
-  if (menuTimer) clearTimeout(menuTimer);
-});
+  if (clockTimer) clearInterval(clockTimer)
+  if (newsTimer) clearInterval(newsTimer)
+  if (menuTimer) clearTimeout(menuTimer)
+})
 </script>
 
 <template>
@@ -141,9 +132,9 @@ onUnmounted(() => {
     class="sticky top-0 z-50 bg-surface-midnight border-b border-white/[0.08] text-white text-xs font-sans"
   >
     <div class="h-12 flex items-center justify-between px-3 sm:px-4">
-      <!-- Left: Logo, Home, and Navigation Links -->
+
       <div class="flex items-center gap-1 sm:gap-2 lg:gap-3 shrink-0">
-        <!-- Brand Logo -->
+
         <NuxtLink to="/iboard" class="flex items-center gap-2 mr-1 group">
           <span
             class="font-bold tracking-tight text-sm text-white group-hover:text-rose-400 transition-colors"
@@ -323,7 +314,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- 5. Tài sản Dropdown -->
           <div
             class="relative h-12 flex items-center"
             @mouseenter="openMenu('assets')"
@@ -391,7 +381,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- 6. Tiện ích Dropdown -->
           <div
             class="relative h-12 flex items-center"
             @mouseenter="openMenu('tools')"
@@ -461,7 +450,6 @@ onUnmounted(() => {
         </nav>
       </div>
 
-      <!-- Center: News Ticker / Marquee Box -->
       <div
         v-if="currentNews"
         class="hidden xl:flex items-center flex-1 max-w-sm 2xl:max-w-md mx-2 min-w-0"
@@ -493,18 +481,16 @@ onUnmounted(() => {
         </UTooltip>
       </div>
 
-      <!-- Right: Clock, Tools, Auth Buttons -->
       <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-        <!-- Live Clock (HH:mm:ss) -->
+
         <div
           class="font-mono text-xs text-white tracking-wide shrink-0 hidden sm:block"
         >
           {{ currentTime }}
         </div>
 
-        <!-- Quick Action Icons -->
         <div class="flex items-center gap-0.5 text-aave-ash">
-          <!-- Flame / Heatmap Icon -->
+
           <UTooltip text="Bản đồ nhiệt thị trường">
             <button
               type="button"
@@ -514,7 +500,6 @@ onUnmounted(() => {
             </button>
           </UTooltip>
 
-          <!-- Settings Gear -->
           <UTooltip text="Cài đặt bảng giá">
             <button
               type="button"
@@ -524,7 +509,6 @@ onUnmounted(() => {
             </button>
           </UTooltip>
 
-          <!-- Market Switch Button: Cổ phiếu cơ sở <-> Thị trường phái sinh -->
           <UTooltip
             :text="
               isDerivatives
@@ -550,7 +534,7 @@ onUnmounted(() => {
               >
                 {{ isDerivatives ? "Phái sinh" : "Cơ sở" }}
               </span>
-              <!-- Physical Switch Indicator Track -->
+
               <span
                 class="w-6 h-3 rounded-full p-0.5 inline-flex items-center transition-colors relative shrink-0"
                 :class="isDerivatives ? 'bg-rose-600' : 'bg-white/20'"
@@ -564,7 +548,6 @@ onUnmounted(() => {
           </UTooltip>
         </div>
 
-        <!-- User Authentication State -->
         <template v-if="token">
           <div
             class="flex items-center gap-2 pl-2 border-l border-white/[0.08]"
@@ -613,7 +596,6 @@ onUnmounted(() => {
           </div>
         </template>
 
-        <!-- Mobile Menu Hamburger Button -->
         <button
           type="button"
           class="lg:hidden p-1.5 text-aave-ash hover:text-white rounded hover:bg-white/[0.06]"
@@ -628,7 +610,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Mobile Drawer for smaller screens -->
     <div
       v-if="mobileOpen"
       class="lg:hidden border-t border-white/[0.08] bg-surface-midnight px-4 py-3 space-y-2 animate-fade-in-down"
@@ -640,7 +621,6 @@ onUnmounted(() => {
         <span>{{ currentTime }}</span>
       </div>
 
-      <!-- Mobile Market Switcher -->
       <div
         class="flex items-center justify-between px-3 py-2 rounded bg-white/[0.03] border border-white/[0.06] text-xs"
       >

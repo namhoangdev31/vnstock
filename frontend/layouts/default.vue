@@ -1,9 +1,9 @@
 <template>
   <div class="min-h-screen bg-aave-inkwell text-aave-paper font-sans selection:bg-aave-violet selection:text-aave-charcoal flex flex-col">
-    <!-- Top Navigation Header -->
+
     <header class="sticky top-0 z-40 h-14 bg-aave-obsidian border-b border-white/[0.06] backdrop-blur-md">
       <div class="h-full px-4 sm:px-6 flex items-center justify-between gap-4">
-        <!-- Left: Brand Logo & Navigation -->
+
         <div class="flex items-center gap-6">
           <NuxtLink to="/app" class="flex items-center gap-2 group">
             <span class="font-semibold tracking-tight text-base text-white group-hover:text-aave-violet transition-colors">
@@ -11,7 +11,6 @@
             </span>
           </NuxtLink>
 
-          <!-- Desktop Navigation Links -->
           <nav class="hidden md:flex items-center gap-1">
             <NuxtLink
               to="/app"
@@ -32,9 +31,8 @@
           </nav>
         </div>
 
-        <!-- Right: Session info, clock, user menu -->
         <div class="flex items-center gap-3">
-          <!-- Session Status Badge -->
+
           <UTooltip :text="sessionStatus.tooltip">
             <div class="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs font-mono">
               <span class="w-1.5 h-1.5 rounded-full" :class="sessionStatus.active ? 'bg-quant-bull' : 'bg-aave-graphite'" />
@@ -43,7 +41,6 @@
             </div>
           </UTooltip>
 
-          <!-- Landing Page Link -->
           <NuxtLink
             to="/"
             class="p-2 text-aave-graphite hover:text-white rounded-lg hover:bg-white/[0.05] transition-colors"
@@ -52,7 +49,6 @@
             <UIcon name="i-heroicons-globe-alt" class="w-4 h-4" />
           </NuxtLink>
 
-          <!-- User Section -->
           <template v-if="user">
             <div class="flex items-center gap-2 pl-2 border-l border-white/[0.06]">
               <div class="w-7 h-7 rounded-full bg-aave-violet text-aave-charcoal font-mono font-bold text-xs flex items-center justify-center">
@@ -80,7 +76,6 @@
             </NuxtLink>
           </template>
 
-          <!-- Mobile Menu Trigger -->
           <button
             type="button"
             class="md:hidden p-1.5 text-aave-graphite hover:text-white rounded-lg hover:bg-white/[0.05]"
@@ -92,7 +87,6 @@
         </div>
       </div>
 
-      <!-- Mobile Navigation Drawer / Dropdown -->
       <div
         v-if="mobileOpen"
         class="md:hidden border-b border-white/[0.06] bg-aave-obsidian px-4 py-3 space-y-2 animate-fade-in-down"
@@ -149,12 +143,10 @@
       </div>
     </header>
 
-    <!-- Main Content Slot -->
     <main class="flex-1 w-full min-w-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <slot />
     </main>
 
-    <!-- Minimalist Quiet Footer -->
     <footer class="border-t border-white/[0.06] bg-aave-obsidian py-3.5 px-6 text-center text-xs text-aave-graphite font-mono">
       <span>© 2026 Vistocks Quants · Nền tảng nghiên cứu định lượng & mô phỏng giao dịch</span>
     </footer>

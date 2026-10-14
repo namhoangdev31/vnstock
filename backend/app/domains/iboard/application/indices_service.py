@@ -10,6 +10,7 @@ from typing import Any
 from sqlmodel import Session, col, select
 
 from app.core.cache import realtime_cache
+from app.core.enums import MarketIndex
 from app.domains.iboard.application.schemas import (
     IBoardIndexBreadth,
     IBoardIndexItem,
@@ -72,23 +73,26 @@ class IBoardIndicesService:
         hose_symbols = _sym_set(StockSymbol.exchange, "HOSE")
         hnx_symbols = _sym_set(StockSymbol.exchange, "HNX")
         hnx30_symbols = _sym_set(StockSymbol.index_group, "HNX30")
+        upcom_symbols = _sym_set(StockSymbol.exchange, "UPCOM")
 
         vn = VnstockService(db_session=session)
         items: list[IBoardIndexItem] = []
 
         target_indices = [
-            ("VN30", "vn30", "VN30", vn30_symbols),
-            ("VNINDEX", "vnindex", "VNINDEX", hose_symbols),
-            ("HNX30", "hnx30", "HNX30", hnx30_symbols),
-            ("VN30F1M", "vn30f1m", "VN30F1M", set()),
-            ("HNXINDEX", "hnx", "HNX-INDEX", hnx_symbols),
+            (MarketIndex.VN30, "vn30", "VN30", vn30_symbols),
+            (MarketIndex.VNINDEX, "vnindex", "VNINDEX", hose_symbols),
+            (MarketIndex.HNX30, "hnx30", "HNX30", hnx30_symbols),
+            (MarketIndex.VN30F1M, "vn30f1m", "VN30F1M", set()),
+            (MarketIndex.HNXINDEX, "hnx", "HNX-INDEX", hnx_symbols),
+            (MarketIndex.UPCOMINDEX, "upcom", "UPCOM", upcom_symbols),
         ]
 
         basket_map: dict[str, set[str]] = {
-            "VN30": vn30_symbols,
-            "VNINDEX": hose_symbols,
-            "HNX30": hnx30_symbols,
-            "HNXINDEX": hnx_symbols,
+            MarketIndex.VN30: vn30_symbols,
+            MarketIndex.VNINDEX: hose_symbols,
+            MarketIndex.HNX30: hnx30_symbols,
+            MarketIndex.HNXINDEX: hnx_symbols,
+            MarketIndex.UPCOMINDEX: upcom_symbols,
         }
 
         for code, idx_id, display_name, subset in target_indices:
@@ -105,17 +109,19 @@ class IBoardIndicesService:
             chg = cur_close - prev_close
             pct = (chg / prev_close * 100) if prev_close else 0.0
 
-            is_deriv = code == "VN30F1M"
+            is_deriv = code == MarketIndex.VN30F1M
 
             raw_vol = float(latest.volume)
             raw_val = float(latest.value or 0)
 
             # Check realtime DNSE cache for market index updates
             cached_idx = realtime_cache.get(f"index:{code}")
-            if not cached_idx and code == "HNXINDEX":
-                cached_idx = realtime_cache.get("index:HNX")
-            elif not cached_idx and code == "VNINDEX":
+            if not cached_idx and code == MarketIndex.HNXINDEX:
+                cached_idx = realtime_cache.get(f"index:{MarketIndex.HNX}")
+            elif not cached_idx and code == MarketIndex.VNINDEX:
                 cached_idx = realtime_cache.get("index:HOSE")
+            elif not cached_idx and code == MarketIndex.UPCOMINDEX:
+                cached_idx = realtime_cache.get(f"index:{MarketIndex.UPCOM}")
 
             breadth: IBoardIndexBreadth
             if (
@@ -149,8 +155,8 @@ class IBoardIndicesService:
                     )
             elif is_deriv:
                 cached_rt = realtime_cache.get(
-                    "realtime:VN30F1M"
-                ) or realtime_cache.get("iboard_quote:VN30F1M")
+                    f"realtime:{MarketIndex.VN30F1M}"
+                ) or realtime_cache.get(f"iboard_quote:{MarketIndex.VN30F1M}")
                 if cached_rt and isinstance(cached_rt, dict):
                     c_p = cached_rt.get("close") or cached_rt.get("close_price")
                     if c_p is not None:
@@ -229,6 +235,7 @@ class IBoardIndicesService:
                     value=val_str,
                     breadth=breadth,
                     sparkline=sparkline,
+                    ref_price=prev_close,
                 )
             )
 

@@ -26,9 +26,6 @@ export interface HistoricalOhlcResult {
   raw: OhlcResponseData
 }
 
-/**
- * DNSE REST API Composable
- */
 export const useDnseApi = (): DNSEClient => {
   if (!_apiClient) {
     let apiKey = ""
@@ -71,31 +68,27 @@ export const dnseApiClient = new Proxy({} as DNSEClient, {
   },
 })
 
-/**
- * Lấy lịch sử nến OHLC:
- * Tải nến 1m của ngày hôm nay (từ thời điểm mở phiên đến hiện tại) kèm toàn bộ nến 1m của 1 ngày giao dịch liền trước (T-1).
- */
-const KNOWN_INDICES = new Set([
-  "VNINDEX",
-  "VN30",
-  "HNX",
-  "UPCOM",
-  "HNX30",
-  "VN100",
-  "VNALL",
-  "VNCOND",
-  "VNCONS",
-  "VNENE",
-  "VNFIN",
-  "VNHEAL",
-  "VNIND",
-  "VNIT",
-  "VNMAT",
-  "VNMID",
-  "VNREAL",
-  "VNSI",
-  "VNSML",
-  "VNUTI",
+const KNOWN_INDICES = new Set<string>([
+  MarketIndexSymbol.VNINDEX,
+  MarketIndexSymbol.VN30,
+  MarketIndexSymbol.HNX,
+  MarketIndexSymbol.UPCOM,
+  MarketIndexSymbol.HNX30,
+  MarketIndexSymbol.VN100,
+  MarketIndexSymbol.VNALL,
+  MarketIndexSymbol.VNCOND,
+  MarketIndexSymbol.VNCONS,
+  MarketIndexSymbol.VNENE,
+  MarketIndexSymbol.VNFIN,
+  MarketIndexSymbol.VNHEAL,
+  MarketIndexSymbol.VNIND,
+  MarketIndexSymbol.VNIT,
+  MarketIndexSymbol.VNMAT,
+  MarketIndexSymbol.VNMID,
+  MarketIndexSymbol.VNREAL,
+  MarketIndexSymbol.VNSI,
+  MarketIndexSymbol.VNSML,
+  MarketIndexSymbol.VNUTI,
 ])
 
 export function detectDnseSymbolType(
@@ -103,7 +96,7 @@ export function detectDnseSymbolType(
 ): "DERIVATIVE" | "INDEX" | "STOCK" {
   const upper = symbol.toUpperCase().trim()
   if (
-    upper === "VN30F1M" ||
+    upper === MarketIndexSymbol.VN30F1M ||
     upper === "VN30F2M" ||
     upper === "VN30F1Q" ||
     upper === "VN30F2Q" ||
@@ -121,9 +114,6 @@ export function detectDnseSymbolType(
   return "STOCK"
 }
 
-/**
- * Lấy nến lịch sử OHLC và lọc nến theo phiên T-1 và T-0 (mặc định cho VN30F1M)
- */
 export const getHistoricalOhlc = async (options?: {
   symbol?: string
   type?: "DERIVATIVE" | "STOCK" | "INDEX" | string
@@ -141,7 +131,6 @@ export const getHistoricalOhlc = async (options?: {
 
   let raw: OhlcResponseData | null = null
 
-  // 1. Ưu tiên gọi qua Backend Proxy (/api/v1/dnse/price/ohlc) để tránh triệt để lỗi CORS trên trình duyệt
   try {
     const config = useRuntimeConfig()
     const apiBase = import.meta.client
@@ -169,7 +158,6 @@ export const getHistoricalOhlc = async (options?: {
     )
   }
 
-  // 2. Fallback nếu backend proxy không khả dụng
   if (!raw) {
     try {
       const client = useDnseApi()
@@ -243,7 +231,6 @@ export const getHistoricalOhlc = async (options?: {
     todayDate = tradingDates[0]
     todayCandles = groupedByDate[todayDate]
   } else if (tradingDates.length >= 2) {
-    // 2 ngày giao dịch gần nhất: T-1 (ngày trước đó) và T-0 (ngày hôm nay)
     previousDate = tradingDates[tradingDates.length - 2]
     todayDate = tradingDates[tradingDates.length - 1]
     previousDayCandles = groupedByDate[previousDate]
@@ -254,8 +241,6 @@ export const getHistoricalOhlc = async (options?: {
     }
   }
 
-  // Danh sách nến: Nếu options?.all = true hoặc options?.from được truyền vào thì lấy toàn bộ allCandles,
-  // ngược lại mặc định lấy 2 phiên gần nhất (T-1 + T-0).
   const combinedCandles =
     options?.all || (options?.from !== undefined && options?.to !== undefined)
       ? allCandles

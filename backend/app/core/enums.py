@@ -87,6 +87,17 @@ class Exchange(StrEnum):
     UPCOM = "UPCOM"
 
 
+class MarketIndex(StrEnum):
+    VNINDEX = "VNINDEX"
+    VN30 = "VN30"
+    HNX = "HNX"
+    HNX30 = "HNX30"
+    HNXINDEX = "HNXINDEX"
+    UPCOM = "UPCOM"
+    UPCOMINDEX = "UPCOMINDEX"
+    VN30F1M = "VN30F1M"
+
+
 class MacroIndicatorCode(StrEnum):
     USD_VND = "USD_VND"
     SJC_GOLD_BUY = "SJC_GOLD_BUY"
@@ -117,6 +128,7 @@ __all__ = [
     "ForecastHorizon",
     "ForecastStatus",
     "MacroIndicatorCode",
+    "MarketIndex",
     "OrderSide",
     "OrderStatus",
     "OrderType",

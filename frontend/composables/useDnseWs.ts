@@ -2,9 +2,6 @@ import { TradingClient } from "@vnstock/dnse"
 
 let _wsClient: TradingClient | null = null
 
-/**
- * DNSE WebSocket Composable
- */
 export const useDnseWs = (): TradingClient => {
   if (!_wsClient) {
     let apiKey = ""

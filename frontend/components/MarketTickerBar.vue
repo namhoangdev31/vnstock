@@ -41,7 +41,6 @@ const onItemClick = (symbol: string) => {
   emit("select", symbol)
 }
 
-// Định dạng giá kiểu Việt Nam: 1.412,68 hoặc 72,15
 const formatPrice = (val: number): string => {
   if (typeof val !== "number" || Number.isNaN(val)) return "-"
   const parts = val.toFixed(2).split(".")
@@ -49,7 +48,6 @@ const formatPrice = (val: number): string => {
   return parts.join(",")
 }
 
-// Định dạng tỷ lệ phần trăm chuẩn tài chính: +0,62%, −0,49%, 0,00%
 const formatChangePercent = (item: MarketTickerItem): string => {
   const val = item.changePercent
   if (typeof val !== "number" || Number.isNaN(val) || Math.abs(val) < 0.001) {
@@ -71,7 +69,6 @@ const getColorClass = (item: MarketTickerItem): string => {
   return "text-tv-gold"
 }
 
-// Thời lượng chạy marquee mượt mà và chậm rãi
 const animationDuration = computed(() => {
   const count = items.value.length
   if (count <= 5) return "50s"
@@ -94,14 +91,14 @@ const themeClass = computed(() => {
       class="mx-auto flex h-10 items-center px-4 sm:px-6"
       :class="props.fluid ? 'w-full' : 'max-w-[1200px]'"
     >
-      <!-- Running Real-time Ticker Track -->
+
       <div class="flex-1 overflow-hidden relative h-full flex items-center cursor-default">
         <div
           v-if="items.length > 0"
           class="ticker-track flex w-max items-center whitespace-nowrap will-change-transform"
           :style="{ animationDuration }"
         >
-          <!-- Track 1 -->
+
           <div class="flex items-center gap-8 pr-8 shrink-0">
             <span
               v-for="item in items"
@@ -133,7 +130,6 @@ const themeClass = computed(() => {
             </span>
           </div>
 
-          <!-- Track 2 (Duplicate for Seamless Infinite Loop) -->
           <div class="flex items-center gap-8 pr-8 shrink-0" aria-hidden="true">
             <span
               v-for="item in items"
@@ -166,7 +162,6 @@ const themeClass = computed(() => {
           </div>
         </div>
 
-        <!-- Loading State -->
         <div
           v-else-if="isLoading"
           class="text-xs font-mono flex items-center gap-2 text-ticker-muted"
@@ -175,7 +170,6 @@ const themeClass = computed(() => {
           <span>Đang nạp luồng bảng giá trực tiếp...</span>
         </div>
 
-        <!-- Empty State -->
         <div
           v-else
           class="text-xs font-mono text-ticker-muted"

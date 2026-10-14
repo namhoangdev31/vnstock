@@ -1615,6 +1615,7 @@ export type IBoardIndexItem = {
      * Sparkline
      */
     sparkline: Array<number>;
+    ref_price?: number | null;
 };
 
 /**

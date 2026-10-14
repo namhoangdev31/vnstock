@@ -154,7 +154,6 @@ const handleGoogleSignIn = async () => {
   } catch (err: unknown) {
     const error = err as { code?: string; message?: string }
     if (error?.code !== "auth/popup-closed-by-user") {
-      // Error handling is managed by loginSocial toast
     }
   } finally {
     isGoogleLoading.value = false
@@ -174,7 +173,6 @@ const handleAppleSignIn = async () => {
   } catch (err: unknown) {
     const error = err as { code?: string; message?: string }
     if (error?.code !== "auth/popup-closed-by-user") {
-      // Error handling is managed by loginSocial toast
     }
   } finally {
     isAppleLoading.value = false

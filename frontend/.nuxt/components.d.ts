@@ -16,7 +16,10 @@ type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {},
 
 export const ClosedLoopPipelineCard: typeof import("../components/ClosedLoopPipelineCard.vue")['default']
 export const FactorPerformanceSection: typeof import("../components/FactorPerformanceSection.vue")['default']
+export const IBoardContent: typeof import("../components/IBoardContent.vue")['default']
 export const IBoardHeader: typeof import("../components/IBoardHeader.vue")['default']
+export const IBoardMiniChart: typeof import("../components/IBoardMiniChart.vue")['default']
+export const IBoardMiniChartsBar: typeof import("../components/IBoardMiniChartsBar.vue")['default']
 export const MarkdownViewer: typeof import("../components/MarkdownViewer.vue")['default']
 export const MarketTickerBar: typeof import("../components/MarketTickerBar.vue")['default']
 export const QuantPulseCard: typeof import("../components/QuantPulseCard.vue")['default']
@@ -98,7 +101,10 @@ export const Body: typeof import("../../node_modules/nuxt/dist/head/runtime/comp
 export const NuxtIsland: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-island")['default']
 export const LazyClosedLoopPipelineCard: LazyComponent<typeof import("../components/ClosedLoopPipelineCard.vue")['default']>
 export const LazyFactorPerformanceSection: LazyComponent<typeof import("../components/FactorPerformanceSection.vue")['default']>
+export const LazyIBoardContent: LazyComponent<typeof import("../components/IBoardContent.vue")['default']>
 export const LazyIBoardHeader: LazyComponent<typeof import("../components/IBoardHeader.vue")['default']>
+export const LazyIBoardMiniChart: LazyComponent<typeof import("../components/IBoardMiniChart.vue")['default']>
+export const LazyIBoardMiniChartsBar: LazyComponent<typeof import("../components/IBoardMiniChartsBar.vue")['default']>
 export const LazyMarkdownViewer: LazyComponent<typeof import("../components/MarkdownViewer.vue")['default']>
 export const LazyMarketTickerBar: LazyComponent<typeof import("../components/MarketTickerBar.vue")['default']>
 export const LazyQuantPulseCard: LazyComponent<typeof import("../components/QuantPulseCard.vue")['default']>

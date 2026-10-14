@@ -59,9 +59,6 @@ function mapResolutionToDnse(res: string): string {
   return res
 }
 
-/**
- * Custom Datafeed cho TradingView Charting Library sử dụng DNSE API và WebSocket
- */
 export function createDnseDatafeed() {
   const subscribers = new Map<
     string,
@@ -102,59 +99,59 @@ export function createDnseDatafeed() {
     ) => {
       const defaultSymbols = [
         {
-          symbol: "VN30F1M",
-          full_name: "HNX:VN30F1M",
+          symbol: MarketIndexSymbol.VN30F1M,
+          full_name: `${MarketExchange.HNX}:${MarketIndexSymbol.VN30F1M}`,
           description: "Hợp đồng tương lai chỉ số VN30 tháng hiện tại",
-          exchange: "HNX",
+          exchange: MarketExchange.HNX,
           type: "futures",
         },
         {
           symbol: "VN30F2M",
-          full_name: "HNX:VN30F2M",
+          full_name: `${MarketExchange.HNX}:VN30F2M`,
           description: "Hợp đồng tương lai chỉ số VN30 tháng kế tiếp",
-          exchange: "HNX",
+          exchange: MarketExchange.HNX,
           type: "futures",
         },
         {
-          symbol: "VNINDEX",
-          full_name: "HOSE:VNINDEX",
+          symbol: MarketIndexSymbol.VNINDEX,
+          full_name: `${MarketExchange.HOSE}:${MarketIndexSymbol.VNINDEX}`,
           description: "Chỉ số VN-Index",
-          exchange: "HOSE",
+          exchange: MarketExchange.HOSE,
           type: "index",
         },
         {
-          symbol: "VN30",
-          full_name: "HOSE:VN30",
+          symbol: MarketIndexSymbol.VN30,
+          full_name: `${MarketExchange.HOSE}:${MarketIndexSymbol.VN30}`,
           description: "Chỉ số VN30",
-          exchange: "HOSE",
+          exchange: MarketExchange.HOSE,
           type: "index",
         },
         {
-          symbol: "HNX",
-          full_name: "HNX:HNX",
+          symbol: MarketIndexSymbol.HNX,
+          full_name: `${MarketExchange.HNX}:${MarketIndexSymbol.HNX}`,
           description: "Chỉ số HNX-Index",
-          exchange: "HNX",
+          exchange: MarketExchange.HNX,
           type: "index",
         },
         {
-          symbol: "UPCOM",
-          full_name: "UPCOM:UPCOM",
+          symbol: MarketIndexSymbol.UPCOM,
+          full_name: `${MarketExchange.UPCOM}:${MarketIndexSymbol.UPCOM}`,
           description: "Chỉ số UPCoM-Index",
-          exchange: "UPCOM",
+          exchange: MarketExchange.UPCOM,
           type: "index",
         },
         {
           symbol: "FPT",
-          full_name: "HOSE:FPT",
+          full_name: `${MarketExchange.HOSE}:FPT`,
           description: "Công ty Cổ phần FPT",
-          exchange: "HOSE",
+          exchange: MarketExchange.HOSE,
           type: "stock",
         },
         {
           symbol: "HPG",
-          full_name: "HOSE:HPG",
+          full_name: `${MarketExchange.HOSE}:HPG`,
           description: "Công ty Cổ phần Tập đoàn Hòa Phát",
-          exchange: "HOSE",
+          exchange: MarketExchange.HOSE,
           type: "stock",
         },
       ]
@@ -195,20 +192,20 @@ export function createDnseDatafeed() {
         session: isDerivative ? "0845-1130,1300-1445" : "0900-1130,1300-1500",
         timezone: "Asia/Ho_Chi_Minh",
         exchange:
-          isDerivative || upper === "HNX"
-            ? "HNX"
-            : upper === "UPCOM"
-              ? "UPCOM"
-              : "HOSE",
+          isDerivative || upper === MarketIndexSymbol.HNX
+            ? MarketExchange.HNX
+            : upper === MarketIndexSymbol.UPCOM
+              ? MarketExchange.UPCOM
+              : MarketExchange.HOSE,
         listed_exchange:
-          isDerivative || upper === "HNX"
-            ? "HNX"
-            : upper === "UPCOM"
-              ? "UPCOM"
-              : "HOSE",
+          isDerivative || upper === MarketIndexSymbol.HNX
+            ? MarketExchange.HNX
+            : upper === MarketIndexSymbol.UPCOM
+              ? MarketExchange.UPCOM
+              : MarketExchange.HOSE,
         format: "price",
         minmov: 1,
-        // VN30F1M có 1 chữ số thập phân (pricescale 10). Chỉ số và cổ phiếu chia theo chuẩn thị trường
+
         pricescale: isDerivative ? 10 : isIndex ? 100 : 1000,
         has_intraday: true,
         intraday_multipliers: ["1", "3", "5", "15", "30", "60"],
@@ -237,14 +234,12 @@ export function createDnseDatafeed() {
         let from = periodParams.from
 
         if (!periodParams.firstDataRequest && cachedEarliest) {
-          // Lùi mốc to về trước 1 giây so với nến sớm nhất hiện có để tránh tải lại chính nến đó
           to = Math.floor(cachedEarliest / 1000) - 1
           const requestedSpan = periodParams.to - periodParams.from
           const minSpan = dnseRes === "1D" ? 30 * 86400 : 3 * 86400
           const span = Math.max(requestedSpan, minSpan)
           from = to - span
         } else {
-          // Lần tải đầu tiên: Đảm bảo tối thiểu 3 ngày dữ liệu
           const minSpan = dnseRes === "1D" ? 60 * 86400 : 3 * 86400
           if (to - from < minSpan) {
             from = to - minSpan
@@ -256,8 +251,6 @@ export function createDnseDatafeed() {
         let currentFrom = from
         const step = dnseRes === "1D" ? 60 * 86400 : 5 * 86400
 
-        // Vòng lặp tìm kiếm nến: Nếu gặp khoảng trống (giờ nghỉ trưa, qua đêm, cuối tuần),
-        // tự động mở rộng mốc currentFrom về quá khứ cho tới khi tìm thấy nến
         while (bars.length === 0 && attempts < 5) {
           const history = await getHistoricalOhlc({
             symbol,
@@ -296,7 +289,6 @@ export function createDnseDatafeed() {
           return
         }
 
-        // Cập nhật nến sớm nhất trong bộ nhớ cache
         const newEarliest = bars[0].time
         if (!cachedEarliest || newEarliest < cachedEarliest) {
           earliestBarCache.set(cacheKey, newEarliest)

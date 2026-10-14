@@ -18,6 +18,7 @@ from typing import Any
 from sqlmodel import Session, col, select
 
 from app.core.cache import realtime_cache
+from app.core.enums import MarketIndex
 from app.domains.dnse import dnse_stream_manager
 from app.domains.iboard.application.schemas import IBoardIndexItem
 from app.domains.market_data.domain.models import StockOHLCVDaily
@@ -72,6 +73,7 @@ class DowJonesGateway:
                     value="-",
                     breadth=None,
                     sparkline=spark,
+                    ref_price=prev_close,
                 )
                 cls._cache["dji"] = {"timestamp": now, "item": item}
                 return item
@@ -157,18 +159,35 @@ class IBoardDataGateway:
             ).all()
         )
 
+        today = date.today()
+        needs_fetch = False
         if len(rows) < target_count:
+            needs_fetch = True
+        elif rows and rows[0].trading_date < today:
+            needs_fetch = True
+
+        if needs_fetch:
             try:
-                today = date.today()
+                fetch_sym = (
+                    MarketIndex.UPCOMINDEX
+                    if symbol.upper() in (MarketIndex.UPCOM, MarketIndex.UPCOMINDEX)
+                    else (
+                        MarketIndex.HNXINDEX
+                        if symbol.upper() == MarketIndex.HNX
+                        else symbol
+                    )
+                )
+                start_date = today - timedelta(days=max(target_count * 2, 220))
                 df = vn.fetch_price_history(
-                    symbol,
-                    start=today - timedelta(days=max(target_count * 2, 220)),
+                    fetch_sym,
+                    start=start_date,
                     end=today,
                     count=target_count,
                     interval="1D",
                 )
                 if df is not None and not df.empty:
                     existing = {r.trading_date for r in rows}
+                    new_entities = []
                     for _, r in df.iterrows():
                         t_str = str(r["time"])[:10]
                         try:
@@ -176,20 +195,28 @@ class IBoardDataGateway:
                         except ValueError:
                             continue
                         if t_date not in existing:
-                            rows.append(
-                                StockOHLCVDaily(
-                                    symbol=symbol,
-                                    trading_date=t_date,
-                                    open=float(r["open"]),
-                                    high=float(r["high"]),
-                                    low=float(r["low"]),
-                                    close=float(r["close"]),
-                                    volume=int(r["volume"]),
-                                    value=float(r.get("value", 0) or 0),
-                                    source=vn.last_successful_source or "vci",
-                                )
+                            new_row = StockOHLCVDaily(
+                                symbol=symbol,
+                                trading_date=t_date,
+                                open=float(r["open"]),
+                                high=float(r["high"]),
+                                low=float(r["low"]),
+                                close=float(r["close"]),
+                                volume=int(r["volume"]),
+                                value=float(r.get("value", 0) or 0),
+                                source=vn.last_successful_source or "vci",
                             )
+                            rows.append(new_row)
+                            new_entities.append(new_row)
                             existing.add(t_date)
+                    if new_entities:
+                        try:
+                            session.add_all(new_entities)
+                            session.commit()
+                        except Exception as ce:
+                            session.rollback()
+                            logger.debug("Không thể commit nến mới vào DB: %s", ce)
+
                     rows.sort(key=lambda x: x.trading_date, reverse=True)
                     rows = rows[:target_count]
             except Exception as e:

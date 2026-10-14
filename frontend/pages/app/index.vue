@@ -858,9 +858,7 @@ const loadState = () => {
         if (typeof parsed.cash === "number") account.cash = parsed.cash
         if (Array.isArray(parsed.positions)) positions.value = parsed.positions
         if (Array.isArray(parsed.orders)) orders.value = parsed.orders
-      } catch {
-        // ignore parse error
-      }
+      } catch {}
     }
   }
 }

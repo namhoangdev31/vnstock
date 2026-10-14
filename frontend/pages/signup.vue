@@ -174,7 +174,6 @@ const handleSignup = async () => {
     return
   }
   try {
-    // Tự động đăng ký người dùng lên Firebase Authentication
     await registerWithEmailPassword(form.email, form.password, form.full_name)
 
     await signup({
@@ -198,7 +197,6 @@ const handleGoogleSignUp = async () => {
   } catch (err: unknown) {
     const error = err as { code?: string; message?: string }
     if (error?.code !== "auth/popup-closed-by-user") {
-      // Error handled by toast
     }
   } finally {
     isGoogleLoading.value = false
@@ -218,7 +216,6 @@ const handleAppleSignUp = async () => {
   } catch (err: unknown) {
     const error = err as { code?: string; message?: string }
     if (error?.code !== "auth/popup-closed-by-user") {
-      // Error handled by toast
     }
   } finally {
     isAppleLoading.value = false

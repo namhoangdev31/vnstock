@@ -25,6 +25,7 @@ class IBoardIndexItem(SQLModel):
     value: str
     breadth: IBoardIndexBreadth | None = None
     sparkline: list[float]
+    ref_price: float | None = None
 
 
 class OrderBookLevel(SQLModel):

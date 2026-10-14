@@ -26,7 +26,7 @@ const getLineWidth = (id: string): number => {
 
 <template>
   <section id="yeu-to" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-white/[0.06]">
-    <!-- Section Header -->
+
     <div class="mx-auto max-w-3xl text-center mb-10 reveal-item">
       <p class="inline-flex items-center gap-2.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-aave-violet">
         <span aria-hidden="true" class="h-0.5 w-6 shrink-0 bg-current" />
@@ -38,9 +38,8 @@ const getLineWidth = (id: string): number => {
       <div class="mx-auto my-4 h-0.5 w-16 bg-aave-violet/60" />
     </div>
 
-    <!-- Cards Grid -->
     <div class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 items-start">
-      <!-- Factor Table Card -->
+
       <div class="reveal-left overflow-hidden rounded-2xl border border-white/[0.08] bg-aave-obsidian shadow-sm transition-all duration-300 hover:border-aave-violet/30">
         <div class="flex items-center justify-between border-b border-white/[0.06] bg-surface-midnight px-5 py-4">
           <h3 class="text-sm sm:text-base font-bold text-white tracking-tight">
@@ -93,7 +92,6 @@ const getLineWidth = (id: string): number => {
         </div>
       </div>
 
-      <!-- Chart Card -->
       <div class="reveal-right overflow-hidden rounded-2xl border border-white/[0.08] bg-aave-obsidian shadow-sm transition-all duration-300 hover:border-aave-violet/30" style="--reveal-delay: 150ms">
         <div class="flex items-center justify-between border-b border-white/[0.06] bg-surface-midnight px-5 py-4">
           <h3 class="text-sm sm:text-base font-bold text-white tracking-tight">
@@ -102,14 +100,14 @@ const getLineWidth = (id: string): number => {
         </div>
 
         <div class="p-5">
-          <!-- SVG Multi-line Graph -->
+
           <svg
             viewBox="0 0 520 210"
             class="h-auto w-full select-none"
             role="img"
             aria-label="Cumulative return chart"
           >
-            <!-- Grid Lines -->
+
             <g class="stroke-white/[0.08]">
               <line x1="52" y1="190" x2="512" y2="190" stroke-width="1" />
               <line x1="52" y1="144.23" x2="512" y2="144.23" stroke-width="1" />
@@ -118,7 +116,6 @@ const getLineWidth = (id: string): number => {
               <line x1="52" y1="12" x2="512" y2="12" stroke-width="1" />
             </g>
 
-            <!-- Axis Labels -->
             <g stroke="none" fill="currentColor" class="text-aave-graphite font-mono font-bold">
               <text x="44" y="190" text-anchor="end" dominant-baseline="central" font-size="12">-10%</text>
               <text x="44" y="144.23" text-anchor="end" dominant-baseline="central" font-size="12">+8%</text>
@@ -127,7 +124,6 @@ const getLineWidth = (id: string): number => {
               <text x="44" y="12" text-anchor="end" dominant-baseline="central" font-size="12">+60%</text>
             </g>
 
-            <!-- Factor Trend Paths -->
             <g>
               <g
                 v-for="item in factors"
@@ -151,7 +147,6 @@ const getLineWidth = (id: string): number => {
             </g>
           </svg>
 
-          <!-- Legend Items -->
           <div class="mt-5 grid grid-cols-2 gap-2 text-xs text-aave-ash sm:grid-cols-3">
             <button
               v-for="item in factors"
@@ -179,7 +174,6 @@ const getLineWidth = (id: string): number => {
       </div>
     </div>
 
-    <!-- Bottom Disclaimer -->
     <p class="mt-6 text-xs text-center text-aave-graphite">
       Dữ liệu chỉ minh họa phương pháp nghiên cứu. Không phản ánh kết quả đầu tư hay tư vấn đầu tư.
     </p>
