@@ -10,7 +10,6 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 from sqlmodel.sql.sqltypes import AutoString
 
-# revision identifiers, used by Alembic.
 revision = "k1l2m3n4o5p6"
 down_revision = "n1a2b3c4d5e6"
 branch_labels = None

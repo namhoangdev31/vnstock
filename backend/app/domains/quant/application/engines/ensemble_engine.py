@@ -43,7 +43,6 @@ from app.domains.quant.domain.indicators import (
 )
 from app.domains.quant.domain.models import ForecastJournal, ModelVersionSnapshot
 
-# Bảng trọng số động theo chu kỳ phiên giao dịch chuẩn quy định tại TRD Phase 2
 DEFAULT_SCHEDULE: dict[str, dict[str, float]] = {
     SessionPhase.PRE_ATO: {"w1": 0.20, "w2": 0.30, "w3": 0.50},
     SessionPhase.ATO: {"w1": 0.40, "w2": 0.20, "w3": 0.40},
@@ -66,9 +65,6 @@ class EnsembleEngine:
     MODEL_VERSION = "v2.0.0"
 
     def __init__(self, session: Session | None = None) -> None:
-        # NOTE: session should be short-lived. The daemon's dispatcher creates a
-        # fresh EnsembleEngine per cycle with the cycle's DB session. Long-lived
-        # instances (e.g. via singleton) risk DetachedInstanceError.
         self.session = session
         self.engine1 = TechnicalEngine(session)
         self.engine2 = FlowLiquidityEngine(session)
@@ -182,9 +178,6 @@ class EnsembleEngine:
             confidence = 0.50
         else:
             final_score = max(-1.0, min(1.0, raw_score))
-            # Adaptive confidence: phản ánh mức đồng thuận giữa engines
-            # Cũ: abs(score) + 0.20 (oversimplified)
-            # Mới: penalty khi disagreement cao, reward khi agreement cao
             agreement_factor = max(0.0, 1.0 - 0.8 * disagreement)
             confidence = round(
                 max(0.10, abs(final_score) * agreement_factor + 0.15),
@@ -196,9 +189,9 @@ class EnsembleEngine:
     def classify_direction(self, score: float) -> str:
         """Phân loại xu hướng: Score >= +0.35 -> LONG, Score <= -0.35 -> SHORT, còn lại NEUTRAL."""
         if score >= 0.35:
-            return ForecastDirection.BULLISH  # Khớp với schema trả về hiển thị "LONG"
+            return ForecastDirection.BULLISH
         if score <= -0.35:
-            return ForecastDirection.BEARISH  # Khớp với schema trả về hiển thị "SHORT"
+            return ForecastDirection.BEARISH
         return ForecastDirection.NEUTRAL
 
     def calculate_risk_brackets(
@@ -219,7 +212,6 @@ class EnsembleEngine:
         c_levels = camarilla_levels or {}
 
         if direction in ("LONG", "BULLISH"):
-            # Cắt lỗ: Entry - 1.5 * ATR hoặc hỗ trợ Camarilla S3
             s3 = c_levels.get("s3")
             atr_sl = entry_price - 1.5 * effective_atr
             stop_loss = max(
@@ -227,14 +219,12 @@ class EnsembleEngine:
                 min(atr_sl, s3 if s3 and s3 < entry_price else atr_sl),
             )
 
-            # Chốt lời: Tối thiểu gấp đôi mức rủi ro (R:R >= 1:2.0)
             risk = entry_price - stop_loss
             reward = max(risk * 2.0, 3.0 * effective_atr)
             take_profit = min(entry_price * 1.07, entry_price + reward)
             return round(stop_loss, 2), round(take_profit, 2)
 
-        else:  # SHORT / BEARISH
-            # Cắt lỗ: Entry + 1.5 * ATR hoặc kháng cự Camarilla R3
+        else:
             r3 = c_levels.get("r3")
             atr_sl = entry_price + 1.5 * effective_atr
             stop_loss = min(
@@ -242,7 +232,6 @@ class EnsembleEngine:
                 max(atr_sl, r3 if r3 and r3 > entry_price else atr_sl),
             )
 
-            # Chốt lời: Tối thiểu gấp đôi mức rủi ro (R:R >= 1:2.0)
             risk = stop_loss - entry_price
             reward = max(risk * 2.0, 3.0 * effective_atr)
             take_profit = max(entry_price * 0.93, entry_price - reward)
@@ -267,9 +256,6 @@ class EnsembleEngine:
         if predicted_at.tzinfo is None:
             predicted_at = predicted_at.replace(tzinfo=VN_TZ)
 
-        # EnsembleEngine is the single owner of journal writes.  The daemon
-        # dispatcher may call generate_signal more than once for the same
-        # market event, so make this write idempotent at the domain boundary.
         if self.session is not None:
             existing = self.session.exec(
                 select(ForecastJournal).where(
@@ -334,9 +320,6 @@ class EnsembleEngine:
                 self.session.commit()
                 self.session.refresh(entry)
             except IntegrityError:
-                # Another worker may have inserted the same unique key after
-                # the read above. Reuse that row instead of surfacing a false
-                # pipeline failure.
                 self.session.rollback()
                 existing = self.session.exec(
                     select(ForecastJournal).where(
@@ -368,7 +351,6 @@ class EnsembleEngine:
         """Kích hoạt 3 Engine, phối hợp trọng số động, tính SL/TP và lưu vết vào ForecastJournal."""
         now = as_of or datetime.now(VN_TZ)
 
-        # DB fallback for prices if omitted and session exists
         if (entry_price <= 0.0 or spot_price <= 0.0) and self.session is not None:
             if entry_price <= 0.0:
                 bar = self.session.exec(
@@ -399,7 +381,6 @@ class EnsembleEngine:
         if spot_price <= 0.0 and entry_price > 0.0:
             spot_price = entry_price
 
-        # 1. Chạy 3 Engine phân tích
         e1_res = self.engine1.analyze(
             symbol=request.symbol,
             highs=highs,
@@ -435,7 +416,6 @@ class EnsembleEngine:
             weights=weights,
         )
 
-        # Guard: NaN/inf propagation check
         if not math.isfinite(final_score):
             logger.error(
                 "Ensemble produced non-finite score (%.4f) for %s — forcing NEUTRAL",
@@ -445,7 +425,6 @@ class EnsembleEngine:
             final_score = 0.0
             confidence = 0.0
 
-        # 3. Phân loại xu hướng dự báo
         raw_direction = self.classify_direction(final_score)
         out_direction = (
             "LONG"
@@ -455,7 +434,6 @@ class EnsembleEngine:
             else "NEUTRAL"
         )
 
-        # 4. Tính toán khoảng rủi ro SL / TP động
         atr_val = None
         if highs and lows and closes and len(closes) >= 15:
             atr_val = compute_atr(highs, lows, closes)
@@ -488,13 +466,10 @@ class EnsembleEngine:
         predicted_high = mc_targets.get("p95", mc_targets.get("high"))
         ensemble_probability = round(0.5 + 0.5 * abs(final_score), 6)
 
-        # Tính correlation giữa các engine (single-point → [score] cho mỗi engine)
-        # Với nhiều phiên tích lũy sẽ chính xác hơn; hiện tại dùng 1 điểm → corr = 0.0
         engine_corr = compute_engine_correlation(
             [e1_res.score], [e2_res.score], [e3_res.score]
         )
 
-        # 5. Lưu vết kiểm toán bắt buộc (RULE 3)
         journal_id = self.log_forecast_to_journal(
             symbol=request.symbol,
             horizon=request.horizon,

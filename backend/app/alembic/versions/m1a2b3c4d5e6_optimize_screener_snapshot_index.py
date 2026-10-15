@@ -8,7 +8,6 @@ Create Date: 2026-09-21
 from alembic import op
 import sqlalchemy as sa
 
-# revision identifiers, used by Alembic.
 revision = "m1a2b3c4d5e6"
 down_revision = "l1a2b3c4d5e6"
 branch_labels = None
@@ -19,7 +18,6 @@ def upgrade() -> None:
     bind = op.get_bind()
     is_postgres = bind.dialect.name == "postgresql"
 
-    # Drop existing indexes from k1
     op.execute("DROP INDEX IF EXISTS ix_screener_snapshot_roe_inst;")
     op.execute("DROP INDEX IF EXISTS ix_screener_snapshot_pe_inst;")
 

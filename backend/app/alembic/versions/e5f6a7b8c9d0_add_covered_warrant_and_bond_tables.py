@@ -8,7 +8,6 @@ Create Date: 2026-09-21
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "e5f6a7b8c9d0"
 down_revision = "d4e5f6a7b8c9"
 branch_labels = None
@@ -16,7 +15,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 1. covered_warrant table
     op.create_table(
         "covered_warrant",
         sa.Column(
@@ -84,7 +82,6 @@ def upgrade() -> None:
         "ix_covered_warrant_maturity_date", "covered_warrant", ["maturity_date"]
     )
 
-    # 2. bond_specification table
     op.create_table(
         "bond_specification",
         sa.Column(

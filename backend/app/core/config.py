@@ -32,14 +32,12 @@ VALID_PSYCOPG_PARAMS: set[str] = {
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        # Use top level .env file (one level above ./backend/)
         env_file=(".env", "../.env"),
         env_ignore_empty=True,
         extra="ignore",
     )
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str
-    # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
     FASTAPI_ENV: Literal["development"] | None = None
@@ -49,22 +47,18 @@ class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
     DIRECT_URL: PostgresDsn | None = None
 
-    # vnstock config
     VNSTOCK_API_KEY: str | None = None
     VNSTOCK_APIKEY: str | None = None
     VNSTOCK_SOURCE: str = "VCI"
     VNSTOCK_FALLBACK_SOURCE: str = "KBS"
     VNSTOCK_TERTIARY_SOURCE: str = "MSN"
     VNSTOCK_TIER: str = (
-        "community"  # 'community' (60 req/min) or 'sponsor' (180-600 req/min)
+        "community"
     )
-    VNSTOCK_REALTIME_CACHE_TTL: int = 5  # seconds
-    VNSTOCK_METADATA_CACHE_TTL: int = 86400  # 24 hours
-    # Minimum spacing between external vnstock requests (anti-ban, AGENTS §7.2).
-    # On Community tier (60 req/min limit), 1.0s ensures safe spacing.
+    VNSTOCK_REALTIME_CACHE_TTL: int = 5
+    VNSTOCK_METADATA_CACHE_TTL: int = 86400
     VNSTOCK_REQUEST_MIN_DELAY: float = 1.0
 
-    # DNSE WebSocket real-time stream config
     DNSE_API_KEY: str | None = None
     DNSE_API_SECRET: str | None = None
     DNSE_WS_URL: str = "wss://ws-openapi.dnse.com.vn"
@@ -77,19 +71,16 @@ class Settings(BaseSettings):
     DNSE_API_KEY_SANDBOX: str | None = None
     DNSE_API_SECRET_SANDBOX: str | None = None
 
-    # Cron & Background Scheduler config
     CRON_SECRET_KEY: str | None = None
     CRON_SECRET: str | None = None
     ENABLE_INPROCESS_CRON: bool = False
 
-    # Firebase Admin configuration
     FIREBASE_PROJECT_ID: str | None = "vistock-pro"
     FIREBASE_DATABASE_URL: str | None = None
     FIREBASE_STORAGE_BUCKET: str | None = "vistock-pro.firebasestorage.app"
     FIREBASE_CREDENTIALS_PATH: str | None = None
     FIREBASE_CREDENTIALS_JSON: str | None = None
 
-    # Database connection pool settings
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 10
 
@@ -103,7 +94,6 @@ class Settings(BaseSettings):
         if not url_str:
             return None
 
-        # Check for unencoded '@' in credentials authority (RFC 3986)
         rest = url_str
         for prefix in ("postgres://", "postgresql://", "postgresql+psycopg://"):
             if rest.startswith(prefix):
@@ -117,7 +107,6 @@ class Settings(BaseSettings):
                 "Per RFC 3986, passwords with '@' must be percent-encoded as '%40' to prevent ambiguous URI parsing."
             )
 
-        # Parse query parameters and validate against allow-list
         if "?" in url_str:
             _base_url, query_str = url_str.split("?", 1)
             query_params = urllib.parse.parse_qsl(query_str, keep_blank_values=True)

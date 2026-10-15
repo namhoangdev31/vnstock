@@ -41,7 +41,6 @@ class VietnamMarketClock:
     def classify(dt: datetime) -> SessionPhase:
         vn_time = dt.astimezone(_VN_TZ)
 
-        # Check for weekends and holidays first
         if not SettlementService.is_trading_day(vn_time.date()):
             return SessionPhase.OVERNIGHT_SIMULATION
 
@@ -50,10 +49,8 @@ class VietnamMarketClock:
         if 510 <= time_minutes < 525:
             return SessionPhase.PRE_ATO
         if 525 <= time_minutes < 555:
-            # 08:45–09:00: Derivatives pre-open/matching + 09:00–09:15: Equities ATO call auction
             return SessionPhase.ATO
         if 555 <= time_minutes < 690:
-            # 09:15–11:30: Continuous trading
             return SessionPhase.MORNING_CONTINUOUS
         if 690 <= time_minutes < 780:
             return SessionPhase.MIDDAY_INTERMISSION

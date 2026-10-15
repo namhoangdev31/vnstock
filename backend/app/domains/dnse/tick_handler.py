@@ -148,7 +148,6 @@ class TickNormalizer:
         }
         realtime_cache.set(f"realtime:{sym}", payload, ttl=self.TRADE_TTL)
 
-        # Update iboard_quote composite cache
         ib_quote = self._get_or_create_iboard_quote(sym)
         if close_val is not None:
             ib_quote["close_price"] = float(close_val)
@@ -176,7 +175,6 @@ class TickNormalizer:
 
         realtime_cache.set(f"iboard_quote:{sym}", ib_quote, ttl=self.IBOARD_QUOTE_TTL)
 
-        # Record recent tick for Time & Sales
         if close_val is not None and trade_qty is not None:
             time_str = str(time_val)
             if " " in time_str:
@@ -184,12 +182,10 @@ class TickNormalizer:
             else:
                 time_str = time_str[:8]
 
-            # Side detection (default to Buy/Sell neutral if side not explicit)
             side_raw = getattr(trade, "side", None)
             if side_raw is not None:
                 side_str = "B" if side_raw == 1 else "S"
             else:
-                # Compare to best bid/ask in ib_quote
                 bid_1 = ib_quote.get("bid_price_1")
                 ask_1 = ib_quote.get("ask_price_1")
                 c_val = float(close_val)
@@ -250,7 +246,6 @@ class TickNormalizer:
         a_p_2, a_v_2 = _get_level(offers, 1)
         a_p_3, a_v_3 = _get_level(offers, 2)
 
-        # Standard top-of-book cache (quote:{sym})
         spread = (
             round(a_p_1 - b_p_1, 2)
             if (a_p_1 is not None and b_p_1 is not None)
@@ -268,7 +263,6 @@ class TickNormalizer:
         }
         realtime_cache.set(f"quote:{sym}", payload, ttl=self.QUOTE_TTL)
 
-        # Update iboard_quote composite cache with full 3-level orderbook
         ib_quote = self._get_or_create_iboard_quote(sym)
         ib_quote["bid_price_1"] = b_p_1
         ib_quote["bid_vol_1"] = b_v_1
@@ -390,7 +384,6 @@ class TickNormalizer:
         }
         realtime_cache.set(f"foreign:{sym}", payload, ttl=self.FOREIGN_TTL)
 
-        # Update iboard_quote composite cache
         ib_quote = self._get_or_create_iboard_quote(sym)
         if tot_buy_vol is not None:
             ib_quote["foreign_buy_volume"] = int(tot_buy_vol)

@@ -169,7 +169,7 @@ class DNSEStreamManager:
         while not self._stop_event.is_set():
             try:
                 await self._connect_and_stream()
-                attempt = 0  # Reset counter after successful connection cycle
+                attempt = 0
             except asyncio.CancelledError:
                 break
             except AuthenticationError as e:
@@ -206,7 +206,7 @@ class DNSEStreamManager:
             api_key=self.config.api_key,
             api_secret=self.config.api_secret,
             base_url=self.config.ws_url,
-            auto_reconnect=False,  # Reconnection is handled cleanly by _run_loop
+            auto_reconnect=False,
             max_retries=1,
             heartbeat_interval=self.config.heartbeat_interval,
         )
@@ -217,7 +217,6 @@ class DNSEStreamManager:
         self._is_connected = True
         logger.info("[DNSE] WebSocket connected and authenticated successfully.")
 
-        # 1. Subscribe to Symbol-level Market Data
         active_symbols = list(self._subscribed_symbols)
         if active_symbols:
             logger.info("[DNSE] Subscribing to symbols: %s", active_symbols)
@@ -246,21 +245,18 @@ class DNSEStreamManager:
                 on_expected_price=self.normalizer.on_expected_price,
             )
 
-        # 2. Subscribe to Market Indices
         for idx in self.config.market_indices:
             logger.info("[DNSE] Subscribing to market index: %s", idx)
             await client.subscribe_market_index(
                 idx, on_market_index=self.normalizer.on_market_index
             )
 
-        # 3. Stream loop until stop requested or internal connection dropped
         while not self._stop_event.is_set():
             if not getattr(client, "_is_running", False):
                 logger.warning("[DNSE] Client reported not running; restarting stream.")
                 break
             await asyncio.sleep(1.0)
 
-        # Clean disconnection
         self._is_connected = False
         await client.disconnect()
         self._client = None

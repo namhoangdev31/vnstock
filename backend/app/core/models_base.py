@@ -27,7 +27,6 @@ def get_datetime_vn() -> datetime:
     return datetime.now(VN_TZ)
 
 
-# Kiểu cột JSONB trên PostgreSQL; fallback JSON thông thường trên SQLite khi kiểm thử
 JSONBVariant = JSON().with_variant(JSONB, "postgresql")
 
 

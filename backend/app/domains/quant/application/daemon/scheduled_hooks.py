@@ -47,11 +47,6 @@ class _HookTracker:
 _tracker = _HookTracker()
 
 
-# ---------------------------------------------------------------------------
-# Hook 1 — T+2 Settlement update
-# ---------------------------------------------------------------------------
-
-
 def run_settlement_hook(
     session_factory: Callable[[], Any] | None,
     today: date | None = None,
@@ -87,7 +82,6 @@ def run_settlement_hook(
         today = now.date()
 
         with session_factory() as session:
-            # Find EQUITY positions with settlement_date reached (T+2 settled)
             pending_positions = session.exec(
                 select(Position).where(
                     col(Position.status) == PositionStatus.OPEN,
@@ -98,26 +92,22 @@ def run_settlement_hook(
 
             for pos in pending_positions:
                 try:
-                    # 1. Fetch the owning portfolio
                     portfolio = session.get(Portfolio, pos.portfolio_id)
                     if portfolio is None:
                         errors.append(f"position {pos.id}: portfolio not found")
                         continue
 
-                    # 2. Calculate settlement proceeds
                     settlement_price = (
                         pos.current_price if pos.current_price > 0 else pos.entry_price
                     )
                     proceeds = abs(pos.quantity) * settlement_price
 
-                    # 3. Credit cash balance (sale proceeds or buy settlement completed)
                     portfolio.cash_balance += proceeds
                     portfolio.margin_used = max(
                         0.0, portfolio.margin_used - pos.margin_required
                     )
                     portfolio.updated_at = now
 
-                    # 4. Create settlement trade record for audit trail
                     settlement_trade = Trade(
                         portfolio_id=portfolio.id,
                         symbol=pos.symbol,
@@ -129,7 +119,6 @@ def run_settlement_hook(
                     )
                     session.add(settlement_trade)
 
-                    # 5. Close position
                     pos.status = PositionStatus.CLOSED
                     pos.updated_at = now
                     session.add(pos)
@@ -157,11 +146,6 @@ def run_settlement_hook(
         logger.error("Settlement hook failed: %s", exc, exc_info=True)
 
     return {"settled": settled, "errors": errors, "skipped": False}
-
-
-# ---------------------------------------------------------------------------
-# Hook 2 — EOD Screener Snapshot
-# ---------------------------------------------------------------------------
 
 
 def run_screener_snapshot_hook(
@@ -212,11 +196,6 @@ def run_screener_snapshot_hook(
     return {"created": created, "errors": errors, "skipped": False}
 
 
-# ---------------------------------------------------------------------------
-# Hook 3 — Equity Universe Refresh
-# ---------------------------------------------------------------------------
-
-
 def run_equity_universe_refresh(
     session_factory: Callable[[], Any] | None,
     symbol_registry: Any | None,
@@ -243,7 +222,6 @@ def run_equity_universe_refresh(
     errors: list[str] = []
 
     try:
-        # Try vnstock Listing first
         from vnstock import Listing  # type: ignore[import]
 
         listing = Listing()
@@ -264,7 +242,6 @@ def run_equity_universe_refresh(
         )
     except Exception as exc:
         errors.append(str(exc))
-        # Fall back to DB-persisted instruments if vnstock fails
         if session_factory is not None:
             try:
                 from sqlmodel import col, select
@@ -299,10 +276,6 @@ def run_equity_universe_refresh(
     return {"symbols": len(symbols), "errors": errors, "skipped": False}
 
 
-# ---------------------------------------------------------------------------
-# Phase-based hook dispatcher
-# ---------------------------------------------------------------------------
-
 _SETTLEMENT_PHASES = {
     SessionPhase.AFTERNOON_CONTINUOUS,
 }
@@ -319,11 +292,6 @@ _INGEST_PHASES = {
     SessionPhase.POST_MARKET,
     SessionPhase.OVERNIGHT_SIMULATION,
 }
-
-
-# ---------------------------------------------------------------------------
-# Hook 4 — Market Data Ingestion (macro + breadth + flows)
-# ---------------------------------------------------------------------------
 
 
 def run_market_data_ingest_hook(
@@ -368,11 +336,6 @@ def run_market_data_ingest_hook(
     except (Exception, SystemExit) as exc:  # noqa: BLE001
         logger.error("[hook] %s failed: %s", hook_name, exc, exc_info=True)
         return {"error": str(exc), "date": str(run_date)}
-
-
-# ---------------------------------------------------------------------------
-# Hook 5 — Forecast Resolution & Scoring (§9.1 Layer A Self-Learning)
-# ---------------------------------------------------------------------------
 
 
 def run_forecast_resolution_hook(

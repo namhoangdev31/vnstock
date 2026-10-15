@@ -98,8 +98,6 @@ def list_forecasts(
         .limit(effective_size)
     ).all()
     items = [ForecastJournalPublic.model_validate(r) for r in rows]
-    # Preserve the original response shape for existing consumers; explicit
-    # page-size requests opt into the Phase 5 envelope.
     if page_size is None and page == 1:
         return items
     return ForecastPage(items=items, page=page, page_size=effective_size, total=total)

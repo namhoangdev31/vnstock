@@ -39,7 +39,6 @@ class ForecastJournal(AwareSQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, index=True)
     horizon: str = Field(default=ForecastHorizon.T_PLUS_1, max_length=20)
-    # Mốc thời gian neo dự phóng (đảm bảo cam kết không rò rỉ dữ liệu tương lai No-Look-Ahead)
     predicted_at: datetime = Field(
         sa_type=DateTime(timezone=True),  # type: ignore
         index=True,
@@ -53,7 +52,6 @@ class ForecastJournal(AwareSQLModel, table=True):
     model_version: str = Field(max_length=40)
     parameter_snapshot: dict = Field(default_factory=dict, sa_type=JSONBVariant)  # type: ignore
 
-    # Kết quả thực tế được ghi ngược lại khi phiên giao dịch kết thúc
     actual_value: float | None = None
     actual_direction: str | None = Field(default=None, max_length=10)
     realized_at: datetime | None = Field(
@@ -173,7 +171,6 @@ class InstitutionalFlow(AwareSQLModel, table=True):
     trading_date: date = Field(index=True)
     symbol: str = Field(max_length=20, index=True)
 
-    # Khối ngoại (Foreign Trading)
     foreign_buy_volume: int | None = None
     foreign_sell_volume: int | None = None
     foreign_net_volume: int | None = None
@@ -184,7 +181,6 @@ class InstitutionalFlow(AwareSQLModel, table=True):
     foreign_room_current: float | None = None
     foreign_room_pct: float | None = None
 
-    # Tự doanh (Proprietary Trading)
     prop_buy_volume: int | None = None
     prop_sell_volume: int | None = None
     prop_net_volume: int | None = None
@@ -221,20 +217,20 @@ class SignalLog(AwareSQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     strategy_name: str = Field(
         max_length=50, index=True
-    )  # vd: basis_arbitrage, atc_breakout, vwap_pullback
+    )
     symbol: str = Field(max_length=20, index=True)
-    signal_type: str = Field(max_length=10)  # BUY, SELL, CLOSE, HOLD
-    action_price: float  # Mức giá kích hoạt tín hiệu
-    stop_loss: float | None = None  # Ngưỡng dừng lỗ kỹ thuật (Dynamic ATR)
-    take_profit: float | None = None  # Ngưỡng chốt lời kỳ vọng
+    signal_type: str = Field(max_length=10)
+    action_price: float
+    stop_loss: float | None = None
+    take_profit: float | None = None
     timeframe: str = Field(
         default="1m", max_length=10
-    )  # Khung thời gian: 1m, 5m, 15m, 1D
-    strength: float = Field(default=1.0)  # Độ mạnh của tín hiệu (0.0 - 1.0)
+    )
+    strength: float = Field(default=1.0)
     metadata_info: dict = Field(
         default_factory=dict,
         sa_type=JSONBVariant,  # type: ignore
-    )  # Snapshot các chỉ báo (RSI, VWAP, Basis...)
+    )
     created_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore

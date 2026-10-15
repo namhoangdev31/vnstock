@@ -55,7 +55,6 @@ class IBoardDetailService:
         timeframe: str = "1D",
     ) -> IBoardStockDetail:
         sym_code = symbol.strip().upper()
-        # Trigger dynamic DNSE stream subscription for this symbol
         dnse_stream_manager.subscribe_symbols_background([sym_code])
         vn = VnstockService(db_session=session)
 
@@ -63,17 +62,14 @@ class IBoardDetailService:
             select(StockSymbol).where(StockSymbol.symbol == sym_code)
         ).first()
 
-        # 1. Chuỗi nến kỹ thuật
         candles = IBoardCandlesService.get_candles(
             session=session, symbol=sym_code, timeframe=timeframe, limit=100
         )
 
-        # 2. Nến ngày cho giá tham chiếu, sparkline
         daily_rows = IBoardDataGateway.backfill_ohlcv_daily(
             session, vn, sym_code, target_count=100
         )
 
-        # 3. Live quote — giá khớp, orderbook 3 cấp, room ngoại
         live_quote_map = IBoardDataGateway.fetch_batch_quotes(vn, [sym_code])
         live_quote_row = live_quote_map.get(sym_code)
 
@@ -102,7 +98,6 @@ class IBoardDetailService:
             else "Chưa phân ngành",
         )
 
-        # 4. Time & Sales (Dòng khớp lệnh ưu tiên DNSE realtime ticks)
         matched_ticks: list[MatchedTickDTO] = []
         dnse_ticks = dnse_stream_manager.normalizer.get_recent_ticks(sym_code, limit=20)
         if dnse_ticks:
@@ -166,7 +161,6 @@ class IBoardDetailService:
                         "Không thể tải tick từ vnstock cho %s: %s", sym_code, e
                     )
 
-        # 5. Hồ sơ doanh nghiệp & Tỷ số tài chính (Read-Only)
         prof = session.exec(
             select(CompanyProfile).where(CompanyProfile.symbol == sym_code)
         ).first()
@@ -221,7 +215,6 @@ class IBoardDetailService:
             roe=roe_val,
         )
 
-        # 6. Sự kiện doanh nghiệp (ex_date, effective_date)
         event_models = list(
             session.exec(
                 select(CorporateEvent)

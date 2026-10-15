@@ -1,0 +1,88 @@
+[     186ms] [INFO] <Suspense> is an experimental feature and its API will likely change. @ http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=77548b1d:7401
+[     396ms] [LOG] ✨ %cNuxt DevTools %c Press Shift + Option + D to open DevTools color: black; border-radius: 3px 0 0 3px; padding: 2px 2px 1px 10px; background: #00DC82 border-radius: 0 3px 3px 0; padding: 2px 10px 1px 2px; background: #00DC8220  @ http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/@nuxt/devtools/dist/runtime/plugins/devtools.client.js?v=77548b1d:51
+[   11906ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[   13886ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[   15754ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[   18421ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[   18422ms] [WARNING] [HNX30] Lỗi nạp dữ liệu chỉ số từ backend: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async loadIndexSnapshot (http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:76:20)
+    at async Promise.allSettled (index 0)
+    at async start (http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:324:5)
+    at async http://localhost:3000/_nuxt/components/IBoardMiniChart.vue?t=1791993243838:100:4 @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:93
+[   20410ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[   20411ms] [WARNING] [HNXINDEX] Lỗi nạp dữ liệu chỉ số từ backend: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async loadIndexSnapshot (http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:76:20)
+    at async Promise.allSettled (index 0)
+    at async start (http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:324:5)
+    at async http://localhost:3000/_nuxt/components/IBoardMiniChart.vue?t=1791993243838:100:4 @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:93
+[   22492ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[   22492ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18)
+    at async http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:101:4 @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94
+[   24683ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  112505ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  112518ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  112518ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 502 Bad Gateway
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94
+[  112889ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  112902ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  112915ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  112928ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  116892ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  116907ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  116919ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  116931ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  120897ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  120909ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  120922ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  120934ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Connection closed before receiving a handshake response @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[  122502ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  122513ms] [ERROR] Failed to load resource: the server responded with a status of 502 (Bad Gateway) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  122514ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 502 Bad Gateway
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94
+[  143964ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  145318ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  145318ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94
+[  154264ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  155698ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  155699ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94
+[  164055ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  165398ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  165399ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94
+[  173943ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  175392ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  175393ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94
+[  183952ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  186079ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  186079ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94
+[  194380ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  196180ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[  196181ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": 500 Internal Server Error
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:327:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791993243838:94

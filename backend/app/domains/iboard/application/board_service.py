@@ -48,7 +48,6 @@ class IBoardTableService:
         rows: list[IBoardStockRow] = []
         vn = VnstockService(db_session=session)
 
-        # 1. Phái sinh (Derivatives)
         if category == "derivatives":
             contracts = list(
                 session.exec(
@@ -102,7 +101,6 @@ class IBoardTableService:
                 )
             return rows
 
-        # 2. Chứng quyền (Covered Warrants)
         if category == "warrants":
             try:
                 wdf = vn.fetch_covered_warrants_list()
@@ -147,7 +145,6 @@ class IBoardTableService:
                 logger.warning("Không thể tải danh sách chứng quyền: %s", e)
             return rows
 
-        # 3. Quỹ ETF
         if category == "etf":
             known_etfs = [
                 "E1VFVN30",
@@ -194,7 +191,6 @@ class IBoardTableService:
                 )
             return rows
 
-        # 4. Cổ phiếu niêm yết (Listed) / Ngành (Sectors)
         stmt = select(StockSymbol).where(StockSymbol.asset_type == "stock")
 
         if category == "sectors" and sector:

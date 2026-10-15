@@ -14,6 +14,10 @@ export interface MiniChartIndexData {
   volume: string
   value: string
   status: string
+  raw_volume?: number | null
+  raw_value?: number | null
+  ref_price?: number | null
+  sparkline?: number[]
   breadth?: {
     advance: number
     ceiling: number
@@ -57,6 +61,10 @@ export function useIndexWsChannel(
     volume: "-",
     value: "-",
     status: "Đóng cửa",
+    raw_volume: null,
+    raw_value: null,
+    ref_price: null,
+    sparkline: [],
     breadth: null,
     derivativesDepth: null,
   })
@@ -79,28 +87,50 @@ export function useIndexWsChannel(
 
     if (normName === normTarget || normId === normTarget) return true
     if (
-      normTarget === MarketIndexSymbol.HNX &&
-      (normName.includes(MarketIndexSymbol.HNX) ||
-        normId === MarketIndexSymbol.HNX)
+      normTarget === MarketIndexSymbol.VNINDEX &&
+      (normName === "VNINDEX" || normId === "vnindex" || normId === "hose")
     )
       return true
     if (
-      normTarget === MarketIndexSymbol.HNXINDEX &&
-      (normName.includes(MarketIndexSymbol.HNX) ||
-        normId === MarketIndexSymbol.HNX)
+      normTarget === MarketIndexSymbol.VN30 &&
+      (normName === "VN30" || normId === "vn30")
     )
       return true
     if (
-      normTarget === MarketIndexSymbol.UPCOM &&
-      normName.startsWith(MarketIndexSymbol.UPCOM)
+      normTarget === MarketIndexSymbol.HNX30 &&
+      (normName === "HNX30" || normId === "hnx30")
     )
       return true
     if (
-      normTarget === MarketIndexSymbol.UPCOMINDEX &&
-      normName.startsWith(MarketIndexSymbol.UPCOM)
+      (normTarget === MarketIndexSymbol.HNX ||
+        normTarget === MarketIndexSymbol.HNXINDEX ||
+        normTarget === MarketIndexSymbol.HNX_INDEX) &&
+      (normName === "HNX" ||
+        normName === "HNXINDEX" ||
+        normId === "hnx" ||
+        normId === "hnxindex")
     )
       return true
-    if (normTarget === "DOWJONESFUTURES" && normId === MarketIndexSymbol.DJI)
+    if (
+      (normTarget === MarketIndexSymbol.UPCOM ||
+        normTarget === MarketIndexSymbol.UPCOMINDEX) &&
+      (normName === "UPCOM" ||
+        normName === "UPCOMINDEX" ||
+        normId === "upcom" ||
+        normId === "upcomindex")
+    )
+      return true
+    if (
+      normTarget === MarketIndexSymbol.VN30F1M &&
+      (normName === "VN30F1M" || normId === "vn30f1m")
+    )
+      return true
+    if (
+      (normTarget === "DOWJONESFUTURES" ||
+        normTarget === MarketIndexSymbol.DJI ||
+        normTarget === "DJI") &&
+      (normId === MarketIndexSymbol.DJI || normId === "dji")
+    )
       return true
     return false
   }
@@ -210,6 +240,10 @@ export function useIndexWsChannel(
       volume: item.volume || "-",
       value: item.value || "-",
       status: "Đóng cửa",
+      raw_volume: item.raw_volume ?? null,
+      raw_value: item.raw_value ?? null,
+      ref_price: item.ref_price ?? (refPrice > 0 ? refPrice : null),
+      sparkline: item.sparkline || [],
       breadth: item.breadth || null,
       derivativesDepth: null,
     }
@@ -347,10 +381,12 @@ export function useIndexWsChannel(
 
                 if (msg.data?.total_volume) {
                   const vol = parseNum(msg.data.total_volume)
+                  indexData.value.raw_volume = vol
                   indexData.value.volume = `${(vol / 1e6).toFixed(2)} Triệu CP`
                 }
                 if (msg.data?.total_value) {
                   const valBillion = parseNum(msg.data.total_value) / 1e9
+                  indexData.value.raw_value = valBillion
                   indexData.value.value = `${valBillion.toFixed(2)} Tỷ`
                 }
                 if (msg.data?.advance !== undefined) {

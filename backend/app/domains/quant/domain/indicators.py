@@ -428,7 +428,6 @@ def compute_adaptive_zscore(
     """
     relevant = list(series[-window:]) if len(series) >= 5 else []
     if len(relevant) < 5:
-        # Fallback conservative: coi std ≈ 5.0 điểm index (VN30 convention)
         z = value / 5.0
         return round(max(-5.0, min(5.0, z)), 4)
 
@@ -492,15 +491,6 @@ def compute_exponential_smoothing(
     return smoothed
 
 
-# =============================================================================
-# PHẦN 3 — Hàm nâng cao sử dụng scipy & scikit-learn
-# Các hàm này thay thế / bổ sung cho Phần 1-2 với:
-#   - Độ tin cậy thống kê cao hơn (p-value, t-distribution, CI 95%)
-#   - Hiệu năng C-level vectorization (numpy/scipy thay Python loop)
-#   - Kháng outlier tốt hơn (RobustScaler thay Min-Max)
-# Mọi hàm đều an toàn trước edge case (rỗng, NaN, thiếu dữ liệu).
-# =============================================================================
-
 import numpy as np  # noqa: E402 — intentional placement in module body
 
 
@@ -524,7 +514,7 @@ def compute_linear_regression_slope_v2(
         p_value          : float [0.0, 1.0]   — < 0.05 → có ý nghĩa
         slope_significant: bool               — p < 0.05 VÀ R² > 0.3
     """
-    from scipy.stats import linregress  # lazy import — tránh circular
+    from scipy.stats import linregress
 
     n = min(window, len(values))
     if n < 3:
@@ -557,7 +547,6 @@ def compute_linear_regression_slope_v2(
             "slope_significant": False,
         }
 
-    # Chuẩn hóa slope → [-1.0, +1.0] (backward-compatible với v1)
     normalized = result.slope / y_mean * n
     slope_norm = round(max(-1.0, min(1.0, normalized)), 4)
 
@@ -590,7 +579,7 @@ def normalize_flow_robust(
 
     Fallback: len(history) < 5 → chia cho fallback_scale (backward-compatible).
     """
-    from sklearn.preprocessing import RobustScaler  # lazy import
+    from sklearn.preprocessing import RobustScaler
 
     if len(history_vals) < 5:
         return round(max(-1.0, min(1.0, current_val / fallback_scale)), 4)
@@ -622,7 +611,7 @@ def compute_historical_volatility_v2(
     - kurtosis > 3 → fat tails → rủi ro tail risk cao hơn phân phối chuẩn
     - skewness < 0 → lệch trái → xác suất drop lớn cao hơn spike
     """
-    from scipy import stats as scipy_stats  # lazy import
+    from scipy import stats as scipy_stats
 
     if len(closes) < 2:
         return {"hv": 0.0, "kurtosis": 0.0, "skewness": 0.0}
@@ -637,7 +626,7 @@ def compute_historical_volatility_v2(
         return {"hv": 0.0, "kurtosis": 0.0, "skewness": 0.0}
 
     hv = float(np.std(log_returns, ddof=1) * np.sqrt(trading_days))
-    kurt = float(scipy_stats.kurtosis(log_returns, fisher=True))  # excess kurtosis
+    kurt = float(scipy_stats.kurtosis(log_returns, fisher=True))
     skew = float(scipy_stats.skew(log_returns))
 
     return {
@@ -666,7 +655,7 @@ def detect_support_resistance(
     Returns:
         {"supports": [1280.5, ...], "resistances": [1310.0, ...]}
     """
-    from scipy.signal import argrelextrema  # lazy import
+    from scipy.signal import argrelextrema
 
     if len(closes) < 2 * order + 1:
         return {"supports": [], "resistances": []}
@@ -717,7 +706,7 @@ def detect_market_regime_gmm(
         regime_probabilities     : dict[str, float]
         current_regime_confidence: float [0.0, 1.0]
     """
-    from sklearn.mixture import GaussianMixture  # lazy import
+    from sklearn.mixture import GaussianMixture
 
     n = min(window, len(closes))
     _default = {
@@ -754,13 +743,11 @@ def detect_market_regime_gmm(
     except Exception:
         return _default
 
-    # assert đảm bảo type checker biết covariances_/means_ không None sau khi fit thành công
     assert gmm.covariances_ is not None and gmm.means_ is not None  # noqa: S101
     variances = gmm.covariances_.flatten()
     means = gmm.means_.flatten()
     sorted_by_var = list(np.argsort(variances))
 
-    # Mapping component → regime name
     regime_map: dict[int, str] = {}
     if len(sorted_by_var) >= 3:
         regime_map[sorted_by_var[0]] = "RANGING"
@@ -862,7 +849,6 @@ def compute_garch_volatility(
     try:
         from arch import arch_model
 
-        # arch expects percentage returns; forecast variance is scaled back to decimal.
         model = arch_model(
             valid * 100.0,
             mean="Constant",
@@ -914,7 +900,7 @@ def compute_basis_zscore_scipy(
         p_value       : float | None — xác suất H₀ đúng
         mean_reverting: bool — True khi basis ngoài CI (≈ outlier)
     """
-    from scipy.stats import t as t_dist  # lazy import
+    from scipy.stats import t as t_dist
 
     basis = futures_price - spot_index_price
 
@@ -1109,15 +1095,13 @@ def simulate_monte_carlo_scipy(
     ceiling_limit = current_price * 1.07
 
     try:
-        from scipy.stats import norm as scipy_norm  # lazy import
+        from scipy.stats import norm as scipy_norm
 
         rng = np.random.default_rng(seed)
         Z = scipy_norm.rvs(size=(n_simulations, n_steps), random_state=rng)
 
-        # GBM increments vectorized
         increments = np.exp(mu_step + vol_step * Z)
 
-        # Price paths: (n_sims, n_steps+1)
         prices = np.empty((n_simulations, n_steps + 1), dtype=np.float64)
         prices[:, 0] = current_price
         for step in range(n_steps):
@@ -1129,7 +1113,6 @@ def simulate_monte_carlo_scipy(
 
         final_prices = prices[:, -1]
 
-        # Max drawdown per simulation
         running_max = np.maximum.accumulate(prices, axis=1)
         safe_max = np.where(running_max > 0, running_max, 1.0)
         drawdowns = (running_max - prices) / safe_max
@@ -1146,7 +1129,6 @@ def simulate_monte_carlo_scipy(
         cvar_95 = float(np.mean(tail_returns)) if len(tail_returns) > 0 else var_95
 
     except Exception:
-        # Fallback về Python loop nếu scipy/numpy không khả dụng
         import random as _random
 
         rng_fb = _random.Random(seed)
@@ -1203,7 +1185,7 @@ def compute_t2_pressure_scipy(
         z_volume : float — Z-score của volume T-2
         p_spike  : float [0.0, 1.0] — xác suất volume là noise (nhỏ → spike thật)
     """
-    from scipy.stats import t as t_dist  # lazy import
+    from scipy.stats import t as t_dist
 
     if len(daily_volumes) < 3:
         return {"pressure": 0.0, "z_volume": 0.0, "p_spike": 1.0}
@@ -1224,13 +1206,12 @@ def compute_t2_pressure_scipy(
     if len(window) >= 5:
         arr_w = np.array(window, dtype=np.float64)
         mean_w = float(np.mean(arr_w))
-        std_w = float(np.std(arr_w, ddof=1))  # sample std (ddof=1)
+        std_w = float(np.std(arr_w, ddof=1))
         if std_w < 1e-9:
             std_w = avg_vol * 0.3
 
         z_vol = (vol_t2 - mean_w) / std_w
         df = len(window) - 1
-        # Survival function: P(T > |z|) — nhỏ → volume spike bất thường
         p_spike = float(t_dist.sf(abs(z_vol), df))
 
         pressure = 0.70 * pressure_base + 0.30 * (1.0 - p_spike)
@@ -1263,7 +1244,7 @@ def compute_engine_correlation(
     Returns:
         corr_e1_e2, corr_e1_e3, corr_e2_e3: float [-1.0, +1.0]
     """
-    from scipy.stats import pearsonr  # lazy import
+    from scipy.stats import pearsonr
 
     min_len = min(len(e1_history), len(e2_history), len(e3_history))
     if min_len < 5:

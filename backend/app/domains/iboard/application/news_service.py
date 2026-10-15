@@ -24,7 +24,6 @@ from app.domains.iboard.application.schemas import IBoardNewsItem
 
 logger = logging.getLogger(__name__)
 
-# Từ điển ánh xạ tên doanh nghiệp / thuật ngữ sang mã cổ phiếu tương ứng
 COMPANY_KEYWORD_MAP: dict[str, str] = {
     "Vingroup": "VIC",
     "VinFast": "VFS",
@@ -77,7 +76,6 @@ COMPANY_KEYWORD_MAP: dict[str, str] = {
 
 TICKER_REGEX = re.compile(r"\b([A-Z]{3}|VN30F1M|VNINDEX|VN30|HNX)\b")
 
-# Các từ viết tắt 3 chữ cái không phải mã cổ phiếu
 IGNORED_ACRONYMS = {
     "USD",
     "VND",
@@ -111,7 +109,7 @@ class IBoardNewsService:
 
     _cached_news: list[IBoardNewsItem] = []
     _last_fetched_ts: float = 0.0
-    _ttl_seconds: float = 300.0  # 5 phút TTL
+    _ttl_seconds: float = 300.0
     _lock: Lock = Lock()
 
     @classmethod
@@ -178,7 +176,6 @@ class IBoardNewsService:
                             continue
 
                         item_date = dt.date()
-                        # Chỉ lấy tin trong ngày hoặc ngày hôm trước (T hoặc T-1)
                         if item_date not in (today, yesterday):
                             continue
 
@@ -199,7 +196,6 @@ class IBoardNewsService:
             except Exception as e:
                 logger.warning("Không thể tải RSS từ %s: %s", url, e)
 
-        # Sắp xếp theo thứ tự mới nhất trước
         return news_items
 
     @classmethod

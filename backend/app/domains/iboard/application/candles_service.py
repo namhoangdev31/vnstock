@@ -38,7 +38,6 @@ class IBoardCandlesService:
         limit = max(min(limit, 300), 5)
         vn = VnstockService(db_session=session)
 
-        # 1. Nến ngày (1D) — DB-first với backfill tự động
         if norm_tf == "1D":
             rows = IBoardDataGateway.backfill_ohlcv_daily(
                 session, vn, sym_code, target_count=limit
@@ -55,7 +54,6 @@ class IBoardCandlesService:
                 for r in reversed(rows)
             ]
 
-        # 2. Nến tuần (1W)
         if norm_tf == "1W":
             try:
                 today = date.today()
@@ -81,7 +79,6 @@ class IBoardCandlesService:
             except Exception as e:
                 logger.warning("Không thể tải nến tuần cho %s: %s", sym_code, e)
 
-        # 3. Nến intraday (1m, 5m, 15m, 1H)
         try:
             df = vn.fetch_intraday(sym_code, interval=norm_tf, count_back=limit)
             if df is not None and not df.empty:
@@ -108,7 +105,6 @@ class IBoardCandlesService:
                 e,
             )
 
-        # 4. Fallback: nến ngày từ DB
         rows = list(
             session.exec(
                 select(StockOHLCVDaily)

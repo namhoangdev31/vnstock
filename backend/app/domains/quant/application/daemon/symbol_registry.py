@@ -24,14 +24,12 @@ logger = logging.getLogger(__name__)
 
 AssetClass = Literal["DERIVATIVE", "EQUITY", "MACRO"]
 
-# Hard-coded tier priorities (lower = polled more frequently)
 _DEFAULT_PRIORITY: dict[str, int] = {
     "DERIVATIVE": 1,
     "EQUITY": 2,
     "MACRO": 3,
 }
 
-# Symbols that are always registered regardless of user preferences
 _ALWAYS_ON: list[tuple[str, str]] = [
     ("VN30F1M", "DERIVATIVE"),
 ]
@@ -43,7 +41,7 @@ class SymbolEntry:
     asset_class: str
     priority: int = 2
     added_at: datetime = field(default_factory=lambda: datetime.now(VN_TZ))
-    source: str = "system"  # "system" | "user" | "index"
+    source: str = "system"
 
     def __hash__(self) -> int:
         return hash(self.symbol)
@@ -86,9 +84,6 @@ class SymbolRegistry:
             len(self._entries),
         )
 
-    # ------------------------------------------------------------------
-    # Public write API
-    # ------------------------------------------------------------------
 
     def register(
         self,
@@ -138,7 +133,6 @@ class SymbolRegistry:
         System symbols (VN30F1M, etc.) are never removed.
         """
         with self._lock:
-            # Remove stale non-system equity entries
             stale = [
                 sym
                 for sym, entry in self._entries.items()
@@ -147,7 +141,6 @@ class SymbolRegistry:
             for sym in stale:
                 del self._entries[sym]
 
-            # Add new ones
             for sym in symbols:
                 if sym not in self._entries:
                     self._entries[sym] = SymbolEntry(
@@ -162,9 +155,6 @@ class SymbolRegistry:
             source,
         )
 
-    # ------------------------------------------------------------------
-    # Public read API
-    # ------------------------------------------------------------------
 
     def get_active_symbols(
         self,
@@ -184,7 +174,6 @@ class SymbolRegistry:
         if asset_class is not None:
             entries = [e for e in entries if e.asset_class == asset_class]
 
-        # Sort: priority ASC, then symbol name for determinism
         entries.sort(key=lambda e: (e.priority, e.symbol))
         return [e.symbol for e in entries[:cap]]
 

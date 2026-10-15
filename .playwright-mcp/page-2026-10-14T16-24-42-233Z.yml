@@ -1,0 +1,301 @@
+- generic [active] [ref=f4e1]:
+  - generic [ref=f4e4]:
+    - banner [ref=f4e5]:
+      - generic [ref=f4e6]:
+        - generic [ref=f4e7]:
+          - link "Vistock" [ref=f4e8] [cursor=pointer]:
+            - /url: /iboard
+          - link "Trang chủ" [ref=f4e10] [cursor=pointer]:
+            - /url: /
+          - navigation [ref=f4e12]:
+            - link "Bảng giá" [ref=f4e13] [cursor=pointer]:
+              - /url: /iboard
+            - button "Đặt lệnh" [ref=f4e15] [cursor=pointer]
+            - button "Phân tích" [ref=f4e19] [cursor=pointer]
+            - button "Tài sản" [ref=f4e23] [cursor=pointer]
+            - button "Tiện ích" [ref=f4e27] [cursor=pointer]
+        - link "VN-INDEX Sáng 13/10, một cổ phiếu ngân hàng vượt đỉnh lịch sử sau khi chốt quyền cổ tức" [ref=f4e32] [cursor=pointer]:
+          - /url: https://cafef.vn/sang-13-10-mot-co-phieu-ngan-hang-vuot-dinh-lich-su-sau-khi-chot-quyen-co-tuc-188261013120522896.chn
+          - generic [ref=f4e33]: VN-INDEX
+          - generic [ref=f4e34]: Sáng 13/10, một cổ phiếu ngân hàng vượt đỉnh lịch sử sau khi chốt quyền cổ tức
+        - generic [ref=f4e35]:
+          - generic [ref=f4e36]: 23:24:41
+          - generic [ref=f4e37]:
+            - button [ref=f4e39] [cursor=pointer]
+            - button [ref=f4e42] [cursor=pointer]
+            - switch "Chuyển đổi thị trường cơ sở và phái sinh" [ref=f4e45] [cursor=pointer]:
+              - generic [ref=f4e46]: Cơ sở
+          - link "Đăng nhập" [ref=f4e50] [cursor=pointer]:
+            - /url: /login
+    - main [ref=f4e51]:
+      - generic [ref=f4e53]:
+        - generic [ref=f4e54]:
+          - generic [ref=f4e56]:
+            - generic [ref=f4e57]:
+              - generic [ref=f4e61]:
+                - generic [ref=f4e62]: 09h
+                - generic [ref=f4e63]: 10h
+                - generic [ref=f4e64]: 11h
+                - generic [ref=f4e65]: 12h
+                - generic [ref=f4e66]: 13h
+                - generic [ref=f4e67]: 14h
+                - generic [ref=f4e68]: 15h
+              - generic [ref=f4e69]:
+                - button "Mở biểu đồ kỹ thuật" [ref=f4e70] [cursor=pointer]
+                - button "Đóng chỉ số" [ref=f4e72] [cursor=pointer]
+            - generic [ref=f4e74]:
+              - generic [ref=f4e75]:
+                - button "VNINDEX" [ref=f4e77] [cursor=pointer]
+                - generic [ref=f4e80]:
+                  - generic [ref=f4e81]: ↓
+                  - generic [ref=f4e82]: 1,704.87
+                  - generic [ref=f4e83]: (-14.55 -0.85%)
+              - generic [ref=f4e84]:
+                - generic [ref=f4e85]: 584,041,036 CP
+                - generic [ref=f4e86]: 1,459.095 Tỷ
+              - generic [ref=f4e87]:
+                - generic [ref=f4e88]:
+                  - generic [ref=f4e89]:
+                    - generic [ref=f4e90]: ↑
+                    - generic [ref=f4e91]: "0"
+                    - generic [ref=f4e92]: (0)
+                  - generic [ref=f4e93]:
+                    - generic [ref=f4e94]: —
+                    - generic [ref=f4e95]: "0"
+                  - generic [ref=f4e96]:
+                    - generic [ref=f4e97]: ↓
+                    - generic [ref=f4e98]: "2"
+                    - generic [ref=f4e99]: (0)
+                - generic [ref=f4e100]: Đóng cửa
+          - generic [ref=f4e102]:
+            - generic [ref=f4e103]:
+              - generic [ref=f4e107]:
+                - generic [ref=f4e108]: 09h
+                - generic [ref=f4e109]: 10h
+                - generic [ref=f4e110]: 11h
+                - generic [ref=f4e111]: 12h
+                - generic [ref=f4e112]: 13h
+                - generic [ref=f4e113]: 14h
+                - generic [ref=f4e114]: 15h
+              - generic [ref=f4e115]:
+                - button "Mở biểu đồ kỹ thuật" [ref=f4e116] [cursor=pointer]
+                - button "Đóng chỉ số" [ref=f4e118] [cursor=pointer]
+            - generic [ref=f4e120]:
+              - generic [ref=f4e121]:
+                - button "VN30" [ref=f4e123] [cursor=pointer]
+                - generic [ref=f4e126]:
+                  - generic [ref=f4e127]: ↓
+                  - generic [ref=f4e128]: 1,852.44
+                  - generic [ref=f4e129]: (-8.55 -0.46%)
+              - generic [ref=f4e130]:
+                - generic [ref=f4e131]: 250,146,200 CP
+                - generic [ref=f4e132]: 6,494.915 Tỷ
+              - generic [ref=f4e133]:
+                - generic [ref=f4e134]:
+                  - generic [ref=f4e135]:
+                    - generic [ref=f4e136]: ↑
+                    - generic [ref=f4e137]: "10"
+                    - generic [ref=f4e138]: (0)
+                  - generic [ref=f4e139]:
+                    - generic [ref=f4e140]: —
+                    - generic [ref=f4e141]: "3"
+                  - generic [ref=f4e142]:
+                    - generic [ref=f4e143]: ↓
+                    - generic [ref=f4e144]: "17"
+                    - generic [ref=f4e145]: (0)
+                - generic [ref=f4e146]: Đóng cửa
+          - generic [ref=f4e148]:
+            - generic [ref=f4e149]:
+              - generic [ref=f4e153]:
+                - generic [ref=f4e154]: 09h
+                - generic [ref=f4e155]: 10h
+                - generic [ref=f4e156]: 11h
+                - generic [ref=f4e157]: 12h
+                - generic [ref=f4e158]: 13h
+                - generic [ref=f4e159]: 14h
+                - generic [ref=f4e160]: 15h
+              - generic [ref=f4e161]:
+                - button "Mở biểu đồ kỹ thuật" [ref=f4e162] [cursor=pointer]
+                - button "Đóng chỉ số" [ref=f4e164] [cursor=pointer]
+            - generic [ref=f4e166]:
+              - generic [ref=f4e167]:
+                - button "HNX30" [ref=f4e169] [cursor=pointer]
+                - generic [ref=f4e172]:
+                  - generic [ref=f4e173]: ↑
+                  - generic [ref=f4e174]: "429.01"
+                  - generic [ref=f4e175]: (+1.99 +0.47%)
+              - generic [ref=f4e176]:
+                - generic [ref=f4e177]: 30,544,450 CP
+                - generic [ref=f4e178]: 13,103.874 Tỷ
+              - generic [ref=f4e179]:
+                - generic [ref=f4e180]:
+                  - generic [ref=f4e181]:
+                    - generic [ref=f4e182]: ↑
+                    - generic [ref=f4e183]: "1"
+                    - generic [ref=f4e184]: (0)
+                  - generic [ref=f4e185]:
+                    - generic [ref=f4e186]: —
+                    - generic [ref=f4e187]: "0"
+                  - generic [ref=f4e188]:
+                    - generic [ref=f4e189]: ↓
+                    - generic [ref=f4e190]: "0"
+                    - generic [ref=f4e191]: (0)
+                - generic [ref=f4e192]: Đóng cửa
+          - generic [ref=f4e194]:
+            - generic [ref=f4e195]:
+              - generic [ref=f4e199]:
+                - generic [ref=f4e200]: 09h
+                - generic [ref=f4e201]: 10h
+                - generic [ref=f4e202]: 11h
+                - generic [ref=f4e203]: 12h
+                - generic [ref=f4e204]: 13h
+                - generic [ref=f4e205]: 14h
+                - generic [ref=f4e206]: 15h
+              - generic [ref=f4e207]:
+                - button "Mở biểu đồ kỹ thuật" [ref=f4e208] [cursor=pointer]
+                - button "Đóng chỉ số" [ref=f4e210] [cursor=pointer]
+            - generic [ref=f4e212]:
+              - generic [ref=f4e213]:
+                - button "HNX-INDEX" [ref=f4e215] [cursor=pointer]
+                - generic [ref=f4e218]:
+                  - generic [ref=f4e219]: ↑
+                  - generic [ref=f4e220]: "265.16"
+                  - generic [ref=f4e221]: (+0.91 +0.34%)
+              - generic [ref=f4e222]:
+                - generic [ref=f4e223]: 45,300,776 CP
+                - generic [ref=f4e224]: 25,115.828 Tỷ
+              - generic [ref=f4e225]:
+                - generic [ref=f4e226]:
+                  - generic [ref=f4e227]:
+                    - generic [ref=f4e228]: ↑
+                    - generic [ref=f4e229]: "2"
+                    - generic [ref=f4e230]: (0)
+                  - generic [ref=f4e231]:
+                    - generic [ref=f4e232]: —
+                    - generic [ref=f4e233]: "0"
+                  - generic [ref=f4e234]:
+                    - generic [ref=f4e235]: ↓
+                    - generic [ref=f4e236]: "0"
+                    - generic [ref=f4e237]: (0)
+                - generic [ref=f4e238]: Đóng cửa
+        - generic [ref=f4e240]:
+          - generic [ref=f4e241]:
+            - generic [ref=f4e242]: Chỉ số
+            - generic [ref=f4e245]: Điểm (+/-)
+            - generic [ref=f4e246]: KLGD (Tr)
+            - generic [ref=f4e247]: GTGD (Tỷ)
+            - generic [ref=f4e248]: CK Tăng/Giảm
+          - generic [ref=f4e249]:
+            - generic [ref=f4e250]:
+              - generic [ref=f4e251]: VNINDEX
+              - generic [ref=f4e252]:
+                - generic [ref=f4e253]: 1,704.87
+                - generic [ref=f4e254]: "-14.55"
+              - generic [ref=f4e255]: "584.041"
+              - generic [ref=f4e256]: 1,459.095
+              - generic [ref=f4e257]:
+                - generic [ref=f4e258]:
+                  - generic [ref=f4e259]: ↑
+                  - generic [ref=f4e260]: "0"
+                - generic [ref=f4e261]:
+                  - generic [ref=f4e262]: —
+                  - generic [ref=f4e263]: "0"
+                - generic [ref=f4e264]:
+                  - generic [ref=f4e265]: ↓
+                  - generic [ref=f4e266]: "2"
+            - generic [ref=f4e267]:
+              - generic [ref=f4e268]: VN30
+              - generic [ref=f4e269]:
+                - generic [ref=f4e270]: 1,852.44
+                - generic [ref=f4e271]: "-8.55"
+              - generic [ref=f4e272]: "250.146"
+              - generic [ref=f4e273]: 6,494.915
+              - generic [ref=f4e274]:
+                - generic [ref=f4e275]:
+                  - generic [ref=f4e276]: ↑
+                  - generic [ref=f4e277]: "10"
+                - generic [ref=f4e278]:
+                  - generic [ref=f4e279]: —
+                  - generic [ref=f4e280]: "3"
+                - generic [ref=f4e281]:
+                  - generic [ref=f4e282]: ↓
+                  - generic [ref=f4e283]: "17"
+            - generic [ref=f4e284]:
+              - generic [ref=f4e285]: HNX30
+              - generic [ref=f4e286]:
+                - generic [ref=f4e287]: "429.01"
+                - generic [ref=f4e288]: "+1.99"
+              - generic [ref=f4e289]: "30.544"
+              - generic [ref=f4e290]: 13,103.874
+              - generic [ref=f4e291]:
+                - generic [ref=f4e292]:
+                  - generic [ref=f4e293]: ↑
+                  - generic [ref=f4e294]: "1"
+                - generic [ref=f4e295]:
+                  - generic [ref=f4e296]: —
+                  - generic [ref=f4e297]: "0"
+                - generic [ref=f4e298]:
+                  - generic [ref=f4e299]: ↓
+                  - generic [ref=f4e300]: "0"
+            - generic [ref=f4e301]:
+              - generic [ref=f4e302]: VN30F1M
+              - generic [ref=f4e303]:
+                - generic [ref=f4e304]: 1,857.00
+                - generic [ref=f4e305]: "-10.50"
+              - generic [ref=f4e306]: 133,489
+              - generic [ref=f4e307]: 24,788.907
+              - generic [ref=f4e308]:
+                - generic [ref=f4e309]:
+                  - generic [ref=f4e310]: ↑
+                  - generic [ref=f4e311]: "0"
+                - generic [ref=f4e312]:
+                  - generic [ref=f4e313]: —
+                  - generic [ref=f4e314]: "0"
+                - generic [ref=f4e315]:
+                  - generic [ref=f4e316]: ↓
+                  - generic [ref=f4e317]: "1"
+            - generic [ref=f4e318]:
+              - generic [ref=f4e319]: HNX-INDEX
+              - generic [ref=f4e320]:
+                - generic [ref=f4e321]: "265.16"
+                - generic [ref=f4e322]: "+0.91"
+              - generic [ref=f4e323]: "45.301"
+              - generic [ref=f4e324]: 25,115.828
+              - generic [ref=f4e325]:
+                - generic [ref=f4e326]:
+                  - generic [ref=f4e327]: ↑
+                  - generic [ref=f4e328]: "2"
+                - generic [ref=f4e329]:
+                  - generic [ref=f4e330]: —
+                  - generic [ref=f4e331]: "0"
+                - generic [ref=f4e332]:
+                  - generic [ref=f4e333]: ↓
+                  - generic [ref=f4e334]: "0"
+            - generic [ref=f4e335]:
+              - generic [ref=f4e336]: UPCOM
+              - generic [ref=f4e337]:
+                - generic [ref=f4e338]: "124.65"
+                - generic [ref=f4e339]: "+0.71"
+              - generic [ref=f4e340]: "31.612"
+              - generic [ref=f4e341]: "-"
+              - generic [ref=f4e342]:
+                - generic [ref=f4e343]:
+                  - generic [ref=f4e344]: ↑
+                  - generic [ref=f4e345]: "0"
+                - generic [ref=f4e346]:
+                  - generic [ref=f4e347]: —
+                  - generic [ref=f4e348]: "0"
+                - generic [ref=f4e349]:
+                  - generic [ref=f4e350]: ↓
+                  - generic [ref=f4e351]: "0"
+      - generic [ref=f4e354]:
+        - generic [ref=f4e356]:
+          - heading "Bảng giá cổ phiếu cơ sở Vistock" [level=2] [ref=f4e357]
+          - generic [ref=f4e358]: Cơ sở
+        - paragraph [ref=f4e359]: Không gian hiển thị bảng giá khớp lệnh thời gian thực cho các mã HOSE, HNX, UPCOM và rổ chỉ số VN30.
+  - generic [ref=f4e360]:
+    - button "Toggle Nuxt DevTools" [ref=f4e361] [cursor=pointer]
+    - generic "Page load time" [ref=f4e365]:
+      - generic [ref=f4e366]: "26"
+      - generic [ref=f4e367]: ms
+    - button "Toggle Component Inspector" [ref=f4e369] [cursor=pointer]

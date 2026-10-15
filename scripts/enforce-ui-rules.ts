@@ -1,18 +1,10 @@
 #!/usr/bin/env bun
-/**
- * enforce-ui-rules.ts
- * Enforces strict UI engineering rules:
- * 1. Replaces hardcoded hex colors (#...) with semantic Tailwind tokens (aave-*, surface-*).
- * 2. Removes gradients from code.
- * 3. Removes emojis in text.
- * 4. Eliminates explanatory parentheses in labels, substituting with <UTooltip> where appropriate.
- */
 
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 
 const COLOR_REPLACEMENTS: [RegExp, string][] = [
-  // Opacity variants first
+
   [/bg-\[#998eff\]\/15/g, "bg-aave-violet/15"],
   [/bg-\[#998eff\]\/20/g, "bg-aave-violet/20"],
   [/bg-\[#998eff\]\/10/g, "bg-aave-violet/10"],
@@ -23,7 +15,6 @@ const COLOR_REPLACEMENTS: [RegExp, string][] = [
   [/border-\[#998eff\]\/50/g, "border-aave-violet/50"],
   [/text-\[#998eff\]\/80/g, "text-aave-violet/80"],
 
-  // Direct colors
   [/selection:bg-\[#998eff\]/g, "selection:bg-aave-violet"],
   [/selection:text-\[#000000\]/g, "selection:text-aave-charcoal"],
   [/bg-\[#998eff\]/g, "bg-aave-violet"],
@@ -219,7 +210,6 @@ const PARENTHESES_REPLACEMENTS: [string | RegExp, string][] = [
 function processContent(content: string, filePath: string): string {
   let updated = content;
 
-  // 1. Remove gradients
   if (filePath.endsWith("index.vue")) {
     updated = updated.replace(
       /bg-gradient-to-b from-\[#ffffff\] via-\[#f7f4ff\] to-\[#ece6ff\]/g,
@@ -232,19 +222,16 @@ function processContent(content: string, filePath: string): string {
   }
 
   if (filePath.endsWith("[symbol].vue")) {
-    // Canvas gradient replacement
     updated = updated.replace(
       /const gradient = ctx\.createLinearGradient[\s\S]*?ctx\.fillStyle = gradient/g,
       `ctx.fillStyle = "rgba(153, 142, 255, 0.06)"`
     );
   }
 
-  // 2. Token replacements
   for (const [regex, replacement] of COLOR_REPLACEMENTS) {
     updated = updated.replace(regex, replacement);
   }
 
-  // 3. Parentheses replacements
   for (const [target, replacement] of PARENTHESES_REPLACEMENTS) {
     if (typeof target === "string") {
       updated = updated.replaceAll(target, replacement);

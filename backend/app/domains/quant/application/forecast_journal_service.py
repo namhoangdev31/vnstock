@@ -41,9 +41,6 @@ class ForecastJournalService:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    # ------------------------------------------------------------------
-    # Layer A — record (predict)
-    # ------------------------------------------------------------------
 
     def record(
         self,
@@ -111,9 +108,6 @@ class ForecastJournalService:
         )
         return entry
 
-    # ------------------------------------------------------------------
-    # Layer A — resolve (back-fill reality)
-    # ------------------------------------------------------------------
 
     def resolve(
         self,
@@ -150,7 +144,6 @@ class ForecastJournalService:
                 "realized_at cannot precede predicted_at (look-ahead violation)"
             )
         if realized_at is not None:
-            # Keep this branch explicit for readability in the audit path.
             real_dt = realized_at
 
         entry.actual_value = actual_value
@@ -164,9 +157,6 @@ class ForecastJournalService:
         logger.info("Resolved forecast %s -> actual=%s", entry.id, actual_value)
         return entry
 
-    # ------------------------------------------------------------------
-    # Layer A — score (measure)
-    # ------------------------------------------------------------------
 
     def score(self, forecast_id) -> ForecastJournal:
         """Compute MAE / directional accuracy. Status → ``scored``.
@@ -243,9 +233,6 @@ class ForecastJournalService:
             return None
         return p == a
 
-    # ------------------------------------------------------------------
-    # Aggregation helpers
-    # ------------------------------------------------------------------
 
     def aggregate(
         self,
@@ -324,7 +311,6 @@ class ForecastJournalService:
         for entry in pending_rows:
             pred_date = entry.predicted_at.date()
 
-            # Determine target resolution date based on horizon
             if entry.horizon in (ForecastHorizon.ATC, ForecastHorizon.INTRADAY):
                 target_date = pred_date
             elif entry.horizon == ForecastHorizon.T_PLUS_1:

@@ -3,6 +3,8 @@
   "python.analysis.extraPaths": ["${workspaceFolder}/backend"],
   "biome.lsp.bin": "./node_modules/.bin/biome",
   "ty.interpreter": ["${workspaceFolder}/.venv/bin/python"],
+  "cSpell.enabled": false,
+  "cSpell.language": "en,vi",
   "python-envs.defaultEnvManager": "ms-python.python:system",
   "cursorpyright.analysis.extraPaths": ["${workspaceFolder}/backend"],
   "css.lint.unknownAtRules": "ignore",

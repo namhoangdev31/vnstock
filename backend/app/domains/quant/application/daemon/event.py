@@ -22,9 +22,9 @@ class MarketDataEvent:
 
     event_id: str
     symbol: str
-    asset_type: str  # "derivative" | "equity" | "index"
+    asset_type: str
     interval: str | None
-    event_type: str  # "candle" | "tick" | "orderflow"
+    event_type: str
     event_time: datetime
     received_at: datetime
     open: Decimal | None = None
@@ -113,7 +113,6 @@ class MarketDataNormalizer:
         phase = poll_result.phase
         from_cache = poll_result.from_cache
 
-        # Choose primary bars series: intraday_bars if present, else history_bars
         raw_bars = poll_result.intraday_bars or poll_result.history_bars or []
         order_flow_raw = poll_result.order_flow or []
 
@@ -146,7 +145,6 @@ class MarketDataNormalizer:
                     if bar_dt.tzinfo is None:
                         bar_dt = bar_dt.replace(tzinfo=VN_TZ)
 
-                    # Look-ahead bias check: future timestamps relative to as_of (with 2s leeway for clock drift)
                     if bar_dt > now + timedelta(seconds=2):
                         logger.warning(
                             "Skipping future bar time %s exceeding as_of %s (Look-ahead guard)",
@@ -207,13 +205,10 @@ class MarketDataNormalizer:
             if event_time.tzinfo is None:
                 event_time = event_time.replace(tzinfo=VN_TZ)
 
-            # Determine whether the candle is closed or forming
-            # A 1m candle is considered forming if within 60s of current time
             is_closed = True
             if interval == "1m":
                 is_closed = (now - event_time).total_seconds() >= 60.0
 
-            # Deduplication key check
             dedup_key = (symbol, interval, event_time.isoformat())
             is_dup = self._mark_seen(dedup_key)
             if is_dup:
@@ -223,7 +218,6 @@ class MarketDataNormalizer:
                     event_time.isoformat(),
                 )
 
-            # Build deterministic event_id
             event_id = (
                 f"{symbol}:{interval}:{event_time.strftime('%Y%m%d%H%M%S')}:candle"
             )
@@ -257,10 +251,7 @@ class MarketDataNormalizer:
             )
 
         entry_price = closes[-1] if closes else 0.0
-        # Merge snapshots: poll_result.market_snapshot (primary, freshly fetched)
-        # overrides the optional market_snapshot parameter (legacy/test injection).
         snapshot = {**(poll_result.market_snapshot or {}), **(market_snapshot or {})}
-        # spot_price > 0 means VN30 index was fetched; otherwise fall back to entry_price
         raw_spot = snapshot.get("spot_price", 0.0)
         spot_price = (
             float(raw_spot)
@@ -268,7 +259,6 @@ class MarketDataNormalizer:
             else float(entry_price)
         )
 
-        # Check sufficiency: if from_cache=True and insufficient bars (< 15 bars)
         if from_cache and len(closes) < 15:
             skip_reason = "cached_data_insufficient_bars"
             is_valid = False
@@ -276,7 +266,6 @@ class MarketDataNormalizer:
             skip_reason = "insufficient_bars_minimum_5_required"
             is_valid = False
 
-        # Orderflow conversion to DataFrame if available
         df_order_flow = None
         if order_flow_raw:
             try:

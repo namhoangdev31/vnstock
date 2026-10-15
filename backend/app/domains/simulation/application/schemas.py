@@ -14,10 +14,6 @@ from sqlmodel import Field, SQLModel
 
 from app.core.enums import DEFAULT_INITIAL_BALANCE, OrderType
 
-# ==============================================================================
-# REQUEST DTOs
-# ==============================================================================
-
 
 class PortfolioCreateRequest(SQLModel):
     """Payload tạo mới một danh mục giao dịch."""
@@ -48,11 +44,6 @@ class MarkToMarketRequest(SQLModel):
     """Payload định giá lại danh mục theo giá thị trường (Mark-to-Market)."""
 
     prices: dict[str, float] = Field(default_factory=dict)
-
-
-# ==============================================================================
-# RESPONSE DTOs
-# ==============================================================================
 
 
 class PortfolioResponse(SQLModel):
@@ -131,7 +122,7 @@ class MarginStatusResponse(SQLModel):
     equity: float
     margin_used: float
     margin_ratio: float | None = None
-    status: str  # SAFE, CALL_MARGIN, FORCE_LIQUIDATION
+    status: str
 
 
 class SettlementProcessResponse(SQLModel):

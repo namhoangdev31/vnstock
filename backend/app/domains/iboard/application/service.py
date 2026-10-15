@@ -37,7 +37,6 @@ from app.domains.iboard.application.schemas import (
     IBoardStockRow,
 )
 from app.domains.iboard.infrastructure.external_indices import (
-    DowJonesGateway,
     IndexSparklineGateway,
 )
 
@@ -45,7 +44,6 @@ from app.domains.iboard.infrastructure.external_indices import (
 class IBoardService:
     """Application Facade điều phối các use case của bảng giá iBoard v2."""
 
-    # 1. Candles & Charts Use Case (100 phiên chuẩn DNSE/TradingView)
     @staticmethod
     def get_candles(
         session: Session,
@@ -57,12 +55,10 @@ class IBoardService:
             session=session, symbol=symbol, timeframe=timeframe, limit=limit
         )
 
-    # 2. Market Indices Strip Use Case
     @classmethod
     def get_indices(cls, session: Session) -> list[IBoardIndexItem]:
         return IBoardIndicesService.get_indices(session)
 
-    # 3. Multi-Category Board Table Use Case
     @staticmethod
     def get_board(
         session: Session,
@@ -81,7 +77,6 @@ class IBoardService:
             limit=limit,
         )
 
-    # 4. Stock Detail, Order Book & Ticks Use Case
     @staticmethod
     def get_stock_detail(
         session: Session, symbol: str, timeframe: str = "1D"
@@ -90,12 +85,10 @@ class IBoardService:
             session=session, symbol=symbol, timeframe=timeframe
         )
 
-    # 5. Market Pulse & Quantitative AI Insight Use Case
     @classmethod
     def get_market_pulse(cls, session: Session) -> IBoardMarketPulse:
         return IBoardPulseService.get_market_pulse(session)
 
-    # 6. Real-time Market News Ticker (T & T-1) Use Case
     @classmethod
     def get_news(
         cls, session: Session, limit: int = 30, randomize: bool = False
@@ -111,17 +104,13 @@ class IBoardService:
         vn: Any,
         fallback_daily: list[float],
         cur_close: float,
-    ) -> list[float]:
+    ) -> list[float | None]:
         return IndexSparklineGateway.get_sparkline(
             code=code,
             vn=vn,
             fallback_daily=fallback_daily,
             cur_close=cur_close,
         )
-
-    @classmethod
-    def _get_dow_jones_futures(cls) -> IBoardIndexItem | None:
-        return DowJonesGateway.get_dow_jones_futures()
 
 
 __all__ = [

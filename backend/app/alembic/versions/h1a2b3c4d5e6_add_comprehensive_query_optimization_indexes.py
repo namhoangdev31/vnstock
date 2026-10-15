@@ -7,7 +7,6 @@ Create Date: 2026-09-21
 
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "h1a2b3c4d5e6"
 down_revision = "g1a2b3c4d5e6"
 branch_labels = None
@@ -15,7 +14,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 1. StockSymbol composite filter indexes
     op.create_index(
         "ix_stock_symbol_active_exchange",
         "stock_symbol",
@@ -29,7 +27,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 2. StockOHLCVDaily composite indexes
     op.create_index(
         "ix_stock_ohlcv_daily_sym_date",
         "stock_ohlcv_daily",
@@ -43,7 +40,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 3. StockOHLCVIntraday multi-timeframe composite index
     op.create_index(
         "ix_stock_ohlcv_intraday_sym_int_time",
         "stock_ohlcv_intraday",
@@ -51,7 +47,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 4. StockTickIntraday tick lookup index
     op.create_index(
         "ix_stock_tick_intraday_sym_time",
         "stock_tick_intraday",
@@ -59,7 +54,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 5. CorporateEvent lookup index
     op.create_index(
         "ix_corporate_event_sym_exdate",
         "corporate_event",
@@ -67,7 +61,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 6. IndexConstituent composition query index
     op.create_index(
         "ix_index_constituent_code_eff",
         "index_constituent",
@@ -75,7 +68,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 7. CoveredWarrant active underlying index
     op.create_index(
         "ix_covered_warrant_underlying_active",
         "covered_warrant",
@@ -83,7 +75,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 8. BondSpecification issuer and type active indexes
     op.create_index(
         "ix_bond_spec_issuer_active",
         "bond_specification",
@@ -97,7 +88,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 9. DataSyncLog audit indexes
     op.create_index(
         "ix_data_sync_log_type_date",
         "data_sync_log",
@@ -111,7 +101,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 10. ForecastJournal learning loop index
     op.create_index(
         "ix_forecast_journal_status_pred",
         "forecast_journal",
@@ -121,7 +110,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Reverse all indexes created in upgrade()
     op.drop_index("ix_forecast_journal_status_pred", table_name="forecast_journal")
     op.drop_index("ix_data_sync_log_symbol_date", table_name="data_sync_log")
     op.drop_index("ix_data_sync_log_type_date", table_name="data_sync_log")

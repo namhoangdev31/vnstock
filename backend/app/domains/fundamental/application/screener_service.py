@@ -49,7 +49,6 @@ class ScreenerService:
         max_ev_to_ebitda: float | None = None,
     ) -> ScreenerResponse:
         """Truy vấn bảng ScreenerSnapshot bằng thuật toán Keyset 2 pha với đầy đủ bộ lọc."""
-        # Điều kiện lọc cơ bản
         base_filters = [col(ScreenerSnapshot.is_active).is_(True)]
 
         if exchange:
@@ -89,11 +88,8 @@ class ScreenerService:
 
         query = select(ScreenerSnapshot).where(*base_filters)
 
-        # Áp dụng Keyset Cursor
         if cursor is not None and cursor.instrument_id is not None:
             if cursor.roe is not None:
-                # Pha 1: Cursor vẫn ở trong vùng giá trị ROE có số thực
-                # Tìm các bản ghi có ROE nhỏ hơn HOẶC bằng nhưng ID lớn hơn HOẶC ROE là NULL
                 cursor_cond = or_(
                     col(ScreenerSnapshot.roe) < cursor.roe,
                     and_(
@@ -108,7 +104,6 @@ class ScreenerService:
                     col(ScreenerSnapshot.instrument_id).asc(),
                 )
             else:
-                # Pha 2: Cursor đã tiến vào vùng roe IS NULL
                 cursor_cond = and_(
                     col(ScreenerSnapshot.roe).is_(None),
                     col(ScreenerSnapshot.instrument_id) > cursor.instrument_id,
@@ -116,13 +111,11 @@ class ScreenerService:
                 query = query.where(cursor_cond)
                 query = query.order_by(col(ScreenerSnapshot.instrument_id).asc())
         else:
-            # Trang đầu tiên
             query = query.order_by(
                 col(ScreenerSnapshot.roe).desc().nulls_last(),
                 col(ScreenerSnapshot.instrument_id).asc(),
             )
 
-        # Lấy dôi dư 1 bản ghi để biết có trang tiếp theo hay không
         query = query.limit(page_size + 1)
         results = list(session.exec(query).all())
 
@@ -226,7 +219,6 @@ class ScreenerService:
         if max_ev_to_ebitda is not None:
             query = query.where(col(FinancialRatio.ev_to_ebitda) <= max_ev_to_ebitda)
 
-        # Lọc exchange / industry qua subquery trên stock_symbol (không import cross-domain model)
         from sqlalchemy import column, table
 
         sym_col = column("symbol")
@@ -263,7 +255,6 @@ class ScreenerService:
         )
         ratios = session.exec(query).all()
 
-        # Lấy organ_name từ stock_symbol qua anonymous table để tránh cross-domain
         symbols = [r.symbol for r in ratios]
         org_map: dict[str, dict] = {}
         if symbols:
@@ -309,14 +300,12 @@ class ScreenerService:
     ) -> int:
         """Tạo snapshot định lượng hàng ngày và lưu trữ lịch sử Point-in-Time một cách idempotent."""
         final_date = target_date or snapshot_date or date.today()
-        # Lấy danh sách Instrument đang hoạt động
         instruments = session.exec(
             select(Instrument).where(col(Instrument.is_active).is_(True))
         ).all()
         if not instruments:
             return 0
 
-        # Lấy trước các historical snapshot đã có cho ngày final_date để đảm bảo tính idempotent
         existing_hist_map = {
             h.instrument_id: h
             for h in session.exec(
@@ -326,7 +315,6 @@ class ScreenerService:
             ).all()
         }
 
-        # Lấy bản đồ profile công ty
         profiles = {p.symbol: p for p in session.exec(select(CompanyProfile)).all()}
 
         created_count = 0
@@ -336,7 +324,6 @@ class ScreenerService:
             sym = inst.canonical_code.split(":")[-1]
             prof = profiles.get(sym)
 
-            # Lấy giá đóng cửa ngày gần nhất
             daily_bar = session.exec(
                 select(StockOHLCVDaily)
                 .where(
@@ -349,7 +336,6 @@ class ScreenerService:
                 .order_by(col(StockOHLCVDaily.trading_date).desc())
             ).first()
 
-            # Lấy chỉ số tài chính gần nhất
             ratio = session.exec(
                 select(FinancialRatio)
                 .where(
@@ -372,7 +358,6 @@ class ScreenerService:
             )
             vol_val = float(daily_bar.volume) if daily_bar else None
 
-            # Upsert vào ScreenerSnapshot
             snap = session.exec(
                 select(ScreenerSnapshot).where(
                     col(ScreenerSnapshot.instrument_id) == inst.id
@@ -456,7 +441,6 @@ class ScreenerService:
                     setattr(snap, k, v)
                 session.add(snap)
 
-            # Idempotent lưu bản ghi lịch sử vintage (ScreenerSnapshotHistorical)
             hist_snap = existing_hist_map.get(inst.id)
             if hist_snap is None:
                 hist_snap = ScreenerSnapshotHistorical(
@@ -466,7 +450,6 @@ class ScreenerService:
                 session.add(hist_snap)
                 existing_hist_map[inst.id] = hist_snap
             else:
-                # Nếu đã có bản ghi của ngày này, cập nhật các chỉ số mới nhất thay vì nhân bản duplicate
                 for k, v in snap_data.items():
                     if k not in ("instrument_id", "snapshot_date"):
                         setattr(hist_snap, k, v)

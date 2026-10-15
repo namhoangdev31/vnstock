@@ -11,7 +11,6 @@ from sqlmodel.sql.sqltypes import AutoString
 
 from app.core.models_base import JSONBVariant
 
-# revision identifiers, used by Alembic.
 revision = "c3d4e5f6a7b8"
 down_revision = "b2c3d4e5f6a7"
 branch_labels = None
@@ -19,11 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # =========================================================================
-    # 1. Bổ sung các cột mới vào các bảng Stock hiện có
-    # =========================================================================
 
-    # 1.1. stock_symbol
     op.add_column(
         "stock_symbol",
         sa.Column(
@@ -58,7 +53,6 @@ def upgrade() -> None:
         ),
     )
 
-    # 1.2. stock_ohlcv_daily
     op.add_column(
         "stock_ohlcv_daily",
         sa.Column("change", sa.Float(), nullable=True),
@@ -104,7 +98,6 @@ def upgrade() -> None:
         sa.Column("foreign_net_volume", sa.Integer(), nullable=True),
     )
 
-    # 1.3. stock_ohlcv_intraday
     op.add_column(
         "stock_ohlcv_intraday",
         sa.Column("value", sa.Float(), nullable=True),
@@ -126,7 +119,6 @@ def upgrade() -> None:
         sa.Column("vwap", sa.Float(), nullable=True),
     )
 
-    # 1.4. company_profile
     op.add_column(
         "company_profile",
         sa.Column("free_float_pct", sa.Float(), nullable=True),
@@ -148,11 +140,7 @@ def upgrade() -> None:
         sa.Column("address", AutoString(length=500), nullable=True),
     )
 
-    # =========================================================================
-    # 2. Tạo các bảng mới cho hệ sinh thái vnstock v4
-    # =========================================================================
 
-    # 2.1. derivative_contract (Đặc tả hợp đồng phái sinh)
     op.create_table(
         "derivative_contract",
         sa.Column("symbol", AutoString(length=20), nullable=False),
@@ -187,7 +175,6 @@ def upgrade() -> None:
         ["expiration_date"],
     )
 
-    # 2.2. stock_tick_intraday (Tick khớp lệnh Quote.intraday)
     op.create_table(
         "stock_tick_intraday",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -220,7 +207,6 @@ def upgrade() -> None:
         ["timestamp"],
     )
 
-    # 2.3. financial_report_item (Chuẩn hóa dòng chỉ tiêu BCTC chi tiết)
     op.create_table(
         "financial_report_item",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -249,7 +235,6 @@ def upgrade() -> None:
         ["item_code"],
     )
 
-    # 2.4. financial_ratio (Chỉ số tài chính P/E, P/B, ROE, ROA, EPS,...)
     op.create_table(
         "financial_ratio",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -283,7 +268,6 @@ def upgrade() -> None:
         ["symbol"],
     )
 
-    # 2.5. corporate_event (Sự kiện doanh nghiệp & cổ tức)
     op.create_table(
         "corporate_event",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -315,7 +299,6 @@ def upgrade() -> None:
         ["ex_date"],
     )
 
-    # 2.6. company_shareholder (Cơ cấu cổ đông lớn)
     op.create_table(
         "company_shareholder",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -362,7 +345,6 @@ def upgrade() -> None:
         ["symbol"],
     )
 
-    # 2.7. company_officer (Ban lãnh đạo, HĐQT)
     op.create_table(
         "company_officer",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -382,7 +364,6 @@ def upgrade() -> None:
         ["symbol"],
     )
 
-    # 2.8. index_constituent (Thành phần rổ chỉ số VN30, VN100)
     op.create_table(
         "index_constituent",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -412,7 +393,6 @@ def upgrade() -> None:
         ["effective_date"],
     )
 
-    # 2.9. signal_log (Sổ cái tín hiệu chiến lược định lượng)
     op.create_table(
         "signal_log",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -444,7 +424,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop các bảng mới theo thứ tự phụ thuộc
     op.drop_index("ix_signal_log_created_at", table_name="signal_log")
     op.drop_index("ix_signal_log_symbol", table_name="signal_log")
     op.drop_index("ix_signal_log_strategy_name", table_name="signal_log")
@@ -490,7 +469,6 @@ def downgrade() -> None:
     )
     op.drop_table("derivative_contract")
 
-    # Drop các cột đã add vào các bảng cũ
     op.drop_column("company_profile", "address")
     op.drop_column("company_profile", "employee_count")
     op.drop_column("company_profile", "max_foreign_ownership_pct")

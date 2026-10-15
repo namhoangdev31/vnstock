@@ -10,7 +10,6 @@ import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 
 
-# revision identifiers, used by Alembic.
 revision = "a1b2c3d4e5f6"
 down_revision = "fe56fa70289e"
 branch_labels = None
@@ -18,7 +17,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # stock_symbol
     op.create_table(
         "stock_symbol",
         sa.Column("symbol", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
@@ -31,7 +29,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("symbol"),
     )
 
-    # stock_ohlcv_daily
     op.create_table(
         "stock_ohlcv_daily",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -51,7 +48,6 @@ def upgrade() -> None:
     op.create_index("ix_stock_ohlcv_daily_symbol", "stock_ohlcv_daily", ["symbol"])
     op.create_index("ix_stock_ohlcv_daily_trading_date", "stock_ohlcv_daily", ["trading_date"])
 
-    # stock_ohlcv_intraday
     op.create_table(
         "stock_ohlcv_intraday",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -71,7 +67,6 @@ def upgrade() -> None:
     op.create_index("ix_stock_ohlcv_intraday_symbol", "stock_ohlcv_intraday", ["symbol"])
     op.create_index("ix_stock_ohlcv_intraday_timestamp", "stock_ohlcv_intraday", ["timestamp"])
 
-    # company_profile
     op.create_table(
         "company_profile",
         sa.Column("symbol", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
@@ -90,7 +85,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("symbol"),
     )
 
-    # financial_report
     op.create_table(
         "financial_report",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -108,7 +102,6 @@ def upgrade() -> None:
     )
     op.create_index("ix_financial_report_symbol", "financial_report", ["symbol"])
 
-    # data_sync_log
     op.create_table(
         "data_sync_log",
         sa.Column("id", sa.Uuid(), nullable=False),

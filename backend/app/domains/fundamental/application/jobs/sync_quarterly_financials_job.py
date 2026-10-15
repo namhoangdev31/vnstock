@@ -28,7 +28,6 @@ from app.domains.vnstock import (
 
 logger = logging.getLogger(__name__)
 
-# Danh sách cổ phiếu cốt lõi dự phòng nếu không lấy được rổ VN30
 FALLBACK_CORE_SYMBOLS: list[str] = [
     "FPT",
     "HPG",

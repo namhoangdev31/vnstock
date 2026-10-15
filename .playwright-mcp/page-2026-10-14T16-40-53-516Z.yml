@@ -1,0 +1,674 @@
+- generic [active] [ref=f4e1]:
+  - main [aria-hidden] [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - generic [ref=f4e5]:
+        - link [ref=f4e1419] [cursor=pointer]:
+          - /url: /v2
+        - link [ref=f4e1420] [cursor=pointer]:
+          - /url: https://entradex.dnse.com.vn/dashboard
+        - generic [ref=f4e12] [cursor=pointer]: Bảng giá
+        - generic [ref=f4e14] [cursor=pointer]: Đặt lệnh
+        - generic [ref=f4e18] [cursor=pointer]: Giao dịch tiền
+        - generic [ref=f4e22] [cursor=pointer]: Phân tích
+        - generic [ref=f4e26] [cursor=pointer]: Tài sản
+        - generic [ref=f4e30] [cursor=pointer]: Tiện ích
+      - generic [ref=f4e34]:
+        - paragraph [ref=f4e941]: 23:40:52
+        - generic [ref=f4e36]:
+          - button [ref=f4e1421] [cursor=pointer]
+          - generic [ref=f4e40] [cursor=pointer]
+          - generic [ref=f4e44] [cursor=pointer]
+        - button [ref=f4e1422] [cursor=pointer]: Đăng nhập
+        - link [ref=f4e1423] [cursor=pointer]:
+          - /url: https://www.dnse.com.vn/mo-tai-khoan?utm_source=DNSE&utm_medium=BangGiaV2&utm_campaign=Banner&utm_content=%2Fv2&utm_term=14102026&redirectPath=https%3A%2F%2Fbanggia.dnse.com.vn%2Fv2
+          - text: Mở tài khoản
+    - generic [ref=f4e52]:
+      - generic [ref=f4e53]:
+        - generic [ref=f4e54]:
+          - generic:
+            - button
+          - generic [ref=f4e55]:
+            - generic [ref=f4e56] [cursor=pointer]:
+              - generic [ref=f4e57]:
+                - generic [ref=f4e58]:
+                  - generic [ref=f4e59]: VN30
+                  - generic [ref=f4e61]: 1,852.44
+                - generic [ref=f4e62]:
+                  - generic [ref=f4e63]: "-0.46%"
+                  - generic [ref=f4e64]: "-8.55"
+              - generic [ref=f4e66]:
+                - generic [ref=f4e67]:
+                  - generic [ref=f4e68]: 250.15 Triệu CP
+                  - generic [ref=f4e69]: "|"
+                  - generic [ref=f4e70]: 8,136.49 Tỷ
+                - generic [ref=f4e71]:
+                  - generic [ref=f4e72]:
+                    - generic [ref=f4e75]: "10"
+                    - generic [ref=f4e76]: (0)
+                  - generic [ref=f4e77]: "3"
+                  - generic [ref=f4e81]:
+                    - generic [ref=f4e84]: "17"
+                    - generic [ref=f4e85]: (0)
+            - generic [ref=f4e89] [cursor=pointer]:
+              - generic [ref=f4e90]:
+                - generic [ref=f4e91]:
+                  - generic [ref=f4e92]: VNINDEX
+                  - generic [ref=f4e94]: 1,704.87
+                - generic [ref=f4e95]:
+                  - generic [ref=f4e96]: "-0.85%"
+                  - generic [ref=f4e97]: "-14.55"
+              - generic [ref=f4e99]:
+                - generic [ref=f4e100]:
+                  - generic [ref=f4e101]: 584.04 Triệu CP
+                  - generic [ref=f4e102]: "|"
+                  - generic [ref=f4e103]: 13,732.34 Tỷ
+                - generic [ref=f4e104]:
+                  - generic [ref=f4e105]:
+                    - generic [ref=f4e108]: "128"
+                    - generic [ref=f4e109]: (9)
+                  - generic [ref=f4e110]: "60"
+                  - generic [ref=f4e114]:
+                    - generic [ref=f4e117]: "163"
+                    - generic [ref=f4e118]: (5)
+            - generic [ref=f4e123] [cursor=pointer]:
+              - generic [ref=f4e124]:
+                - generic [ref=f4e125]: DOW JONES FUTURES
+                - generic [ref=f4e126]: 51,549.00
+              - generic [ref=f4e127]:
+                - generic [ref=f4e128]: +0.11%
+                - generic [ref=f4e129]: "+56.00"
+            - generic [ref=f4e134] [cursor=pointer]:
+              - generic [ref=f4e135]:
+                - generic [ref=f4e136]:
+                  - generic [ref=f4e137]: HNX30
+                  - generic [ref=f4e139]: "429.01"
+                - generic [ref=f4e140]:
+                  - generic [ref=f4e141]: +0.47%
+                  - generic [ref=f4e142]: "+1.99"
+              - generic [ref=f4e144]:
+                - generic [ref=f4e145]:
+                  - generic [ref=f4e146]: 30.54 Triệu CP
+                  - generic [ref=f4e147]: "|"
+                  - generic [ref=f4e148]: 495.79 Tỷ
+                - generic [ref=f4e149]:
+                  - generic [ref=f4e150]:
+                    - generic [ref=f4e153]: "9"
+                    - generic [ref=f4e154]: (0)
+                  - generic [ref=f4e155]: "9"
+                  - generic [ref=f4e159]:
+                    - generic [ref=f4e162]: "11"
+                    - generic [ref=f4e163]: (0)
+            - generic [ref=f4e167] [cursor=pointer]:
+              - generic [ref=f4e168]:
+                - generic [ref=f4e169]:
+                  - generic [ref=f4e170]: VN30F1M
+                  - generic [ref=f4e172]: 1,857.0
+                - generic [ref=f4e173]:
+                  - generic [ref=f4e174]: "-0.56%"
+                  - generic [ref=f4e175]: "-10.50"
+              - generic [ref=f4e177]:
+                - generic [ref=f4e178]:
+                  - generic [ref=f4e179]: 133,489 HĐ
+                  - generic [ref=f4e180]: "|"
+                  - generic [ref=f4e181]: 24,820.85 Tỷ
+                - generic [ref=f4e182]:
+                  - generic [ref=f4e183]: 1,998.2
+                  - generic [ref=f4e184]: 1,867.5
+                  - generic [ref=f4e185]: 1,736.8
+          - generic:
+            - button
+        - generic [ref=f4e189]:
+          - button [ref=f4e1424] [cursor=pointer]
+          - button [ref=f4e1425] [cursor=pointer]:
+            - generic [ref=f4e196]: Đóng
+      - generic [ref=f4e197]:
+        - generic [ref=f4e198]:
+          - generic [ref=f4e200]:
+            - link [ref=f4e1426] [cursor=pointer]:
+              - /url: /v2/theo-doi
+              - text: Danh mục của bạn
+            - link [ref=f4e1427] [cursor=pointer]:
+              - /url: /v2/niem-yet/vn30
+              - text: Niêm yết
+            - link [ref=f4e1428] [cursor=pointer]:
+              - /url: /v2/nganh/danh-muc-nganh/ngan-hang
+              - text: Ngành
+            - link [ref=f4e1429] [cursor=pointer]:
+              - /url: /v2/phai-sinh
+              - text: Phái sinh
+            - link [ref=f4e1430] [cursor=pointer]:
+              - /url: /v2/chung-quyen
+              - text: Chứng quyền
+            - link [ref=f4e1431] [cursor=pointer]:
+              - /url: /v2/etf
+              - text: ETF
+            - link [ref=f4e1432] [cursor=pointer]:
+              - /url: /v2/thoa-thuan/hsx
+              - text: Thỏa thuận
+            - link [ref=f4e1433] [cursor=pointer]:
+              - /url: /v2/y-tuong-dau-tu
+              - text: Ý tưởng đầu tư
+            - link [ref=f4e1434] [cursor=pointer]:
+              - /url: /v2/bo-loc-mau
+              - text: Bộ lọc cổ phiếu
+          - generic [ref=f4e219]:
+            - generic [ref=f4e220]:
+              - button [ref=f4e222] [cursor=pointer]:
+                - textbox [ref=f4e1435]:
+                  - /placeholder: Tìm mã
+              - generic [ref=f4e228]:
+                - button [ref=f4e1436]:
+                  - generic [ref=f4e230]:
+                    - text: VN30
+                    - img [ref=f4e231] [cursor=pointer]
+                - link [ref=f4e1437] [cursor=pointer]:
+                  - /url: /v2/niem-yet/hsx
+                  - text: HSX
+                - link [ref=f4e1438] [cursor=pointer]:
+                  - /url: /v2/niem-yet/hnx
+                  - text: HNX
+                - link [ref=f4e1439] [cursor=pointer]:
+                  - /url: /v2/niem-yet/upcom
+                  - text: UPCOM
+                - button [ref=f4e1440]:
+                  - generic [ref=f4e240]:
+                    - text: Lô lẻ
+                    - img [ref=f4e241] [cursor=pointer]
+                - link [ref=f4e1441] [cursor=pointer]:
+                  - /url: /v2/niem-yet/vay-uu-dai
+                  - text: Vay ưu đãi
+            - generic [ref=f4e243]:
+              - button [ref=f4e1443] [cursor=pointer]:
+                - generic [ref=f4e247]: Tin tức
+              - button [ref=f4e1444] [cursor=pointer]
+              - button [ref=f4e1445] [cursor=pointer]
+          - generic [ref=f4e254]:
+            - generic [ref=f4e255]:
+              - paragraph [ref=f4e256]: Thống kê biến động
+              - generic [ref=f4e257]:
+                - button [ref=f4e1446] [cursor=pointer]:
+                  - generic [ref=f4e262]: "0"
+                - button [ref=f4e1447] [cursor=pointer]:
+                  - generic [ref=f4e267]: "10"
+                - button [ref=f4e1448] [cursor=pointer]:
+                  - generic [ref=f4e272]: "3"
+                - button [ref=f4e1449] [cursor=pointer]:
+                  - generic [ref=f4e277]: "17"
+                - button [ref=f4e1450] [cursor=pointer]:
+                  - generic [ref=f4e282]: "0"
+            - table [ref=f4e284]:
+              - rowgroup [ref=f4e285]:
+                - row [ref=f4e1451]:
+                  - columnheader [ref=f4e1452]:
+                    - generic [ref=f4e288] [cursor=pointer]: Mã chứng khoán
+                  - columnheader [ref=f4e1453]:
+                    - generic [ref=f4e292] [cursor=pointer]: Giá khớp
+                  - columnheader [ref=f4e1454]:
+                    - generic [ref=f4e297] [cursor=pointer]:
+                      - generic [ref=f4e298]:
+                        - log [ref=f4e300]
+                        - generic [ref=f4e302]:
+                          - generic [ref=f4e303]: 1 ngày
+                          - combobox [ref=f4e1455]
+                      - generic [ref=f4e308]:
+                        - button [ref=f4e1456]
+                        - button [ref=f4e1457]: "%"
+                        - button [ref=f4e1458]
+                  - columnheader [ref=f4e1459]:
+                    - generic [ref=f4e317] [cursor=pointer]: Tổng khối lượng
+                  - columnheader [ref=f4e1460]:
+                    - generic [ref=f4e321]: Biểu đồ
+                  - columnheader [ref=f4e1461]:
+                    - generic [ref=f4e325]:
+                      - button [ref=f4e1462] [cursor=pointer]
+                      - button [ref=f4e1463] [cursor=pointer]: Mua/Bán
+                      - button [ref=f4e1464] [cursor=pointer]
+                  - columnheader [ref=f4e333]
+              - rowgroup [ref=f4e334]:
+                - row [ref=f4e1465]:
+                  - cell [ref=f4e1466]:
+                    - generic [ref=f4e339]:
+                      - generic [ref=f4e340]:
+                        - paragraph [ref=f4e341]: ACB
+                        - button [ref=f4e1468] [cursor=pointer]:
+                          - generic [ref=f4e963]: 9.99%*
+                      - paragraph [ref=f4e342]: Ngân hàng TMCP Á Châu
+                  - cell [ref=f4e1469]:
+                    - button [ref=f4e1470] [cursor=pointer]: "20.45"
+                  - cell [ref=f4e1471]:
+                    - generic [ref=f4e969]: 0.00%
+                  - cell [ref=f4e1472]:
+                    - generic [ref=f4e971]: 4,923,500
+                  - cell [ref=f4e352]
+                  - cell [ref=f4e1473]:
+                    - generic [ref=f4e976]:
+                      - paragraph [ref=f4e977]: 39%
+                      - paragraph [ref=f4e978]: 61%
+                  - cell [ref=f4e1474]:
+                    - button [ref=f4e1475] [cursor=pointer]
+                - row [ref=f4e1476]:
+                  - cell [ref=f4e1477]:
+                    - generic [ref=f4e366]:
+                      - paragraph [ref=f4e368]: BID
+                      - paragraph [ref=f4e369]: Ngân hàng TMCP Đầu tư và Phát triển Việt Nam
+                  - cell [ref=f4e1479]:
+                    - button [ref=f4e1480] [cursor=pointer]: "33.10"
+                  - cell [ref=f4e1481]:
+                    - generic [ref=f4e989]: "-0.75%"
+                  - cell [ref=f4e1482]:
+                    - generic [ref=f4e991]: 3,041,800
+                  - cell [ref=f4e379]
+                  - cell [ref=f4e1483]:
+                    - generic [ref=f4e996]:
+                      - paragraph [ref=f4e997]: 41%
+                      - paragraph [ref=f4e998]: 59%
+                  - cell [ref=f4e1484]:
+                    - button [ref=f4e1485] [cursor=pointer]
+                - row [ref=f4e1486]:
+                  - cell [ref=f4e1487]:
+                    - generic [ref=f4e393]:
+                      - paragraph [ref=f4e395]: BSR
+                      - paragraph [ref=f4e396]: CTCP - Tổng Công ty Lọc hóa dầu Việt Nam
+                  - cell [ref=f4e1489]:
+                    - button [ref=f4e1490] [cursor=pointer]: "30.10"
+                  - cell [ref=f4e1491]:
+                    - generic [ref=f4e1009]: "-0.66%"
+                  - cell [ref=f4e1492]:
+                    - generic [ref=f4e1011]: 5,702,100
+                  - cell [ref=f4e406]
+                  - cell [ref=f4e1493]:
+                    - generic [ref=f4e1016]:
+                      - paragraph [ref=f4e1017]: 99%
+                      - paragraph [ref=f4e1018]: 1%
+                  - cell [ref=f4e1494]:
+                    - button [ref=f4e1495] [cursor=pointer]
+                - row [ref=f4e1496]:
+                  - cell [ref=f4e1497]:
+                    - generic [ref=f4e420]:
+                      - generic [ref=f4e421]:
+                        - paragraph [ref=f4e422]: CTG
+                        - button [ref=f4e1499] [cursor=pointer]:
+                          - generic [ref=f4e1027]: 9.99%*
+                      - paragraph [ref=f4e423]: Ngân hàng TMCP Công Thương Việt Nam
+                  - cell [ref=f4e1500]:
+                    - button [ref=f4e1501] [cursor=pointer]: "29.55"
+                  - cell [ref=f4e1502]:
+                    - generic [ref=f4e1033]: +0.51%
+                  - cell [ref=f4e1503]:
+                    - generic [ref=f4e1035]: 4,898,600
+                  - cell [ref=f4e433]
+                  - cell [ref=f4e1504]:
+                    - generic [ref=f4e1040]:
+                      - paragraph [ref=f4e1041]: 33%
+                      - paragraph [ref=f4e1042]: 67%
+                  - cell [ref=f4e1505]:
+                    - button [ref=f4e1506] [cursor=pointer]
+                - row [ref=f4e1507]:
+                  - cell [ref=f4e1508]:
+                    - generic [ref=f4e447]:
+                      - generic [ref=f4e448]:
+                        - paragraph [ref=f4e449]: FPT
+                        - button [ref=f4e1510] [cursor=pointer]:
+                          - generic [ref=f4e1051]: 9.99%*
+                      - paragraph [ref=f4e450]: CTCP FPT
+                  - cell [ref=f4e1511]:
+                    - button [ref=f4e1512] [cursor=pointer]: "57.10"
+                  - cell [ref=f4e1513]:
+                    - generic [ref=f4e1057]: +1.42%
+                  - cell [ref=f4e1514]:
+                    - generic [ref=f4e1059]: 7,095,300
+                  - cell [ref=f4e460]
+                  - cell [ref=f4e1515]:
+                    - generic [ref=f4e1064]:
+                      - paragraph [ref=f4e1065]: 99%
+                      - paragraph [ref=f4e1066]: 1%
+                  - cell [ref=f4e1516]:
+                    - button [ref=f4e1517] [cursor=pointer]
+                - row [ref=f4e1518]:
+                  - cell [ref=f4e1519]:
+                    - generic [ref=f4e474]:
+                      - paragraph [ref=f4e476]: GAS
+                      - paragraph [ref=f4e477]: Tổng Công ty Khí Việt Nam - CTCP
+                  - cell [ref=f4e1521]:
+                    - button [ref=f4e1522] [cursor=pointer]: "78.60"
+                  - cell [ref=f4e1523]:
+                    - generic [ref=f4e1077]: +0.13%
+                  - cell [ref=f4e1524]:
+                    - generic [ref=f4e1079]: 690,400
+                  - cell [ref=f4e487]
+                  - cell [ref=f4e1525]:
+                    - generic [ref=f4e1084]:
+                      - paragraph [ref=f4e1085]: 84%
+                      - paragraph [ref=f4e1086]: 16%
+                  - cell [ref=f4e1526]:
+                    - button [ref=f4e1527] [cursor=pointer]
+                - row [ref=f4e1528]:
+                  - cell [ref=f4e1529]:
+                    - generic [ref=f4e501]:
+                      - generic [ref=f4e502]:
+                        - paragraph [ref=f4e503]: GVR
+                        - button [ref=f4e1531] [cursor=pointer]:
+                          - generic [ref=f4e1095]: 5.99%*
+                      - paragraph [ref=f4e504]: Tập đoàn Công nghiệp Cao su Việt Nam - CTCP
+                  - cell [ref=f4e1532]:
+                    - button [ref=f4e1533] [cursor=pointer]: "31.40"
+                  - cell [ref=f4e1534]:
+                    - generic [ref=f4e1101]: "-2.94%"
+                  - cell [ref=f4e1535]:
+                    - generic [ref=f4e1103]: 3,339,200
+                  - cell [ref=f4e514]
+                  - cell [ref=f4e1536]:
+                    - generic [ref=f4e1108]:
+                      - paragraph [ref=f4e1109]: 75%
+                      - paragraph [ref=f4e1110]: 25%
+                  - cell [ref=f4e1537]:
+                    - button [ref=f4e1538] [cursor=pointer]
+                - row [ref=f4e1539]:
+                  - cell [ref=f4e1540]:
+                    - generic [ref=f4e528]:
+                      - paragraph [ref=f4e530]: HDB
+                      - paragraph [ref=f4e531]: Ngân hàng TMCP Phát triển TP. HCM
+                  - cell [ref=f4e1542]:
+                    - button [ref=f4e1543] [cursor=pointer]: "23.20"
+                  - cell [ref=f4e1544]:
+                    - generic [ref=f4e1121]: +0.43%
+                  - cell [ref=f4e1545]:
+                    - generic [ref=f4e1123]: 15,154,600
+                  - cell [ref=f4e541]
+                  - cell [ref=f4e1546]:
+                    - generic [ref=f4e1128]:
+                      - paragraph [ref=f4e1129]: 71%
+                      - paragraph [ref=f4e1130]: 29%
+                  - cell [ref=f4e1547]:
+                    - button [ref=f4e1548] [cursor=pointer]
+                - row [ref=f4e1549]:
+                  - cell [ref=f4e1550]:
+                    - generic [ref=f4e555]:
+                      - paragraph [ref=f4e557]: HPG
+                      - paragraph [ref=f4e558]: CTCP Tập đoàn Hòa Phát
+                  - cell [ref=f4e1552]:
+                    - button [ref=f4e1553] [cursor=pointer]: "20.80"
+                  - cell [ref=f4e1554]:
+                    - generic [ref=f4e1141]: +1.71%
+                  - cell [ref=f4e1555]:
+                    - generic [ref=f4e1143]: 19,326,400
+                  - cell [ref=f4e568]
+                  - cell [ref=f4e1556]:
+                    - generic [ref=f4e1148]:
+                      - paragraph [ref=f4e1149]: 38%
+                      - paragraph [ref=f4e1150]: 62%
+                  - cell [ref=f4e1557]:
+                    - button [ref=f4e1558] [cursor=pointer]
+                - row [ref=f4e1559]:
+                  - cell [ref=f4e1560]:
+                    - generic [ref=f4e582]:
+                      - paragraph [ref=f4e584]: LPB
+                      - paragraph [ref=f4e585]: Ngân hàng TMCP Lộc Phát Việt Nam
+                  - cell [ref=f4e1562]:
+                    - button [ref=f4e1563] [cursor=pointer]: "38.10"
+                  - cell [ref=f4e1564]:
+                    - generic [ref=f4e1161]: "-3.05%"
+                  - cell [ref=f4e1565]:
+                    - generic [ref=f4e1163]: 1,693,500
+                  - cell [ref=f4e595]
+                  - cell [ref=f4e1566]:
+                    - generic [ref=f4e1168]:
+                      - paragraph [ref=f4e1169]: 83%
+                      - paragraph [ref=f4e1170]: 17%
+                  - cell [ref=f4e1567]:
+                    - button [ref=f4e1568] [cursor=pointer]
+                - row [ref=f4e1569]:
+                  - cell [ref=f4e1570]:
+                    - generic [ref=f4e609]:
+                      - paragraph [ref=f4e611]: MBB
+                      - paragraph [ref=f4e612]: Ngân hàng TMCP Quân Đội
+                  - cell [ref=f4e1572]:
+                    - button [ref=f4e1573] [cursor=pointer]: "19.35"
+                  - cell [ref=f4e1574]:
+                    - generic [ref=f4e1181]: +1.57%
+                  - cell [ref=f4e1575]:
+                    - generic [ref=f4e1183]: 15,849,800
+                  - cell [ref=f4e622]
+                  - cell [ref=f4e1576]:
+                    - generic [ref=f4e1188]:
+                      - paragraph [ref=f4e1189]: 52%
+                      - paragraph [ref=f4e1190]: 48%
+                  - cell [ref=f4e1577]:
+                    - button [ref=f4e1578] [cursor=pointer]
+                - row [ref=f4e1579]:
+                  - cell [ref=f4e1580]:
+                    - generic [ref=f4e636]:
+                      - paragraph [ref=f4e638]: MCH
+                      - paragraph [ref=f4e639]: CTCP Hàng tiêu dùng Masan
+                  - cell [ref=f4e1582]:
+                    - button [ref=f4e1583] [cursor=pointer]: "140.90"
+                  - cell [ref=f4e1584]:
+                    - generic [ref=f4e1201]: "-0.21%"
+                  - cell [ref=f4e1585]:
+                    - generic [ref=f4e1203]: 1,043,400
+                  - cell [ref=f4e649]
+                  - cell [ref=f4e1586]:
+                    - generic [ref=f4e1208]:
+                      - paragraph [ref=f4e1209]: 19%
+                      - paragraph [ref=f4e1210]: 81%
+                  - cell [ref=f4e1587]:
+                    - button [ref=f4e1588] [cursor=pointer]
+        - generic [ref=f4e662]:
+          - generic [ref=f4e663]:
+            - tablist [ref=f4e664]:
+              - tab [selected] [ref=f4e1589] [cursor=pointer]: Thị trường
+              - tab [ref=f4e1590] [cursor=pointer]: Đặt lệnh
+              - tab [ref=f4e1591] [cursor=pointer]: Sổ lệnh
+            - button [ref=f4e1592] [cursor=pointer]
+          - tabpanel [ref=f4e1593]:
+            - generic [ref=f4e682]:
+              - paragraph [ref=f4e686]: ENSA Trợ lý AI nói gì?
+              - generic [ref=f4e1214]:
+                - text: Vnindex -1,85% so với tuần trước, giá trị giao dịch -2,52% và có xu hướng giảm trong ngắn hạn.
+                - paragraph [ref=f4e1215]:
+                  - text: Dòng tiền đang đổ vào các ngành
+                  - link [ref=f4e1595] [cursor=pointer]:
+                    - /url: https://banggia.dnse.com.vn/v2/nganh/danh-muc-nganh/nguyen-vat-lieu?sectorId=15&sectorSlug=nguyen-vat-lieu
+                    - text: Nguyên vật liệu
+                  - text: ","
+                  - link [ref=f4e1596] [cursor=pointer]:
+                    - /url: https://banggia.dnse.com.vn/v2/nganh/danh-muc-nganh/dich-vu-va-thiet-bi-cham-soc-suc-khoe?sectorId=31&sectorSlug=dich-vu-va-thiet-bi-cham-soc-suc-khoe
+                    - text: Dịch vụ chăm sóc sức khỏe
+                  - text: và rút ra ở ngành
+                  - link [ref=f4e1597] [cursor=pointer]:
+                    - /url: https://banggia.dnse.com.vn/v2/nganh/danh-muc-nganh/hang-hoa-chu-chot?sectorId=17&sectorSlug=hang-hoa-chu-chot
+                    - text: Hàng hóa công nghiệp
+                  - text: .
+              - generic [ref=f4e693]:
+                - paragraph [ref=f4e694]: Bạn muốn biết thị trường hôm nay thế nào?
+                - button [ref=f4e1598] [cursor=pointer]: Hỏi ngay
+            - generic [ref=f4e696]:
+              - paragraph [ref=f4e700]: Top cổ phiếu tăng giá
+              - table [ref=f4e1219]:
+                - rowgroup [ref=f4e1220]:
+                  - row [ref=f4e1599] [cursor=pointer]:
+                    - cell [ref=f4e1600]:
+                      - generic [ref=f4e1226]:
+                        - paragraph [ref=f4e1228]: F88
+                        - paragraph [ref=f4e1229]: Cổ phiếu CTCP Đầu tư F88
+                    - cell [ref=f4e1602]:
+                      - generic [ref=f4e1231]:
+                        - button [ref=f4e1603]: "57.80"
+                        - generic [ref=f4e1234]: +14.91%
+                  - row [ref=f4e1604] [cursor=pointer]:
+                    - cell [ref=f4e1605]:
+                      - generic [ref=f4e1240]:
+                        - paragraph [ref=f4e1242]: AAH
+                        - paragraph [ref=f4e1243]: CTCP Hợp Nhất
+                    - cell [ref=f4e1607]:
+                      - generic [ref=f4e1245]:
+                        - button [ref=f4e1608]: "1.80"
+                        - generic [ref=f4e1248]: +12.50%
+                  - row [ref=f4e1609] [cursor=pointer]:
+                    - cell [ref=f4e1610]:
+                      - generic [ref=f4e1254]:
+                        - paragraph [ref=f4e1256]: VIG
+                        - paragraph [ref=f4e1257]: CTCP Chứng khoán Đầu tư Tài chính Việt Nam
+                    - cell [ref=f4e1612]:
+                      - generic [ref=f4e1259]:
+                        - button [ref=f4e1613]: "4.10"
+                        - generic [ref=f4e1262]: +7.89%
+                  - row [ref=f4e1614] [cursor=pointer]:
+                    - cell [ref=f4e1615]:
+                      - generic [ref=f4e1268]:
+                        - generic [ref=f4e1269]:
+                          - paragraph [ref=f4e1270]: VGS
+                          - button [ref=f4e1617]
+                        - paragraph [ref=f4e1277]: CTCP Ống thép Việt Đức VG PIPE
+                    - cell [ref=f4e1618]:
+                      - generic [ref=f4e1279]:
+                        - button [ref=f4e1619]: "16.70"
+                        - generic [ref=f4e1282]: +7.74%
+            - generic [ref=f4e758]:
+              - paragraph [ref=f4e762]: Top cổ phiếu giảm giá
+              - table [ref=f4e1283]:
+                - rowgroup [ref=f4e1284]:
+                  - row [ref=f4e1620] [cursor=pointer]:
+                    - cell [ref=f4e1621]:
+                      - generic [ref=f4e1290]:
+                        - paragraph [ref=f4e1292]: GEE
+                        - paragraph [ref=f4e1293]: CTCP Thiết bị điện Gelex
+                    - cell [ref=f4e1623]:
+                      - generic [ref=f4e1295]:
+                        - button [ref=f4e1624]: "65.30"
+                        - generic [ref=f4e1298]: "-6.04%"
+                  - row [ref=f4e1625] [cursor=pointer]:
+                    - cell [ref=f4e1626]:
+                      - generic [ref=f4e1304]:
+                        - paragraph [ref=f4e1306]: NVB
+                        - paragraph [ref=f4e1307]: Ngân hàng TMCP Quốc Dân
+                    - cell [ref=f4e1628]:
+                      - generic [ref=f4e1309]:
+                        - button [ref=f4e1629]: "14.00"
+                        - generic [ref=f4e1312]: "-6.04%"
+                  - row [ref=f4e1630] [cursor=pointer]:
+                    - cell [ref=f4e1631]:
+                      - generic [ref=f4e1318]:
+                        - paragraph [ref=f4e1320]: VHM
+                        - paragraph [ref=f4e1321]: CTCP Vinhomes
+                    - cell [ref=f4e1633]:
+                      - generic [ref=f4e1323]:
+                        - button [ref=f4e1634]: "61.00"
+                        - generic [ref=f4e1326]: "-5.28%"
+                  - row [ref=f4e1635] [cursor=pointer]:
+                    - cell [ref=f4e1636]:
+                      - generic [ref=f4e1332]:
+                        - paragraph [ref=f4e1334]: SHN
+                        - paragraph [ref=f4e1335]: CTCP Đầu tư Tổng hợp Hà Nội
+                    - cell [ref=f4e1638]:
+                      - generic [ref=f4e1337]:
+                        - button [ref=f4e1639]: "8.10"
+                        - generic [ref=f4e1340]: "-4.71%"
+            - generic [ref=f4e820]:
+              - paragraph [ref=f4e824]: Top khối lượng giao dịch
+              - table [ref=f4e1341]:
+                - rowgroup [ref=f4e1342]:
+                  - row [ref=f4e1640] [cursor=pointer]:
+                    - cell [ref=f4e1641]:
+                      - generic [ref=f4e1348]:
+                        - paragraph [ref=f4e1350]: SHB
+                        - paragraph [ref=f4e1351]: Ngân hàng TMCP Sài Gòn - Hà Nội
+                    - cell [ref=f4e1643]:
+                      - generic [ref=f4e1353]:
+                        - paragraph [ref=f4e1354]: KLGD
+                        - generic [ref=f4e1355]: 32,323,300
+                    - cell [ref=f4e1644]:
+                      - generic [ref=f4e1357]:
+                        - button [ref=f4e1645]: "10.30"
+                        - generic [ref=f4e1360]: "-1.44%"
+                  - row [ref=f4e1646] [cursor=pointer]:
+                    - cell [ref=f4e1647]:
+                      - generic [ref=f4e1366]:
+                        - paragraph [ref=f4e1368]: NVL
+                        - paragraph [ref=f4e1369]: CTCP Tập đoàn Đầu tư Địa ốc No Va
+                    - cell [ref=f4e1649]:
+                      - generic [ref=f4e1371]:
+                        - paragraph [ref=f4e1372]: KLGD
+                        - generic [ref=f4e1373]: 22,540,600
+                    - cell [ref=f4e1650]:
+                      - generic [ref=f4e1375]:
+                        - button [ref=f4e1651]: "10.75"
+                        - generic [ref=f4e1378]: "-3.59%"
+                  - row [ref=f4e1652] [cursor=pointer]:
+                    - cell [ref=f4e1653]:
+                      - generic [ref=f4e1384]:
+                        - paragraph [ref=f4e1386]: VIX
+                        - paragraph [ref=f4e1387]: CTCP Chứng khoán VIX
+                    - cell [ref=f4e1655]:
+                      - generic [ref=f4e1389]:
+                        - paragraph [ref=f4e1390]: KLGD
+                        - generic [ref=f4e1391]: 19,992,800
+                    - cell [ref=f4e1656]:
+                      - generic [ref=f4e1393]:
+                        - button [ref=f4e1657]: "11.50"
+                        - generic [ref=f4e1396]: 0.00%
+                  - row [ref=f4e1658] [cursor=pointer]:
+                    - cell [ref=f4e1659]:
+                      - generic [ref=f4e1402]:
+                        - paragraph [ref=f4e1404]: HPG
+                        - paragraph [ref=f4e1405]: CTCP Tập đoàn Hòa Phát
+                    - cell [ref=f4e1661]:
+                      - generic [ref=f4e1407]:
+                        - paragraph [ref=f4e1408]: KLGD
+                        - generic [ref=f4e1409]: 19,326,400
+                    - cell [ref=f4e1662]:
+                      - generic [ref=f4e1411]:
+                        - button [ref=f4e1663]: "20.80"
+                        - generic [ref=f4e1414]: +1.71%
+  - alert [ref=f4e882]: VN30 1,852.44 ▼ -0.46% - Bảng giá chứng khoán DNSE
+  - generic [aria-hidden] [ref=f4e883]:
+    - generic [ref=f4e884]:
+      - paragraph [ref=f4e885]: Cài đặt
+      - button [ref=f4e1664] [cursor=pointer]
+    - generic [ref=f4e890]:
+      - paragraph [ref=f4e894]: Chọn chủ đề
+      - switch [ref=f4e1665] [cursor=pointer]:
+        - generic [ref=f4e896]: Sáng
+        - generic [ref=f4e900]: Tối
+    - generic [ref=f4e905]:
+      - generic [ref=f4e906]: Chọn giao diện
+      - generic [ref=f4e910]:
+        - generic [ref=f4e911]:
+          - generic [ref=f4e912] [cursor=pointer]
+          - generic [ref=f4e913] [cursor=pointer]: Gen-Z
+        - generic [ref=f4e917]:
+          - generic [ref=f4e918] [cursor=pointer]
+          - generic [ref=f4e919] [cursor=pointer]: Cơ bản
+    - generic [ref=f4e923]:
+      - generic [ref=f4e924]: Nháy giá & khối lượng
+      - generic [ref=f4e928]:
+        - generic [ref=f4e929]:
+          - generic [ref=f4e930] [cursor=pointer]
+          - generic [ref=f4e931] [cursor=pointer]: Dịu mắt
+        - generic [ref=f4e935]:
+          - generic [ref=f4e936] [cursor=pointer]
+          - generic [ref=f4e937] [cursor=pointer]: Sắc nét
+  - generic [ref=f4e1672]:
+    - generic [ref=f4e1673]:
+      - generic [ref=f4e1676]:
+        - paragraph [ref=f4e1677]: VNINDEX
+        - generic [ref=f4e1678]:
+          - generic [ref=f4e1679]: 1,704.87
+          - generic [ref=f4e1680]:
+            - generic [ref=f4e1683]: "-14.55"
+            - generic [ref=f4e1684]: (-0.85%)
+      - button [ref=f4e1687] [cursor=pointer]
+    - iframe [ref=f4e1691]:
+      - generic [ref=f6e1]:
+        - main [ref=f6e2]:
+          - iframe [ref=f6e5]:
+            - table [ref=f7e14]:
+              - row [ref=f7e15]:
+                - cell
+                - cell [ref=f7e16]
+                - cell [ref=f7e20]
+              - row [ref=f7e24]:
+                - cell
+                - cell [ref=f7e25]
+                - cell "A" [ref=f7e29]
+        - alert [ref=f6e6]

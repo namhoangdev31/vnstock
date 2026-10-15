@@ -31,10 +31,8 @@ from app.domains.quant.application.daemon.state import DaemonCircuitBreaker
 
 logger = logging.getLogger(__name__)
 
-# TRD §4.1 — mandatory inter-request delay (seconds)
 _REQUEST_DELAY_S: float = 0.25
 
-# TRD §4.1 — retry parameters
 _MAX_RETRY_ATTEMPTS: int = 3
 _RETRY_BASE_S: float = 0.5
 _RETRY_MAX_S: float = 10.0
@@ -52,10 +50,7 @@ class MarketPollResult:
     order_flow: list[Any] | None = field(default_factory=list)
     errors: list[dict[str, Any]] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
-    # Set to True when result was served from the last-known-data cache.
     from_cache: bool = False
-    # Market context: spot_price (VN30), institutional flows, breadth, macro.
-    # Populated by _fetch_market_snapshot() and passed into AnalysisContext.
     market_snapshot: dict[str, Any] = field(default_factory=dict)
 
 
@@ -65,14 +60,10 @@ def _jittered_backoff(attempt: int) -> float:
     return min(_RETRY_MAX_S, _RETRY_BASE_S * (2**attempt) + jitter)
 
 
-# Regex to extract the vnai-recommended wait duration from rate-limit messages.
-# vnai prints both Vietnamese ("Chờ X giây") and English ("Wait X seconds") hints.
 _RATE_LIMIT_WAIT_RE = re.compile(
     r"(?:Ch[oờ\u1edd]+|Wait(?:\s+to\s+retry)?)\s+(\d+)\s*(?:gi[aâ]y|seconds?)",
     re.IGNORECASE,
 )
-# Maximum wait we will honour in a single sleep inside _fetch_with_retry.
-# Waits longer than this are deferred to the circuit-breaker OPEN phase.
 _MAX_INLINE_WAIT_S: float = 65.0
 
 
@@ -118,24 +109,18 @@ def _fetch_with_retry(fn, label: str) -> Any:
     """
     last_exc: BaseException | None = None
     for attempt in range(_MAX_RETRY_ATTEMPTS):
-        # Mandatory 250 ms rate-limit delay before every API request.
         time.sleep(_REQUEST_DELAY_S)
         try:
             return fn()
         except SystemExit as exc:
-            # vnai calls sys.exit() on RateLimitExceeded — convert to a
-            # regular exception so the daemon can handle it gracefully.
             rate_err = RuntimeError(
                 f"[rate-limit] vnstock API rate limit reached (sys.exit intercepted): {exc}"
             )
             last_exc = rate_err
 
-            # Use the explicit wait hint from vnai if available.
             suggested_wait = _parse_rate_limit_wait_s(exc)
             if suggested_wait is not None:
                 if suggested_wait > _MAX_INLINE_WAIT_S:
-                    # Wait too long to block here — abort retries immediately
-                    # and let the circuit breaker handle the recovery.
                     logger.warning(
                         f"[poller] {label} attempt {attempt + 1}/{_MAX_RETRY_ATTEMPTS} "
                         f"rate-limited; vnai requests {suggested_wait:.0f}s wait "
@@ -190,9 +175,7 @@ class MarketDataPoller:
         )
         self._vnstock_service = None
         self.session_factory = session_factory
-        # TRD §4.2 — in-memory cache: last successful result per symbol.
         self._last_known: dict[str, MarketPollResult] = {}
-        # Cache for market snapshot — refreshed at most once per cycle (60s TTL).
         self._snapshot_cache: dict[str, Any] | None = None
         self._snapshot_cache_at: datetime | None = None
         self._SNAPSHOT_TTL_S: float = 60.0
@@ -217,14 +200,13 @@ class MarketDataPoller:
             (now - cached.timestamp).total_seconds() if cached is not None else None
         )
 
-        # TRD §4.2 — circuit breaker OPEN → return last known data
         if self.circuit_breaker.is_open:
             if (
                 cached is not None
                 and cache_age is not None
                 and cache_age <= self.cache_ttl_seconds
             ):
-                stale_threshold_s = 300.0  # 5 minutes
+                stale_threshold_s = 300.0
                 is_stale = cache_age > stale_threshold_s
                 logger.info(
                     "[poller] CB OPEN — serving %sdata for %s (cached at %s, age=%.0fs)",
@@ -233,7 +215,6 @@ class MarketDataPoller:
                     cached.timestamp.isoformat(),
                     cache_age,
                 )
-                # Return a copy tagged as from_cache so callers can act on it.
                 return MarketPollResult(
                     symbol=symbol,
                     phase=phase,
@@ -256,7 +237,6 @@ class MarketDataPoller:
                     ],
                 )
 
-            # No cache available yet — surface the CB state explicitly.
             return MarketPollResult(
                 symbol=symbol,
                 phase=phase,
@@ -301,14 +281,12 @@ class MarketDataPoller:
 
         result = MarketPollResult(symbol=symbol, phase=phase, timestamp=now)
 
-        # Phase-aware polling
         if phase in (
             SessionPhase.MORNING_CONTINUOUS,
             SessionPhase.AFTERNOON_CONTINUOUS,
             SessionPhase.ATO,
             SessionPhase.ATC,
         ):
-            # Active trading: fetch full data
             result.history_bars = self._fetch_history(symbol, limit_history)
             result.intraday_bars = self._fetch_intraday(symbol, limit_intraday)
             result.order_flow = self._fetch_order_flow(symbol, limit_orderflow)
@@ -324,14 +302,12 @@ class MarketDataPoller:
                 result.errors.append(
                     {"error": "orderflow_fetch_failed", "symbol": symbol}
                 )
-            # Fetch market snapshot (spot price, institutional flows, breadth, macro)
             result.market_snapshot = self._fetch_market_snapshot(now)
         elif phase in (
             SessionPhase.PRE_ATO,
             SessionPhase.PRE_ATC,
             SessionPhase.MIDDAY_INTERMISSION,
         ):
-            # Pre-market or intermission: history only
             result.history_bars = self._fetch_history(symbol, limit_history)
             if result.history_bars is None:
                 result.errors.append(
@@ -339,7 +315,6 @@ class MarketDataPoller:
                 )
             result.market_snapshot = self._fetch_market_snapshot(now)
         elif phase in (SessionPhase.POST_MARKET, SessionPhase.OVERNIGHT_SIMULATION):
-            # Overnight/post-market: dùng nến ngày (1D) để phân tích T+1
             result.history_bars = self._fetch_history(
                 symbol, limit_history, interval="1D"
             )
@@ -349,7 +324,6 @@ class MarketDataPoller:
                 )
             result.market_snapshot = self._fetch_market_snapshot(now)
 
-        # Update last-known cache on every successful (non-error) poll.
         if not result.errors:
             self._last_known[symbol] = result
 
@@ -358,9 +332,6 @@ class MarketDataPoller:
 
         return result
 
-    # ------------------------------------------------------------------
-    # Private fetch helpers — each uses _fetch_with_retry for TRD §4.1
-    # ------------------------------------------------------------------
 
     def _fetch_history(
         self, symbol: str, limit: int, interval: str = "1m"
@@ -375,10 +346,8 @@ class MarketDataPoller:
 
         today: date = datetime.now(VN_TZ).date()
         if interval == "1D":
-            # Nến ngày: start đủ rộng để lấy `limit` ngày giao dịch (bù nghỉ lễ/cuối tuần)
             start: date = today - timedelta(days=max(limit * 2, 180))
         else:
-            # Nến phút: start trong ngày hôm nay là đủ
             start = today - timedelta(days=max(limit * 2, 60))
 
         def _call() -> list[Any]:
@@ -443,7 +412,6 @@ class MarketDataPoller:
         within the same daemon cycle share the same snapshot (avoids N DB
         round-trips per cycle).
         """
-        # 60s in-memory cache — shared across all symbols in a cycle
         if (
             self._snapshot_cache is not None
             and self._snapshot_cache_at is not None
@@ -458,7 +426,6 @@ class MarketDataPoller:
             "macro": [],
         }
 
-        # ---- Spot price: VN30 index last close ----
         try:
             from app.domains.vnstock import (
                 vnstock_service,
@@ -468,7 +435,6 @@ class MarketDataPoller:
             from datetime import timedelta
 
             start = today - timedelta(days=5)
-            # Use 1m history for VN30 index — gives latest intraday spot
             df_spot = vnstock_service.fetch_price_history(
                 symbol="VN30",
                 start=start,
@@ -486,7 +452,6 @@ class MarketDataPoller:
         except Exception as exc:
             logger.debug("[poller] VN30 spot fetch failed: %s", exc)
 
-        # ---- DB-sourced data: flows, breadth, macro ----
         if self.session_factory is not None:
             try:
                 from sqlmodel import col, select
@@ -498,7 +463,6 @@ class MarketDataPoller:
                 )
 
                 with self.session_factory() as session:
-                    # Institutional flows: last 10 trading days for momentum calc
                     flows = session.exec(
                         select(InstitutionalFlow)
                         .order_by(col(InstitutionalFlow.trading_date).desc())
@@ -513,7 +477,6 @@ class MarketDataPoller:
                         for f in flows
                     ]
 
-                    # Market breadth: most recent record
                     breadth = session.exec(
                         select(MarketBreadth)
                         .order_by(col(MarketBreadth.trading_date).desc())
@@ -528,7 +491,6 @@ class MarketDataPoller:
                             "floor_count": breadth.floor_count,
                         }
 
-                    # Macro indicators: last 5 records (USD/VND + gold)
                     macro = session.exec(
                         select(MacroIndicator)
                         .order_by(col(MacroIndicator.recorded_date).desc())

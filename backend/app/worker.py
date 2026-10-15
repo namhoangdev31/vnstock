@@ -41,15 +41,15 @@ WORKER_ADVISORY_LOCK_ID = 8823910248102
 class MarketSessionState(StrEnum):
     """9 trạng thái phiên giao dịch theo chuẩn Master Rules (AGENTS §3)."""
 
-    PRE_ATO_SETUP = "PRE_ATO_SETUP"  # 08:30 - 08:45
-    ATO_AUCTION = "ATO_AUCTION"  # 08:45 - 09:00 (Phái sinh mở 08:45)
-    MORNING_CONTINUOUS = "MORNING_CONTINUOUS"  # 09:00 - 11:30 (Cơ sở mở 09:00)
-    MIDDAY_INTERMISSION = "MIDDAY_INTERMISSION"  # 11:30 - 13:00
-    AFTERNOON_CONTINUOUS = "AFTERNOON_CONTINUOUS"  # 13:00 - 14:15 (Hàng T+2 về 13:00)
-    PRE_ATC_SETUP = "PRE_ATC_SETUP"  # 14:15 - 14:30 (Kích hoạt dự báo ATC)
-    ATC_AUCTION = "ATC_AUCTION"  # 14:30 - 14:45
-    POST_MARKET_EVAL = "POST_MARKET_EVAL"  # 14:45 - 15:30 (Đối soát sổ lệnh)
-    OVERNIGHT_SIMULATION = "OVERNIGHT_SIMULATION"  # 15:30 - 08:30 / Nghỉ lễ / Cuối tuần
+    PRE_ATO_SETUP = "PRE_ATO_SETUP"
+    ATO_AUCTION = "ATO_AUCTION"
+    MORNING_CONTINUOUS = "MORNING_CONTINUOUS"
+    MIDDAY_INTERMISSION = "MIDDAY_INTERMISSION"
+    AFTERNOON_CONTINUOUS = "AFTERNOON_CONTINUOUS"
+    PRE_ATC_SETUP = "PRE_ATC_SETUP"
+    ATC_AUCTION = "ATC_AUCTION"
+    POST_MARKET_EVAL = "POST_MARKET_EVAL"
+    OVERNIGHT_SIMULATION = "OVERNIGHT_SIMULATION"
 
 
 STATE_POLL_INTERVALS: dict[MarketSessionState, float] = {
@@ -82,13 +82,11 @@ def get_current_session_state(dt: datetime | None = None) -> MarketSessionState:
     current_date = dt.date()
     current_time = dt.time()
 
-    # Kiểm tra cuối tuần hoặc ngày lễ
     if current_date.weekday() in (5, 6) or VietnamHolidayCalendar.is_holiday(
         current_date
     ):
         return MarketSessionState.OVERNIGHT_SIMULATION
 
-    # Phân định các khung giờ ngày thường (Thứ 2 đến Thứ 6)
     if current_time < dtime(8, 30):
         return MarketSessionState.OVERNIGHT_SIMULATION
     if dtime(8, 30) <= current_time < dtime(8, 45):
@@ -196,7 +194,6 @@ class MarketWorkerDaemon:
             STATE_POLL_INTERVALS[state],
         )
 
-        # Định tuyến tác vụ theo từng phiên
         if state == MarketSessionState.PRE_ATO_SETUP:
             logger.debug(
                 "PRE_ATO_SETUP: Đồng bộ baseline tham chiếu và pivots chuẩn bị phiên"
@@ -246,13 +243,11 @@ class MarketWorkerDaemon:
 
     def run(self, max_cycles: int | None = None, single_cycle: bool = False) -> None:
         """Bắt đầu vòng lặp tiến trình daemon."""
-        # Đăng ký signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
         logger.info("Khởi động Standalone Market Worker Daemon...")
 
-        # Chiếm Advisory Lock và giữ Connection mở suốt thời gian chạy
         self._has_lock, self._lock_conn = try_acquire_worker_advisory_lock(
             self.db_engine
         )

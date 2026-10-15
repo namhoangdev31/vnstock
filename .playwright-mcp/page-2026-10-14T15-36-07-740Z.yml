@@ -1,0 +1,130 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "Vistock" [ref=e8] [cursor=pointer]:
+          - /url: /iboard
+        - link "Trang chủ" [ref=e10] [cursor=pointer]:
+          - /url: /
+        - navigation [ref=e11]:
+          - link "Bảng giá" [ref=e12] [cursor=pointer]:
+            - /url: /iboard
+          - button "Đặt lệnh" [ref=e14] [cursor=pointer]
+          - button "Phân tích" [ref=e18] [cursor=pointer]
+          - button "Tài sản" [ref=e22] [cursor=pointer]
+          - button "Tiện ích" [ref=e26] [cursor=pointer]
+      - generic [ref=e29]:
+        - generic [ref=e30]: 22:36:07
+        - generic [ref=e31]:
+          - button [ref=e33] [cursor=pointer]
+          - button [ref=e35] [cursor=pointer]
+          - switch "Chuyển đổi thị trường cơ sở và phái sinh" [ref=e37] [cursor=pointer]:
+            - generic [ref=e38]: Cơ sở
+        - link "Đăng nhập" [ref=e42] [cursor=pointer]:
+          - /url: /login
+  - main [ref=e43]:
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e53]:
+              - generic [ref=e54]: 09h
+              - generic [ref=e55]: 10h
+              - generic [ref=e56]: 11h
+              - generic [ref=e57]: 12h
+              - generic [ref=e58]: 13h
+              - generic [ref=e59]: 14h
+              - generic [ref=e60]: 15h
+            - generic [ref=e61]:
+              - button "Mở biểu đồ kỹ thuật" [ref=e62] [cursor=pointer]
+              - button "Đóng chỉ số" [ref=e63] [cursor=pointer]
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - button "VNINDEX" [ref=e67] [cursor=pointer]
+              - generic [ref=e70]:
+                - generic [ref=e71]: "0.0"
+                - generic [ref=e72]: (0.00 0.00%)
+            - generic [ref=e73]:
+              - generic [ref=e74]: "-"
+              - generic [ref=e75]: "-"
+            - generic [ref=e76]: Đóng cửa
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e84]:
+              - generic [ref=e85]: 09h
+              - generic [ref=e86]: 10h
+              - generic [ref=e87]: 11h
+              - generic [ref=e88]: 12h
+              - generic [ref=e89]: 13h
+              - generic [ref=e90]: 14h
+              - generic [ref=e91]: 15h
+            - generic [ref=e92]:
+              - button "Mở biểu đồ kỹ thuật" [ref=e93] [cursor=pointer]
+              - button "Đóng chỉ số" [ref=e94] [cursor=pointer]
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - button "VN30" [ref=e98] [cursor=pointer]
+              - generic [ref=e101]:
+                - generic [ref=e102]: "0.0"
+                - generic [ref=e103]: (0.00 0.00%)
+            - generic [ref=e104]:
+              - generic [ref=e105]: "-"
+              - generic [ref=e106]: "-"
+            - generic [ref=e107]: Đóng cửa
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - generic [ref=e115]:
+              - generic [ref=e116]: 09h
+              - generic [ref=e117]: 10h
+              - generic [ref=e118]: 11h
+              - generic [ref=e119]: 12h
+              - generic [ref=e120]: 13h
+              - generic [ref=e121]: 14h
+              - generic [ref=e122]: 15h
+            - generic [ref=e123]:
+              - button "Mở biểu đồ kỹ thuật" [ref=e124] [cursor=pointer]
+              - button "Đóng chỉ số" [ref=e125] [cursor=pointer]
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - button "HNX30" [ref=e129] [cursor=pointer]
+              - generic [ref=e132]:
+                - generic [ref=e133]: "0.0"
+                - generic [ref=e134]: (0.00 0.00%)
+            - generic [ref=e135]:
+              - generic [ref=e136]: "-"
+              - generic [ref=e137]: "-"
+            - generic [ref=e138]: Đóng cửa
+        - generic [ref=e141]:
+          - generic [ref=e142]:
+            - generic [ref=e146]:
+              - generic [ref=e147]: 09h
+              - generic [ref=e148]: 10h
+              - generic [ref=e149]: 11h
+              - generic [ref=e150]: 12h
+              - generic [ref=e151]: 13h
+              - generic [ref=e152]: 14h
+              - generic [ref=e153]: 15h
+            - generic [ref=e154]:
+              - button "Mở biểu đồ kỹ thuật" [ref=e155] [cursor=pointer]
+              - button "Đóng chỉ số" [ref=e156] [cursor=pointer]
+          - generic [ref=e157]:
+            - generic [ref=e158]:
+              - button "HNXINDEX" [ref=e160] [cursor=pointer]
+              - generic [ref=e163]:
+                - generic [ref=e164]: "0.0"
+                - generic [ref=e165]: (0.00 0.00%)
+            - generic [ref=e166]:
+              - generic [ref=e167]: "-"
+              - generic [ref=e168]: "-"
+            - generic [ref=e169]: Đóng cửa
+      - generic [ref=e173]:
+        - generic [ref=e174]: Chỉ số
+        - generic [ref=e177]: Điểm (+/-)
+        - generic [ref=e178]: KLGD (Tr)
+        - generic [ref=e179]: GTGD (Tỷ)
+        - generic [ref=e180]: CK Tăng/Giảm
+    - generic [ref=e183]:
+      - generic [ref=e185]:
+        - heading "Bảng giá cổ phiếu cơ sở Vistock" [level=2] [ref=e186]
+        - generic [ref=e187]: Cơ sở
+      - paragraph [ref=e188]: Không gian hiển thị bảng giá khớp lệnh thời gian thực cho các mã HOSE, HNX, UPCOM và rổ chỉ số VN30.

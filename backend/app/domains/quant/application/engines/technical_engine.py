@@ -110,7 +110,6 @@ class TechnicalEngine:
         if len(highs) < 3 or len(lows) < 3:
             return False, {}
 
-        # FVG Tăng giá (Bullish FVG): Đáy nến 3 nằm cao hơn hoàn toàn đỉnh nến 1
         if lows[-1] > highs[-3]:
             return True, {
                 "type": "BULLISH_FVG",
@@ -119,7 +118,6 @@ class TechnicalEngine:
                 "size": round(lows[-1] - highs[-3], 2),
             }
 
-        # FVG Giảm giá (Bearish FVG): Đỉnh nến 3 nằm thấp hơn hoàn toàn đáy nến 1
         if highs[-1] < lows[-3]:
             return True, {
                 "type": "BEARISH_FVG",
@@ -156,10 +154,8 @@ class TechnicalEngine:
         curr_low = lows[-1]
         curr_close = closes[-1]
 
-        # Quét đỉnh (Bearish sweep): High vượt qua đỉnh cũ nhưng Close quay đầu đóng cửa bên dưới
         bearish_sweep = curr_high > swing_high > curr_close
 
-        # Quét đáy (Bullish sweep): Low chọc thủng đáy cũ nhưng Close hồi phục đóng cửa bên trên
         bullish_sweep = curr_low < swing_low < curr_close
 
         return {
@@ -194,10 +190,8 @@ class TechnicalEngine:
         - "RANGING"  : Tăng trọng RSI (mean-reversion hiệu quả khi sideway)
         - "VOLATILE" : Tăng trọng VWAP/BB (định giá tương đối trong biến động cao)
         """
-        # 1. Cấu phần Kỹ thuật (50%)
         tech_score = 0.0
 
-        # Trọng số con theo regime (tổng = 1.0 trong cấu phần kỹ thuật)
         regime_factors: dict[str, dict[str, float]] = {
             "TRENDING": {"macd": 0.5, "rsi": 0.2, "vwap": 0.2, "bb": 0.1},
             "RANGING": {"macd": 0.2, "rsi": 0.4, "vwap": 0.2, "bb": 0.2},
@@ -205,11 +199,9 @@ class TechnicalEngine:
         }
         factors = regime_factors.get(regime, regime_factors["RANGING"])
 
-        # RSI smoothed (sigmoid, liên tục — không còn cliff tại 30/70)
         if rsi is not None:
             tech_score += factors["rsi"] * _sigmoid_rsi(rsi)
 
-        # MACD histogram với scaling thích ứng theo biến động giá gần đây
         if macd_hist != 0.0:
             macd_scale = 0.4
             tech_score += (
@@ -219,27 +211,22 @@ class TechnicalEngine:
                 * (1.0 if abs(macd_hist) >= macd_scale else abs(macd_hist) / macd_scale)
             )
 
-        # VWAP position
         if vwap_diff_pct != 0.0:
             tech_score += factors["vwap"] * max(-1.0, min(1.0, vwap_diff_pct * 10.0))
 
-        # Bollinger %B: > 0.8 → quá mua, < 0.2 → quá bán (mean-reversion)
         if percent_b is not None:
             bb_signal = 0.5 - percent_b
             tech_score += factors["bb"] * max(-1.0, min(1.0, bb_signal))
         elif rsi is None and macd_hist == 0.0:
             tech_score += 0.0
 
-        # ROC momentum bonus (ngoài 50% cấu phần kỹ thuật, scale nhỏ)
         if roc is not None:
             tech_score += 0.10 * max(-1.0, min(1.0, roc))
 
         tech_score = max(-1.0, min(1.0, tech_score))
 
-        # 2. Cấu phần Dòng lệnh (30%)
         orderflow_score = max(-1.0, min(1.0, imbalance))
 
-        # 3. Cấu phần Hành động giá (20%)
         pa_score = 0.0
         if fvg_detected and fvg_type:
             pa_score += 0.5 if fvg_type == "BULLISH_FVG" else -0.5
@@ -281,7 +268,6 @@ class TechnicalEngine:
                 volumes = [float(b.volume) for b in db_bars]
 
         if not closes or not highs or not lows or len(closes) == 0:
-            # Dữ liệu rỗng: trả về trạng thái trung tính mặc định
             return TechnicalEngineResponse(
                 symbol=symbol,
                 as_of=now,
@@ -320,13 +306,10 @@ class TechnicalEngine:
         if vwap is not None and vwap > 0:
             vwap_diff_pct = (closes[-1] - vwap) / vwap
 
-        # Tự động phát hiện chế độ thị trường (ADX-inspired)
         regime = detect_market_regime(closes, highs=highs, lows=lows)
 
-        # Rate of Change momentum
         roc = compute_roc(closes, period=10)
 
-        # Bollinger %B (đã tính trong bb)
         percent_b = bb.get("percent_b")
 
         score = self.compute_composite_score(

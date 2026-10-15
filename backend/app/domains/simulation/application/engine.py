@@ -66,11 +66,9 @@ from app.domains.simulation.domain.settlement import SettlementService
 
 logger = logging.getLogger(__name__)
 
-# Sides that open/increase a LONG vs. a SHORT.
 _BULLISH_SIDES = {OrderSide.BUY, OrderSide.LONG}
 _BEARISH_SIDES = {OrderSide.SELL, OrderSide.SHORT}
 
-# Futures contract codes look like VN30F1M / VN30F2M / VN30F1Y ...
 _DERIVATIVE_PREFIXES = ("VN30F",)
 
 
@@ -82,10 +80,10 @@ class SimulationConfig:
     pin exact values for PnL assertions (TEST-ISO-03).
     """
 
-    equity_fee_rate: float = 0.0015  # 0.15% per side
-    equity_tax_rate: float = 0.001  # 0.1% on equity sells
-    derivative_fee_rate: float = 0.00025  # 0.025% per side
-    derivative_margin_rate: float = 0.135  # ~13.5% initial margin
+    equity_fee_rate: float = 0.0015
+    equity_tax_rate: float = 0.001
+    derivative_fee_rate: float = 0.00025
+    derivative_margin_rate: float = 0.135
 
 
 def is_derivative(symbol: str) -> bool:
@@ -102,9 +100,6 @@ class SimulationEngine:
         self.session = session
         self.config = config or SimulationConfig()
 
-    # ------------------------------------------------------------------
-    # Portfolio lifecycle
-    # ------------------------------------------------------------------
 
     def create_portfolio(
         self,
@@ -146,9 +141,6 @@ class SimulationEngine:
             ).all()
         )
 
-    # ------------------------------------------------------------------
-    # Order placement
-    # ------------------------------------------------------------------
 
     def place_order(
         self,
@@ -255,9 +247,6 @@ class SimulationEngine:
         self.session.refresh(order)
         return order
 
-    # ------------------------------------------------------------------
-    # Intent classification
-    # ------------------------------------------------------------------
 
     def _classify(
         self, portfolio_id: UUID, symbol: str, side: str
@@ -294,7 +283,6 @@ class SimulationEngine:
         if kind == "reduce":
             assert position is not None
             if not deriv:
-                # Sell-lock (D5): shares bought recently are unsellable until T+2.
                 available = available_quantity(self.session, portfolio.id, order.symbol)
                 if order.quantity > available:
                     return (
@@ -308,14 +296,11 @@ class SimulationEngine:
                 )
             return None
 
-        # Opening.
         fee = self._fee(notional, deriv)
         if deriv:
             margin = notional * self.config.derivative_margin_rate
-            required = margin + fee  # derivatives carry no transfer tax
+            required = margin + fee
         else:
-            # Equity opens are always LONG (BUY); a SELL with no position is a
-            # short attempt, which the cash market forbids.
             if order.side in _BEARISH_SIDES:
                 return "No open position to sell; equities cannot be shorted"
             required = notional + fee
@@ -327,9 +312,6 @@ class SimulationEngine:
             )
         return None
 
-    # ------------------------------------------------------------------
-    # Fill logic
-    # ------------------------------------------------------------------
 
     def _fill(
         self,
@@ -365,7 +347,7 @@ class SimulationEngine:
                 portfolio, position, qty, fill_price, mult, fee, tax, deriv
             )
         else:
-            tax = 0.0  # opening buys incur no transfer tax
+            tax = 0.0
             realized = 0.0
             self._apply_open_fill(
                 portfolio,
@@ -380,7 +362,6 @@ class SimulationEngine:
             )
 
         order.filled_quantity = prev_qty + qty
-        # Weighted average fill price.
         if prev_qty + qty > 0:
             prev_total = (order.filled_price or 0.0) * prev_qty
             order.filled_price = round(
@@ -452,7 +433,6 @@ class SimulationEngine:
             portfolio.cash_balance = round_money(
                 portfolio.cash_balance - notional - fee - tax
             )
-        # Equity SELL never reaches here (rejected in _precheck).
 
         if existing is None:
             settlement = (
@@ -478,7 +458,6 @@ class SimulationEngine:
             self.session.add(position)
 
             if not deriv:
-                # Create a PENDING_T2 BUY ledger row for this equity fill.
                 create_ledger_row(
                     self.session,
                     portfolio_id=portfolio.id,
@@ -490,7 +469,6 @@ class SimulationEngine:
                 )
             return
 
-        # Increase an existing same-direction position (average the entry).
         new_qty = existing.quantity + qty
         existing.entry_price = round(
             (existing.entry_price * existing.quantity + fill_price * qty) / new_qty,
@@ -500,7 +478,6 @@ class SimulationEngine:
         existing.margin_required = round_money(existing.margin_required + margin_add)
 
         if not deriv:
-            # New equity shares from this fill lock until T+2 settlement.
             new_settlement = SettlementService.calculate_settlement_date(
                 date.today(), cycle_days=EQUITY_SETTLEMENT_DAYS
             )
@@ -559,9 +536,6 @@ class SimulationEngine:
                 portfolio.cash_balance + released + realized
             )
         else:
-            # Equity close: sale cash is NOT credited immediately. A SELL ledger
-            # row is created and cash lands at 13:00 VN on T+2 via
-            # process_due_settlements (D4). Realized PnL stays on the position.
             create_ledger_row(
                 self.session,
                 portfolio_id=portfolio.id,
@@ -626,9 +600,6 @@ class SimulationEngine:
         self.session.refresh(trade)
         return trade
 
-    # ------------------------------------------------------------------
-    # Mark-to-market
-    # ------------------------------------------------------------------
 
     def mark_to_market(
         self, portfolio: Portfolio, prices: dict[str, float]
@@ -663,9 +634,6 @@ class SimulationEngine:
             portfolio.cash_balance + portfolio.margin_used + unrealized
         )
 
-    # ------------------------------------------------------------------
-    # Queries & helpers
-    # ------------------------------------------------------------------
 
     def open_positions(self, portfolio_id: UUID) -> list[Position]:
         return list(

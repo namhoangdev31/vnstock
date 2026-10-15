@@ -43,7 +43,6 @@ from app.domains.quant.application.daemon.state import (
 )
 from app.domains.quant.application.daemon.symbol_registry import SymbolRegistry
 
-# Alias for backward compatibility
 QuantDaemonController = DaemonController
 
 default_orchestrator = PhaseAwareEngineOrchestrator(session=None)

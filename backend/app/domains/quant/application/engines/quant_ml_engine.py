@@ -265,7 +265,6 @@ class QuantMLEngine:
         now = as_of or datetime.now(VN_TZ)
         phase = self.classify_session_phase(now)
 
-        # 1. DB fallback for prices & bars if omitted and session exists
         if (
             futures_price <= 0.0 or spot_index_price <= 0.0
         ) and self.session is not None:
@@ -313,7 +312,6 @@ class QuantMLEngine:
         if spot_index_price <= 0.0 and futures_price > 0.0:
             spot_index_price = futures_price
 
-        # Guard: reject non-positive or missing prices (RULE 3)
         if futures_price <= 0.0 or spot_index_price <= 0.0:
             logger.warning(
                 "QuantMLEngine.analyze: invalid prices futures=%.2f spot=%.2f — returning neutral",

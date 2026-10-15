@@ -76,7 +76,6 @@ class IBoardWSManager:
             msg = {"type": event_type, "key": key, "data": payload}
             channels_to_target.add("all")
 
-        # Broadcast via async event loop
         try:
             loop = self._loop or asyncio.get_running_loop()
             loop.create_task(self._broadcast_to_channels(msg, channels_to_target))
@@ -115,7 +114,7 @@ class IBoardWSManager:
         self.subscriptions[websocket] = {
             "indices",
             "board",
-        }  # Default baseline channels
+        }
         self._ensure_listener()
 
         try:
@@ -128,7 +127,6 @@ class IBoardWSManager:
             len(self.active_connections),
         )
 
-        # Send initial connection acknowledgment & baseline snapshot
         await websocket.send_text(
             json.dumps(
                 {
@@ -195,7 +193,6 @@ class IBoardWSManager:
             client_subs = self.subscriptions.setdefault(websocket, set())
             client_subs.update(new_channels)
 
-            # Trigger background DNSE subscription for stock-specific feeds
             if stock_symbols:
                 dnse_stream_manager.subscribe_symbols_background(stock_symbols)
 
@@ -208,7 +205,6 @@ class IBoardWSManager:
                 )
             )
 
-            # Immediate snapshots
             if "indices" in new_channels:
                 await self._send_indices_snapshot(websocket)
             for sym in stock_symbols:

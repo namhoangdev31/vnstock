@@ -9,7 +9,6 @@ import sqlalchemy as sa
 from alembic import op
 from sqlmodel.sql.sqltypes import AutoString
 
-# revision identifiers, used by Alembic.
 revision = "g1a2b3c4d5e6"
 down_revision = "f6a7b8c9d0e1"
 branch_labels = None
@@ -17,7 +16,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 1. Update stock_ohlcv_daily (derivatives open_interest and basis)
     op.add_column(
         "stock_ohlcv_daily",
         sa.Column("open_interest", sa.BigInteger(), nullable=True),
@@ -27,8 +25,6 @@ def upgrade() -> None:
         sa.Column("basis", sa.Float(), nullable=True),
     )
 
-    # 2. Update financial_report
-    # Add report_scope and is_audited
     op.add_column(
         "financial_report",
         sa.Column(
@@ -48,7 +44,6 @@ def upgrade() -> None:
         ),
     )
 
-    # Add 14 summary financial columns
     op.add_column("financial_report", sa.Column("revenue", sa.Float(), nullable=True))
     op.add_column("financial_report", sa.Column("gross_profit", sa.Float(), nullable=True))
     op.add_column("financial_report", sa.Column("operating_profit", sa.Float(), nullable=True))
@@ -64,7 +59,6 @@ def upgrade() -> None:
     op.add_column("financial_report", sa.Column("investing_cash_flow", sa.Float(), nullable=True))
     op.add_column("financial_report", sa.Column("financing_cash_flow", sa.Float(), nullable=True))
 
-    # Update Unique Constraint for financial_report to include report_scope
     bind = op.get_bind()
     inspector = sa.inspect(bind)
     existing_uqs = inspector.get_unique_constraints("financial_report")
@@ -81,14 +75,12 @@ def upgrade() -> None:
         ["symbol", "report_type", "report_scope", "period", "year", "quarter"],
     )
 
-    # Add lookup index for financial_report
     op.create_index(
         "ix_financial_report_lookup",
         "financial_report",
         ["symbol", "report_type", "report_scope", "year", "quarter"],
     )
 
-    # 3. Update financial_ratio (17 explicit fields and indexes)
     op.add_column("financial_ratio", sa.Column("ev_to_ebitda", sa.Float(), nullable=True))
     op.add_column("financial_ratio", sa.Column("ev_to_ebit", sa.Float(), nullable=True))
     op.add_column("financial_ratio", sa.Column("p_to_fcf", sa.Float(), nullable=True))
@@ -118,7 +110,6 @@ def upgrade() -> None:
         ["year", "quarter", "revenue_growth_yoy", "net_profit_growth_yoy"],
     )
 
-    # 4. Update institutional_flow
     op.add_column("institutional_flow", sa.Column("foreign_buy_volume", sa.BigInteger(), nullable=True))
     op.add_column("institutional_flow", sa.Column("foreign_sell_volume", sa.BigInteger(), nullable=True))
     op.add_column("institutional_flow", sa.Column("foreign_net_volume", sa.BigInteger(), nullable=True))
@@ -142,7 +133,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # 4. Revert institutional_flow
     op.drop_index("ix_inst_flow_date_net_val", table_name="institutional_flow")
     op.drop_index("ix_inst_flow_symbol_date", table_name="institutional_flow")
 
@@ -156,7 +146,6 @@ def downgrade() -> None:
     op.drop_column("institutional_flow", "foreign_sell_volume")
     op.drop_column("institutional_flow", "foreign_buy_volume")
 
-    # 3. Revert financial_ratio
     op.drop_index("ix_financial_ratio_growth", table_name="financial_ratio")
     op.drop_index("ix_financial_ratio_screener", table_name="financial_ratio")
 
@@ -181,7 +170,6 @@ def downgrade() -> None:
     ]:
         op.drop_column("financial_ratio", col)
 
-    # 2. Revert financial_report
     op.drop_index("ix_financial_report_lookup", table_name="financial_report")
     op.drop_constraint("uq_financial_report_record", "financial_report", type_="unique")
     op.create_unique_constraint(
@@ -210,6 +198,5 @@ def downgrade() -> None:
     ]:
         op.drop_column("financial_report", col)
 
-    # 1. Revert stock_ohlcv_daily
     op.drop_column("stock_ohlcv_daily", "basis")
     op.drop_column("stock_ohlcv_daily", "open_interest")

@@ -29,7 +29,7 @@ VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 
 def get_next_schedule_delay(
     now: datetime | None = None,
-    target_days: tuple[int, ...] = (0, 3),  # 0=Monday, 3=Thursday
+    target_days: tuple[int, ...] = (0, 3),
     target_hour: int = 8,
     target_minute: int = 0,
 ) -> float:

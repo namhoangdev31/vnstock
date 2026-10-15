@@ -70,8 +70,6 @@ class DaemonController:
         self.instance_id: str | None = None
         self.session_factory = session_factory
         self.lease = lease
-        # Symbol registry: manages active symbols across asset classes.
-        # Defaults to a new registry seeded with always-on symbols (VN30F1M).
         self.symbol_registry: SymbolRegistry = symbol_registry or SymbolRegistry()
 
     @staticmethod
@@ -178,16 +176,12 @@ class DaemonController:
         self.state.status = "running"
         self.state.last_started_at = started_at
 
-        # Determine symbols: caller-supplied list overrides registry.
-        # If no override, derive from the SymbolRegistry so all asset classes
-        # (derivatives + equities) are polled from the start.
         effective_symbols = (
             symbols
             if symbols is not None
             else self.symbol_registry.get_active_symbols()
         )
 
-        # Spawn the main loop as a fire-and-forget background task.
         self._task = asyncio.create_task(
             self.run(
                 db=None,
@@ -196,7 +190,6 @@ class DaemonController:
             ),
             name=self.instance_id,
         )
-        # TRD §6 — register OS signal handlers for graceful shutdown.
         self._register_signal_handlers()
         logger.info(
             "Daemon started",
@@ -267,7 +260,6 @@ class DaemonController:
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
-            # No running loop (e.g. during unit tests) — skip silently.
             logger.debug("_register_signal_handlers: no running event loop, skipping")
             return
 
@@ -276,8 +268,6 @@ class DaemonController:
                 f"Received {sig.name} — initiating graceful daemon shutdown",
                 extra={"signal": sig.name, "instance_id": self.instance_id},
             )
-            # Schedule stop() as a coroutine on the running loop so it runs
-            # in the asyncio thread (signal handlers cannot be async).
             loop.create_task(self.stop(), name="daemon-signal-stop")
 
         for sig in (signal.SIGTERM, signal.SIGINT):
@@ -285,7 +275,6 @@ class DaemonController:
                 loop.add_signal_handler(sig, lambda s=sig: _handle_signal(s))
                 logger.debug(f"Registered {sig.name} handler")
             except (NotImplementedError, OSError, RuntimeError):
-                # Windows / non-main threads that don't support add_signal_handler.
                 logger.debug(
                     f"Cannot register {sig.name} handler on this platform/thread"
                 )
@@ -465,8 +454,6 @@ class DaemonController:
             if owns_db and cycle_db is not None:
                 cycle_db.close()
 
-        # ---- Phase-aware scheduled hooks (T+2 settlement, EOD screener, equity refresh) ----
-        # These are idempotent: each runs at most once per trading day.
         try:
             hook_results = dispatch_phase_hooks(
                 phase=phase,
@@ -479,7 +466,6 @@ class DaemonController:
                     phase.value,
                     {k: v for k, v in hook_results.items() if not v.get("skipped")},
                 )
-                # Surface hook errors as daemon warnings (non-fatal).
                 for hook_name, result in hook_results.items():
                     if result.get("errors"):
                         self.state.errors_by_type[f"hook_{hook_name}"] = (
@@ -521,7 +507,6 @@ class DaemonController:
         start_time = datetime.now(VN_TZ)
         cycle_count = 0
         failure_count = 0
-        # Reuse instance_id set by start(); fall back if run() called directly.
         instance_id = self.instance_id or f"{daemon_name}-{int(start_time.timestamp())}"
         self.instance_id = instance_id
 
@@ -532,8 +517,6 @@ class DaemonController:
             started_at=start_time,
         )
 
-        # A manually supplied session remains supported for tests/one-shot
-        # callers; the production daemon uses session_factory instead.
         try:
             if db is not None:
                 self._apply_session_log_persistence(db, session_log, create=True)
@@ -562,8 +545,6 @@ class DaemonController:
         try:
             while self.state.running:
                 if self.state.paused:
-                    # Keep the task alive while paused so resume() can clear
-                    # the flag and continue the same daemon session.
                     await asyncio.sleep(1.0)
                     continue
 
@@ -582,7 +563,6 @@ class DaemonController:
                 cycle_start = datetime.now(VN_TZ)
 
                 try:
-                    # Get current phase
                     snapshot = self.clock.snapshot()
                     phase = snapshot.session_phase
                     self.state.session_phase = phase.value
@@ -629,7 +609,6 @@ class DaemonController:
                         datetime.now(VN_TZ) - cycle_start
                     ).total_seconds() * 1000
 
-                    # Get adaptive poll interval from state
                     next_interval = STATE_POLL_INTERVALS.get(phase, 60.0)
 
                     metric = DaemonCycleMetrics(
@@ -649,12 +628,10 @@ class DaemonController:
                         extra=metric.__dict__,
                     )
 
-                    # Update session log heartbeat
                     session_log.last_heartbeat_at = datetime.now(VN_TZ)
                     session_log.last_phase = phase.value
                     session_log.cycle_count = cycle_count
 
-                    # Persist heartbeat update to DB (every cycle).
                     if db is not None:
                         self._apply_session_log_persistence(
                             db, session_log, create=False
@@ -662,7 +639,6 @@ class DaemonController:
                     elif self.session_factory is not None:
                         await asyncio.to_thread(self._persist_session_log, session_log)
 
-                    # Reset failure count on success
                     self.state.last_run_at = datetime.now(VN_TZ)
                     cycle_has_errors = bool(poll_errors or dispatch_result.errors)
                     if cycle_has_errors:
@@ -703,7 +679,6 @@ class DaemonController:
                         extra={"cycle": cycle_count, "failure_count": failure_count},
                     )
 
-                    # Persist failure state to DB.
                     if db is not None:
                         try:
                             self._apply_session_log_persistence(
@@ -723,7 +698,6 @@ class DaemonController:
                                 f"Failed to persist session log on error: {db_err}"
                             )
 
-                    # Check circuit breaker
                     self.circuit_breaker.record_failure(e)
                     if self.circuit_breaker.is_open:
                         logger.warning(
@@ -731,7 +705,6 @@ class DaemonController:
                             extra={"opened_at": self.circuit_breaker.opened_at},
                         )
 
-                    # Jittered backoff on error (TRD §4.1)
                     base_interval = STATE_POLL_INTERVALS.get(
                         SessionPhase.OVERNIGHT_SIMULATION, 60.0
                     )
@@ -742,8 +715,6 @@ class DaemonController:
             logger.info(f"Daemon {daemon_name} cancelled")
             session_log.status = "CANCELLED"
         except SystemExit as se:
-            # Catch sys.exit() that escapes poller — should not happen after
-            # the poller fix, but guard here to prevent uvicorn from dying.
             logger.error(
                 f"Daemon {daemon_name} intercepted SystemExit (rate-limit): {se}",
                 exc_info=True,
@@ -763,7 +734,6 @@ class DaemonController:
             if session_log.status not in ("CANCELLED", "CRASHED"):
                 session_log.status = "STOPPED"
 
-            # Final DB flush — record the terminal state.
             if db is not None:
                 try:
                     self._apply_session_log_persistence(db, session_log, create=False)

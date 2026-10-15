@@ -43,7 +43,6 @@ class TickStorageService:
         """
         required_bars = min_bars if min_bars is not None else cls.MIN_BARS_PER_SESSION
 
-        # Kiểm tra tồn tại trong StockOHLCVIntraday
         ohlcv_count = session.exec(
             select(func.count())
             .select_from(StockOHLCVIntraday)
@@ -53,7 +52,6 @@ class TickStorageService:
         if ohlcv_count >= required_bars:
             return True
 
-        # Kiểm tra tồn tại trong TickFlowAggregated (qua metadata để tránh cross-domain import)
         tick_flow_table = SQLModel.metadata.tables.get("tick_flow_aggregated")
         if tick_flow_table is not None:
             flow_count = session.exec(
@@ -81,7 +79,6 @@ class TickStorageService:
         - Thực hiện DELETE theo khối (set-based bulk delete) theo ngày thay vì nạp vào bộ nhớ và xóa từng dòng.
         - Trả về tổng số lượng bản ghi tick đã được dọn dẹp.
         """
-        # Lấy danh sách các ngày có dữ liệu tick cũ hơn cutoff_date
         old_dates = session.exec(
             select(func.date(StockTickIntraday.timestamp))
             .where(func.date(StockTickIntraday.timestamp) < cutoff_date)
@@ -98,7 +95,6 @@ class TickStorageService:
                 date.fromisoformat(str(d_str)) if isinstance(d_str, str) else d_str
             )
 
-            # Kiểm tra Safe Purge Gate
             gate_passed = cls.verify_safe_purge_gate(
                 session, target_d, min_bars=min_bars
             )
@@ -110,7 +106,6 @@ class TickStorageService:
                 )
                 continue
 
-            # Thực hiện xóa theo khối (bulk delete)
             delete_stmt = delete(StockTickIntraday).where(
                 func.date(StockTickIntraday.timestamp) == target_d
             )

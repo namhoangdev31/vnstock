@@ -9,7 +9,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-# revision identifiers, used by Alembic.
 revision = "i1a2b3c4d5e6"
 down_revision = "h1a2b3c4d5e6"
 branch_labels = None
@@ -20,7 +19,6 @@ def upgrade() -> None:
     bind = op.get_bind()
     is_postgres = bind.dialect.name == "postgresql"
 
-    # 1. Bảng LegalEntity
     op.create_table(
         "legal_entity",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -36,7 +34,6 @@ def upgrade() -> None:
     op.create_index("ix_legal_entity_legal_name", "legal_entity", ["legal_name"], unique=False)
     op.create_index("ix_legal_entity_tax_id", "legal_entity", ["tax_id"], unique=False)
 
-    # 2. Bảng Instrument
     op.create_table(
         "instrument",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -62,7 +59,6 @@ def upgrade() -> None:
     op.create_index("ix_instrument_exchange", "instrument", ["exchange"], unique=False)
     op.create_index("ix_instrument_legal_entity_id", "instrument", ["legal_entity_id"], unique=False)
 
-    # 3. Bảng InstrumentAlias
     op.create_table(
         "instrument_alias",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -79,7 +75,6 @@ def upgrade() -> None:
     op.create_index("ix_instrument_alias_instrument_id", "instrument_alias", ["instrument_id"], unique=False)
     op.create_index("ix_instrument_alias_lookup", "instrument_alias", ["alias", "valid_from", "valid_to"], unique=False)
 
-    # Partial unique index cho active alias
     if is_postgres:
         op.create_index(
             "uix_instrument_alias_active",
@@ -97,7 +92,6 @@ def upgrade() -> None:
             sqlite_where=sa.text("valid_to IS NULL"),
         )
 
-    # 4. Bảng InstrumentRelation
     op.create_table(
         "instrument_relation",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -119,7 +113,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # 5. Thêm instrument_id vào các Fact Tables
     op.add_column("stock_ohlcv_daily", sa.Column("instrument_id", sa.Uuid(), nullable=True))
     op.create_foreign_key(
         "fk_stock_ohlcv_daily_instrument_id",
@@ -153,13 +146,12 @@ def upgrade() -> None:
     )
     op.create_index("ix_financial_ratio_instrument_id", "financial_ratio", ["instrument_id"], unique=False)
 
-    # 6. Backfill Data từ stock_symbol vào Asset Master
     if is_postgres:
         op.execute(
             """
             -- 1. Tạo LegalEntity cho các mã hiện có trong stock_symbol
             INSERT INTO legal_entity (id, legal_name, short_name, created_at, updated_at)
-            SELECT 
+            SELECT
                 gen_random_uuid(),
                 COALESCE(s.organ_name, s.symbol),
                 s.symbol,
@@ -173,16 +165,16 @@ def upgrade() -> None:
             INSERT INTO instrument (
                 id, legal_entity_id, instrument_type, canonical_code, exchange, currency, is_active, created_at, updated_at
             )
-            SELECT 
+            SELECT
                 gen_random_uuid(),
                 le.id,
-                CASE 
+                CASE
                     WHEN s.asset_type = 'DERIVATIVE' OR s.symbol LIKE 'VN30F%' THEN 'FUTURES'
                     WHEN s.symbol LIKE 'C%' AND LENGTH(s.symbol) = 8 THEN 'COVERED_WARRANT'
                     WHEN s.symbol IN ('VN30', 'VN100', 'VNINDEX', 'HNXINDEX', 'UPCOMINDEX') THEN 'INDEX'
                     ELSE 'EQUITY'
                 END,
-                CASE 
+                CASE
                     WHEN s.asset_type = 'DERIVATIVE' OR s.symbol LIKE 'VN30F%' THEN 'FUTURES:' || s.symbol
                     WHEN s.symbol LIKE 'C%' AND LENGTH(s.symbol) = 8 THEN 'COVERED_WARRANT:' || s.symbol
                     WHEN s.symbol IN ('VN30', 'VN100', 'VNINDEX', 'HNXINDEX', 'UPCOMINDEX') THEN 'INDEX:' || s.symbol
@@ -219,11 +211,11 @@ def upgrade() -> None:
             INSERT INTO instrument_alias (
                 id, instrument_id, alias, alias_type, valid_from, valid_to, created_at
             )
-            SELECT 
+            SELECT
                 gen_random_uuid(),
                 i.id,
                 s.symbol,
-                CASE 
+                CASE
                     WHEN s.symbol = 'VN30F1M' THEN 'CONTINUOUS_ROLLING'
                     ELSE 'TICKER'
                 END,
@@ -232,7 +224,7 @@ def upgrade() -> None:
                 NOW()
             FROM stock_symbol s
             JOIN instrument i ON i.canonical_code = (
-                CASE 
+                CASE
                     WHEN s.symbol = 'VN30F1M' THEN 'FUTURES:VN30F1M:CONTINUOUS'
                     WHEN s.asset_type = 'DERIVATIVE' OR s.symbol LIKE 'VN30F%' THEN 'FUTURES:' || s.symbol
                     WHEN s.symbol LIKE 'C%' AND LENGTH(s.symbol) = 8 THEN 'COVERED_WARRANT:' || s.symbol
@@ -264,7 +256,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # 1. Gỡ bỏ instrument_id khỏi Fact Tables
     op.drop_index("ix_financial_ratio_instrument_id", table_name="financial_ratio")
     op.drop_constraint("fk_financial_ratio_instrument_id", "financial_ratio", type_="foreignkey")
     op.drop_column("financial_ratio", "instrument_id")
@@ -277,24 +268,20 @@ def downgrade() -> None:
     op.drop_constraint("fk_stock_ohlcv_daily_instrument_id", "stock_ohlcv_daily", type_="foreignkey")
     op.drop_column("stock_ohlcv_daily", "instrument_id")
 
-    # 2. Xóa bảng InstrumentRelation
     op.drop_index("ix_instrument_relation_lookup", table_name="instrument_relation")
     op.drop_table("instrument_relation")
 
-    # 3. Xóa bảng InstrumentAlias
     op.drop_index("uix_instrument_alias_active", table_name="instrument_alias")
     op.drop_index("ix_instrument_alias_lookup", table_name="instrument_alias")
     op.drop_index("ix_instrument_alias_instrument_id", table_name="instrument_alias")
     op.drop_table("instrument_alias")
 
-    # 4. Xóa bảng Instrument
     op.drop_index("ix_instrument_legal_entity_id", table_name="instrument")
     op.drop_index("ix_instrument_exchange", table_name="instrument")
     op.drop_index("ix_instrument_type_active", table_name="instrument")
     op.drop_index("ix_instrument_canonical_code", table_name="instrument")
     op.drop_table("instrument")
 
-    # 5. Xóa bảng LegalEntity
     op.drop_index("ix_legal_entity_tax_id", table_name="legal_entity")
     op.drop_index("ix_legal_entity_legal_name", table_name="legal_entity")
     op.drop_table("legal_entity")

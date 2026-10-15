@@ -44,7 +44,7 @@ class StockSymbolsPublic(SQLModel):
 class OHLCVRecord(SQLModel):
     """Bản ghi nến giá đơn lẻ trong chuỗi thời gian."""
 
-    trading_date: str  # Định dạng ngày ISO YYYY-MM-DD
+    trading_date: str
     open: float
     high: float
     low: float
@@ -100,7 +100,7 @@ class BondSpecificationPublic(SQLModel):
 
     id: uuid.UUID
     symbol: str
-    bond_type: str  # corporate / government
+    bond_type: str
     issuer_symbol: str | None = None
     issuer_name: str | None = None
     par_value: float = 100_000.0

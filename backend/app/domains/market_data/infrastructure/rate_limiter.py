@@ -59,7 +59,6 @@ class RateLimiter:
         self._sleep = sleep
 
         self._lock = threading.Lock()
-        # Bộ đệm trạng thái in-memory
         self._last_calls: dict[str, float] = {}
         self._failures: dict[str, int] = {}
         self._circuit_states: dict[str, CircuitState] = {}
@@ -82,7 +81,6 @@ class RateLimiter:
                     if state_str == CircuitState.OPEN.value:
                         now_utc = datetime.now(VN_TZ)
                         if open_until is not None and now_utc >= open_until:
-                            # Đã hết thời gian chờ -> Chuyển sang HALF_OPEN để thăm dò
                             session.exec(
                                 text(
                                     "UPDATE provider_rate_limit_state SET circuit_state = :s, updated_at = :u WHERE provider = :p"
@@ -98,7 +96,6 @@ class RateLimiter:
                         return False
                     return True
             except Exception:
-                # Nếu truy vấn DB lỗi, fallback sang bộ nhớ cục bộ
                 pass
 
         with self._lock:
@@ -120,7 +117,6 @@ class RateLimiter:
         """
         provider_key = provider.upper()
 
-        # Kiểm tra Circuit Breaker trước khi chờ
         if not self.is_available(provider_key, session=session):
             with self._lock:
                 until = self._circuit_open_until.get(provider_key)
@@ -128,7 +124,6 @@ class RateLimiter:
 
         if session is not None:
             try:
-                # Distributed atomic check via PostgreSQL (no FOR UPDATE during sleep)
                 row = session.exec(
                     text(
                         "SELECT last_request_at FROM provider_rate_limit_state WHERE provider = :p"
@@ -139,7 +134,6 @@ class RateLimiter:
                 slept = 0.0
                 if row and row[0]:
                     last_req: datetime = row[0]
-                    # Chuyển đổi timestamp nếu cần
                     if last_req.tzinfo is None:
                         last_req = last_req.replace(tzinfo=VN_TZ)
                     elapsed = (now_utc - last_req).total_seconds()
@@ -148,7 +142,6 @@ class RateLimiter:
                         self._sleep(remaining)
                         slept = remaining
 
-                # Cập nhật last_request_at
                 now_after = datetime.now(VN_TZ)
                 session.exec(
                     text(
@@ -164,10 +157,8 @@ class RateLimiter:
                 session.commit()
                 return slept
             except Exception:
-                # Nếu DB lỗi hoặc lock thất bại, fallback sang in-memory throttle
                 pass
 
-        # In-memory throttle
         with self._lock:
             now = self._clock()
             last_call = self._last_calls.get(provider_key)
@@ -178,7 +169,6 @@ class RateLimiter:
             elapsed = now - last_call
             remaining = self.min_delay - elapsed
 
-        # Release lock BEFORE sleeping to avoid blocking other threads
         if remaining > 0:
             self._sleep(remaining)
             slept = remaining
@@ -225,7 +215,6 @@ class RateLimiter:
         if session is not None:
             try:
                 now_utc = datetime.now(VN_TZ)
-                # Đảm bảo row tồn tại trước khi lock/update
                 session.exec(
                     text(
                         """
@@ -286,7 +275,6 @@ class RateLimiter:
                 )  # type: ignore
                 session.commit()
 
-                # Đồng bộ trạng thái vào in-memory RAM của tiến trình từ kết quả DB
                 with self._lock:
                     self._failures[provider_key] = curr_fails
                     if curr_fails >= self.max_failures:
@@ -306,7 +294,6 @@ class RateLimiter:
             self._failures[provider_key] = curr_fails
 
             if curr_fails >= self.max_failures:
-                # Tính toán exponential backoff kèm jitter
                 exponent = curr_fails - self.max_failures
                 backoff = min(self.base_cooldown * (2**exponent), self.max_cooldown)
                 jitter = random.uniform(0.0, 5.0)

@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 from alembic import op
 import sqlalchemy as sa
 from app.cron.scheduler import VN_TZ
-# revision identifiers, used by Alembic.
 revision = "l1a2b3c4d5e6"
 down_revision = "k1a2b3c4d5e6"
 branch_labels = None
@@ -28,7 +27,6 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
 
-    # Seed initial rows for default providers
     now = datetime.now(VN_TZ)
     provider_table = sa.table(
         "provider_rate_limit_state",

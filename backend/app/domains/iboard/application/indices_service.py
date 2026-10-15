@@ -17,7 +17,6 @@ from app.domains.iboard.application.schemas import (
 )
 from app.domains.iboard.domain.policy import compute_market_breadth
 from app.domains.iboard.infrastructure.external_indices import (
-    DowJonesGateway,
     IBoardDataGateway,
     IndexSparklineGateway,
 )
@@ -114,7 +113,6 @@ class IBoardIndicesService:
             raw_vol = float(latest.volume)
             raw_val = float(latest.value or 0)
 
-            # Check realtime DNSE cache for market index updates
             cached_idx = realtime_cache.get(f"index:{code}")
             if not cached_idx and code == MarketIndex.HNXINDEX:
                 cached_idx = realtime_cache.get(f"index:{MarketIndex.HNX}")
@@ -236,19 +234,10 @@ class IBoardIndicesService:
                     breadth=breadth,
                     sparkline=sparkline,
                     ref_price=prev_close,
+                    raw_volume=raw_vol,
+                    raw_value=val_num if raw_val > 0 else None,
                 )
             )
-
-        # Chèn Dow Jones Futures thực
-        dji_item = DowJonesGateway.get_futures_item()
-        if dji_item is not None:
-            vnindex_pos = next(
-                (i for i, it in enumerate(items) if it.id == "vnindex"), -1
-            )
-            if vnindex_pos >= 0:
-                items.insert(vnindex_pos + 1, dji_item)
-            else:
-                items.append(dji_item)
 
         return items
 

@@ -1,0 +1,443 @@
+- generic [active] [ref=f4e1]:
+  - main [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - generic [ref=f4e5]:
+        - link "dnse" [ref=f4e6] [cursor=pointer]:
+          - /url: /v2
+        - link "Home" [ref=f4e9] [cursor=pointer]:
+          - /url: https://entradex.dnse.com.vn/dashboard
+        - generic [ref=f4e12] [cursor=pointer]: Bảng giá
+        - generic [ref=f4e14] [cursor=pointer]: Đặt lệnh
+        - generic [ref=f4e18] [cursor=pointer]: Giao dịch tiền
+        - generic [ref=f4e22] [cursor=pointer]: Phân tích
+        - generic [ref=f4e26] [cursor=pointer]: Tài sản
+        - generic [ref=f4e30] [cursor=pointer]: Tiện ích
+      - generic [ref=f4e34]:
+        - generic [ref=f4e36]:
+          - button "Setting" [ref=f4e37] [cursor=pointer]
+          - generic [ref=f4e40] [cursor=pointer]
+          - generic [ref=f4e44] [cursor=pointer]
+        - button "Đăng nhập" [ref=f4e49] [cursor=pointer]
+        - link "Mở tài khoản" [ref=f4e50] [cursor=pointer]:
+          - /url: https://www.dnse.com.vn/mo-tai-khoan?utm_source=DNSE&utm_medium=BangGiaV2&utm_campaign=Banner&utm_content=%2Fv2&utm_term=14102026&redirectPath=https%3A%2F%2Fbanggia.dnse.com.vn%2Fv2
+    - generic [ref=f4e52]:
+      - generic [ref=f4e53]:
+        - generic [ref=f4e54]:
+          - generic:
+            - button "Market Card Navigation"
+          - generic [ref=f4e55]:
+            - generic [ref=f4e56] [cursor=pointer]:
+              - generic [ref=f4e57]:
+                - generic [ref=f4e58]:
+                  - generic [ref=f4e59]: VN30
+                  - generic [ref=f4e61]: "0.00"
+                - generic [ref=f4e62]:
+                  - generic [ref=f4e63]: "-"
+                  - generic [ref=f4e64]: "-"
+              - generic [ref=f4e66]:
+                - generic [ref=f4e67]:
+                  - generic [ref=f4e68]: "-"
+                  - generic [ref=f4e69]: "|"
+                  - generic [ref=f4e70]: "-"
+                - generic [ref=f4e71]:
+                  - generic [ref=f4e72]:
+                    - generic [ref=f4e75]: "0"
+                    - generic [ref=f4e76]: (0)
+                  - generic [ref=f4e77]: "0"
+                  - generic [ref=f4e81]:
+                    - generic [ref=f4e84]: "0"
+                    - generic [ref=f4e85]: (0)
+            - generic [ref=f4e89] [cursor=pointer]:
+              - generic [ref=f4e90]:
+                - generic [ref=f4e91]:
+                  - generic [ref=f4e92]: VNINDEX
+                  - generic [ref=f4e94]: "0.00"
+                - generic [ref=f4e95]:
+                  - generic [ref=f4e96]: "-"
+                  - generic [ref=f4e97]: "-"
+              - generic [ref=f4e99]:
+                - generic [ref=f4e100]:
+                  - generic [ref=f4e101]: "-"
+                  - generic [ref=f4e102]: "|"
+                  - generic [ref=f4e103]: "-"
+                - generic [ref=f4e104]:
+                  - generic [ref=f4e105]:
+                    - generic [ref=f4e108]: "0"
+                    - generic [ref=f4e109]: (0)
+                  - generic [ref=f4e110]: "0"
+                  - generic [ref=f4e114]:
+                    - generic [ref=f4e117]: "0"
+                    - generic [ref=f4e118]: (0)
+            - generic [ref=f4e123] [cursor=pointer]:
+              - generic [ref=f4e124]:
+                - generic [ref=f4e125]: DOW JONES FUTURES
+                - generic [ref=f4e126]: "-"
+              - generic [ref=f4e127]:
+                - generic [ref=f4e128]: "-"
+                - generic [ref=f4e129]: "-"
+            - generic [ref=f4e134] [cursor=pointer]:
+              - generic [ref=f4e135]:
+                - generic [ref=f4e136]:
+                  - generic [ref=f4e137]: HNX30
+                  - generic [ref=f4e139]: "0.00"
+                - generic [ref=f4e140]:
+                  - generic [ref=f4e141]: "-"
+                  - generic [ref=f4e142]: "-"
+              - generic [ref=f4e144]:
+                - generic [ref=f4e145]:
+                  - generic [ref=f4e146]: "-"
+                  - generic [ref=f4e147]: "|"
+                  - generic [ref=f4e148]: "-"
+                - generic [ref=f4e149]:
+                  - generic [ref=f4e150]:
+                    - generic [ref=f4e153]: "0"
+                    - generic [ref=f4e154]: (0)
+                  - generic [ref=f4e155]: "0"
+                  - generic [ref=f4e159]:
+                    - generic [ref=f4e162]: "0"
+                    - generic [ref=f4e163]: (0)
+            - generic [ref=f4e167] [cursor=pointer]:
+              - generic [ref=f4e168]:
+                - generic [ref=f4e169]:
+                  - generic [ref=f4e170]: VN30F1M
+                  - generic [ref=f4e172]: "-"
+                - generic [ref=f4e173]:
+                  - generic [ref=f4e174]: "-"
+                  - generic [ref=f4e175]: "-"
+              - generic [ref=f4e177]:
+                - generic [ref=f4e178]:
+                  - generic [ref=f4e179]: "-"
+                  - generic [ref=f4e180]: "|"
+                  - generic [ref=f4e181]: "-"
+                - generic [ref=f4e182]:
+                  - generic [ref=f4e183]: "-"
+                  - generic [ref=f4e184]: "-"
+                  - generic [ref=f4e185]: "-"
+          - generic:
+            - button "Market Card Navigation"
+        - generic [ref=f4e189]:
+          - button "Show Market Card Modal" [ref=f4e190] [cursor=pointer]
+          - button "Đóng" [ref=f4e193] [cursor=pointer]
+      - generic [ref=f4e197]:
+        - generic [ref=f4e198]:
+          - generic [ref=f4e200]:
+            - link "Danh mục của bạn" [ref=f4e202] [cursor=pointer]:
+              - /url: /v2/theo-doi
+            - link "Niêm yết" [ref=f4e204] [cursor=pointer]:
+              - /url: /v2/niem-yet/vn30
+            - link "Ngành" [ref=f4e206] [cursor=pointer]:
+              - /url: /v2/nganh/danh-muc-nganh/ngan-hang
+            - link "Phái sinh" [ref=f4e208] [cursor=pointer]:
+              - /url: /v2/phai-sinh
+            - link "Chứng quyền" [ref=f4e210] [cursor=pointer]:
+              - /url: /v2/chung-quyen
+            - link "ETF" [ref=f4e212] [cursor=pointer]:
+              - /url: /v2/etf
+            - link "Thỏa thuận" [ref=f4e214] [cursor=pointer]:
+              - /url: /v2/thoa-thuan/hsx
+            - link "Ý tưởng đầu tư" [ref=f4e216] [cursor=pointer]:
+              - /url: /v2/y-tuong-dau-tu
+            - link "Bộ lọc cổ phiếu" [ref=f4e218] [cursor=pointer]:
+              - /url: /v2/bo-loc-mau
+          - generic [ref=f4e219]:
+            - generic [ref=f4e220]:
+              - button [ref=f4e222] [cursor=pointer]:
+                - textbox "Tìm mã" [ref=f4e226]
+              - generic [ref=f4e228]:
+                - button [ref=f4e229]:
+                  - generic [ref=f4e230]:
+                    - text: VN30
+                    - img [ref=f4e231] [cursor=pointer]
+                - link "HSX" [ref=f4e234] [cursor=pointer]:
+                  - /url: /v2/niem-yet/hsx
+                - link "HNX" [ref=f4e236] [cursor=pointer]:
+                  - /url: /v2/niem-yet/hnx
+                - link "UPCOM" [ref=f4e238] [cursor=pointer]:
+                  - /url: /v2/niem-yet/upcom
+                - button [ref=f4e239]:
+                  - generic [ref=f4e240]:
+                    - text: Lô lẻ
+                    - img [ref=f4e241] [cursor=pointer]
+            - generic [ref=f4e243]:
+              - button "Toggle News" [ref=f4e244] [cursor=pointer]:
+                - generic [ref=f4e247]: Tin tức
+              - button "List Layout" [ref=f4e248] [cursor=pointer]
+              - button "Grid Layout" [ref=f4e251] [cursor=pointer]
+          - generic [ref=f4e254]:
+            - generic [ref=f4e255]:
+              - paragraph [ref=f4e256]: Thống kê biến động
+              - generic [ref=f4e257]:
+                - button "0" [ref=f4e258] [cursor=pointer]
+                - button "0" [ref=f4e263] [cursor=pointer]
+                - button "0" [ref=f4e268] [cursor=pointer]
+                - button "0" [ref=f4e273] [cursor=pointer]
+                - button "0" [ref=f4e278] [cursor=pointer]
+            - table [ref=f4e284]:
+              - rowgroup [ref=f4e285]:
+                - row [ref=f4e286]:
+                  - columnheader "Mã chứng khoán" [ref=f4e287]
+                  - columnheader "Giá khớp" [ref=f4e291]
+                  - columnheader "1 ngày Toggle ratio display Reset ratio display Toggle ratio display" [ref=f4e295]:
+                    - generic [ref=f4e297] [cursor=pointer]:
+                      - generic [ref=f4e298]:
+                        - log [ref=f4e300]
+                        - generic [ref=f4e302]:
+                          - generic [ref=f4e303]: 1 ngày
+                          - combobox "Filter ratio values" [ref=f4e304]
+                      - generic [ref=f4e308]:
+                        - button "Toggle ratio display" [ref=f4e309]
+                        - button "Reset ratio display" [ref=f4e312]: "%"
+                        - button "Toggle ratio display" [ref=f4e313]
+                  - columnheader "Tổng khối lượng" [ref=f4e316]
+                  - columnheader "Biểu đồ" [ref=f4e320]
+                  - columnheader [ref=f4e324]:
+                    - generic [ref=f4e325]:
+                      - button "Toggle bid/ask display" [ref=f4e326] [cursor=pointer]
+                      - button "Reset bid/ask display" [ref=f4e329] [cursor=pointer]: Mua/Bán
+                      - button "Toggle bid/ask display" [ref=f4e330] [cursor=pointer]
+                  - columnheader [ref=f4e333]
+              - rowgroup [ref=f4e334]:
+                - row [ref=f4e335]:
+                  - cell [ref=f4e336]:
+                    - generic [ref=f4e337]:
+                      - generic [ref=f4e338]:
+                        - img "ACB"
+                      - generic [ref=f4e339]:
+                        - paragraph [ref=f4e341]: ACB
+                        - paragraph [ref=f4e342]: Ngân hàng TMCP Á Châu
+                  - cell [ref=f4e343]
+                  - cell [ref=f4e346]
+                  - cell [ref=f4e349]
+                  - cell [ref=f4e352]
+                  - cell [ref=f4e355]
+                  - cell [ref=f4e358]:
+                    - button "Toggle Watchlist" [ref=f4e359] [cursor=pointer]
+                - row [ref=f4e362]:
+                  - cell [ref=f4e363]:
+                    - generic [ref=f4e364]:
+                      - generic [ref=f4e365]:
+                        - img "BID"
+                      - generic [ref=f4e366]:
+                        - paragraph [ref=f4e368]: BID
+                        - paragraph [ref=f4e369]: Ngân hàng TMCP Đầu tư và Phát triển Việt Nam
+                  - cell [ref=f4e370]
+                  - cell [ref=f4e373]
+                  - cell [ref=f4e376]
+                  - cell [ref=f4e379]
+                  - cell [ref=f4e382]
+                  - cell [ref=f4e385]:
+                    - button "Toggle Watchlist" [ref=f4e386] [cursor=pointer]
+                - row [ref=f4e389]:
+                  - cell [ref=f4e390]:
+                    - generic [ref=f4e391]:
+                      - generic [ref=f4e392]:
+                        - img "BSR"
+                      - generic [ref=f4e393]:
+                        - paragraph [ref=f4e395]: BSR
+                        - paragraph [ref=f4e396]: CTCP - Tổng Công ty Lọc hóa dầu Việt Nam
+                  - cell [ref=f4e397]
+                  - cell [ref=f4e400]
+                  - cell [ref=f4e403]
+                  - cell [ref=f4e406]
+                  - cell [ref=f4e409]
+                  - cell [ref=f4e412]:
+                    - button "Toggle Watchlist" [ref=f4e413] [cursor=pointer]
+                - row [ref=f4e416]:
+                  - cell [ref=f4e417]:
+                    - generic [ref=f4e418]:
+                      - generic [ref=f4e419]:
+                        - img "CTG"
+                      - generic [ref=f4e420]:
+                        - paragraph [ref=f4e422]: CTG
+                        - paragraph [ref=f4e423]: Ngân hàng TMCP Công Thương Việt Nam
+                  - cell [ref=f4e424]
+                  - cell [ref=f4e427]
+                  - cell [ref=f4e430]
+                  - cell [ref=f4e433]
+                  - cell [ref=f4e436]
+                  - cell [ref=f4e439]:
+                    - button "Toggle Watchlist" [ref=f4e440] [cursor=pointer]
+                - row [ref=f4e443]:
+                  - cell [ref=f4e444]:
+                    - generic [ref=f4e445]:
+                      - generic [ref=f4e446]:
+                        - img "FPT"
+                      - generic [ref=f4e447]:
+                        - paragraph [ref=f4e449]: FPT
+                        - paragraph [ref=f4e450]: CTCP FPT
+                  - cell [ref=f4e451]
+                  - cell [ref=f4e454]
+                  - cell [ref=f4e457]
+                  - cell [ref=f4e460]
+                  - cell [ref=f4e463]
+                  - cell [ref=f4e466]:
+                    - button "Toggle Watchlist" [ref=f4e467] [cursor=pointer]
+                - row [ref=f4e470]:
+                  - cell [ref=f4e471]:
+                    - generic [ref=f4e472]:
+                      - generic [ref=f4e473]:
+                        - img "GAS"
+                      - generic [ref=f4e474]:
+                        - paragraph [ref=f4e476]: GAS
+                        - paragraph [ref=f4e477]: Tổng Công ty Khí Việt Nam - CTCP
+                  - cell [ref=f4e478]
+                  - cell [ref=f4e481]
+                  - cell [ref=f4e484]
+                  - cell [ref=f4e487]
+                  - cell [ref=f4e490]
+                  - cell [ref=f4e493]:
+                    - button "Toggle Watchlist" [ref=f4e494] [cursor=pointer]
+                - row [ref=f4e497]:
+                  - cell [ref=f4e498]:
+                    - generic [ref=f4e499]:
+                      - generic [ref=f4e500]:
+                        - img "GVR"
+                      - generic [ref=f4e501]:
+                        - paragraph [ref=f4e503]: GVR
+                        - paragraph [ref=f4e504]: Tập đoàn Công nghiệp Cao su Việt Nam - CTCP
+                  - cell [ref=f4e505]
+                  - cell [ref=f4e508]
+                  - cell [ref=f4e511]
+                  - cell [ref=f4e514]
+                  - cell [ref=f4e517]
+                  - cell [ref=f4e520]:
+                    - button "Toggle Watchlist" [ref=f4e521] [cursor=pointer]
+                - row [ref=f4e524]:
+                  - cell [ref=f4e525]:
+                    - generic [ref=f4e526]:
+                      - generic [ref=f4e527]:
+                        - img "HDB"
+                      - generic [ref=f4e528]:
+                        - paragraph [ref=f4e530]: HDB
+                        - paragraph [ref=f4e531]: Ngân hàng TMCP Phát triển TP. HCM
+                  - cell [ref=f4e532]
+                  - cell [ref=f4e535]
+                  - cell [ref=f4e538]
+                  - cell [ref=f4e541]
+                  - cell [ref=f4e544]
+                  - cell [ref=f4e547]:
+                    - button "Toggle Watchlist" [ref=f4e548] [cursor=pointer]
+                - row [ref=f4e551]:
+                  - cell [ref=f4e552]:
+                    - generic [ref=f4e553]:
+                      - generic [ref=f4e554]:
+                        - img "HPG"
+                      - generic [ref=f4e555]:
+                        - paragraph [ref=f4e557]: HPG
+                        - paragraph [ref=f4e558]: CTCP Tập đoàn Hòa Phát
+                  - cell [ref=f4e559]
+                  - cell [ref=f4e562]
+                  - cell [ref=f4e565]
+                  - cell [ref=f4e568]
+                  - cell [ref=f4e571]
+                  - cell [ref=f4e574]:
+                    - button "Toggle Watchlist" [ref=f4e575] [cursor=pointer]
+                - row [ref=f4e578]:
+                  - cell [ref=f4e579]:
+                    - generic [ref=f4e580]:
+                      - generic [ref=f4e581]:
+                        - img "LPB"
+                      - generic [ref=f4e582]:
+                        - paragraph [ref=f4e584]: LPB
+                        - paragraph [ref=f4e585]: Ngân hàng TMCP Lộc Phát Việt Nam
+                  - cell [ref=f4e586]
+                  - cell [ref=f4e589]
+                  - cell [ref=f4e592]
+                  - cell [ref=f4e595]
+                  - cell [ref=f4e598]
+                  - cell [ref=f4e601]:
+                    - button "Toggle Watchlist" [ref=f4e602] [cursor=pointer]
+                - row [ref=f4e605]:
+                  - cell [ref=f4e606]:
+                    - generic [ref=f4e607]:
+                      - generic [ref=f4e608]:
+                        - img "MBB"
+                      - generic [ref=f4e609]:
+                        - paragraph [ref=f4e611]: MBB
+                        - paragraph [ref=f4e612]: Ngân hàng TMCP Quân Đội
+                  - cell [ref=f4e613]
+                  - cell [ref=f4e616]
+                  - cell [ref=f4e619]
+                  - cell [ref=f4e622]
+                  - cell [ref=f4e625]
+                  - cell [ref=f4e628]:
+                    - button "Toggle Watchlist" [ref=f4e629] [cursor=pointer]
+                - row [ref=f4e632]:
+                  - cell [ref=f4e633]:
+                    - generic [ref=f4e634]:
+                      - generic [ref=f4e635]:
+                        - img "MCH"
+                      - generic [ref=f4e636]:
+                        - paragraph [ref=f4e638]: MCH
+                        - paragraph [ref=f4e639]: CTCP Hàng tiêu dùng Masan
+                  - cell [ref=f4e640]
+                  - cell [ref=f4e643]
+                  - cell [ref=f4e646]
+                  - cell [ref=f4e649]
+                  - cell [ref=f4e652]
+                  - cell [ref=f4e655]:
+                    - button "Toggle Watchlist" [ref=f4e656] [cursor=pointer]
+        - generic [ref=f4e662]:
+          - generic [ref=f4e663]:
+            - tablist [ref=f4e664]:
+              - tab "Thị trường" [selected] [ref=f4e665] [cursor=pointer]
+              - tab "Đặt lệnh" [ref=f4e669] [cursor=pointer]
+              - tab "Sổ lệnh" [ref=f4e673] [cursor=pointer]
+            - button "Tooltip" [ref=f4e677] [cursor=pointer]
+          - tabpanel "Thị trường" [ref=f4e681]:
+            - generic [ref=f4e682]:
+              - generic [ref=f4e683]:
+                - img "Ensa" [ref=f4e685]
+                - paragraph [ref=f4e686]: ENSA Trợ lý AI nói gì?
+              - generic [ref=f4e688]:
+                - text: Vnindex -1,85% so với tuần trước, giá trị giao dịch -2,52% và có xu hướng giảm trong ngắn hạn.
+                - paragraph [ref=f4e689]:
+                  - text: Dòng tiền đang đổ vào các ngành
+                  - link "Nguyên vật liệu" [ref=f4e690] [cursor=pointer]:
+                    - /url: https://banggia.dnse.com.vn/v2/nganh/danh-muc-nganh/nguyen-vat-lieu?sectorId=15&sectorSlug=nguyen-vat-lieu
+                  - text: ","
+                  - link "Dịch vụ chăm sóc sức khỏe" [ref=f4e691] [cursor=pointer]:
+                    - /url: https://banggia.dnse.com.vn/v2/nganh/danh-muc-nganh/dich-vu-va-thiet-bi-cham-soc-suc-khoe?sectorId=31&sectorSlug=dich-vu-va-thiet-bi-cham-soc-suc-khoe
+                  - text: và rút ra ở ngành
+                  - link "Hàng hóa công nghiệp" [ref=f4e692] [cursor=pointer]:
+                    - /url: https://banggia.dnse.com.vn/v2/nganh/danh-muc-nganh/hang-hoa-chu-chot?sectorId=17&sectorSlug=hang-hoa-chu-chot
+                  - text: .
+              - generic [ref=f4e693]:
+                - paragraph [ref=f4e694]: Bạn muốn biết thị trường hôm nay thế nào?
+                - button "Hỏi ngay" [ref=f4e695] [cursor=pointer]
+            - paragraph [ref=f4e700]: Top cổ phiếu tăng giá
+            - paragraph [ref=f4e762]: Top cổ phiếu giảm giá
+            - paragraph [ref=f4e824]: Top khối lượng giao dịch
+  - region "Notifications alt+T"
+  - alert [ref=f4e882]
+  - generic [ref=f4e883]:
+    - generic [ref=f4e884]:
+      - paragraph [ref=f4e885]: Cài đặt
+      - button "close" [ref=f4e886] [cursor=pointer]
+    - generic [ref=f4e890]:
+      - paragraph [ref=f4e894]: Chọn chủ đề
+      - switch "Sáng Tối" [ref=f4e895] [cursor=pointer]:
+        - generic [ref=f4e896]: Sáng
+        - generic [ref=f4e900]: Tối
+    - generic [ref=f4e905]:
+      - generic [ref=f4e906]: Chọn giao diện
+      - generic [ref=f4e910]:
+        - generic [ref=f4e911]:
+          - generic [ref=f4e912] [cursor=pointer]:
+            - img "v2"
+          - generic [ref=f4e913] [cursor=pointer]: Gen-Z
+        - generic [ref=f4e917]:
+          - generic [ref=f4e918] [cursor=pointer]:
+            - img "v1"
+          - generic [ref=f4e919] [cursor=pointer]: Cơ bản
+    - generic [ref=f4e923]:
+      - generic [ref=f4e924]: Nháy giá & khối lượng
+      - generic [ref=f4e928]:
+        - generic [ref=f4e929]:
+          - generic [ref=f4e930] [cursor=pointer]:
+            - img "ease"
+          - generic [ref=f4e931] [cursor=pointer]: Dịu mắt
+        - generic [ref=f4e935]:
+          - generic [ref=f4e936] [cursor=pointer]:
+            - img "sharp"
+          - generic [ref=f4e937] [cursor=pointer]: Sắc nét

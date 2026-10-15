@@ -9,10 +9,6 @@ from sqlmodel import SQLModel
 
 from app.domains.fundamental.domain.models import ScreenerSnapshot
 
-# ===========================================================================
-# 1. SCREENER SCHEMAS
-# ===========================================================================
-
 
 class ScreenerCursor(BaseModel):
     """Thông tin con trỏ Keyset Pagination."""
@@ -61,11 +57,6 @@ class StockScreenerResponse(SQLModel):
     next_cursor_instrument_id: uuid.UUID | None = None
 
 
-# ===========================================================================
-# 2. CORPORATE OVERVIEW SCHEMAS
-# ===========================================================================
-
-
 class CompanyOverviewPublic(SQLModel):
     """Thông tin tổng quan hồ sơ doanh nghiệp."""
 
@@ -90,11 +81,6 @@ class CompanyOverviewPublic(SQLModel):
     description: str | None = None
 
 
-# ===========================================================================
-# 3. FINANCIAL STATEMENTS & RATIOS SCHEMAS
-# ===========================================================================
-
-
 class FinancialReportPublic(SQLModel):
     """Bản ghi báo cáo tài chính trả về cho API."""
 
@@ -105,7 +91,6 @@ class FinancialReportPublic(SQLModel):
     quarter: int | None = None
     is_audited: bool = False
 
-    # Các chỉ tiêu tài chính cốt lõi
     revenue: float | None = None
     gross_profit: float | None = None
     operating_profit: float | None = None
@@ -155,26 +140,22 @@ class FinancialRatioPublic(SQLModel):
     current_ratio: float | None = None
     dividend_yield: float | None = None
 
-    # Định giá & Dòng tiền bổ sung
     ev_to_ebitda: float | None = None
     ev_to_ebit: float | None = None
     p_to_fcf: float | None = None
     p_to_ocf: float | None = None
     fcf: float | None = None
 
-    # Hiệu quả hoạt động & Lợi nhuận bổ sung
     ebit_margin: float | None = None
     ebitda_margin: float | None = None
     asset_turnover: float | None = None
     inventory_turnover: float | None = None
     receivables_turnover: float | None = None
 
-    # Cơ cấu vốn & Khả năng thanh toán bổ sung
     debt_to_assets: float | None = None
     interest_coverage: float | None = None
     cash_ratio: float | None = None
 
-    # Tăng trưởng (Growth)
     revenue_growth_yoy: float | None = None
     net_profit_growth_yoy: float | None = None
     revenue_growth_qoq: float | None = None
@@ -212,11 +193,6 @@ class FinancialReportRevisionsResponse(SQLModel):
     report_id: uuid.UUID
     count: int
     revisions: list[FinancialReportRevisionPublic]
-
-
-# ===========================================================================
-# 4. CORPORATE GOVERNANCE SCHEMAS
-# ===========================================================================
 
 
 class CompanyShareholderPublic(SQLModel):

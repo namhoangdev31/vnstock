@@ -20,7 +20,6 @@ def upgrade() -> None:
     conn = op.get_bind()
     insp = sa.inspect(conn)
 
-    # 1. instrument table: roll_rule column
     inst_cols = {c["name"] for c in insp.get_columns("instrument")}
     if "roll_rule" not in inst_cols:
         op.add_column(
@@ -28,7 +27,6 @@ def upgrade() -> None:
             sa.Column("roll_rule", sa.String(length=100), nullable=True),
         )
 
-    # 2. screener_snapshot_historical: as_of column
     hist_cols = {c["name"] for c in insp.get_columns("screener_snapshot_historical")}
     if "as_of" not in hist_cols:
         op.add_column(
@@ -51,7 +49,6 @@ def upgrade() -> None:
             ["instrument_id", "as_of"],
         )
 
-    # 3. tick_flow_aggregated table: interval_start, open, high, low, close, volume
     if "tick_flow_aggregated" in insp.get_table_names():
         tick_cols = {c["name"] for c in insp.get_columns("tick_flow_aggregated")}
         if "timestamp" in tick_cols and "interval_start" not in tick_cols:
@@ -94,19 +91,16 @@ def downgrade() -> None:
     conn = op.get_bind()
     insp = sa.inspect(conn)
 
-    # 1. instrument
     inst_cols = {c["name"] for c in insp.get_columns("instrument")}
     if "roll_rule" in inst_cols:
         op.drop_column("instrument", "roll_rule")
 
-    # 2. screener_snapshot_historical
     hist_cols = {c["name"] for c in insp.get_columns("screener_snapshot_historical")}
     if "as_of" in hist_cols:
         op.drop_index("ix_screener_hist_inst_as_of", table_name="screener_snapshot_historical")
         op.drop_index("ix_screener_snapshot_historical_as_of", table_name="screener_snapshot_historical")
         op.drop_column("screener_snapshot_historical", "as_of")
 
-    # 3. tick_flow_aggregated
     if "tick_flow_aggregated" in insp.get_table_names():
         tick_cols = {c["name"] for c in insp.get_columns("tick_flow_aggregated")}
         for col_name in ["open", "high", "low", "close", "volume"]:

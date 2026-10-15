@@ -26,10 +26,6 @@ engine = create_engine(
 
 
 def init_db(session: Session) -> None:
-    # Tables should be created with Alembic migrations
-    # But if you don't want to use migrations, create
-    # the tables un-commenting the next lines
-    # from sqlmodel import SQLModel
 
     user = session.exec(
         select(User).where(User.email == settings.FIRST_SUPERUSER)

@@ -105,15 +105,10 @@ class MacroIndicatorCode(StrEnum):
     WORLD_GOLD = "WORLD_GOLD"
 
 
-# --- Vietnamese market constants (AGENTS.md Section 6) ---
-
-# VN30F1M index-futures contract multiplier (VND per index point).
 DERIVATIVE_MULTIPLIER = 100_000
 
-# Default simulated starting balance (VND).
 DEFAULT_INITIAL_BALANCE = 100_000_000.0
 
-# Settlement cycles: equities T+2, derivatives T+0 (intraday round-trip allowed).
 EQUITY_SETTLEMENT_DAYS = 2
 DERIVATIVE_SETTLEMENT_DAYS = 0
 

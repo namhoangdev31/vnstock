@@ -248,9 +248,6 @@ class DataSyncManager:
         bind = self.session.get_bind()
         return getattr(getattr(bind, "dialect", None), "name", "") == "postgresql"
 
-    # ------------------------------------------------------------------
-    # Common Reusable Handlers & Lifecycle Management
-    # ------------------------------------------------------------------
 
     def _create_log(self, sync_type: str, symbol: str | None = None) -> DataSyncLog:
         """Create a sync log entry with status 'started'."""
@@ -339,11 +336,6 @@ class DataSyncManager:
 
         insert_stmt = pg_insert(model_cls)
 
-        # Xây dựng mệnh đề ON CONFLICT theo chuẩn dialects/postgresql/dml.py:
-        # - Khi update_fields có trường: gọi on_conflict_do_update với set_=update_dict
-        # - Khi update_fields rỗng: gọi on_conflict_do_nothing (tránh ValueError do set_ rỗng)
-        # Sử dụng getattr để gọi an toàn, giải quyết triệt để lỗi phân tích tĩnh sai của PyCharm
-        # (PyCharm không suy luận được kiểu trả về qua decorator @_generative của SQLAlchemy nên báo giả PyNoneFunctionAssignment)
         if update_fields:
             excluded = insert_stmt.excluded
             update_dict = {f: getattr(excluded, f) for f in update_fields}
@@ -359,7 +351,6 @@ class DataSyncManager:
             )
 
         num_cols = len(records[0]) if records else 1
-        # Giới hạn an toàn tham số PostgreSQL (tối đa 32,767 tham số trên mỗi câu lệnh)
         safe_batch_size = max(1, 32767 // max(num_cols, 1))
         step = min(batch_size, safe_batch_size)
 
@@ -417,12 +408,9 @@ class DataSyncManager:
         if not records:
             return 0
 
-        # 1. Khử trùng lặp nội bộ
         deduped = self._deduplicate_records(records, conflict_keys)
-        # 2. Đồng nhất keys cho batch
         standardized = self._standardize_record_keys(deduped)
 
-        # 3. Thực thi theo dialect
         if self.is_postgresql:
             return self._upsert_postgresql(
                 model_cls,
@@ -457,7 +445,6 @@ class DataSyncManager:
             "index": "INDEX",
         }
 
-        # Deduplicate symbols_info by symbol
         items_by_sym: dict[str, dict[str, Any]] = {}
         for item in symbols_info:
             sym = str(item.get("symbol") or "").strip().upper()
@@ -480,7 +467,6 @@ class DataSyncManager:
                 prefix = "BOND"
             canonical_codes.append(f"{prefix}:{sym}")
 
-        # Batch query existing instruments
         existing_instruments: dict[str, Instrument] = {}
         batch_size = 500
         for i in range(0, len(canonical_codes), batch_size):
@@ -528,7 +514,6 @@ class DataSyncManager:
 
         self.session.flush()
 
-        # Batch query existing active InstrumentAlias
         symbols_list = list(items_by_sym.keys())
         existing_aliases: dict[str, InstrumentAlias] = {}
         for i in range(0, len(symbols_list), batch_size):
@@ -635,9 +620,6 @@ class DataSyncManager:
         )
         self.session.commit()
 
-    # ------------------------------------------------------------------
-    # Safe Extraction Helpers (Loại bỏ triệt để code smell row.get nested)
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _extract_val(row: Any, *keys: str, default: Any = None) -> Any:
@@ -704,9 +686,6 @@ class DataSyncManager:
         val = cls._extract_val(row, *keys)
         return cls._parse_datetime(val)
 
-    # ------------------------------------------------------------------
-    # Data Normalization & Parsing Primitives
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _normalize_to_dataframe(data: Any, symbol_col: str = "symbol") -> pd.DataFrame:
@@ -858,9 +837,6 @@ class DataSyncManager:
                 except (ValueError, TypeError):
                     return None
 
-    # ------------------------------------------------------------------
-    # Sub-Sync Logics (VN30, Derivatives, CW, Bonds)
-    # ------------------------------------------------------------------
 
     def _sync_vn30_group(self) -> int:
         """Cập nhật cờ index_group='VN30' cho các cổ phiếu thuộc rổ VN30."""
@@ -1063,14 +1039,12 @@ class DataSyncManager:
         if not cw_records:
             return 0
 
-        # Đảm bảo tất cả mã cơ sở (underlying_symbol) đã tồn tại trong StockSymbol
         self._find_or_create_symbols(
             underlying_codes,
             auto_create=True,
             default_name_prefix="Cổ phiếu cơ sở",
         )
 
-        # Bulk UPSERT cả 2 bảng StockSymbol và CoveredWarrant
         self._bulk_upsert(
             StockSymbol,
             sym_records,
@@ -1102,7 +1076,6 @@ class DataSyncManager:
         now_utc = datetime.now(VN_TZ)
         today_d = date.today()
 
-        # Bóc tách danh sách mã tổ chức phát hành tiềm năng
         candidate_issuers: set[str] = set()
         for _, row in df.iterrows():
             code = self._extract_str(row, col_sym)
@@ -1224,9 +1197,6 @@ class DataSyncManager:
         self.session.commit()
         return len(bond_records)
 
-    # ------------------------------------------------------------------
-    # Public Sync APIs
-    # ------------------------------------------------------------------
 
     def sync_covered_warrants(self) -> DataSyncLog:
         """Đồng bộ riêng danh mục chứng quyền có bảo đảm (Covered Warrants)."""
@@ -1294,7 +1264,6 @@ class DataSyncManager:
             del records
             gc.collect()
 
-            # Sync VN30 group, Derivatives, Covered Warrants & Bonds
             self._sync_vn30_group()
             deriv_count = self._sync_derivatives()
             cw_count = self._sync_covered_warrants()
@@ -1554,7 +1523,6 @@ class DataSyncManager:
             self._ensure_symbol_exists(symbol)
             now_utc = datetime.now(VN_TZ)
 
-            # Kiểm tra xem df có cột theo dạng kỳ (YYYY-Qx hoặc YYYY) hay không
             period_cols = [
                 c
                 for c in df.columns
@@ -1565,7 +1533,6 @@ class DataSyncManager:
             records: list[dict[str, Any]] = []
 
             if period_cols and ("item" in df.columns or "item_id" in df.columns):
-                # DẠNG 1: Ma trận ngang (Cột là các kỳ YYYY-Qx, Hàng là các chỉ tiêu)
                 period_records: dict[str, dict[str, Any]] = {}
 
                 for col_name in period_cols:
@@ -1615,7 +1582,6 @@ class DataSyncManager:
                 records = list(period_records.values())
 
             else:
-                # DẠNG 2: Bảng dọc (Mỗi hàng là một kỳ báo cáo)
                 for _, row in df.iterrows():
                     year = self._extract_int(row, "year", "yearReport", default=0)
                     quarter = self._extract_int(
@@ -1649,7 +1615,6 @@ class DataSyncManager:
             if not records:
                 return 0
 
-            # Phân giải canonical instrument_id nếu có
             alias_row = self.session.exec(
                 select(InstrumentAlias.instrument_id)
                 .where(InstrumentAlias.alias == symbol)
@@ -1657,15 +1622,12 @@ class DataSyncManager:
             ).first()
             inst_id = alias_row if alias_row else None
 
-            # Điền các cột số học tường minh từ payload data
             for rec in records:
                 summary_vals = _extract_financial_summary_fields(rec["data"])
                 rec.update(summary_vals)
                 if inst_id is not None:
                     rec["instrument_id"] = inst_id
 
-            # Thực hiện cập nhật Master Record và ghi nhận FinancialReportRevision
-            # đồng thời dưới Transaction Advisory Lock theo natural key trong cùng transaction
             count = 0
             for rec in records:
                 q_val = rec.get("quarter")
@@ -1772,7 +1734,6 @@ class DataSyncManager:
             now_utc = datetime.now(VN_TZ)
             records: list[dict[str, Any]] = []
 
-            # Phân loại 2 dạng cấu trúc trả về từ vnstock:
             period_cols = [
                 c
                 for c in df.columns
@@ -1781,7 +1742,6 @@ class DataSyncManager:
             ]
 
             if period_cols and ("item" in df.columns or "item_id" in df.columns):
-                # Dạng 1: Ma trận xoay chiều (pivot)
                 metric_row_map: dict[str, dict[str, Any]] = {}
                 for col_name in period_cols:
                     col_str = str(col_name).strip()
@@ -1990,7 +1950,6 @@ class DataSyncManager:
 
                 records = [r for r in metric_row_map.values() if r["year"] > 0]
             else:
-                # Dạng 2: Bảng chuẩn từng row là 1 kỳ
                 for _, row in df.iterrows():
                     year = self._extract_int(row, "year", "yearReport", default=0)
                     quarter = self._extract_int(
@@ -2250,7 +2209,6 @@ class DataSyncManager:
                     row, "event_type", "eventType", "type", default="dividend"
                 )
 
-                # Parse ngày giao dịch không hưởng quyền (ex_date)
                 raw_ex_date = row.get("ex_date") or row.get("exDate") or row.get("date")
                 ex_date: date | None = None
                 if raw_ex_date and pd.notna(raw_ex_date):
@@ -2305,7 +2263,6 @@ class DataSyncManager:
             if not symbols:
                 return 0
 
-            # Đảm bảo các mã tồn tại trong bảng stock_symbol
             self._find_or_create_symbols(symbols, exchange="HOSE", asset_type="stock")
 
             now_utc = datetime.now(VN_TZ)
@@ -2724,7 +2681,6 @@ class DataSyncManager:
                 ).all()
                 target_symbols = list(active)
 
-            # Thử lấy dữ liệu dòng tiền khối ngoại và tự doanh trực tiếp từ API nếu có
             foreign_map: dict[str, Any] = {}
             prop_map: dict[str, Any] = {}
             fetch_foreign_fn = getattr(self.svc, "fetch_foreign_flow", None)
@@ -2769,7 +2725,6 @@ class DataSyncManager:
 
                 close_price = daily_bar.close if daily_bar else 0.0
 
-                # Khối ngoại
                 if f_row is not None:
                     foreign_buy_vol = self._extract_int(
                         f_row, "buy_vol", "foreign_buy_volume", default=None
@@ -2842,7 +2797,6 @@ class DataSyncManager:
                         foreign_room_total = None
                     foreign_room_current = None
 
-                # Tự doanh
                 if p_row is not None:
                     prop_buy_vol = self._extract_int(
                         p_row, "buy_vol", "prop_buy_volume", default=None
@@ -2870,7 +2824,6 @@ class DataSyncManager:
                     prop_sell_val = None
                     prop_net_val = None
 
-                # Không tạo bản ghi NULL giả nếu không có bất kỳ dữ liệu dòng tiền thực tế nào
                 has_foreign = (
                     foreign_buy_vol is not None
                     or foreign_sell_vol is not None

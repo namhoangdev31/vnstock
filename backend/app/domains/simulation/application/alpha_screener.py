@@ -29,20 +29,17 @@ from app.domains.market_data.domain.models import (
 from app.domains.quant.domain.indicators import compute_sma
 from app.domains.quant.domain.models import InstitutionalFlow
 
-# Weekly thresholds
 WEEKLY_VOL_SURGE_MULT = 2.0
-WEEKLY_MIN_AVG_VALUE_VND = 15e9  # 15 billion VND
+WEEKLY_MIN_AVG_VALUE_VND = 15e9
 
-# Monthly thresholds
 MONTHLY_RS_MIN = 80
-MONTHLY_RS_WINDOW = 60  # days
+MONTHLY_RS_WINDOW = 60
 MONTHLY_SECTOR_TOP_N = 3
 MONTHLY_SECTOR_LOOKBACK_TRADING_DAYS = 10
-MONTHLY_VCP_MAX_RANGE = 0.08  # 8%
+MONTHLY_VCP_MAX_RANGE = 0.08
 
-# Quarterly thresholds
-QUARTERLY_GROWTH_MIN = 20.0  # % YoY
-QUARTERLY_ROE_MIN = 15.0  # %
+QUARTERLY_GROWTH_MIN = 20.0
+QUARTERLY_ROE_MIN = 15.0
 QUARTERLY_DE_MAX = 1.5
 QUARTERLY_FSCORE_MIN = 7
 PE_HISTORY_QUARTERS = 12
@@ -65,7 +62,7 @@ class ScreenedTicker:
 
     symbol: str
     horizon: str
-    alpha_score: float  # 0-100, weighted pass rate
+    alpha_score: float
     criteria: list[Criterion]
 
 
@@ -204,7 +201,6 @@ def _screen_monthly(
     if len(closes) < 60 or len(highs) < 5 or len(lows) < 5:
         return None
 
-    # RS: 60-day ROC residualized by VNINDEX bars when present
     roc_symbol = (
         ((closes[-1] - closes[-60]) / closes[-60]) * 100 if closes[-60] > 0 else 0.0
     )
@@ -220,7 +216,6 @@ def _screen_monthly(
         vn_closes = [b.close for b in vn_bars if b.close is not None]
         if len(vn_closes) >= 60 and vn_closes[-60] > 0:
             roc_bench = ((vn_closes[-1] - vn_closes[-60]) / vn_closes[-60]) * 100
-            # Residualized score: baseline 50 + (roc_symbol - roc_bench) clamped to [0, 100]
             rs_score = min(100.0, max(0.0, 50.0 + (roc_symbol - roc_bench)))
         else:
             rs_score = min(100.0, max(0.0, roc_symbol))
@@ -229,14 +224,12 @@ def _screen_monthly(
 
     rs_passed = rs_score >= MONTHLY_RS_MIN
 
-    # Sector: check if symbol's ICB is in top sectors
     symbol_meta = session.exec(
         select(StockSymbol).where(StockSymbol.symbol == symbol)
     ).first()
     icb_code = symbol_meta.icb_code if symbol_meta else None
     sector_passed = icb_code in sector_top_icb if icb_code else False
 
-    # VCP: max (high-low)/close over last 5 bars < 8%
     last_5_ranges = []
     for i in range(-5, 0):
         if closes[i] > 0:
@@ -293,7 +286,6 @@ def _compute_piotroski_fscore(
     if current_ratio is None:
         return 0.0
 
-    # Find prior year financial ratio for YoY comparison (same quarter of prior year preferred)
     prior_ratio = session.exec(
         select(FinancialRatio)
         .where(FinancialRatio.symbol == symbol)
@@ -311,7 +303,6 @@ def _compute_piotroski_fscore(
             .limit(1)
         ).first()
 
-    # Query matching FinancialReport rows
     current_report = session.exec(
         select(FinancialReport)
         .where(FinancialReport.symbol == symbol)
@@ -330,7 +321,6 @@ def _compute_piotroski_fscore(
 
     fscore = 0.0
 
-    # F1: ROA > 0
     if current_ratio.roa is not None and current_ratio.roa > 0:
         fscore += 1
     elif (
@@ -342,17 +332,14 @@ def _compute_piotroski_fscore(
     ):
         fscore += 1
 
-    # F2: OCF > 0
     if current_report and current_report.operating_cash_flow is not None:
         if current_report.operating_cash_flow > 0:
             fscore += 1
 
-    # F3: ROA improving YoY
     if current_ratio.roa is not None and prior_ratio and prior_ratio.roa is not None:
         if current_ratio.roa > prior_ratio.roa:
             fscore += 1
 
-    # F4: Accruals (OCF / Total Assets > ROA or improved)
     if (
         current_report
         and current_report.operating_cash_flow is not None
@@ -366,7 +353,6 @@ def _compute_piotroski_fscore(
         if curr_ocf_scaled > curr_roa_frac:
             fscore += 1
 
-    # F5: LTD/TotalAssets decreased
     if (
         current_report
         and prior_report
@@ -384,7 +370,6 @@ def _compute_piotroski_fscore(
         if curr_ltd_ratio < prior_ltd_ratio:
             fscore += 1
 
-    # F6: Current ratio improved
     if (
         current_ratio.current_ratio is not None
         and prior_ratio
@@ -393,9 +378,7 @@ def _compute_piotroski_fscore(
         if current_ratio.current_ratio > prior_ratio.current_ratio:
             fscore += 1
 
-    # F7: No new share issuance (skip/0 if no event data)
 
-    # F8: Gross margin improved
     if (
         current_ratio.gross_margin is not None
         and prior_ratio
@@ -404,7 +387,6 @@ def _compute_piotroski_fscore(
         if current_ratio.gross_margin > prior_ratio.gross_margin:
             fscore += 1
 
-    # F9: Asset turnover increased
     if (
         current_ratio.asset_turnover is not None
         and prior_ratio
@@ -440,7 +422,6 @@ def _screen_quarterly(
     if current_ratio is None:
         return None
 
-    # Revenue/Profit growth YoY
     growth_passed = (
         current_ratio.revenue_growth_yoy is not None
         and current_ratio.revenue_growth_yoy >= QUARTERLY_GROWTH_MIN
@@ -448,7 +429,6 @@ def _screen_quarterly(
         and current_ratio.net_profit_growth_yoy >= QUARTERLY_GROWTH_MIN
     )
 
-    # ROE >= 15% and D/E < 1.5
     health_passed = (
         current_ratio.roe is not None
         and current_ratio.roe >= QUARTERLY_ROE_MIN
@@ -456,11 +436,9 @@ def _screen_quarterly(
         and current_ratio.debt_to_equity < QUARTERLY_DE_MAX
     )
 
-    # Piotroski F-Score >= 7
     fscore = _compute_piotroski_fscore(session, symbol, current_ratio)
     fscore_passed = fscore >= QUARTERLY_FSCORE_MIN
 
-    # P/E < 3-year average (use 12-quarter history)
     pe_history = session.exec(
         select(FinancialRatio.pe)
         .where(FinancialRatio.symbol == symbol)
@@ -643,7 +621,6 @@ def screen(
         "quarterly": [],
     }
 
-    # Pre-compute top sectors for monthly screen
     sector_top_icb: list[str] = []
     if horizon in ("monthly", "all"):
         cutoff = as_of_date - timedelta(days=MONTHLY_SECTOR_LOOKBACK_TRADING_DAYS * 3)
@@ -653,7 +630,6 @@ def screen(
             .where(col(InstitutionalFlow.trading_date) >= cutoff)
             .order_by(col(InstitutionalFlow.trading_date).desc())
         ).all()
-        # Find distinct last 10 trading dates present in InstitutionalFlow
         distinct_dates = sorted({row.trading_date for row in flow_rows}, reverse=True)[
             :MONTHLY_SECTOR_LOOKBACK_TRADING_DAYS
         ]
@@ -679,22 +655,21 @@ def screen(
     for symbol in symbols:
         if horizon in ("weekly", "all"):
             screened = _screen_weekly(session, symbol, as_of=as_of_date)
-            if screened and screened.alpha_score >= 75:  # 3/4 criteria passed
+            if screened and screened.alpha_score >= 75:
                 results["weekly"].append(screened)
 
         if horizon in ("monthly", "all"):
             screened = _screen_monthly(
                 session, symbol, sector_top_icb, as_of=as_of_date
             )
-            if screened and screened.alpha_score >= 66:  # 2/3 criteria passed
+            if screened and screened.alpha_score >= 66:
                 results["monthly"].append(screened)
 
         if horizon in ("quarterly", "all"):
             screened = _screen_quarterly(session, symbol, as_of=as_of_date)
-            if screened and screened.alpha_score >= 75:  # 3/4 criteria passed
+            if screened and screened.alpha_score >= 75:
                 results["quarterly"].append(screened)
 
-    # Sort each basket by alpha_score descending
     for key in results:
         results[key].sort(key=lambda t: t.alpha_score, reverse=True)
 

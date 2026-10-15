@@ -10,10 +10,6 @@ from sqlmodel import Field, SQLModel
 
 from app.domains.identity.domain.models import ItemBase, UserBase
 
-# =============================================================================
-# REQUEST DTOs
-# =============================================================================
-
 
 class UserCreate(UserBase):
     """Payload tạo mới người dùng có mật khẩu."""
@@ -71,11 +67,6 @@ class ItemUpdate(SQLModel):
 
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=255)
-
-
-# =============================================================================
-# RESPONSE DTOs
-# =============================================================================
 
 
 class UserPublic(UserBase):

@@ -1,0 +1,864 @@
+[     372ms] [INFO] <Suspense> is an experimental feature and its API will likely change. @ http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/@vue/runtime-core/dist/runtime-core.esm-bundler.js?v=77548b1d:7401
+[     662ms] [LOG] ✨ %cNuxt DevTools %c Press Shift + Option + D to open DevTools color: black; border-radius: 3px 0 0 3px; padding: 2px 2px 1px 10px; background: #00DC82 border-radius: 0 3px 3px 0; padding: 2px 10px 1px 2px; background: #00DC8220  @ http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/@nuxt/devtools/dist/runtime/plugins/devtools.client.js?v=77548b1d:51
+[ 1935939ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34836237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34836238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34836239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34846237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34846237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34846237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34856236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34856237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34856237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34864327ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34864568ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34866148ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34866237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34866237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34866237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34866894ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34870074ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34870640ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34871272ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34874653ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34876236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34876237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34876237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34877218ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34878855ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34879246ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34883520ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34883581ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34884998ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34886237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34886237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34886237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34887129ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34890931ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34891154ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34892387ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34894403ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34896236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34896236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34896236ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34896823ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34897904ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34900502ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34900993ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34902964ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34906236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34906237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34906237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34906660ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34906910ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34907631ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34908154ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34913296ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34913526ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34914429ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34915815ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34916236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34916236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34916236ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34920281ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34920754ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34921241ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34921408ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34925738ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34926236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34926236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34926236ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34926927ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34928088ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34928880ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34932148ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34933740ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34934909ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34936236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34936237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34936237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34937072ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34938837ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34939179ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34943840ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34945334ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34946236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34946236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34946236ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34947105ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34948026ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34949511ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34954261ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34955972ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34956048ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34956236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34956237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34956237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34956853ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34961970ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34962541ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34962678ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34964608ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34966236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34966237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34966237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34967964ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34968454ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34969473ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34970008ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34974853ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34975623ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34976236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34976237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34976237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34976575ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34977780ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34980721ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34982003ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34982966ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34985280ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34986236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34986237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34986237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34987606ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34988543ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34989198ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34991393ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34995451ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34995843ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34996236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34996237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[34996237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[34997339ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[34997467ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35001470ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35001482ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35002993ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35003995ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35006236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35006236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35006236ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35008422ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35009180ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35009198ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35009797ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35015245ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35016236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35016237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35016237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35016367ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35016572ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35017306ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35022141ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35022560ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35023606ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35024741ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35026236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35026237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35026237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35029878ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35030393ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35030470ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35033540ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35036237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35036238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35036238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35037162ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35038177ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35038587ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35042270ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35043311ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35044241ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35046237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35046238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35046238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35046630ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35047288ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35049463ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35051228ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35055216ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35055538ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35055750ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35056237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35056238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35056238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35056453ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35061748ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35061787ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35062854ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35063079ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35066236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35066237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35066237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35067406ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35068678ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35069060ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35070750ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35075828ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35075840ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35076237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35076237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35076237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35076342ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35076589ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35081548ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35082179ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35082411ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35085022ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35086237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35086237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35086237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35088024ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35089530ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35091080ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35093713ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35095153ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35095764ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35096237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35096238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35096238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35098310ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35101090ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35101924ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35102392ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35103919ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35106237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35106238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35106238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35109254ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35109306ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35110004ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35112166ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35114979ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35115622ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35116236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35116237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35116237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35117544ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35118291ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35123113ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35123460ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35123830ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35126046ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35126238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35126239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35126239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35128249ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35132074ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35132754ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35134113ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35136148ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35136238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35136239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35136239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35138173ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35139758ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35141319ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35142218ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35145294ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35145913ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35146237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35146238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35146238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35147102ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35149080ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35151004ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35153764ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35154261ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35156237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35156237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35156237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35156621ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35157494ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35159363ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35159375ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35161877ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35165273ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35165521ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35165812ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35166237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35166238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35166238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35168691ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35171238ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35172360ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35174263ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35176237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35176238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35176238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35176580ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35177573ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35178500ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35182547ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35182621ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35184703ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35186237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35186237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35186237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35187428ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35190355ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35191452ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35191760ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35194390ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35196237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35196237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35196237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35196503ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35198522ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35199083ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35201781ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35203920ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35203950ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35206236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35206237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35206237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35207057ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35207770ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35209149ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35210807ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35215046ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35215180ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35215631ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35216238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35216238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35216238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35217766ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35222862ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35222983ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35223007ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35223398ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35226236ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35226237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35226237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35228176ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35229780ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35231191ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35231429ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35235556ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35236237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35236238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35236238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35236953ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35237341ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35239510ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35243236ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35243709ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35244480ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35244995ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35246238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35246238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35246239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35250556ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35251035ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35251831ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35253274ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35256237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35256237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35256238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35257033ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35259131ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35259144ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35260780ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35263404ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35265321ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35265826ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35265904ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35266238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35266238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35266238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35270531ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35271784ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35272940ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35274125ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35276237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35276237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35276238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35278064ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35279201ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35279833ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35280362ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35283420ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35285874ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35286034ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35286237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35286238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35286238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35287633ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35290024ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35293680ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35293707ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35294385ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35296239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35296239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35296239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35297406ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35301223ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35302401ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35302498ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35304230ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35306238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35306238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35306238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35308510ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35309483ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35309619ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35313022ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35315323ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35316238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35316238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35316238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35316985ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35317174ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35320674ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35322093ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35324031ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35324550ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35326238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35326239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35326239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35328940ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35330121ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35330456ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35331650ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35334637ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35336162ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35336237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35336238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35336238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35337140ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35340022ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35340974ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35344360ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35345093ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35346238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35346239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35346239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35347295ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35348631ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35351474ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35351486ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35353840ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35355989ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35356238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35356238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35356238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35358263ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35360464ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35361952ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35362341ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35365910ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35366237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35366237ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35366237ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35368356ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35370560ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35370644ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35374438ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35376231ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35376238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35376239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35376239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35376503ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35377046ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35381731ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35383453ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35384836ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35386023ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35386238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35386238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35386238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35388580ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35390013ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35391880ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35391941ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35395198ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35396100ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35396240ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35396240ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35396240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35397032ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35399275ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35402400ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35403580ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35405495ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35405618ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35406238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35406239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35406239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35410415ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35410713ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35411431ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35412524ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35416238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35416238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35416238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35417350ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35418249ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35419239ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35419368ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35424950ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35425981ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35426239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35426239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35426239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35428159ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35428320ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35428953ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35429982ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35432172ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35432333ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35432964ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35434102ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35436239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35436239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35436239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35436480ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35438048ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35439223ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35439439ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35444111ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35445159ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35445451ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35446238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35446239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35446239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35447285ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35449883ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35453690ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35453728ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35454324ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35456238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35456238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35456238ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35457011ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35461041ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35462023ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35462390ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35465030ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35466239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35466239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35466239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35466541ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35468204ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35468711ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35472911ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35473930ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35474400ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35474938ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35476239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35476240ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35476240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35478357ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35479575ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35482145ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35483103ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35483741ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35485540ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35486239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35486239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35486240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35488030ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35489856ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35491141ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35491274ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35493955ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35496239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35496240ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35496240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35496450ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35496656ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35498127ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35500388ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35501823ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35504785ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35504941ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35506238ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35506239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35506239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35508297ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35508726ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35511724ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35512690ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35516239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35516239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35516239ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35516678ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35516988ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35517837ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35519675ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35522994ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35525246ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35526239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35526240ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35526240ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35526240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35527530ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35530475ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35533023ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35533538ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35533940ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35536239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35536239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35536240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35536363ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35541060ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35541454ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35541741ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35542564ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35546239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35546240ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35546240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35547773ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35549514ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35549852ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35549930ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35553018ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35555633ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35556239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35556239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35556240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35557664ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35558041ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35559090ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35563439ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35563458ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35564245ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35566239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35566240ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35566240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35567877ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35569320ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35570018ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35571983ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35573888ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35574936ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35576239ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35576240ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/api/v1/stock/iboard/indices:0
+[35576240ms] [WARNING] Lỗi nạp danh sách chỉ số thị trường: FetchError: [GET] "/api/v1/stock/iboard/indices": <no response> Failed to fetch
+    at async $fetchRaw2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:286:14)
+    at async $fetch2 (http://localhost:3000/_nuxt/@fs/Volumes/developer101/code/vnstock/node_modules/ofetch/dist/shared/ofetch.CWycOUEr.mjs?v=77548b1d:332:15)
+    at async fetchIndices (http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:90:18) @ http://localhost:3000/_nuxt/components/IBoardMiniChartsBar.vue?t=1791994966178:94
+[35578814ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194
+[35578989ms] [ERROR] WebSocket connection to 'ws://localhost:8000/api/v1/stock/iboard/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/_nuxt/composables/useIndexWsChannel.ts?t=1791991071585:194

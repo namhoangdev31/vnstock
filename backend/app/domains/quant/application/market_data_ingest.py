@@ -29,9 +29,8 @@ from app.domains.quant.domain.models import (
 
 logger = logging.getLogger(__name__)
 
-# Community tier: 60 req/min → keep below 50 req/min with safety margin
-_API_DELAY_S = 1.2  # live ingest: ~45 calls/min max for Community tier safety
-_BACKFILL_DELAY_S = 1.5  # backfill: ~40 calls/min — safe for 30-day history
+_API_DELAY_S = 1.2
+_BACKFILL_DELAY_S = 1.5
 
 
 def _safe_call(fn: Callable, label: str, delay: float = _API_DELAY_S) -> Any:
@@ -42,11 +41,6 @@ def _safe_call(fn: Callable, label: str, delay: float = _API_DELAY_S) -> Any:
     except (Exception, SystemExit) as exc:  # noqa: BLE001
         logger.warning("[ingest] %s failed: %s", label, exc)
         return None
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 
 def _upsert_macro(
@@ -102,11 +96,6 @@ def _get_col(df_cols: list[str], candidates: list[str]) -> str | None:
     return None
 
 
-# ---------------------------------------------------------------------------
-# 1. macro_indicator
-# ---------------------------------------------------------------------------
-
-
 def ingest_macro_indicators(
     session: Session,
     trading_date: date | None = None,
@@ -117,7 +106,6 @@ def ingest_macro_indicators(
     today = trading_date or datetime.now(VN_TZ).date()
     counts: dict[str, int] = {"usd_vnd": 0, "sjc_buy": 0, "sjc_sell": 0}
 
-    # USD/VND
     df_fx = _safe_call(
         lambda: vnstock_service.fetch_retail_exchange_rate(),
         "fetch_retail_exchange_rate",
@@ -167,7 +155,6 @@ def ingest_macro_indicators(
                     except (ValueError, TypeError):
                         pass
 
-    # SJC gold
     df_gold = _safe_call(
         lambda: vnstock_service.fetch_retail_gold(source="sjc"),
         "fetch_retail_gold(sjc)",
@@ -215,11 +202,6 @@ def ingest_macro_indicators(
     return counts
 
 
-# ---------------------------------------------------------------------------
-# 2. market_breadth
-# ---------------------------------------------------------------------------
-
-
 def ingest_market_breadth(
     session: Session,
     trading_date: date | None = None,
@@ -253,7 +235,6 @@ def ingest_market_breadth(
 
         chg_col = _get_col(
             list(df_q.columns),
-            # actual vnstock column is 'percent_change'
             ["percent_change", "change_percent", "change_pct", "pct_change", "change"],
         )
         if chg_col is None:
@@ -340,11 +321,6 @@ def ingest_market_breadth(
     return 1
 
 
-# ---------------------------------------------------------------------------
-# 3. institutional_flow
-# ---------------------------------------------------------------------------
-
-
 def ingest_institutional_flows(
     session: Session,
     trading_date: date | None = None,
@@ -388,11 +364,10 @@ def ingest_institutional_flows(
         fs_vol = _g(["foreign_sell_volume", "sell_foreign_vol", "fs_vol", "nn_ban"])
         fb_val = _g(["foreign_buy_value", "buy_foreign_val"])
         fs_val = _g(["foreign_sell_value", "sell_foreign_val"])
-        # 'foreign_room' in per-symbol quote = remaining (current) room
         fr_current = _g(
             ["foreign_room", "room_current", "foreign_room_current", "con_room"]
         )
-        fr_total: float | None = None  # not returned by per-symbol quote API
+        fr_total: float | None = None
 
         if all(v is None for v in (fb_vol, fs_vol, fb_val, fs_val)):
             continue
@@ -446,11 +421,6 @@ def ingest_institutional_flows(
         today,
     )
     return upserted
-
-
-# ---------------------------------------------------------------------------
-# 4. Backfill macro lịch sử
-# ---------------------------------------------------------------------------
 
 
 def backfill_macro_indicators(session: Session, days: int = 30) -> int:
@@ -534,11 +504,6 @@ def backfill_macro_indicators(session: Session, days: int = 30) -> int:
         "[ingest] backfill_macro_indicators: %d records for %d days", total, days
     )
     return total
-
-
-# ---------------------------------------------------------------------------
-# 5. run_all — chạy toàn bộ pipeline
-# ---------------------------------------------------------------------------
 
 
 def run_all(session: Session, backfill_days: int = 30) -> None:

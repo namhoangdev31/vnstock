@@ -43,11 +43,9 @@ class CapabilityInfo(BaseModel):
 class VnstockCapabilityRegistry:
     """Registry trung tâm quản lý ma trận năng lực của toàn bộ hệ sinh thái dữ liệu vnstock."""
 
-    # Provider fallback order chuẩn theo AGENTS §7.1 (loại bỏ DNSE không tương thích)
     FALLBACK_ORDER: list[str] = ["vci", "kbs", "msn"]
 
     CAPABILITIES: dict[str, CapabilityInfo] = {
-        # 1. Quote Module
         "quote.history_daily": CapabilityInfo(
             module="Quote",
             action="history(interval='1D')",
@@ -72,7 +70,6 @@ class VnstockCapabilityRegistry:
             fallback_sources=["kbs"],
             description="Gói tick khớp lệnh quan sát (price, volume, match_type)",
         ),
-        # 2. Listing Module
         "listing.all_symbols": CapabilityInfo(
             module="Listing",
             action="all_symbols()",
@@ -97,7 +94,6 @@ class VnstockCapabilityRegistry:
             fallback_sources=["vci"],
             description="Phân loại ngành ICB 4 cấp",
         ),
-        # 3. Company Module
         "company.overview": CapabilityInfo(
             module="Company",
             action="overview()",
@@ -154,7 +150,6 @@ class VnstockCapabilityRegistry:
             fallback_sources=["vci"],
             description="Lịch sử giao dịch của cổ đông nội bộ",
         ),
-        # 4. Finance & Fundamental Module
         "finance.income_statement": CapabilityInfo(
             module="Finance",
             action="income_statement()",
@@ -219,7 +214,6 @@ class VnstockCapabilityRegistry:
             fallback_sources=["vci"],
             description="Hơn 50 chỉ số tài chính và định giá định lượng qua Fundamental.equity",
         ),
-        # 5. Retail Module
         "retail.gold": CapabilityInfo(
             module="Retail",
             action="gold()",
@@ -236,7 +230,6 @@ class VnstockCapabilityRegistry:
             fallback_sources=[],
             description="Tỷ giá hối đoái ngoại tệ chính thức từ Vietcombank (VCB)",
         ),
-        # 6. Market Module (Đầy đủ 10 lớp tài sản v4.0.6)
         "market.quote": CapabilityInfo(
             module="Market",
             action="quote()",
@@ -437,7 +430,6 @@ class VnstockCapabilityRegistry:
             fallback_sources=[],
             description="Khớp lệnh trái phiếu chi tiết trong ngày",
         ),
-        # 7. Reference Module (Đầy đủ theo chuẩn v4.0.6)
         "reference.equity_list": CapabilityInfo(
             module="Reference",
             action="equity().list()",
@@ -662,7 +654,6 @@ class VnstockCapabilityRegistry:
             fallback_sources=[],
             description="Hiển thị tài liệu hướng dẫn cú pháp hàm qua show_doc",
         ),
-        # 8. Unverified & Unavailable Flows
         "flow.proprietary": CapabilityInfo(
             module="Flow",
             action="fetch_prop_flow()",
@@ -681,7 +672,6 @@ class VnstockCapabilityRegistry:
             description="Độ rộng thị trường Advance/Decline toàn thị trường",
             reason="Vnstock v4 không cung cấp feed thống kê Advance/Decline chính thức",
         ),
-        # 8. Out-of-Scope Declarations
         "external.crypto": CapabilityInfo(
             module="External",
             action="crypto()",

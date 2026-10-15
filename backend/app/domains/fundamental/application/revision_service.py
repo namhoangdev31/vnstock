@@ -83,7 +83,6 @@ def record_financial_report_revision(
     ).first()
 
     if latest_rev and latest_rev.payload_hash == payload_hash:
-        # Dữ liệu không thay đổi so với bản trước đó
         return latest_rev
 
     next_rev_num = (latest_rev.revision_number + 1) if latest_rev else 1

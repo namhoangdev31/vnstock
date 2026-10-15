@@ -76,7 +76,6 @@ class SignalDispatcher:
             session=session
         )
         self.session = session
-        # In-memory journal ledger for offline mode and duplicate prevention across cycles
         self.journal_ledger: dict[tuple[str, str, str], dict[str, Any]] = {}
 
     @property
@@ -179,8 +178,6 @@ class SignalDispatcher:
         if ensemble is None:
             return result
 
-        # The daemon owns a short-lived DB session per cycle.  Never reuse an
-        # engine bound to a previous request/session (or a closed connection).
         if db is not None:
             try:
                 from app.domains.quant.application.engines.ensemble_engine import (
@@ -219,7 +216,6 @@ class SignalDispatcher:
                 symbol_data = market_data.get(symbol, {})
                 context: AnalysisContext | None = symbol_data.get("context")
 
-                # If AnalysisContext not explicitly passed, construct a lightweight context
                 if context is None:
                     closes = symbol_data.get("closes") or []
                     highs = symbol_data.get("highs") or closes
@@ -236,7 +232,6 @@ class SignalDispatcher:
                         else float(entry_p)
                     )
 
-                    # Create placeholder event
                     ev_time = now
                     ev_id = f"{symbol}:1m:{ev_time.strftime('%Y%m%d%H%M%S')}:candle"
                     event = MarketDataEvent(
@@ -286,7 +281,6 @@ class SignalDispatcher:
                     extra=log_extra,
                 )
 
-                # Skip conditions: non-trading phase with no bars or invalid context
                 if not context.is_valid:
                     result.skipped_signals += 1
                     logger.info(
@@ -325,19 +319,16 @@ class SignalDispatcher:
                     )
                     continue
 
-                # Run phase-aware orchestrator to execute applicable engines
                 validate_context = getattr(orchestrator, "validate_context", None)
                 if callable(validate_context):
                     orch_result = validate_context(
                         context, session_id=session_id, cycle_id=cycle_id
                     )
                 else:
-                    # Compatibility for injected test/dedicated orchestrators.
                     orch_result = orchestrator.orchestrate(
                         context, session_id=session_id, cycle_id=cycle_id
                     )
 
-                # Tick-driven paper order matcher for pending orders (Phase 4, RULE 1/2/3)
                 if db is not None and context.entry_price and context.entry_price > 0:
                     try:
                         from app.domains.simulation.application.order_matcher import (
@@ -395,8 +386,6 @@ class SignalDispatcher:
                 if pred_time.tzinfo is None:
                     pred_time = pred_time.replace(tzinfo=VN_TZ)
 
-                # Generate Ensemble Decision
-                # Guard: skip signal when price data is missing (RULE 3)
                 if not context.entry_price or context.entry_price <= 0.0:
                     result.skipped_signals += 1
                     logger.warning(
@@ -437,8 +426,6 @@ class SignalDispatcher:
                     extra=log_extra,
                 )
 
-                # EnsembleEngine already wrote this journal entry. Dispatcher
-                # only tracks the returned id to report retries accurately.
                 journal_id, is_duplicate = self._track_journal_reference(
                     symbol=symbol,
                     horizon=horizon,
@@ -470,7 +457,6 @@ class SignalDispatcher:
                 if signal_dir in ("LONG", "SHORT"):
                     result.ensemble_signals += 1
 
-                    # Isolated Paper Trading Simulation
                     if simulation is not None and not is_duplicate:
                         try:
                             sim_fn = getattr(simulation, "simulate_order", None)

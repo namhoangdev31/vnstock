@@ -58,7 +58,6 @@ class VnstockService:
         "finance.income_statement"
     ).supported_sources or ["kbs", "vci"]
 
-    # In-memory quote cache (TTL 60s) to prevent duplicate calls on Community tier
     _quote_cache: dict[str, tuple[float, pd.DataFrame]] = {}
     _quote_cache_lock: threading.Lock = threading.Lock()
     _QUOTE_CACHE_TTL: float = 60.0
@@ -100,7 +99,6 @@ class VnstockService:
             if s and s not in normalized:
                 normalized.append(s)
 
-        # Bổ sung các nguồn chuẩn theo thứ tự fallback của VnstockCapabilityRegistry
         for default_src in VnstockCapabilityRegistry.FALLBACK_ORDER:
             if default_src not in normalized:
                 normalized.append(default_src)
@@ -158,7 +156,6 @@ class VnstockService:
         )
         self._current_source = src
 
-        # Kiểm tra circuit breaker trước khi request
         if hasattr(self._limiter, "is_available"):
             try:
                 if not self._limiter.is_available(src):
@@ -232,9 +229,6 @@ class VnstockService:
             logger.warning("%s: %s", err_msg, exc)
         return pd.DataFrame()
 
-    # =========================================================================
-    # PHÂN HỆ 1: THAM CHIẾU & DANH MỤC THỊ TRƯỜNG (REFERENCE DATA)
-    # =========================================================================
 
     def fetch_all_symbols(self) -> pd.DataFrame:
         """Lấy danh sách tất cả các mã cổ phiếu đang niêm yết trên thị trường (HOSE, HNX, UPCOM).
@@ -247,7 +241,6 @@ class VnstockService:
             try:
                 self._throttle(src)
                 lst = Listing(source=src, show_log=False)
-                # Ưu tiên symbols_by_exchange để có sẵn thông tin cột sàn niêm yết (exchange)
                 if hasattr(lst, "symbols_by_exchange"):
                     df = lst.symbols_by_exchange()
                     if df is not None and not df.empty:
@@ -345,7 +338,6 @@ class VnstockService:
             try:
                 self._throttle(src)
                 lst = Listing(source=src, show_log=False)
-                # Thử symbols_by_industries trước, sau đó thử industries_icb
                 if hasattr(lst, "symbols_by_industries"):
                     df = lst.symbols_by_industries()
                 else:
@@ -419,7 +411,6 @@ class VnstockService:
         if not hasattr(ref_obj, attr_name):
             return None
         sub = getattr(ref_obj, attr_name)
-        # Duck-typing check for mock objects without importing unittest.mock in production
         if hasattr(sub, "_mock_return_value") or hasattr(sub, "_mock_children"):
             if getattr(sub, "_mock_children", None):
                 return sub
@@ -434,9 +425,6 @@ class VnstockService:
                 return sub
         return sub
 
-    # -------------------------------------------------------------------------
-    # Nhóm Reference UI: Cổ phiếu (Reference.equity)
-    # -------------------------------------------------------------------------
 
     def fetch_reference_equity_list(self) -> pd.DataFrame:
         """Liệt kê toàn bộ mã cổ phiếu niêm yết qua Reference.equity().list()."""
@@ -489,9 +477,6 @@ class VnstockService:
             err_msg=f"Lỗi tải cổ phiếu nhóm {group} qua Reference.equity.list_by_group",
         )
 
-    # -------------------------------------------------------------------------
-    # Nhóm Reference UI: Chỉ số (Reference.index)
-    # -------------------------------------------------------------------------
 
     def fetch_reference_index_list(self) -> pd.DataFrame:
         """Danh sách tất cả các chỉ số thị trường (VNINDEX, VN30,...) qua Reference.index().list()."""
@@ -538,9 +523,6 @@ class VnstockService:
             err_msg=f"Lỗi tải thành phần chỉ số {symbol} qua Reference.index.members",
         )
 
-    # -------------------------------------------------------------------------
-    # Nhóm Reference UI: Các nhóm tài sản khác (ETF, Futures, Warrant, Bond, Fund)
-    # -------------------------------------------------------------------------
 
     def fetch_reference_etf_list(self) -> pd.DataFrame:
         """Danh sách các chứng chỉ quỹ ETF qua Reference.etf().list()."""
@@ -590,7 +572,6 @@ class VnstockService:
                 self.record_failure(src)
                 continue
 
-        # Thử qua Reference layer
         return self.fetch_reference_futures_list()
 
     def fetch_reference_warrant_list(self) -> pd.DataFrame:
@@ -633,7 +614,6 @@ class VnstockService:
                 self.record_failure(src)
                 continue
 
-        # Thử qua Reference layer
         return self.fetch_reference_warrant_list()
 
     def fetch_reference_fund_list(self) -> pd.DataFrame:
@@ -677,7 +657,6 @@ class VnstockService:
         if not res.empty:
             return res
 
-        # Fallback thử qua VCI listing nếu Reference lỗi
         try:
             self._throttle("vci")
             lst = Listing(source="vci", show_log=False)
@@ -710,9 +689,6 @@ class VnstockService:
 
         return pd.DataFrame()
 
-    # -------------------------------------------------------------------------
-    # Nhóm Reference UI: Tìm kiếm (Reference.search)
-    # -------------------------------------------------------------------------
 
     def search_reference_symbol(self, query: str, limit: int = 10) -> pd.DataFrame:
         """Tìm kiếm mã chứng khoán theo từ khóa qua Reference.search.symbol()."""
@@ -758,9 +734,6 @@ class VnstockService:
             return [str(s) for s in result if str(s).strip()]
         return []
 
-    # =========================================================================
-    # PHÂN HỆ 2: HỒ SƠ & DỮ LIỆU DOANH NGHIỆP (COMPANY DATA)
-    # =========================================================================
 
     def fetch_company_overview(self, symbol: str) -> dict[str, Any]:
         """Lấy thông tin tổng quan/hồ sơ cơ bản của doanh nghiệp.
@@ -997,9 +970,6 @@ class VnstockService:
 
         return pd.DataFrame()
 
-    # -------------------------------------------------------------------------
-    # Nhóm Reference UI: Hồ sơ doanh nghiệp (Reference.company)
-    # -------------------------------------------------------------------------
 
     def fetch_reference_company_info(self, symbol: str) -> pd.DataFrame:
         """Lấy tổng quan về doanh nghiệp (ngành, vốn hóa...) qua Reference.company().info()."""
@@ -1200,9 +1170,6 @@ class VnstockService:
         except Exception:
             logger.warning("Lỗi hiển thị tài liệu qua show_doc", exc_info=True)
 
-    # =========================================================================
-    # PHÂN HỆ 3: DỮ LIỆU THỊ TRƯỜNG & GIAO DỊCH (MARKET DATA)
-    # =========================================================================
 
     def fetch_price_history(
         self,
@@ -1423,7 +1390,6 @@ class VnstockService:
         if not df.empty:
             return df
 
-        # Fallback qua Quote thông thường — đảm bảo start/end là date bắt buộc
         from datetime import date as _date
 
         def _parse_to_date(v: date | str | None) -> _date:
@@ -1441,9 +1407,6 @@ class VnstockService:
             count=count if count is not None else 100,
         )
 
-    # -------------------------------------------------------------------------
-    # Nhóm A: Lớp equity (Cổ phiếu)
-    # -------------------------------------------------------------------------
 
     def fetch_market_equity_ohlcv(
         self,
@@ -1501,9 +1464,6 @@ class VnstockService:
                 self._quote_cache[sym_clean] = (now, df)
         return df
 
-    # -------------------------------------------------------------------------
-    # Nhóm B: Lớp futures (Hợp đồng tương lai / Phái sinh)
-    # -------------------------------------------------------------------------
 
     def fetch_market_futures_ohlcv(
         self,
@@ -1545,9 +1505,6 @@ class VnstockService:
         """Alias tương thích ngược cho fetch_market_futures_quote."""
         return self.fetch_market_futures_quote(symbol=symbol)
 
-    # -------------------------------------------------------------------------
-    # Nhóm C: Lớp warrant (Chứng quyền có bảo đảm)
-    # -------------------------------------------------------------------------
 
     def fetch_market_warrant_ohlcv(
         self,
@@ -1585,9 +1542,6 @@ class VnstockService:
             err_msg=f"Lỗi tải bảng giá chứng quyền {symbol} qua Market.warrant.quote",
         )
 
-    # -------------------------------------------------------------------------
-    # Nhóm D: Lớp etf (Chứng chỉ quỹ ETF)
-    # -------------------------------------------------------------------------
 
     def fetch_market_etf_ohlcv(
         self,
@@ -1625,9 +1579,6 @@ class VnstockService:
             err_msg=f"Lỗi tải bảng giá ETF {symbol} qua Market.etf.quote",
         )
 
-    # -------------------------------------------------------------------------
-    # Nhóm E: Lớp fund (Quỹ mở FMarket)
-    # -------------------------------------------------------------------------
 
     def fetch_market_fund_nav(self, symbol: str) -> pd.DataFrame:
         """Lấy giá trị tài sản ròng NAV của quỹ mở qua Market.fund.nav."""
@@ -1664,9 +1615,6 @@ class VnstockService:
             err_msg=f"Lỗi tải phân bổ ngành quỹ {symbol} qua Market.fund.industry_holding",
         )
 
-    # -------------------------------------------------------------------------
-    # Nhóm F: Tài sản Quốc tế & Vĩ mô (forex, crypto, commodity)
-    # -------------------------------------------------------------------------
 
     def fetch_market_forex_ohlcv(
         self,
@@ -1734,9 +1682,6 @@ class VnstockService:
             err_msg=f"Lỗi tải nến hàng hóa {symbol} qua Market.commodity.ohlcv",
         )
 
-    # -------------------------------------------------------------------------
-    # Nhóm G: Lớp bond (Trái phiếu)
-    # -------------------------------------------------------------------------
 
     def fetch_market_bond_ohlcv(
         self,
@@ -1774,9 +1719,6 @@ class VnstockService:
             err_msg=f"Lỗi tải khớp lệnh trái phiếu {symbol} qua Market.bond.trades",
         )
 
-    # =========================================================================
-    # PHÂN HỆ 4: BÁO CÁO TÀI CHÍNH & ĐỊNH GIÁ CƠ BẢN (FUNDAMENTAL DATA)
-    # =========================================================================
 
     def fetch_financials(
         self,
@@ -1799,7 +1741,6 @@ class VnstockService:
         period_clean = "quarter" if "quarter" in period else "year"
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_FINANCE)
 
-        # Thử qua lớp Fundamental hiện đại trước (hỗ trợ tham số orient)
         try:
             self._throttle("vci")
             fnd = Fundamental()
@@ -1836,7 +1777,6 @@ class VnstockService:
                 exc_info=True,
             )
 
-        # Fallback qua lớp Finance truyền thống
         for src in valid_sources:
             try:
                 self._throttle(src)
@@ -1953,7 +1893,6 @@ class VnstockService:
         Trả về:
             pd.DataFrame chứa toàn bộ các chỉ số tài chính.
         """
-        # Thử qua lớp Fundamental hiện đại
         try:
             self._throttle("vci")
             fnd = Fundamental()
@@ -1979,7 +1918,6 @@ class VnstockService:
                 exc_info=True,
             )
 
-        # Fallback qua lớp Finance
         valid_sources = self._get_valid_sources(self.VALID_SOURCES_FINANCE)
         for src in valid_sources:
             try:
@@ -2001,9 +1939,6 @@ class VnstockService:
 
         raise VnstockServiceError(f"Không thể tải chỉ số tài chính cho mã {symbol}")
 
-    # =========================================================================
-    # PHÂN HỆ 5: HÀNG HÓA, VÀNG & NGOẠI TỆ BÁN LẺ (RETAIL DATA)
-    # =========================================================================
 
     def fetch_retail_gold(
         self,
@@ -2067,7 +2002,6 @@ class VnstockService:
         return self.fetch_retail_exchange_rate(date=date_str)
 
 
-# Khởi tạo thể hiện Singleton dùng chung toàn bộ ứng dụng
 vnstock_service = VnstockService()
 
 __all__ = ["VnstockService", "VnstockServiceError", "vnstock_service"]

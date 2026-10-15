@@ -9,7 +9,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-# revision identifiers, used by Alembic.
 revision = "j1a2b3c4d5e6"
 down_revision = "i1a2b3c4d5e6"
 branch_labels = None
@@ -48,7 +47,6 @@ def upgrade() -> None:
     bind = op.get_bind()
     is_postgres = bind.dialect.name == "postgresql"
 
-    # 1. Tạo bảng FinancialReportRevision
     op.create_table(
         "financial_report_revision",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -73,7 +71,6 @@ def upgrade() -> None:
     op.create_index("ix_financial_report_revision_payload_hash", "financial_report_revision", ["payload_hash"], unique=False)
     op.create_index("ix_financial_report_revision_report_id", "financial_report_revision", ["report_id"], unique=False)
 
-    # 2. Chuyển đổi các cột tiền sang NUMERIC trên PostgreSQL
     if is_postgres:
         for col_name in MONEY_COLUMNS_FINANCIAL_REPORT:
             op.alter_column(
@@ -109,13 +106,12 @@ def upgrade() -> None:
             postgresql_using="value::numeric(28,0)",
         )
 
-        # 3. Backfill initial revisions (revision 1) cho dữ liệu BCTC đã có
         op.execute(
             """
             INSERT INTO financial_report_revision (
                 id, report_id, revision_number, payload_hash, published_at, is_provisional, data, created_at
             )
-            SELECT 
+            SELECT
                 gen_random_uuid(),
                 f.id,
                 1,
@@ -134,7 +130,6 @@ def downgrade() -> None:
     bind = op.get_bind()
     is_postgres = bind.dialect.name == "postgresql"
 
-    # 1. Phục hồi kiểu FLOAT
     if is_postgres:
         for col_name in MONEY_COLUMNS_FINANCIAL_REPORT:
             op.alter_column(
@@ -170,7 +165,6 @@ def downgrade() -> None:
             postgresql_using="value::double precision",
         )
 
-    # 2. Xóa bảng FinancialReportRevision
     op.drop_index("ix_financial_report_revision_report_id", table_name="financial_report_revision")
     op.drop_index("ix_financial_report_revision_payload_hash", table_name="financial_report_revision")
     op.drop_index("ix_financial_report_rev_pub", table_name="financial_report_revision")

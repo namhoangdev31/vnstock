@@ -25,7 +25,7 @@ class EngineExecutionResult:
 
     engine_name: str
     version: str
-    status: str  # "COMPLETED" | "SKIPPED" | "FAILED"
+    status: str
     score: float = 0.0
     confidence: float = 0.0
     metrics: dict[str, Any] = field(default_factory=dict)
@@ -132,7 +132,6 @@ class PhaseAwareEngineOrchestrator:
             "market_phase": phase.value,
         }
 
-        # Check if context was marked invalid during normalization
         if not context.is_valid:
             logger.info(
                 "market_data_event_skipped: %s (reason: %s)",
@@ -150,9 +149,6 @@ class PhaseAwareEngineOrchestrator:
 
         results: dict[str, EngineExecutionResult] = {}
 
-        # -------------------------------------------------------------
-        # 1. Engine 1: Technical & Price-Action Engine
-        # -------------------------------------------------------------
         should_run_e1 = phase in (
             SessionPhase.ATO,
             SessionPhase.MORNING_CONTINUOUS,
@@ -228,9 +224,6 @@ class PhaseAwareEngineOrchestrator:
                     error=str(exc),
                 )
 
-        # -------------------------------------------------------------
-        # 2. Engine 2: Liquidity, Flow & T+2 Cash Flow Engine
-        # -------------------------------------------------------------
         should_run_e2 = phase in (
             SessionPhase.PRE_ATO,
             SessionPhase.ATO,
@@ -255,9 +248,6 @@ class PhaseAwareEngineOrchestrator:
                 "engine_started: engine2 (FlowLiquidityEngine)", extra=log_extra
             )
             try:
-                # context.flows  → list of InstitutionalFlow dicts (from market_snapshot)
-                # context.breadth → MarketBreadth dict or None  (from market_snapshot)
-                # context.macro  → list of MacroIndicator dicts (from market_snapshot)
                 flows_list = context.flows or []
                 breadth_dict = (
                     context.breadth if isinstance(context.breadth, dict) else None
@@ -316,15 +306,8 @@ class PhaseAwareEngineOrchestrator:
                     error=str(exc),
                 )
 
-        # -------------------------------------------------------------
-        # 3. Engine 3: Quantitative ML, Basis & Probability Engine
-        # -------------------------------------------------------------
-        # Engine 3 runs across all phases (ATO gap, basis, QMC T+1)
         logger.info("engine_started: engine3 (QuantMLEngine)", extra=log_extra)
         try:
-            # spot_price > 0 means we have a real VN30 index price from the snapshot.
-            # If spot_price == 0.0 (fetch failed), use entry_price as fallback but
-            # note it in missing_data so basis will be ~0 (expected degraded mode).
             spot = (
                 context.spot_price if context.spot_price > 0.0 else context.entry_price
             )
@@ -386,7 +369,6 @@ class PhaseAwareEngineOrchestrator:
                 error=str(exc),
             )
 
-        # Determine if at least one engine completed successfully
         has_completed = any(r.status == "COMPLETED" for r in results.values())
         if not has_completed:
             failed_reasons = {

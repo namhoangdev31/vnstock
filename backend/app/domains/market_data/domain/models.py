@@ -40,38 +40,34 @@ class StockSymbol(AwareSQLModel, table=True):
     )
     symbol: str = Field(primary_key=True, max_length=20)
     organ_name: str | None = Field(default=None, max_length=255)
-    exchange: str | None = Field(default=None, max_length=10)  # HOSE, HNX, UPCOM, DERIV
+    exchange: str | None = Field(default=None, max_length=10)
     industry: str | None = Field(default=None, max_length=100)
-    icb_code: str | None = Field(default=None, max_length=20)  # Mã ngành ICB cấp 1-4
+    icb_code: str | None = Field(default=None, max_length=20)
     icb_name: str | None = Field(
         default=None, max_length=255
-    )  # Tên ngành theo chuẩn ICB
+    )
     index_group: str | None = Field(
         default=None, max_length=50
-    )  # Rổ chỉ số: VN30, VN100, VNFINLEAD
+    )
     asset_type: str = Field(
         default="stock",
         max_length=20,
-    )  # stock, etf, derivative, index, covered_warrant, corporate_bond, government_bond
-    lot_size: int = Field(default=100)  # Quy mô lô chuẩn (100 cp cơ sở, 1 HĐ phái sinh)
+    )
+    lot_size: int = Field(default=100)
     is_active: bool = Field(default=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
     )
 
-    # Relationships nội bộ trong Market Data domain
-    # Chứng quyền có tài sản cơ sở là mã này (e.g. FPT -> [CFPT2501, CFPT2502])
     covered_warrants: list["CoveredWarrant"] = Relationship(
         back_populates="underlying_rel",
         sa_relationship_kwargs={"foreign_keys": "CoveredWarrant.underlying_symbol"},
     )
-    # Trái phiếu do công ty này phát hành (e.g. MSN -> [MSN123009])
     issued_bonds: list["BondSpecification"] = Relationship(
         back_populates="issuer_rel",
         sa_relationship_kwargs={"foreign_keys": "BondSpecification.issuer_symbol"},
     )
-    # Hợp đồng phái sinh dựa trên chỉ số này (e.g. VN30 -> [VN30F1M, VN30F2M])
     derivative_contracts: list["DerivativeContract"] = Relationship(
         back_populates="underlying_rel",
         sa_relationship_kwargs={"foreign_keys": "DerivativeContract.underlying_symbol"},
@@ -99,23 +95,23 @@ class StockOHLCVDaily(AwareSQLModel, table=True):
     low: float
     close: float
     volume: int
-    value: float | None = None  # Giá trị giao dịch khớp lệnh (VND)
-    change: float | None = None  # Biến động giá tuyệt đối (VND)
-    change_pct: float | None = None  # Phần trăm thay đổi giá (%)
-    reference_price: float | None = None  # Giá tham chiếu trong ngày
-    ceiling_price: float | None = None  # Giá trần (HOSE: +7%, HNX: +10%, UPCOM: +15%)
-    floor_price: float | None = None  # Giá sàn (HOSE: -7%, HNX: -10%, UPCOM: -15%)
-    adjusted_close: float | None = None  # Giá đóng cửa điều chỉnh sau chia cổ tức
-    buy_volume: int | None = None  # Khối lượng khớp lệnh mua chủ động
-    sell_volume: int | None = None  # Khối lượng khớp lệnh bán chủ động
-    foreign_buy_volume: int | None = None  # Khối lượng mua của Khối ngoại
-    foreign_sell_volume: int | None = None  # Khối lượng bán của Khối ngoại
-    foreign_net_volume: int | None = None  # Mua/Bán ròng của Khối ngoại
-    open_interest: int | None = None  # Khối lượng vị thế mở qua đêm (phái sinh VN30F1M)
+    value: float | None = None
+    change: float | None = None
+    change_pct: float | None = None
+    reference_price: float | None = None
+    ceiling_price: float | None = None
+    floor_price: float | None = None
+    adjusted_close: float | None = None
+    buy_volume: int | None = None
+    sell_volume: int | None = None
+    foreign_buy_volume: int | None = None
+    foreign_sell_volume: int | None = None
+    foreign_net_volume: int | None = None
+    open_interest: int | None = None
     basis: float | None = (
-        None  # Độ lệch giá đóng cửa phái sinh so với VN30 (VN30F1M - VN30)
+        None
     )
-    source: str = Field(max_length=10)  # VCI, KBS, TCBS
+    source: str = Field(max_length=10)
 
 
 class StockOHLCVIntraday(AwareSQLModel, table=True):
@@ -135,17 +131,17 @@ class StockOHLCVIntraday(AwareSQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
     timestamp: datetime = Field(sa_type=DateTime(timezone=True), index=True)  # type: ignore
-    interval: str = Field(max_length=5)  # 1m, 5m, 15m, 1h
+    interval: str = Field(max_length=5)
     open: float
     high: float
     low: float
     close: float
     volume: int
-    value: float | None = None  # Giá trị giao dịch cây nến
-    buy_volume: int | None = None  # Khối lượng mua chủ động
-    sell_volume: int | None = None  # Khối lượng bán chủ động
-    volume_delta: int | None = None  # Delta luồng lệnh (Buy Vol - Sell Vol)
-    vwap: float | None = None  # Giá bình quân gia quyền theo khối lượng (VWAP)
+    value: float | None = None
+    buy_volume: int | None = None
+    sell_volume: int | None = None
+    volume_delta: int | None = None
+    vwap: float | None = None
     source: str = Field(max_length=10)
 
 
@@ -165,12 +161,12 @@ class StockTickIntraday(AwareSQLModel, table=True):
     volume: int
     match_type: str = Field(
         max_length=10
-    )  # BU (Mua chủ động), SD (Bán chủ động), ATO, ATC
-    accumulated_volume: int | None = None  # Khối lượng tích lũy đến thời điểm tick
-    accumulated_value: float | None = None  # Giá trị tích lũy đến thời điểm tick
+    )
+    accumulated_volume: int | None = None
+    accumulated_value: float | None = None
     sequence_number: int = Field(
         default=0
-    )  # Thứ tự tick trong cùng một timestamp mili-giây
+    )
     source: str = Field(max_length=10)
 
 
@@ -186,11 +182,11 @@ class IndexConstituent(AwareSQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     index_code: str = Field(
         max_length=20, index=True
-    )  # VN30, VN100, VNFINLEAD, VNMID, VNSML
+    )
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
-    weight: float = Field(default=0.0)  # Tỷ trọng trong rổ chỉ số (%)
-    free_float_shares: float | None = None  # Số lượng cổ phiếu tự do lưu hành
-    effective_date: date = Field(index=True)  # Ngày áp dụng hiệu lực của kỳ cơ cấu
+    weight: float = Field(default=0.0)
+    free_float_shares: float | None = None
+    effective_date: date = Field(index=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -209,10 +205,10 @@ class DataSyncLog(AwareSQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     sync_type: str = Field(
         max_length=30
-    )  # symbols, daily_ohlcv, intraday, ticks, profile, financials, ratios, events, constituents
+    )
     symbol: str | None = Field(default=None, max_length=20)
     source: str = Field(max_length=10)
-    status: str = Field(max_length=15)  # started, success, failed, partial
+    status: str = Field(max_length=15)
     rows_synced: int = 0
     error_message: str | None = None
     started_at: datetime = Field(
@@ -238,16 +234,16 @@ class DerivativeContract(AwareSQLModel, table=True):
     )
     symbol: str = Field(
         primary_key=True, max_length=20, foreign_key="stock_symbol.symbol"
-    )  # Mã HĐ: VN30F1M, VN30F2609
+    )
     underlying_symbol: str = Field(
         default="VN30", max_length=20, foreign_key="stock_symbol.symbol", index=True
-    )  # Tài sản cơ sở VN30
-    multiplier: float = Field(default=100_000.0)  # Hệ số nhân: 100,000 VND / điểm
-    first_trading_date: date | None = None  # Ngày niêm yết chào sàn
-    last_trading_date: date | None = None  # Ngày giao dịch cuối cùng
-    expiration_date: date = Field(index=True)  # Ngày đáo hạn hợp đồng (Thứ 5 tuần 3)
-    settlement_price: float | None = None  # Giá thanh toán cuối cùng ngày đáo hạn
-    is_active: bool = Field(default=True)  # Đang trong chu kỳ giao dịch
+    )
+    multiplier: float = Field(default=100_000.0)
+    first_trading_date: date | None = None
+    last_trading_date: date | None = None
+    expiration_date: date = Field(index=True)
+    settlement_price: float | None = None
+    is_active: bool = Field(default=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -280,29 +276,29 @@ class CoveredWarrant(AwareSQLModel, table=True):
         unique=True,
         index=True,
         foreign_key="stock_symbol.symbol",
-    )  # Mã chứng quyền ví dụ CACB2511, CFPT2501
+    )
     underlying_symbol: str = Field(
         max_length=20,
         foreign_key="stock_symbol.symbol",
         index=True,
-    )  # Mã cổ phiếu cơ sở ví dụ ACB, FPT, HPG
+    )
     issuer_name: str | None = Field(
         default=None, max_length=255
-    )  # Tên tổ chức phát hành (CTCK: SSI, VND, HSC...)
-    warrant_type: str = Field(default="call", max_length=10)  # call / put
-    exercise_price: float | None = None  # Giá thực hiện (VND)
+    )
+    warrant_type: str = Field(default="call", max_length=10)
+    exercise_price: float | None = None
     conversion_ratio: str | None = Field(
         default=None, max_length=20
-    )  # Tỷ lệ chuyển đổi ví dụ "4:1", "2:1"
-    exercise_ratio: float | None = None  # Tỷ lệ thực hiện dạng số thập phân (e.g. 0.25)
-    issue_date: date | None = None  # Ngày phát hành
+    )
+    exercise_ratio: float | None = None
+    issue_date: date | None = None
     maturity_date: date | None = Field(
         default=None, index=True
-    )  # Ngày đáo hạn chứng quyền
-    last_trading_date: date | None = None  # Ngày giao dịch cuối cùng
+    )
+    last_trading_date: date | None = None
     settlement_type: str | None = Field(
         default="cash", max_length=20
-    )  # Hình thức thanh toán: cash (tiền mặt)
+    )
     is_active: bool = Field(default=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -333,31 +329,31 @@ class BondSpecification(AwareSQLModel, table=True):
         unique=True,
         index=True,
         foreign_key="stock_symbol.symbol",
-    )  # Mã trái phiếu ví dụ BAB123032, 41B5GC000
+    )
     bond_type: str = Field(
         max_length=20,
         index=True,
-    )  # corporate (doanh nghiệp) / government (chính phủ)
+    )
     issuer_symbol: str | None = Field(
         default=None,
         max_length=20,
         foreign_key="stock_symbol.symbol",
         index=True,
         nullable=True,
-    )  # Mã doanh nghiệp phát hành nếu niêm yết (ví dụ BAB, MSN, VIC)
+    )
     issuer_name: str | None = Field(
         default=None, max_length=255
-    )  # Tên tổ chức phát hành
-    par_value: float = Field(default=100_000.0)  # Mệnh giá chuẩn (VND)
-    coupon_rate: float | None = None  # Lãi suất danh nghĩa (%/năm)
+    )
+    par_value: float = Field(default=100_000.0)
+    coupon_rate: float | None = None
     coupon_type: str | None = Field(
         default="fixed", max_length=20
-    )  # fixed (cố định) / floating (thả nổi)
-    tenor_years: float | None = None  # Kỳ hạn trái phiếu (năm)
-    issue_date: date | None = None  # Ngày phát hành
+    )
+    tenor_years: float | None = None
+    issue_date: date | None = None
     maturity_date: date | None = Field(
         default=None, index=True
-    )  # Ngày đáo hạn trái phiếu
+    )
     is_active: bool = Field(default=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,

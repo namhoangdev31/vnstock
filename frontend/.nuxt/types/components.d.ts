@@ -18,6 +18,8 @@ interface _GlobalComponents {
   FactorPerformanceSection: typeof import("../../components/FactorPerformanceSection.vue")['default']
   IBoardContent: typeof import("../../components/IBoardContent.vue")['default']
   IBoardHeader: typeof import("../../components/IBoardHeader.vue")['default']
+  IBoardIndexSummaryTable: typeof import("../../components/IBoardIndexSummaryTable.vue")['default']
+  IBoardIntradayCanvas: typeof import("../../components/IBoardIntradayCanvas.vue")['default']
   IBoardMiniChart: typeof import("../../components/IBoardMiniChart.vue")['default']
   IBoardMiniChartsBar: typeof import("../../components/IBoardMiniChartsBar.vue")['default']
   MarkdownViewer: typeof import("../../components/MarkdownViewer.vue")['default']
@@ -103,6 +105,8 @@ interface _GlobalComponents {
   LazyFactorPerformanceSection: LazyComponent<typeof import("../../components/FactorPerformanceSection.vue")['default']>
   LazyIBoardContent: LazyComponent<typeof import("../../components/IBoardContent.vue")['default']>
   LazyIBoardHeader: LazyComponent<typeof import("../../components/IBoardHeader.vue")['default']>
+  LazyIBoardIndexSummaryTable: LazyComponent<typeof import("../../components/IBoardIndexSummaryTable.vue")['default']>
+  LazyIBoardIntradayCanvas: LazyComponent<typeof import("../../components/IBoardIntradayCanvas.vue")['default']>
   LazyIBoardMiniChart: LazyComponent<typeof import("../../components/IBoardMiniChart.vue")['default']>
   LazyIBoardMiniChartsBar: LazyComponent<typeof import("../../components/IBoardMiniChartsBar.vue")['default']>
   LazyMarkdownViewer: LazyComponent<typeof import("../../components/MarkdownViewer.vue")['default']>

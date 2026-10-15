@@ -11,7 +11,6 @@ from sqlmodel.sql.sqltypes import AutoString
 
 from app.core.models_base import JSONBVariant
 
-# revision identifiers, used by Alembic.
 revision = "b2c3d4e5f6a7"
 down_revision = "a1b2c3d4e5f6"
 branch_labels = None
@@ -19,7 +18,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # --- forecast_journal (RULE 3 audit ledger) ---
     op.create_table(
         "forecast_journal",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -69,7 +67,6 @@ def upgrade() -> None:
         "ix_forecast_journal_status", "forecast_journal", ["status"]
     )
 
-    # --- macro_indicator ---
     op.create_table(
         "macro_indicator",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -94,7 +91,6 @@ def upgrade() -> None:
         "ix_macro_indicator_indicator_code", "macro_indicator", ["indicator_code"]
     )
 
-    # --- tick_flow_aggregated ---
     op.create_table(
         "tick_flow_aggregated",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -132,7 +128,6 @@ def upgrade() -> None:
         "ix_tick_flow_aggregated_timestamp", "tick_flow_aggregated", ["timestamp"]
     )
 
-    # --- institutional_flow (schema only — no Phase 1 sync source) ---
     op.create_table(
         "institutional_flow",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -157,7 +152,6 @@ def upgrade() -> None:
         "ix_institutional_flow_symbol", "institutional_flow", ["symbol"]
     )
 
-    # --- market_breadth (schema only — no Phase 1 sync source) ---
     op.create_table(
         "market_breadth",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -193,7 +187,6 @@ def upgrade() -> None:
         "ix_market_breadth_trading_date", "market_breadth", ["trading_date"]
     )
 
-    # --- simulation_portfolio (RULE 1/2: isolated paper account) ---
     op.create_table(
         "simulation_portfolio",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -228,7 +221,6 @@ def upgrade() -> None:
         "ix_simulation_portfolio_user_id", "simulation_portfolio", ["user_id"]
     )
 
-    # --- simulation_order ---
     op.create_table(
         "simulation_order",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -273,7 +265,6 @@ def upgrade() -> None:
     op.create_index("ix_simulation_order_symbol", "simulation_order", ["symbol"])
     op.create_index("ix_simulation_order_status", "simulation_order", ["status"])
 
-    # --- simulation_position ---
     op.create_table(
         "simulation_position",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -326,7 +317,6 @@ def upgrade() -> None:
         "ix_simulation_position_status", "simulation_position", ["status"]
     )
 
-    # --- simulation_trade ---
     op.create_table(
         "simulation_trade",
         sa.Column("id", sa.Uuid(), nullable=False),

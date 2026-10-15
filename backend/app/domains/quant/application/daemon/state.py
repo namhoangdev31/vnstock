@@ -8,10 +8,6 @@ from typing import Any
 from app.core.enums import SessionPhase
 from app.core.models_base import VN_TZ
 
-# Adaptive polling intervals per session phase (in seconds)
-# Calibrated for Community Tier (60 requests/minute max):
-# Each cycle polls 2 endpoints (VN30F1M + VN30 1m).
-# 3.0s interval = 20 cycles/min * 2 = 40 requests/min, leaving 20 req/min margin for other services.
 COMMUNITY_POLL_INTERVALS: dict[SessionPhase, float] = {
     SessionPhase.PRE_ATO: 30.0,
     SessionPhase.ATO: 3.0,
@@ -53,9 +49,6 @@ class DaemonCircuitBreaker:
 
     @property
     def is_open(self) -> bool:
-        # Once the cooldown expires the breaker is HALF_OPEN and must allow
-        # one probe request through. Treating HALF_OPEN as OPEN would keep the
-        # poller serving stale cache data forever.
         return self.opened_at is not None and not self.is_half_open
 
     @property
@@ -63,7 +56,6 @@ class DaemonCircuitBreaker:
         if self.opened_at is None:
             return False
         now = datetime.now(VN_TZ)
-        # Half-open if cooldown has passed since circuit opened
         return (
             now - self.opened_at
         ).total_seconds() >= self._half_open_cooldown_seconds

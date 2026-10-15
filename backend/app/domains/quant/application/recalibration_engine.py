@@ -30,8 +30,6 @@ def project_weights(
         key: min(upper[key], max(lower[key], float(proposal.get(key, active[key]))))
         for key in keys
     }
-    # Distribute the residual across non-saturated coordinates. Three weights and
-    # a small bounded interval make this deterministic and easy to audit.
     for _ in range(8):
         residual = 1.0 - sum(values.values())
         if abs(residual) < 1e-10:
@@ -159,7 +157,6 @@ class RecalibrationEngine:
             training, {"w1": active.w1, "w2": active.w2, "w3": active.w3}
         )
         baseline_metrics = _metrics(validation)
-        # Candidate metrics are calculated counterfactually from immutable engine targets.
         candidate_errors = []
         candidate_briers = []
         candidate_directions = []

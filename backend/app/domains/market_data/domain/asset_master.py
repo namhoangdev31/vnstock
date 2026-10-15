@@ -56,17 +56,17 @@ class Instrument(AwareSQLModel, table=True):
     )
     instrument_type: str = Field(
         max_length=30, index=True
-    )  # EQUITY, FUTURES, COVERED_WARRANT, CORPORATE_BOND, INDEX
+    )
     canonical_code: str = Field(
         max_length=50, unique=True, index=True
-    )  # e.g. "EQUITY:VNM", "FUTURES:VN30F2610", "FUTURES:VN30F1M:CONTINUOUS", "INDEX:VN30"
+    )
     isin: str | None = Field(default=None, max_length=20, unique=True, index=True)
     figi: str | None = Field(default=None, max_length=20, unique=True, index=True)
-    exchange: str = Field(max_length=20, index=True)  # HOSE, HNX, UPCOM, VNFE
+    exchange: str = Field(max_length=20, index=True)
     currency: str = Field(default="VND", max_length=10)
     roll_rule: str | None = Field(
         default=None, max_length=100
-    )  # e.g. "THIRD_THURSDAY", "EXPIRATION_MINUS_1D"
+    )
     is_active: bool = Field(default=True, index=True)
     created_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -114,10 +114,10 @@ class InstrumentAlias(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     instrument_id: uuid.UUID = Field(foreign_key="instrument.id", index=True)
-    alias: str = Field(max_length=30, index=True)  # e.g. "VNM", "VN30F1M", "VN30F2610"
+    alias: str = Field(max_length=30, index=True)
     alias_type: str = Field(
         default="TICKER", max_length=30
-    )  # TICKER, LOCAL_CODE, CONTINUOUS_ROLLING
+    )
     valid_from: date = Field(default_factory=lambda: date(2000, 1, 1), index=True)
     valid_to: date | None = Field(default=None, index=True)
     created_at: datetime = Field(
@@ -147,7 +147,7 @@ class InstrumentRelation(AwareSQLModel, table=True):
     target_instrument_id: uuid.UUID = Field(foreign_key="instrument.id", index=True)
     relation_type: str = Field(
         max_length=50, index=True
-    )  # UNDERLYING_OF_CW, UNDERLYING_OF_FUTURES, ISSUED_BY, CONSTITUENT_OF_INDEX
+    )
     weight: float | None = None
     valid_from: date = Field(default_factory=lambda: date(2000, 1, 1))
     valid_to: date | None = None

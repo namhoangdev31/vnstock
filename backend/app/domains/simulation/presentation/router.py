@@ -77,11 +77,6 @@ def _owned_portfolio(
         raise HTTPException(status_code=404, detail=str(exc))
 
 
-# ---------------------------------------------------------------------------
-# Portfolios
-# ---------------------------------------------------------------------------
-
-
 @router.post("/portfolios", response_model=PortfolioResponse)
 def create_portfolio(
     session: SessionDep,
@@ -155,11 +150,6 @@ def mark_to_market(
     return PortfolioResponse.model_validate(updated)
 
 
-# ---------------------------------------------------------------------------
-# Orders
-# ---------------------------------------------------------------------------
-
-
 @router.post("/portfolios/{portfolio_id}/orders", response_model=OrderResponse)
 def place_order(
     session: SessionDep,
@@ -196,18 +186,12 @@ def cancel_order(
     order = session.get(Order, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
-    # Ownership: the order's portfolio must belong to the user.
     _owned_portfolio(engine, order.portfolio_id, current_user.id)
     try:
         cancelled = engine.cancel_order(order_id)
     except SimulationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return OrderResponse.model_validate(cancelled)
-
-
-# ---------------------------------------------------------------------------
-# Positions
-# ---------------------------------------------------------------------------
 
 
 @router.post("/positions/{position_id}/close", response_model=TradeResponse)
@@ -256,11 +240,6 @@ def list_orders(
         query = query.where(col(Order.portfolio_id).in_(ids))
     rows = session.exec(query.order_by(col(Order.created_at).desc()).limit(limit)).all()
     return [OrderResponse.model_validate(r) for r in rows]
-
-
-# ---------------------------------------------------------------------------
-# Phase 4: Margin Status, T+2 Settlement, and Alpha Screener Endpoints
-# ---------------------------------------------------------------------------
 
 
 @router.get(

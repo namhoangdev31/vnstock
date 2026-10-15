@@ -51,7 +51,6 @@ class PriceService:
         """Lấy lịch sử nến ngày từ PostgreSQL. Nếu thiếu dữ liệu, tự động backfill từ vnstock."""
         sym_code = symbol.strip().upper()
 
-        # 1. Truy vấn PostgreSQL trước (DB-first policy)
         rows = session.exec(
             select(StockOHLCVDaily)
             .where(StockOHLCVDaily.symbol == sym_code)
@@ -60,7 +59,6 @@ class PriceService:
             .order_by(col(StockOHLCVDaily.trading_date))
         ).all()
 
-        # 2. Nếu DB chưa có dữ liệu, thử backfill từ vnstock
         if not rows:
             from app.domains.market_data.application.sync_service import DataSyncManager
 
@@ -143,25 +141,21 @@ class PriceService:
         if not sym:
             raise SymbolNotFoundError(sym_code)
 
-        # 1. Profile (truy vấn độc lập ở tầng Application)
         db_prof = session.exec(
             select(CompanyProfile).where(CompanyProfile.symbol == sym_code)
         ).first()
         profile_dto = CompanyOverviewPublic.model_validate(db_prof) if db_prof else None
 
-        # 2. Covered Warrants có cơ sở là mã này
         cw_rows = session.exec(
             select(CoveredWarrant).where(CoveredWarrant.underlying_symbol == sym_code)
         ).all()
         cws_dto = [CoveredWarrantPublic.model_validate(w) for w in cw_rows]
 
-        # 3. Trái phiếu do mã này phát hành
         bond_rows = session.exec(
             select(BondSpecification).where(BondSpecification.issuer_symbol == sym_code)
         ).all()
         bonds_dto = [BondSpecificationPublic.model_validate(b) for b in bond_rows]
 
-        # 4. Hợp đồng phái sinh dựa trên chỉ số này (e.g. VN30)
         deriv_rows = session.exec(
             select(DerivativeContract).where(
                 DerivativeContract.underlying_symbol == sym_code
@@ -169,7 +163,6 @@ class PriceService:
         ).all()
         derivs_dto = [DerivativeContractPublic.model_validate(d) for d in deriv_rows]
 
-        # 5. Nếu bản thân mã là Chứng quyền -> truy xuất ngược về cổ phiếu cơ sở
         underlying_asset_dto = None
         if sym.asset_type == "covered_warrant":
             cw_spec = session.exec(
@@ -186,7 +179,6 @@ class PriceService:
                         underlying_sym
                     )
 
-        # 6. Nếu bản thân mã là Phái sinh -> truy xuất ngược về chỉ số cơ sở (VN30)
         elif sym.asset_type == "derivative":
             deriv_spec = session.exec(
                 select(DerivativeContract).where(DerivativeContract.symbol == sym_code)
@@ -202,7 +194,6 @@ class PriceService:
                         underlying_sym
                     )
 
-        # 7. Nếu bản thân mã là Trái phiếu -> truy xuất ngược về tổ chức phát hành
         issuer_asset_dto = None
         if sym.asset_type in ("corporate_bond", "government_bond"):
             bond_spec = session.exec(

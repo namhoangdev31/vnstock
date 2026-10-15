@@ -38,7 +38,6 @@ from app.domains.vnstock import (
 
 logger = logging.getLogger(__name__)
 
-# vnstock returns intraday timestamps in Vietnam local time (naive).
 _VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 
 
@@ -156,9 +155,6 @@ class QuantSyncManager:
         self.session = session
         self.svc = vnstock_svc or VnstockService()
 
-    # ------------------------------------------------------------------
-    # Macro indicators
-    # ------------------------------------------------------------------
 
     def sync_macro(self, *, date_str: str | None = None) -> DataSyncLog:
         """Sync SJC gold + USD/VND for a date (default today)."""
@@ -185,7 +181,6 @@ class QuantSyncManager:
         df = self.svc.fetch_gold_prices(date_str)
         if df is None or df.empty:
             return 0
-        # SJC standard bar (loại 1 lượng) is the headline price series.
         row = self._select_gold_row(df)
         if row is None:
             return 0
@@ -263,9 +258,6 @@ class QuantSyncManager:
         self.session.commit()
         return 1
 
-    # ------------------------------------------------------------------
-    # Tick order-flow → 1-minute aggregated delta
-    # ------------------------------------------------------------------
 
     def sync_tick_orderflow(self, symbol: str, *, page_size: int = 100) -> DataSyncLog:
         """Fetch matched ticks and persist aggregated 1-minute delta bars."""
@@ -325,7 +317,6 @@ class QuantSyncManager:
                 )
 
             if tick_records:
-                # Deduplicate trong batch hiện tại trước khi bulk insert
                 dedup_map: dict[tuple[str, datetime, int], dict[str, Any]] = {}
                 for rec in tick_records:
                     k = (rec["symbol"], rec["timestamp"], rec["sequence_number"])
@@ -379,9 +370,6 @@ class QuantSyncManager:
             logger.exception("Tick order-flow sync failed for %s", symbol)
             return self._finish_log(log, "failed", error_message=str(exc))
 
-    # ------------------------------------------------------------------
-    # Log helpers (mirror DataSyncManager)
-    # ------------------------------------------------------------------
 
     def _create_log(self, sync_type: str, symbol: str | None = None) -> DataSyncLog:
         log = DataSyncLog(

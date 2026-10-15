@@ -55,7 +55,6 @@ def login_social(session: SessionDep, body: SocialLogin) -> Token:
     """OAuth social login: exchange verified Google/Apple/Firebase payload for application JWT token."""
     clean_email = str(body.email).strip().lower()
 
-    # Xác thực mật mã an toàn nếu client gửi Firebase ID Token
     from app.core.firebase import verify_firebase_id_token
 
     verified_claims = verify_firebase_id_token(body.token)
@@ -102,8 +101,6 @@ def recover_password(email: str, session: SessionDep) -> Message:
     """Password Recovery."""
     user = crud.get_user_by_email(session=session, email=email)
 
-    # Always return the same response to prevent email enumeration attacks
-    # Only send email if user actually exists
     if user:
         password_reset_token = generate_password_reset_token(email=email)
         email_data = generate_reset_password_email(
@@ -127,7 +124,6 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
         raise HTTPException(status_code=400, detail="Invalid token")
     user = crud.get_user_by_email(session=session, email=email)
     if not user:
-        # Don't reveal that the user doesn't exist - use same error as invalid token
         raise HTTPException(status_code=400, detail="Invalid token")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")

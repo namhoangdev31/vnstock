@@ -50,6 +50,5 @@ class TTLCache:
         return len(expired_keys)
 
 
-# Singleton instances for different cache tiers
-realtime_cache = TTLCache(default_ttl=5)  # 3-5 seconds for realtime prices
-metadata_cache = TTLCache(default_ttl=86400)  # 24 hours for metadata
+realtime_cache = TTLCache(default_ttl=5)
+metadata_cache = TTLCache(default_ttl=86400)

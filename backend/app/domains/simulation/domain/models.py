@@ -83,8 +83,6 @@ class Order(AwareSQLModel, table=True):
     fee: float = 0.0
     tax: float = 0.0
     status: str = Field(default=OrderStatus.PENDING, max_length=10, index=True)
-    # Stable source id makes paper execution idempotent across daemon retries
-    # and multiple workers.  NULL remains valid for manually submitted orders.
     source_signal_id: str | None = Field(default=None, max_length=100, index=True)
     reject_reason: str | None = Field(default=None, max_length=255)
     created_at: datetime = Field(
@@ -122,7 +120,6 @@ class Position(AwareSQLModel, table=True):
     unrealized_pnl: float = 0.0
     realized_pnl: float = 0.0
     margin_required: float = 0.0
-    # Chu kỳ thanh toán: T+2 cho cổ phiếu cơ sở, T+0 cho phái sinh VN30F1M
     settlement_date: date | None = None
     status: str = Field(default=PositionStatus.OPEN, max_length=10, index=True)
     created_at: datetime = Field(
@@ -167,7 +164,6 @@ class Trade(AwareSQLModel, table=True):
     portfolio: Portfolio | None = Relationship(back_populates="trades")
 
 
-# Trạng thái ledger T+2 — chuẩn hóa domain name (RULE 2)
 SETTLEMENT_PENDING = "PENDING_T2"
 SETTLEMENT_AVAILABLE = "SETTLED_AVAILABLE"
 
@@ -189,7 +185,7 @@ class EquitySettlementLedger(AwareSQLModel, table=True):
         ondelete="CASCADE",
     )
     symbol: str = Field(max_length=20, index=True)
-    side: str = Field(max_length=10)  # BUY/SELL — tên trường chuẩn domain
+    side: str = Field(max_length=10)
     quantity: int
     price: float
     bought_at: datetime = Field(

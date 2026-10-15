@@ -9,10 +9,6 @@ from sqlmodel import Field, SQLModel
 
 from app.core.enums import ForecastDirection, ForecastHorizon
 
-# ==============================================================================
-# REQUEST DTOs
-# ==============================================================================
-
 
 class ForecastCreate(SQLModel):
     """Payload ghi nhận một dự phóng mới phát ra từ hệ thống động cơ định lượng."""
@@ -52,11 +48,6 @@ class EnsembleWeightsUpdate(SQLModel):
     w1: float = Field(ge=0.0, le=1.0)
     w2: float = Field(ge=0.0, le=1.0)
     w3: float = Field(ge=0.0, le=1.0)
-
-
-# ==============================================================================
-# RESPONSE DTOs
-# ==============================================================================
 
 
 class MacroIndicatorPublic(SQLModel):
@@ -197,30 +188,30 @@ class TechnicalEngineResponse(SQLModel):
 
     symbol: str
     as_of: datetime
-    score: float  # -1.0 đến +1.0
+    score: float
     rsi: float | None = None
     macd: dict = Field(default_factory=dict)
     vwap: float | None = None
-    order_imbalance: float = 0.0  # -1.0 đến +1.0
+    order_imbalance: float = 0.0
     volume_delta: int = 0
     camarilla_levels: dict = Field(default_factory=dict)
     fvg_detected: bool = False
     fvg_details: dict = Field(default_factory=dict)
     liquidity_sweeps: dict = Field(default_factory=dict)
-    regime: str = "RANGING"  # "TRENDING" | "RANGING" | "VOLATILE"
-    roc: float | None = None  # Rate of Change [-1.0, +1.0]
+    regime: str = "RANGING"
+    roc: float | None = None
 
 
 class FlowLiquidityEngineResponse(SQLModel):
     """Dữ liệu đầu ra của Động cơ 2: Thanh khoản, Dòng tiền tổ chức & Áp lực T+2."""
 
     as_of: datetime
-    score: float  # -1.0 đến +1.0
+    score: float
     institutional_momentum: float = 0.0
     market_breadth: float | None = None
     market_breadth_ratio_ma20: float | None = None
     mbi_formula: str | None = None
-    t2_pressure: float = 0.0  # 0.0 đến 1.0
+    t2_pressure: float = 0.0
     macro_sentiment: float = 0.0
 
 
@@ -229,7 +220,7 @@ class QuantMLEngineResponse(SQLModel):
 
     symbol: str
     as_of: datetime
-    score: float  # -1.0 đến +1.0
+    score: float
     basis_value: float = 0.0
     basis_zscore: float = 0.0
     historical_vol: float = 0.0
@@ -237,8 +228,8 @@ class QuantMLEngineResponse(SQLModel):
     session_phase: str = "CONTINUOUS"
     monte_carlo_targets: dict = Field(default_factory=dict)
     qmc_targets: dict = Field(default_factory=dict)
-    lr_trend_score: float = 0.0  # Linear regression slope [-1.0, +1.0]
-    mc_max_drawdown_p50: float = 0.0  # Max drawdown percentile 50 intraday (%)
+    lr_trend_score: float = 0.0
+    mc_max_drawdown_p50: float = 0.0
     basis_stationarity: dict = Field(default_factory=dict)
 
 
@@ -249,9 +240,9 @@ class EnsembleSignalResponse(SQLModel):
     symbol: str
     horizon: str
     predicted_at: datetime
-    predicted_direction: str  # "LONG", "SHORT", "NEUTRAL"
-    ensemble_score: float  # -1.0 đến +1.0
-    confidence: float  # 0.0 đến 1.0
+    predicted_direction: str
+    ensemble_score: float
+    confidence: float
     entry_price: float | None = None
     stop_loss: float | None = None
     take_profit: float | None = None
@@ -259,7 +250,7 @@ class EnsembleSignalResponse(SQLModel):
     engine_scores: dict
     model_version: str = "v2.0.0"
     engine_disagreement: float = (
-        0.0  # std(E1,E2,E3) — 0.0 = full consensus, 1.0+ = max divergence
+        0.0
     )
     disclaimer: str = (
         "CẢNH BÁO RỦI RO (RULE 4): Tín hiệu mô phỏng định lượng mang tính chất tham khảo "

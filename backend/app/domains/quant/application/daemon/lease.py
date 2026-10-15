@@ -99,8 +99,6 @@ class PostgresAdvisoryLease:
             if self._connection is not None:
                 return True
 
-            # SQLite is used by unit tests and has no advisory-lock primitive.
-            # Production is PostgreSQL, where the lock is mandatory.
             if self.engine.dialect.name != "postgresql":
                 return True
 

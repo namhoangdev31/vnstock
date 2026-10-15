@@ -11,7 +11,6 @@ from sqlmodel.sql.sqltypes import AutoString
 
 from app.core.models_base import JSONBVariant
 
-# revision identifiers, used by Alembic.
 revision = "f6a7b8c9d0e1"
 down_revision = "e5f6a7b8c9d0"
 branch_labels = None
@@ -19,7 +18,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 1. Add columns to existing tables
     op.add_column(
         "company_profile",
         sa.Column("ceo_name", AutoString(length=255), nullable=True),
@@ -33,7 +31,6 @@ def upgrade() -> None:
         sa.Column("data", JSONBVariant, nullable=True),
     )
 
-    # 2. company_subsidiary table
     op.create_table(
         "company_subsidiary",
         sa.Column(
@@ -81,7 +78,6 @@ def upgrade() -> None:
         ["sub_organ_code"],
     )
 
-    # 3. insider_trading table
     op.create_table(
         "insider_trading",
         sa.Column(
@@ -135,7 +131,6 @@ def upgrade() -> None:
         ["deal_announce_date"],
     )
 
-    # 4. capital_history table
     op.create_table(
         "capital_history",
         sa.Column(

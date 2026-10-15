@@ -18,6 +18,8 @@ export const ClosedLoopPipelineCard: typeof import("../components/ClosedLoopPipe
 export const FactorPerformanceSection: typeof import("../components/FactorPerformanceSection.vue")['default']
 export const IBoardContent: typeof import("../components/IBoardContent.vue")['default']
 export const IBoardHeader: typeof import("../components/IBoardHeader.vue")['default']
+export const IBoardIndexSummaryTable: typeof import("../components/IBoardIndexSummaryTable.vue")['default']
+export const IBoardIntradayCanvas: typeof import("../components/IBoardIntradayCanvas.vue")['default']
 export const IBoardMiniChart: typeof import("../components/IBoardMiniChart.vue")['default']
 export const IBoardMiniChartsBar: typeof import("../components/IBoardMiniChartsBar.vue")['default']
 export const MarkdownViewer: typeof import("../components/MarkdownViewer.vue")['default']
@@ -103,6 +105,8 @@ export const LazyClosedLoopPipelineCard: LazyComponent<typeof import("../compone
 export const LazyFactorPerformanceSection: LazyComponent<typeof import("../components/FactorPerformanceSection.vue")['default']>
 export const LazyIBoardContent: LazyComponent<typeof import("../components/IBoardContent.vue")['default']>
 export const LazyIBoardHeader: LazyComponent<typeof import("../components/IBoardHeader.vue")['default']>
+export const LazyIBoardIndexSummaryTable: LazyComponent<typeof import("../components/IBoardIndexSummaryTable.vue")['default']>
+export const LazyIBoardIntradayCanvas: LazyComponent<typeof import("../components/IBoardIntradayCanvas.vue")['default']>
 export const LazyIBoardMiniChart: LazyComponent<typeof import("../components/IBoardMiniChart.vue")['default']>
 export const LazyIBoardMiniChartsBar: LazyComponent<typeof import("../components/IBoardMiniChartsBar.vue")['default']>
 export const LazyMarkdownViewer: LazyComponent<typeof import("../components/MarkdownViewer.vue")['default']>

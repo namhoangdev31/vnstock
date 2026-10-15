@@ -21,8 +21,6 @@ from app.domains.vnstock import (
 
 logger = logging.getLogger(__name__)
 
-# LƯU Ý: "UPCOM" bị loại bỏ vì vnstock v4 validate_symbol() từ chối tên sàn.
-# "HNX" được giữ vì source msn hỗ trợ fallback thành công.
 CORE_INDEXES: list[str] = ["VNINDEX", "VN30", "HNX", "VN30F1M"]
 
 
@@ -37,7 +35,6 @@ def run_sync_daily_market_job(
     def _execute(mgr: DataSyncManager) -> list[DataSyncLog]:
         logs: list[DataSyncLog] = []
 
-        # 1. Lấy danh sách mã rổ VN30
         try:
             vn30_symbols = mgr.svc.fetch_group_symbols("VN30")
         except Exception:
@@ -65,7 +62,6 @@ def run_sync_daily_market_job(
                 except Exception as rollback_err:
                     logger.debug("Rollback failed for %s: %s", sym, rollback_err)
 
-        # 2. Đồng bộ dòng tiền tổ chức (Khối ngoại, Tự doanh, Room ngoại)
         try:
             logger.info("Đang đồng bộ dòng tiền tổ chức...")
             flow_log = mgr.sync_institutional_flow(
@@ -79,7 +75,6 @@ def run_sync_daily_market_job(
             except Exception as rollback_err:
                 logger.debug("Rollback failed for institutional flow: %s", rollback_err)
 
-        # 3. Tính toán và cập nhật Basis phái sinh (VN30F1M - VN30)
         try:
             logger.info("Đang tính toán Basis phái sinh VN30F1M...")
             mgr.compute_daily_derivative_basis(trading_date=None)

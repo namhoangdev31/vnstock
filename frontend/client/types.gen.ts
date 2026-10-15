@@ -1616,6 +1616,8 @@ export type IBoardIndexItem = {
      */
     sparkline: Array<number>;
     ref_price?: number | null;
+    raw_volume?: number | null;
+    raw_value?: number | null;
 };
 
 /**

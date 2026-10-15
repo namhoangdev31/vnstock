@@ -62,7 +62,6 @@ def screen_stocks(
     ),
 ) -> Any:
     """Bộ lọc cổ phiếu định lượng tối ưu SLA P95 < 10ms qua Keyset Pagination & ScreenerSnapshot."""
-    # 1. Ưu tiên sử dụng ScreenerService với bảng pre-computed ScreenerSnapshot (Keyset Pagination)
     clean_cursor_id = (
         cursor_instrument_id if isinstance(cursor_instrument_id, uuid.UUID) else None
     )
@@ -73,7 +72,6 @@ def screen_stocks(
     if clean_cursor_id is not None:
         cursor = ScreenerCursor(roe=clean_cursor_roe, instrument_id=clean_cursor_id)
 
-    # Kiểm tra sự tồn tại của snapshot trong cơ sở dữ liệu
     has_snapshots = False
     try:
         has_snapshots = (
@@ -192,7 +190,6 @@ def screen_stocks(
                 next_cursor_instrument_id=next_inst_id,
             )
 
-    # 2. Fallback sang logic truy vấn cũ nếu hệ thống chưa tạo pre-computed snapshot
     fallback_items_data = ScreenerService.query_screener_fallback(
         session=session,
         period=period,

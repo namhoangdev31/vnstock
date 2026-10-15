@@ -1,155 +1,241 @@
 """Infrastructure Adapters for External Market Indices & Intraday Sparklines.
 
-Tuân thủ Clean Architecture:
-- Đóng gói toàn bộ các tác vụ I/O, network calls ra ngoài (Yahoo Finance, disk file cache).
-- Cách ly Application Service khỏi các chi tiết giao thức HTTP và filesystem.
+Sử dụng độc quyền VnstockService từ app.domains.vnstock (tuân thủ Rule 4, 7 & kiến trúc miền).
 """
 
 from __future__ import annotations
 
-import json
 import logging
 import time
-import urllib.request
-from datetime import date, datetime, timedelta
-from pathlib import Path
+from datetime import datetime, timedelta
+from math import isfinite
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlmodel import Session, col, select
 
 from app.core.cache import realtime_cache
 from app.core.enums import MarketIndex
-from app.domains.dnse import dnse_stream_manager
-from app.domains.iboard.application.schemas import IBoardIndexItem
 from app.domains.market_data.domain.models import StockOHLCVDaily
 from app.domains.vnstock import VnstockService
 
 logger = logging.getLogger(__name__)
-
-
-class DowJonesGateway:
-    """Gateway truy xuất dữ liệu Dow Jones Futures (YM=F) từ Yahoo Finance với in-memory TTL cache."""
-
-    _cache: dict[str, Any] = {}
-
-    @classmethod
-    def get_futures_item(cls) -> IBoardIndexItem | None:
-        """Truy xuất snapshot Dow Jones Futures thực; trả về None khi lỗi (không bịa số)."""
-        now = time.time()
-        cached = cls._cache.get("dji")
-        if cached and (now - cached["timestamp"] < 60):
-            return cached["item"]
-
-        try:
-            url = "https://query1.finance.yahoo.com/v8/finance/chart/YM=F?interval=1d&range=3mo"
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=3) as resp:
-                data = json.loads(resp.read().decode())["chart"]["result"][0]
-                meta = data["meta"]
-                price = float(meta.get("regularMarketPrice") or 0.0)
-                raw_closes = [
-                    round(float(c), 2)
-                    for c in data["indicators"]["quote"][0]["close"]
-                    if c is not None
-                ]
-                prev_close = (
-                    raw_closes[-2]
-                    if len(raw_closes) >= 2
-                    else float(meta.get("chartPreviousClose") or price)
-                )
-                chg = price - prev_close
-                pct = (chg / prev_close * 100) if prev_close else 0.0
-                spark = raw_closes[-50:] if len(raw_closes) >= 50 else raw_closes
-
-                item = IBoardIndexItem(
-                    id="dji",
-                    name="DOW JONES FUTURES",
-                    price=f"{price:,.2f}",
-                    change=f"{chg:+,.2f}",
-                    change_percent=f"{pct:+,.2f}%",
-                    is_positive=chg >= 0,
-                    is_unchanged=chg == 0,
-                    volume="-",
-                    value="-",
-                    breadth=None,
-                    sparkline=spark,
-                    ref_price=prev_close,
-                )
-                cls._cache["dji"] = {"timestamp": now, "item": item}
-                return item
-        except Exception as e:
-            logger.debug("Không thể tải Dow Jones Futures online: %s", e)
-
-        return cached["item"] if cached else None
-
-    get_dow_jones_futures = get_futures_item
+VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 
 
 class IndexSparklineGateway:
-    """Gateway quản lý nến 1m sparkline cho dải chỉ số thị trường (disk cache + live API)."""
+    """Gateway quản lý nến 1m sparkline qua VnstockService độc quyền."""
 
     _mem_cache: dict[str, Any] = {}
+
+    @staticmethod
+    def _build_360_slots(
+        time_value_pairs: list[tuple[datetime, float]],
+    ) -> list[float | None]:
+        """Xây dựng dải 360 phút (09:00 -> 15:00, slots 0..359).
+
+        Quy chuẩn phiên giao dịch Việt Nam:
+        - 09:00 đến 11:30 (slots 0..150 · 151 slots): Nến 1m phiên sáng.
+        - 11:31 đến 12:59 (slots 151..239 · 89 slots): Giờ nghỉ trưa giữ nguyên giá trị
+          ở slot 150 (chốt 11:30) xuyên suốt tới 239 tạo thành đường thẳng nằm ngang.
+        - 13:00 đến 14:45 (slots 240..345 · 106 slots): Nến 1m phiên chiều + ATC.
+        - 14:46 đến 14:59 (slots 346..359 · 14 slots): Giữ giá chốt ATC sau 14:45 đến hết ngày.
+        - Nếu nến sau không đổi / không có giao dịch thì giữ nguyên giá trị nến trước đó (forward-fill).
+        """
+        slots: list[float | None] = [None] * 360
+
+        for dt, val in time_value_pairs:
+            if dt.tzinfo is None:
+                dt_vn = dt.replace(tzinfo=VN_TZ)
+            else:
+                dt_vn = dt.astimezone(VN_TZ)
+            m = (dt_vn.hour - 9) * 60 + dt_vn.minute
+
+            if 0 <= m < 360 and not (151 <= m <= 239):
+                slots[m] = round(float(val), 2)
+
+        first_known_morning = next(
+            (slots[m] for m in range(0, 151) if slots[m] is not None), None
+        )
+        if first_known_morning is not None:
+            for m in range(0, 151):
+                if slots[m] is None:
+                    slots[m] = first_known_morning
+                else:
+                    break
+
+        last_val: float | None = None
+        for m in range(0, 151):
+            if slots[m] is not None:
+                last_val = slots[m]
+            elif last_val is not None:
+                slots[m] = last_val
+
+            val_150 = slots[150]
+        if val_150 is not None:
+            for m in range(151, 240):
+                slots[m] = val_150
+            last_val = val_150
+
+        has_afternoon = any(slots[m] is not None for m in range(240, 360))
+        if has_afternoon:
+            first_afternoon = next(
+                (slots[m] for m in range(240, 346) if slots[m] is not None),
+                last_val,
+            )
+            if first_afternoon is not None:
+                for m in range(240, 346):
+                    if slots[m] is None:
+                        slots[m] = first_afternoon
+                    else:
+                        break
+
+            for m in range(240, 346):
+                if slots[m] is not None:
+                    last_val = slots[m]
+                elif last_val is not None:
+                    slots[m] = last_val
+
+            if last_val is not None:
+                for m in range(346, 360):
+                    if slots[m] is None:
+                        slots[m] = last_val
+
+        return slots
 
     @classmethod
     def get_sparkline(
         cls,
         code: str,
         vn: VnstockService,
-        fallback_daily: list[float],
-        cur_close: float,
-    ) -> list[float]:
+        fallback_daily: list[float] | None = None,
+        cur_close: float | None = None,
+    ) -> list[float | None]:
+        """Lấy chuỗi giá 1m intraday 360 slots cho mã chỉ số hoặc phái sinh qua VnstockService."""
         now = time.time()
         cached = cls._mem_cache.get(code)
-        if cached and (now - cached["timestamp"] < 300):
+        if cached and (now - cached["timestamp"] < 60):
             return cached["sparkline"]
 
-        # 1. Thử disk cache
-        cache_file = Path("data/index_intraday_cache.json")
-        if cache_file.exists():
-            try:
-                disk_cache = json.loads(cache_file.read_text())
-                if code in disk_cache and len(disk_cache[code]) >= 5:
-                    spark = disk_cache[code][-50:]
-                    cls._mem_cache[code] = {
-                        "timestamp": now,
-                        "sparkline": spark,
-                    }
-                    return spark
-            except Exception:
-                pass
+        today = datetime.now(VN_TZ).date()
+        start_date = today - timedelta(days=2)
 
-        # 2. Thử fetch qua VnstockService
+        if code == MarketIndex.VN30F1M:
+            try:
+                df = vn.fetch_price_history(
+                    symbol=code,
+                    start=start_date,
+                    end=today,
+                    count=380,
+                    interval="1m",
+                )
+                if (
+                    df is not None
+                    and not df.empty
+                    and "close" in df.columns
+                    and "time" in df.columns
+                ):
+                    pairs: list[tuple[datetime, float]] = []
+                    for _, row in df.iterrows():
+                        t_val = row.get("time")
+                        c_val = row.get("close")
+                        if t_val is None or c_val is None:
+                            continue
+                        try:
+                            close = float(c_val)
+                        except (TypeError, ValueError):
+                            continue
+                        if not isfinite(close):
+                            continue
+                        try:
+                            dt = (
+                                t_val
+                                if isinstance(t_val, datetime)
+                                else datetime.fromisoformat(str(t_val))
+                            )
+                        except (TypeError, ValueError):
+                            continue
+                        pairs.append((dt, close))
+
+                    if pairs:
+                        latest_date = max(p[0].date() for p in pairs)
+                        session_pairs = [p for p in pairs if p[0].date() == latest_date]
+                        session_pairs.sort(key=lambda x: x[0])
+                        slots = cls._build_360_slots(session_pairs)
+                        cls._mem_cache[code] = {
+                            "timestamp": now,
+                            "sparkline": slots,
+                        }
+                        return slots
+            except Exception as e:
+                logger.debug("Không thể tải nến 1m cho VN30F1M: %s", e)
+
         try:
-            today = date.today()
             df = vn.fetch_index_ohlcv(
-                symbol=code, start=today, end=today, interval="1m", count=80
+                symbol=code,
+                interval="1m",
+                count=380,
             )
-            if df is not None and not df.empty and "close" in df.columns:
-                pts = [round(float(c), 2) for c in df["close"] if c is not None]
-                if pts:
-                    spark = pts[-50:] if len(pts) >= 50 else pts
+            if (
+                df is not None
+                and not df.empty
+                and "close" in df.columns
+                and "time" in df.columns
+            ):
+                pairs = []
+                for _, row in df.iterrows():
+                    t_val = row.get("time")
+                    c_val = row.get("close")
+                    if t_val is None or c_val is None:
+                        continue
+                    try:
+                        close = float(c_val)
+                    except (TypeError, ValueError):
+                        continue
+                    if not isfinite(close):
+                        continue
+                    try:
+                        dt = (
+                            t_val
+                            if isinstance(t_val, datetime)
+                            else datetime.fromisoformat(str(t_val))
+                        )
+                    except (TypeError, ValueError):
+                        continue
+                    pairs.append((dt, close))
+
+                if pairs:
+                    latest_date = max(p[0].date() for p in pairs)
+                    session_pairs = [p for p in pairs if p[0].date() == latest_date]
+                    session_pairs.sort(key=lambda x: x[0])
+                    slots = cls._build_360_slots(session_pairs)
                     cls._mem_cache[code] = {
                         "timestamp": now,
-                        "sparkline": spark,
+                        "sparkline": slots,
                     }
-                    return spark
+                    return slots
         except Exception as e:
             logger.debug("Không thể tải nến 1m cho %s: %s", code, e)
 
-        return fallback_daily[-30:] if len(fallback_daily) >= 30 else fallback_daily
+        cls._mem_cache[code] = {
+            "timestamp": now - 45,
+            "sparkline": [],
+        }
+        return []
 
 
 class IBoardDataGateway:
     """Gateway truy vấn dữ liệu kết hợp DB PostgreSQL và VnstockService (Rule 7.2)."""
 
-    @staticmethod
+    @classmethod
     def backfill_ohlcv_daily(
+        cls,
         session: Session,
         vn: VnstockService,
         symbol: str,
         target_count: int = 100,
     ) -> list[StockOHLCVDaily]:
-        """Truy xuất nến ngày từ PostgreSQL; nạp tạm thời nếu DB chưa đủ mà không sửa đổi DB."""
+        """Truy xuất nến ngày từ PostgreSQL; chỉ gọi vnstock nếu DB hoàn toàn rỗng."""
         rows: list[StockOHLCVDaily] = list(
             session.exec(
                 select(StockOHLCVDaily)
@@ -159,12 +245,8 @@ class IBoardDataGateway:
             ).all()
         )
 
-        today = date.today()
-        needs_fetch = False
-        if len(rows) < target_count:
-            needs_fetch = True
-        elif rows and rows[0].trading_date < today:
-            needs_fetch = True
+        today = datetime.now(VN_TZ).date()
+        needs_fetch = len(rows) == 0
 
         if needs_fetch:
             try:
@@ -247,26 +329,23 @@ class IBoardDataGateway:
             else:
                 missing.append(sym)
 
-        # Trigger dynamic DNSE stream subscription for any missing symbols
-        if missing:
-            dnse_stream_manager.subscribe_symbols_background(missing)
-
-        # Fallback to vnstock for missing symbols if cache is not populated yet
         if missing and vn is not None:
             try:
-                df = vn.fetch_market_quote(missing)
-                if df is not None and not df.empty and "symbol" in df.columns:
-                    for _, row in df.iterrows():
-                        r_sym = str(row["symbol"]).strip().upper()
-                        results[r_sym] = row
+                quotes_df = vn.fetch_market_quote(missing)
+                if quotes_df is not None and not quotes_df.empty:
+                    for _, row in quotes_df.iterrows():
+                        sym = str(row.get("symbol") or row.get("ticker") or "").upper()
+                        if sym:
+                            q_dict = row.to_dict()
+                            results[sym] = q_dict
+                            realtime_cache.set(f"iboard_quote:{sym}", q_dict, ttl=5)
             except Exception as e:
-                logger.warning("fetch_market_quote fallback batch thất bại: %s", e)
+                logger.debug("Lỗi tải snapshot hàng loạt qua VnstockService: %s", e)
 
         return results
 
 
 __all__ = [
-    "DowJonesGateway",
     "IBoardDataGateway",
     "IndexSparklineGateway",
 ]

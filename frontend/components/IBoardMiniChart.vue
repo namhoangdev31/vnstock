@@ -1,402 +1,275 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
-import { createDnseDatafeed } from "~/composables/useDnseDatafeed"
 import { useIndexWsChannel } from "~/composables/useIndexWsChannel"
-import { loadTradingViewScript } from "~/composables/useTradingViewScript"
 import { MarketIndexSymbol } from "~/types/market"
+import IBoardIntradayCanvas from "./IBoardIntradayCanvas.vue"
 
 interface Props {
   symbol: string
-  initialResolution?: string
-  isExpanded?: boolean
+  availableSymbols?: Array<{ symbol: string; name: string }>
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  initialResolution: "1",
-  isExpanded: false,
+  availableSymbols: () => [],
 })
 
 const emit = defineEmits<{
   (e: "close", symbol: string): void
   (e: "expand", symbol: string): void
+  (e: "change-symbol", oldSym: string, newSym: string): void
 }>()
 
-const containerId = `tv_mini_frame_${props.symbol.toLowerCase()}_${Math.random().toString(36).substring(2, 8)}`
-const chartContainerRef = ref<HTMLDivElement | null>(null)
-const isLoading = ref(true)
-const loadError = ref<string | null>(null)
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let tvWidget: any = null
+const isDropdownOpen = ref(false)
 
 const { indexData, isWsConnected, isFlashing, start, stop } = useIndexWsChannel(
   props.symbol,
 )
 
-function initChart() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const TradingView = (window as any).TradingView
-  if (!TradingView?.widget) {
-    loadError.value = "Không tìm thấy thư viện TradingView Charting Library"
-    isLoading.value = false
-    return
-  }
-
-  try {
-    const datafeed = createDnseDatafeed()
-
-    tvWidget = new TradingView.widget({
-      container: containerId,
-      locale: "vi",
-      library_path: "/charting_library/",
-      symbol: props.symbol,
-      interval: props.initialResolution,
-      timezone: "Asia/Ho_Chi_Minh",
-      theme: "dark",
-      autosize: true,
-      datafeed,
-      fullscreen: false,
-      loading_screen: {
-        backgroundColor: "#111217",
-        foregroundColor: "#10b981",
-      },
-      disabled_features: [
-        "use_localstorage_for_settings",
-        "study_templates",
-        "header_widget",
-        "left_toolbar",
-        "timeframes_toolbar",
-        "control_bar",
-        "context_menus",
-        "pane_context_menu",
-        "symbol_info",
-        "display_market_status",
-      ],
-      enabled_features: [],
-      overrides: {
-        "paneProperties.background": "#111217",
-        "paneProperties.backgroundType": "solid",
-        "paneProperties.vertGridProperties.color": "rgba(255, 255, 255, 0.04)",
-        "paneProperties.horzGridProperties.color": "rgba(255, 255, 255, 0.04)",
-        "scalesProperties.textColor": "#a1a1aa",
-        "mainSeriesProperties.candleStyle.upColor": "#089981",
-        "mainSeriesProperties.candleStyle.downColor": "#f23645",
-        "mainSeriesProperties.candleStyle.borderUpColor": "#089981",
-        "mainSeriesProperties.candleStyle.borderDownColor": "#f23645",
-        "mainSeriesProperties.candleStyle.wickUpColor": "#089981",
-        "mainSeriesProperties.candleStyle.wickDownColor": "#f23645",
-      },
-    })
-
-    tvWidget.onChartReady(() => {
-      isLoading.value = false
-    })
-  } catch (err) {
-    console.error(`[${props.symbol}] Khởi tạo widget thất bại:`, err)
-    loadError.value = err instanceof Error ? err.message : String(err)
-    isLoading.value = false
-  }
-}
-
 const formatPrice = (val: number | string | undefined | null): string => {
   if (val === undefined || val === null || val === "") return "-"
   const n = typeof val === "number" ? val : Number.parseFloat(String(val))
   if (Number.isNaN(n)) return String(val)
-  const parts = n.toFixed(2).split(".")
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-  return parts.join(",")
+  return n.toLocaleString("en-US", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 2,
+  })
+}
+
+const formatSignedChange = (chg: number): string => {
+  if (typeof chg !== "number" || Number.isNaN(chg) || Math.abs(chg) < 0.001) {
+    return "0.00"
+  }
+  const sign = chg > 0 ? "+" : ""
+  return `${sign}${chg.toFixed(2)}`
 }
 
 const formatChangePercent = (val: number): string => {
   if (typeof val !== "number" || Number.isNaN(val) || Math.abs(val) < 0.001) {
-    return "0,00%"
+    return "0.00%"
   }
-  const sign = val > 0 ? "+" : "−"
-  const parts = Math.abs(val).toFixed(2).split(".")
-  const formattedAbs = `${parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${parts[1]}`
-  return `${sign}${formattedAbs}%`
+  const sign = val > 0 ? "+" : ""
+  return `${sign}${val.toFixed(2)}%`
 }
+
+const formatVolumeText = computed(() => {
+  const isDeriv = props.symbol === MarketIndexSymbol.VN30F1M
+  if (indexData.value.raw_volume && indexData.value.raw_volume > 0) {
+    const v = Math.round(indexData.value.raw_volume)
+    return isDeriv
+      ? `${v.toLocaleString("en-US")} HĐ`
+      : `${v.toLocaleString("en-US")} CP`
+  }
+  return indexData.value.volume || "-"
+})
+
+const formatValueText = computed(() => {
+  if (indexData.value.raw_value && indexData.value.raw_value > 0) {
+    return `${indexData.value.raw_value.toLocaleString("en-US", {
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    })} Tỷ`
+  }
+  return indexData.value.value || "-"
+})
 
 const getColorClass = (change: number): string => {
-  if (change > 0.001) return "text-tv-bull"
-  if (change < -0.001) return "text-tv-bear"
-  return "text-tv-gold"
+  if (change > 0.001) return "text-[#089981]"
+  if (change < -0.001) return "text-[#f23645]"
+  return "text-[#f59e0b]"
 }
 
-const derivativesRatio = computed(() => {
-  const d = indexData.value.derivativesDepth
-  if (!d) return { buyPct: 50, sellPct: 50 }
-  const total = d.buyQuantity + d.sellQuantity || 1
-  const buyPct = Math.round((d.buyQuantity / total) * 100)
-  return { buyPct, sellPct: 100 - buyPct }
+const derivPrices = computed(() => {
+  if (indexData.value.symbol !== MarketIndexSymbol.VN30F1M) return null
+  const ref =
+    indexData.value.derivativesDepth?.refPrice ||
+    (indexData.value.price > 0 && indexData.value.change !== 0
+      ? Number((indexData.value.price - indexData.value.change).toFixed(1))
+      : 0)
+  if (!ref || ref <= 0) return null
+  const ceil =
+    indexData.value.derivativesDepth?.ceilingPrice ||
+    Number((ref * 1.07).toFixed(1))
+  const flr =
+    indexData.value.derivativesDepth?.floorPrice ||
+    Number((ref * 0.93).toFixed(1))
+  return {
+    refPrice: ref,
+    ceilingPrice: ceil,
+    floorPrice: flr,
+  }
 })
+
+const switchSymbol = (newSym: string) => {
+  isDropdownOpen.value = false
+  if (newSym !== props.symbol) {
+    emit("change-symbol", props.symbol, newSym)
+  }
+}
 
 watch(
   () => props.symbol,
-  (newSym) => {
-    if (tvWidget && newSym) {
-      try {
-        tvWidget.activeChart().setSymbol(newSym)
-      } catch (err) {
-        console.warn(`[${props.symbol}] Lỗi khi chuyển mã ${newSym}:`, err)
-      }
-    }
+  () => {
+    stop()
+    start()
   },
 )
 
 onMounted(async () => {
   await start()
-  try {
-    await loadTradingViewScript()
-    initChart()
-  } catch (err) {
-    console.error(`[${props.symbol}] Lỗi khi nạp script TradingView:`, err)
-    loadError.value = "Không thể nạp tệp thư viện TradingView"
-    isLoading.value = false
-  }
 })
 
 onBeforeUnmount(() => {
-  if (tvWidget) {
-    try {
-      tvWidget.remove()
-    } catch (e) {
-      console.warn(`[${props.symbol}] Lỗi dọn dẹp widget:`, e)
-    }
-    tvWidget = null
-  }
   stop()
 })
 </script>
 
 <template>
   <div
-    class="flex flex-col bg-surface-midnight rounded-lg border border-white/[0.08] overflow-hidden text-xs select-none transition-all shadow-sm"
+    class="flex flex-col relative bg-[#10121a] hover:bg-[#131622] p-1.5 rounded border border-white/[0.08] transition-all select-none shadow-sm min-w-0"
     :class="{
-      'ring-1 ring-tv-bull/40': isFlashing === 'up',
-      'ring-1 ring-tv-bear/40': isFlashing === 'down',
+      'ring-1 ring-[#089981]/50': isFlashing === 'up',
+      'ring-1 ring-[#f23645]/50': isFlashing === 'down',
     }"
   >
 
-    <div
-      class="px-2.5 py-1.5 flex items-center justify-between border-b border-white/[0.06] bg-surface-canvas/80 gap-2"
-    >
+    <div class="relative w-full">
 
-      <div class="flex items-center gap-1.5 min-w-0">
-        <UTooltip
-          :text="
-            isWsConnected ? 'WebSocket kết nối trực tiếp' : 'Đang kết nối lại'
-          "
+      <IBoardIntradayCanvas
+        :sparkline="indexData.sparkline || []"
+        :ref-price="indexData.ref_price"
+        :current-price="indexData.price"
+        :is-positive="indexData.isPositive"
+        :symbol="props.symbol"
+      />
+
+      <div
+        class="absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <button
+          type="button"
+          class="p-0.5 rounded text-zinc-500 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+          title="Mở biểu đồ kỹ thuật"
+          @click="emit('expand', props.symbol)"
         >
-          <span
-            class="w-1.5 h-1.5 rounded-full inline-block shrink-0"
-            :class="
-              isWsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-            "
+          <UIcon
+            name="i-heroicons-arrows-pointing-out"
+            class="w-3 h-3"
           />
-        </UTooltip>
-
-        <span class="text-white font-bold tracking-tight text-xs shrink-0">
-          {{ indexData.name || props.symbol }}
-        </span>
-
-        <span
-          class="font-mono tabular-nums text-xs transition-colors duration-200 shrink-0"
-          :class="[
-            isFlashing === 'up'
-              ? 'text-tv-bull font-bold'
-              : isFlashing === 'down'
-                ? 'text-tv-bear font-bold'
-                : getColorClass(indexData.change),
-          ]"
+        </button>
+        <button
+          type="button"
+          class="p-0.5 rounded text-zinc-500 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
+          title="Đóng chỉ số"
+          @click="emit('close', props.symbol)"
         >
-          {{ formatPrice(indexData.price) }}
-        </span>
+          <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
+        </button>
+      </div>
+    </div>
 
-        <span
-          class="text-[10px] font-mono tabular-nums flex items-center gap-0.5 font-medium shrink-0"
+    <div class="flex flex-col gap-0.5 pt-1.5 px-0.5 text-[10px] font-mono leading-tight">
+
+      <div class="flex items-center justify-between leading-none">
+
+        <div class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-0.5 font-bold font-mono text-[11px] text-white hover:text-rose-400 transition-colors cursor-pointer"
+            @click="isDropdownOpen = !isDropdownOpen"
+          >
+            <span>{{ indexData.name || props.symbol }}</span>
+            <UIcon
+              name="i-heroicons-chevron-down"
+              class="w-2.5 h-2.5 text-zinc-400"
+            />
+          </button>
+
+          <div
+            v-if="isDropdownOpen"
+            class="absolute top-5 left-0 z-50 w-36 py-1 rounded bg-[#181a24] border border-white/[0.12] shadow-2xl flex flex-col gap-0.5"
+          >
+            <button
+              v-for="item in availableSymbols"
+              :key="item.symbol"
+              type="button"
+              class="w-full text-left px-2 py-1 text-[10px] hover:bg-white/10 text-white flex items-center justify-between transition-colors cursor-pointer"
+              :class="item.symbol === props.symbol ? 'text-rose-400 font-bold' : ''"
+              @click="switchSymbol(item.symbol)"
+            >
+              <span>{{ item.symbol }}</span>
+              <span class="text-zinc-500 text-[9px]">{{ item.name }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="flex items-center gap-0.5 font-bold tabular-nums"
           :class="getColorClass(indexData.change)"
         >
           <span>{{
-            indexData.change > 0 ? "▲" : indexData.change < 0 ? "▼" : "■"
+            indexData.change > 0 ? "↑" : indexData.change < 0 ? "↓" : ""
           }}</span>
-          <span>{{ indexData.change > 0 ? "+" : "" }}{{
-            formatPrice(indexData.change)
-          }}</span>
-          <span>{{ formatChangePercent(indexData.changePercent) }}</span>
-        </span>
+          <span class="text-[11px]">{{ formatPrice(indexData.price) }}</span>
+          <span class="text-[9px] font-normal">
+            ({{ formatSignedChange(indexData.change) }}
+            {{ formatChangePercent(indexData.changePercent) }})
+          </span>
+        </div>
       </div>
 
-      <div class="flex items-center gap-1 text-zinc-400 shrink-0">
-        <UTooltip text="Mở rộng khung biểu đồ">
-          <button
-            type="button"
-            class="p-0.5 hover:text-white rounded hover:bg-white/[0.08] transition-colors cursor-pointer"
-            @click="emit('expand', props.symbol)"
-          >
-            <UIcon
-              name="i-heroicons-arrows-pointing-out"
-              class="w-3.5 h-3.5"
-            />
-          </button>
-        </UTooltip>
-
-        <UTooltip text="Đóng khung chỉ số">
-          <button
-            type="button"
-            class="p-0.5 hover:text-rose-400 rounded hover:bg-white/[0.08] transition-colors cursor-pointer"
-            @click="emit('close', props.symbol)"
-          >
-            <UIcon name="i-heroicons-x-mark" class="w-3.5 h-3.5" />
-          </button>
-        </UTooltip>
+      <div class="flex items-center justify-between text-zinc-300 text-[10px] tabular-nums pt-0.5">
+        <span>{{ formatVolumeText }}</span>
+        <span>{{ formatValueText }}</span>
       </div>
-    </div>
 
-    <div
-      class="relative w-full bg-[#111217] overflow-hidden"
-      :class="props.isExpanded ? 'h-[440px]' : 'h-[230px]'"
-    >
-      <div :id="containerId" ref="chartContainerRef" class="w-full h-full" />
+      <div class="flex items-center justify-between tabular-nums pt-0.5 text-[9px]">
 
-      <div
-        v-if="isLoading"
-        class="absolute inset-0 flex flex-col items-center justify-center bg-[#111217]/90 z-10 font-mono text-xs text-zinc-400 gap-2 pointer-events-none"
-      >
         <div
-          class="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"
-        />
-        <span>Đang nạp biểu đồ kỹ thuật...</span>
+          v-if="props.symbol === MarketIndexSymbol.VN30F1M && derivPrices"
+          class="flex items-center gap-1.5 font-semibold"
+        >
+          <span class="text-[#f59e0b]">{{
+            formatPrice(derivPrices.refPrice)
+          }}</span>
+          <span class="text-[#c084fc]">{{
+            formatPrice(derivPrices.ceilingPrice)
+          }}</span>
+          <span class="text-[#22d3ee]">{{
+            formatPrice(derivPrices.floorPrice)
+          }}</span>
+        </div>
+
+        <div
+          v-else-if="indexData.breadth"
+          class="flex items-center gap-1.5 leading-none"
+        >
+
+          <span class="text-[#089981] flex items-center gap-0.5">
+            <span>↑</span>
+            <span>{{ indexData.breadth.advance }}</span>
+            <span class="text-[#c084fc]"
+              >({{ indexData.breadth.ceiling }})</span
+            >
+          </span>
+
+          <span class="text-[#f59e0b] flex items-center gap-0.5">
+            <span>—</span>
+            <span>{{ indexData.breadth.unchanged }}</span>
+          </span>
+
+          <span class="text-[#f23645] flex items-center gap-0.5">
+            <span>↓</span>
+            <span>{{ indexData.breadth.decline }}</span>
+            <span class="text-[#22d3ee]"
+              >({{ indexData.breadth.floor }})</span
+            >
+          </span>
+        </div>
+
+        <span class="text-zinc-500 font-sans text-[9px]">{{
+          indexData.status || "Đóng cửa"
+        }}</span>
       </div>
-
-      <div
-        v-if="loadError"
-        class="absolute inset-0 flex flex-col items-center justify-center bg-[#111217] z-20 font-mono text-xs text-rose-400 p-4 text-center gap-1"
-      >
-        <span class="font-bold">Không thể khởi tạo biểu đồ</span>
-        <span class="text-zinc-500 text-[11px]">{{ loadError }}</span>
-      </div>
-    </div>
-
-    <div
-      class="p-2 border-t border-white/[0.06] bg-surface-canvas/90 flex flex-col gap-1 text-[10px]"
-    >
-
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2 font-mono tabular-nums text-zinc-400">
-          <span>KL: <strong class="text-zinc-200">{{ indexData.volume }}</strong></span>
-          <span>GT: <strong class="text-zinc-200">{{ indexData.value }}</strong></span>
-        </div>
-        <span class="text-zinc-400 font-medium">
-          {{ indexData.status }}
-        </span>
-      </div>
-
-      <template
-        v-if="
-          indexData.symbol === MarketIndexSymbol.VN30F1M &&
-          indexData.derivativesDepth
-        "
-      >
-        <div class="flex flex-col gap-0.5 mt-0.5">
-          <div
-            class="flex items-center justify-between text-zinc-300 font-mono tabular-nums"
-          >
-            <span>
-              Dư mua:
-              <strong class="text-white"
-                >{{
-                  indexData.derivativesDepth.buyQuantity.toLocaleString("vi-VN")
-                }}
-                HĐ</strong
-              >
-            </span>
-            <span>
-              Dư bán:
-              <strong class="text-white"
-                >{{
-                  indexData.derivativesDepth.sellQuantity.toLocaleString(
-                    "vi-VN",
-                  )
-                }}
-                HĐ</strong
-              >
-            </span>
-          </div>
-
-          <div class="h-1 w-full bg-zinc-800 rounded-full flex overflow-hidden">
-            <div
-              class="bg-tv-bull h-full transition-all duration-300"
-              :style="{ width: `${derivativesRatio.buyPct}%` }"
-            />
-            <div
-              class="bg-tv-bear h-full transition-all duration-300"
-              :style="{ width: `${derivativesRatio.sellPct}%` }"
-            />
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between text-zinc-400 pt-0.5">
-          <span class="text-zinc-500 font-sans">Biên độ dao động:</span>
-          <div class="flex items-center gap-1.5 font-mono text-[9px] tabular-nums">
-            <UTooltip text="Giá tham chiếu">
-              <span class="text-amber-400 font-semibold">
-                {{ formatPrice(indexData.derivativesDepth.refPrice) }}
-              </span>
-            </UTooltip>
-            <UTooltip text="Giá trần">
-              <span class="text-purple-400 font-semibold">
-                {{ formatPrice(indexData.derivativesDepth.ceilingPrice) }}
-              </span>
-            </UTooltip>
-            <UTooltip text="Giá sàn">
-              <span class="text-cyan-400 font-semibold">
-                {{ formatPrice(indexData.derivativesDepth.floorPrice) }}
-              </span>
-            </UTooltip>
-          </div>
-        </div>
-      </template>
-
-      <template v-else-if="indexData.breadth">
-        <div class="flex items-center justify-between pt-0.5 text-zinc-400">
-          <span class="text-zinc-500 font-sans">Độ rộng thị trường:</span>
-          <div class="flex items-center gap-1.5 font-mono text-[9px] tabular-nums">
-            <UTooltip text="Mã tăng giá">
-              <span class="text-tv-bull flex items-center gap-0.5">
-                <span>▲</span>
-                <span>{{ indexData.breadth.advance }}</span>
-                <span
-                  v-if="indexData.breadth.ceiling > 0"
-                  class="text-purple-400"
-                >
-                  [{{ indexData.breadth.ceiling }}]
-                </span>
-              </span>
-            </UTooltip>
-
-            <UTooltip text="Mã đứng giá">
-              <span class="text-tv-gold flex items-center gap-0.5">
-                <span>■</span>
-                <span>{{ indexData.breadth.unchanged }}</span>
-              </span>
-            </UTooltip>
-
-            <UTooltip text="Mã giảm giá">
-              <span class="text-tv-bear flex items-center gap-0.5">
-                <span>▼</span>
-                <span>{{ indexData.breadth.decline }}</span>
-                <span
-                  v-if="indexData.breadth.floor > 0"
-                  class="text-cyan-400"
-                >
-                  [{{ indexData.breadth.floor }}]
-                </span>
-              </span>
-            </UTooltip>
-          </div>
-        </div>
-      </template>
     </div>
   </div>
 </template>
