@@ -6,17 +6,17 @@ type Decorate<T extends Record<string, any>> = { [K in keyof T as K extends stri
 type InjectionType<A extends Plugin> = A extends {default: Plugin<infer T>} ? Decorate<T> : unknown
 
 type NuxtAppInjections = 
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/revive-payload.client.js")> &
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/head/runtime/plugins/unhead.js")> &
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/pages/runtime/plugins/router.js")> &
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/navigation-repaint.client.js")> &
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/revive-payload.server.js")> &
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/chunk-reload.client.js")> &
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/app/plugins/island-link-navigation.client.js")> &
-  InjectionType<typeof import("../../../node_modules/nuxt/dist/pages/runtime/plugins/prefetch.client.js")> &
-  InjectionType<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/plugins/slideovers.js")> &
-  InjectionType<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/plugins/modals.js")> &
-  InjectionType<typeof import("../../../node_modules/@nuxt/ui/dist/runtime/plugins/colors.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app/plugins/revive-payload.client.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/head/runtime/plugins/unhead.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/pages/runtime/plugins/router.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app/plugins/navigation-repaint.client.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app/plugins/revive-payload.server.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app/plugins/chunk-reload.client.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app/plugins/island-link-navigation.client.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/pages/runtime/plugins/prefetch.client.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/@nuxt/ui/dist/runtime/plugins/slideovers.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/@nuxt/ui/dist/runtime/plugins/modals.js")> &
+  InjectionType<typeof import("../../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/@nuxt/ui/dist/runtime/plugins/colors.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxtjs/color-mode/dist/runtime/plugin.server.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxtjs/color-mode/dist/runtime/plugin.client.js")> &
   InjectionType<typeof import("../../../node_modules/@nuxt/icon/dist/runtime/plugin.js")> &

@@ -30,15 +30,15 @@ Phương án này tiết kiệm CPU/RAM tối đa và phản hồi tức thì kh
    Mở terminal riêng tại thư mục gốc:
    ```bash
    cd frontend
-   bun install
-   bun run dev
+   pnpm install
+   pnpm run dev
    ```
    Frontend Vite dev server khởi chạy tại: <http://localhost:5173>
 
 4. **Build Frontend tĩnh tích hợp vào FastAPI**:
    ```bash
    cd frontend
-   bun run build
+   pnpm run build
    ```
    Bản build được xuất ra `backend/app/frontend` và FastAPI tự động phục vụ giao diện tại <http://localhost:8000>.
 
@@ -201,7 +201,7 @@ File `.env` ở thư mục gốc chứa các thiết lập mặc định cho mô
 
 Dự án sử dụng bộ công cụ hiện đại tốc độ cao:
 * **Backend**: `uv`, `ruff` (linter & formatter), `ty` (type checking).
-* **Frontend**: `bun`, `@biomejs/biome` (linter & formatter), `vue-tsc` (type checking).
+* **Frontend**: `pnpm`, `@biomejs/biome` (linter & formatter), `vue-tsc` (type checking).
 * **Git Hooks**: `prek` (công cụ thay thế `pre-commit` viết bằng Rust, tốc độ siêu nhanh).
 
 ### Cài đặt Hook tự động kiểm tra trước khi Commit
@@ -219,5 +219,5 @@ Mỗi khi bạn thực hiện `git commit`, `prek` sẽ tự động định d�
   ```
 * **Kiểm tra Frontend**:
   ```bash
-  cd frontend && bun run lint
+  cd frontend && pnpm run lint
   ```

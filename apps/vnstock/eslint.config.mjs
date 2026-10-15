@@ -17,6 +17,7 @@ export default antfu(
 
     // Disable JSON processing for translation files (handled by i18n-json plugin)
     jsonc: false,
+    markdown: false,
 
     // Use ESLint Stylistic for formatting
     stylistic: {
@@ -48,6 +49,7 @@ export default antfu(
 
   // Custom rules
   {
+    files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
     rules: {
       'max-params': ['error', 3],
       'max-lines-per-function': ['error', 110],

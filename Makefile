@@ -18,21 +18,21 @@ help: ## Hiển thị danh sách các lệnh có sẵn
 		/^##@/ { printf "\n$(BLUE)%s$(RESET)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Cài đặt & Khởi tạo
-install: ## Cài đặt dependencies cho cả Backend (uv) và Frontend (bun)
+install: ## Cài đặt dependencies cho cả Backend (uv) và Frontend (pnpm)
 	@echo "$(YELLOW)Cài đặt Python dependencies...$(RESET)"
 	uv sync
 	@echo "$(YELLOW)Cài đặt Frontend dependencies...$(RESET)"
-	cd frontend && bun install
+	pnpm install
 
 ##@ Phát triển Local
 dev: ## Khởi chạy Backend FastAPI server ở chế độ dev (port 8800)
 	cd backend && uv run fastapi dev --port 8800
 
-frontend: ## Khởi chạy Frontend Nuxt dev server (port 5173)
-	cd frontend && bun run dev --port 5173
+frontend: ## Khởi chạy Frontend Vite/Nuxt dev server (port 5173)
+	cd frontend && pnpm run dev
 
-build-frontend: ## Build Frontend tĩnh xuất vào frontend/dist
-	cd frontend && bun run build
+build-frontend: ## Build Frontend tĩnh xuất vào backend/app/frontend
+	cd frontend && pnpm run build
 
 ##@ Docker (Production)
 docker-up: ## Khởi chạy hệ thống Production (backend & frontend) ở chế độ background
@@ -67,11 +67,11 @@ db-revision: ## Tạo migration mới tự động (cú pháp: make db-revision 
 ##@ Kiểm tra chất lượng mã (Lint & Check)
 lint: ## Kiểm tra cú pháp và định dạng mã nguồn (ruff + biome)
 	uv run ruff check backend
-	cd frontend && bun run lint
+	cd frontend && pnpm run lint
 
 format: ## Tự động định dạng mã nguồn (ruff format + biome format)
 	uv run ruff format backend
-	cd frontend && bunx biome check --write app.vue nuxt.config.ts pages components composables layouts data
+	cd frontend && pnpm exec biome check --write app.vue nuxt.config.ts pages components composables layouts data
 
 check: ## Chạy kiểm tra toàn diện: ruff lint, ruff format check, type check, frontend lint
 	@echo "$(YELLOW)Kiểm tra lint backend...$(RESET)"
@@ -81,7 +81,7 @@ check: ## Chạy kiểm tra toàn diện: ruff lint, ruff format check, type che
 	@echo "$(YELLOW)Kiểm tra types backend...$(RESET)"
 	uv run ty check
 	@echo "$(YELLOW)Kiểm tra frontend...$(RESET)"
-	cd frontend && bun run lint
+	cd frontend && pnpm run lint
 	@echo "$(GREEN)Tất cả các bước kiểm tra đều thành công!$(RESET)"
 
 prek: ## Chạy toàn bộ Git pre-commit hooks bằng prek

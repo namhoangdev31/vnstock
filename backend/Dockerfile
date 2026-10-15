@@ -1,3 +1,27 @@
+FROM node:22-slim AS frontend-build
+
+WORKDIR /app
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
+COPY packages /app/packages/
+COPY frontend /app/frontend/
+
+RUN pnpm install --filter frontend... --frozen-lockfile
+
+WORKDIR /app/packages/dnse
+RUN pnpm run build
+
+WORKDIR /app/frontend
+
+ARG VITE_API_URL=
+
+RUN pnpm run build
+
+
 FROM python:3.14
 
 ENV PYTHONUNBUFFERED=1

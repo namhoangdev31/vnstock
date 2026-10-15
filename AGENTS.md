@@ -251,8 +251,8 @@ Any quantitative model, simulation, or financial calculation MUST adhere strictl
   2. **Không dùng Gradient trong Code (Zero Gradients)**: Tuyệt đối không dùng gradient (`bg-gradient-to-...`, `linear-gradient(...)`). Tất cả bề mặt, thẻ card và nút bấm phải là các mảng màu phẳng (flat surface) có tính kỷ luật cao.
   3. **Không dùng Emoji trong Văn Bản (Zero Emojis in Text)**: Tuyệt đối không dùng icon emoji (🚀, 📦, ⚡, 🛡️,...) trong văn bản hay tiêu đề. Thay vào đó, dùng component biểu tượng hệ thống `<UIcon>` hoặc typography chuẩn.
   4. **Không viết Text dùng dấu ngoặc đơn "()" để giải thích**: Tuyệt đối không dùng dấu ngoặc đơn để chú thích thuật ngữ hay định dạng trong nhãn hiển thị (ví dụ KHÔNG viết `<span>Technical Requirements Document (Markdown Specification)</span>` hay `Mật khẩu (tối thiểu 8 ký tự)`). Nếu cần cung cấp thông tin giải thích bổ sung, **bắt buộc phải dùng tooltip** (ví dụ `<UTooltip text="...">` hoặc hint text riêng).
-- **Code Quality**: Every frontend change MUST pass `bun run lint` and `bun run typecheck` cleanly with 0 errors.
-- **No Redundant Build During Development**: TUYỆT ĐỐI KHÔNG tự ý chạy `bun run build` sau mỗi lần sửa đổi frontend trong quá trình phát triển (môi trường `make docker-watch` / HMR tự động đồng bộ nóng). Chỉ chạy `bun run build` khi người dùng yêu cầu rõ ràng.
+- **Code Quality**: Every frontend change MUST pass `pnpm run lint` and `pnpm run typecheck` cleanly with 0 errors.
+- **No Redundant Build During Development**: TUYỆT ĐỐI KHÔNG tự ý chạy `pnpm run build` sau mỗi lần sửa đổi frontend trong quá trình phát triển (môi trường `make docker-watch` / HMR tự động đồng bộ nóng). Chỉ chạy `pnpm run build` khi người dùng yêu cầu rõ ràng.
 
 ---
 

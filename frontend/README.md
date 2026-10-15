@@ -4,22 +4,22 @@ The frontend is built with [Vite](https://vitejs.dev/), [React](https://react.de
 
 ## Requirements
 
-- [Bun](https://bun.sh/)
+- [Node.js](https://nodejs.org/) (>= 20) & [pnpm](https://pnpm.io/)
 
 ## Quick Start
 
 From the project root, install the dependencies and start the frontend development server:
 
 ```bash
-bun install
-bun run dev
+pnpm install
+pnpm run dev
 ```
 
 Then open <http://localhost:5173/> in your browser.
 
 Run `uv run bash scripts/prestart.sh` and `uv run fastapi dev` from the `backend` directory, with PostgreSQL running in Docker Compose. See [../development.md](../development.md) for the complete setup.
 
-To serve the frontend with FastAPI, run `bun run build` from the `frontend` directory and open `http://localhost:8000`.
+To serve the frontend with FastAPI, run `pnpm run build` from the `frontend` directory and open `http://localhost:8000`.
 
 Check `frontend/package.json` to see the other available commands.
 
@@ -62,7 +62,7 @@ bash ./scripts/generate-client.sh
 * To generate the frontend client, run:
 
 ```bash
-bun run generate-client
+pnpm run generate-client
 ```
 
 * Commit the changes.
@@ -103,13 +103,13 @@ docker compose up -d --wait backend
 Then, you can run the tests with the following command:
 
 ```bash
-bunx playwright test
+pnpm exec playwright test
 ```
 
 You can also run your tests in UI mode to see the browser and interact with it running:
 
 ```bash
-bunx playwright test --ui
+pnpm exec playwright test --ui
 ```
 
 To stop and remove the Docker Compose stack and clean the data created in tests, use the following command:

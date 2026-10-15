@@ -11,9 +11,9 @@
     "typecheck": "nuxt typecheck",
     "lint": "biome check app.vue nuxt.config.ts pages components composables layouts data",
     "generate-client": "openapi-ts",
-    "test": "bunx playwright test",
-    "test:ui": "bunx playwright test --ui",
-    "stripcomment": "bun ../scripts/strip-comments.ts ."
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "stripcomment": "pnpm dlx tsx ../scripts/strip-comments.ts ."
   },
   "dependencies": {
     "@msgpack/msgpack": "^3.1.3",

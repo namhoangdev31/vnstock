@@ -2,7 +2,7 @@
   "compilerOptions": {
     "paths": {
       "nuxt": [
-        "../../node_modules/nuxt"
+        "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt"
       ],
       "@unhead/vue": [
         "../../node_modules/@unhead/vue"
@@ -98,19 +98,19 @@
         "../server/*"
       ],
       "#app": [
-        "../../node_modules/nuxt/dist/app"
+        "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app"
       ],
       "#app/*": [
-        "../../node_modules/nuxt/dist/app/*"
+        "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app/*"
       ],
       "vue-demi": [
-        "../../node_modules/nuxt/dist/app/compat/vue-demi"
+        "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app/compat/vue-demi"
       ],
       "#ui": [
-        "../../node_modules/@nuxt/ui/dist/runtime"
+        "../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/@nuxt/ui/dist/runtime"
       ],
       "#ui/*": [
-        "../../node_modules/@nuxt/ui/dist/runtime/*"
+        "../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/@nuxt/ui/dist/runtime/*"
       ],
       "#ui-colors": [
         "./ui.colors"
@@ -119,10 +119,10 @@
         "./color-mode-options.mjs"
       ],
       "#vue-router": [
-        "../../node_modules/vue-router"
+        "../../node_modules/.pnpm/vue-router@4.6.4_vue@3.5.44_typescript@5.9.3_/node_modules/vue-router"
       ],
       "#unhead/composables": [
-        "../../node_modules/nuxt/dist/head/runtime/composables/v3"
+        "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/head/runtime/composables/v3"
       ],
       "#imports": [
         "./imports"
@@ -134,7 +134,7 @@
         "./tailwind/expose/*"
       ],
       "#app-manifest": [
-        "../../node_modules/mocked-exports/lib/proxy.d.mts"
+        "../../node_modules/.pnpm/mocked-exports@0.1.1/node_modules/mocked-exports/lib/proxy.d.mts"
       ],
       "#components": [
         "./components"
@@ -181,27 +181,35 @@
     "./nuxt.d.ts",
     "../../node_modules/runtime",
     "../../node_modules/dist/runtime",
+    "../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/runtime",
+    "../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/dist/runtime",
+    "../../node_modules/.pnpm/@vueuse+nuxt@15.0.0_@nuxt+schema@3.21.11_confbox@0.3.1_dotenv@17.4.2_giget@3.3.1_jiti@2_85ae08a8aa443bb319abd79534288baa/node_modules/runtime",
+    "../../node_modules/.pnpm/@vueuse+nuxt@15.0.0_@nuxt+schema@3.21.11_confbox@0.3.1_dotenv@17.4.2_giget@3.3.1_jiti@2_85ae08a8aa443bb319abd79534288baa/node_modules/dist/runtime",
     "..",
-    "../../node_modules/nuxt/dist/app",
-    "../../node_modules/nuxt/dist/app/compat/vue-demi",
-    "../../node_modules/@nuxt/ui/dist/runtime",
-    "../../node_modules/vue-router/vue-router.node.mjs",
-    "../../node_modules/nuxt/dist/head/runtime/composables/v3",
-    "../../node_modules/mocked-exports/lib/proxy.d.mts"
+    "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app",
+    "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/app/compat/vue-demi",
+    "../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/@nuxt/ui/dist/runtime",
+    "../../node_modules/.pnpm/vue-router@4.6.4_vue@3.5.44_typescript@5.9.3_/node_modules/vue-router/vue-router.node.mjs",
+    "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/dist/head/runtime/composables/v3",
+    "../../node_modules/.pnpm/mocked-exports@0.1.1/node_modules/mocked-exports/lib/proxy.d.mts"
   ],
   "exclude": [
     "../dist",
     "../.data",
     "../../node_modules",
-    "../../node_modules/nuxt/node_modules",
+    "../../node_modules/.pnpm/nuxt@3.21.11_@biomejs+biome@2.5.15_@oxc-project+types@0.143.0_@types+node@26.6.5_@vue+c_a6dfb0f088285a491ab381aee5ebcce3/node_modules/nuxt/node_modules",
     "../../node_modules/@nuxt/icon/node_modules",
     "../../node_modules/@nuxtjs/color-mode/node_modules",
     "../../node_modules/@nuxtjs/tailwindcss/node_modules",
-    "../../node_modules/@nuxt/ui/node_modules",
-    "../../node_modules/@vueuse/nuxt/node_modules",
+    "../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/@nuxt/ui/node_modules",
+    "../../node_modules/.pnpm/@vueuse+nuxt@15.0.0_@nuxt+schema@3.21.11_confbox@0.3.1_dotenv@17.4.2_giget@3.3.1_jiti@2_85ae08a8aa443bb319abd79534288baa/node_modules/@vueuse/nuxt/node_modules",
     "../../node_modules/@nuxt/devtools/node_modules",
     "../../node_modules/runtime/server",
     "../../node_modules/dist/runtime/server",
+    "../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/runtime/server",
+    "../../node_modules/.pnpm/@nuxt+ui@2.22.3_@nuxt+schema@3.21.11_axios@1.20.0_debug@4.4.3_supports-color@10.2.2__su_55443b908975645970aac7c89ceba0c4/node_modules/dist/runtime/server",
+    "../../node_modules/.pnpm/@vueuse+nuxt@15.0.0_@nuxt+schema@3.21.11_confbox@0.3.1_dotenv@17.4.2_giget@3.3.1_jiti@2_85ae08a8aa443bb319abd79534288baa/node_modules/runtime/server",
+    "../../node_modules/.pnpm/@vueuse+nuxt@15.0.0_@nuxt+schema@3.21.11_confbox@0.3.1_dotenv@17.4.2_giget@3.3.1_jiti@2_85ae08a8aa443bb319abd79534288baa/node_modules/dist/runtime/server",
     "../.output"
   ]
 }

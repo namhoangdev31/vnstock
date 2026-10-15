@@ -43,7 +43,7 @@ export function changeLanguage(lang: Language) {
 }
 
 export function useSelectedLanguage() {
-  const [language, setLang] = useMMKVString(LOCAL);
+  const [language, setLang] = useMMKVString(LOCAL, storage);
 
   const setLanguage = useCallback(
     (lang: Language) => {

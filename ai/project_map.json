@@ -30,7 +30,7 @@
     "frontend": {
       "framework": "Nuxt 3 + Vue 3 Composition API",
       "styling": "@nuxt/ui + TailwindCSS",
-      "package_manager": "bun / npm",
+      "package_manager": "pnpm",
       "entrypoints": [
         "frontend/app.vue",
         "frontend/nuxt.config.ts"
