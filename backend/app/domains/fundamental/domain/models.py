@@ -142,9 +142,7 @@ class CompanyProfile(AwareSQLModel, table=True):
     market_cap: float | None = None
     free_float_pct: float | None = None
     foreign_ownership_pct: float | None = None
-    max_foreign_ownership_pct: float | None = (
-        None
-    )
+    max_foreign_ownership_pct: float | None = None
     employee_count: int | None = None
     website: str | None = Field(default=None, max_length=500)
     address: str | None = Field(default=None, max_length=500)
@@ -180,12 +178,8 @@ class FinancialReport(AwareSQLModel, table=True):
     instrument_id: uuid.UUID | None = Field(
         default=None, foreign_key="instrument.id", index=True
     )
-    report_type: str = Field(
-        max_length=20
-    )
-    report_scope: str = Field(
-        default="consolidated", max_length=20, index=True
-    )
+    report_type: str = Field(max_length=20)
+    report_scope: str = Field(default="consolidated", max_length=20, index=True)
     period: str = Field(max_length=10)
     year: int
     quarter: int | None = None
@@ -238,9 +232,7 @@ class FinancialReportRevision(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     report_id: uuid.UUID = Field(foreign_key="financial_report.id", index=True)
-    revision_number: int = Field(
-        default=1
-    )
+    revision_number: int = Field(default=1)
     payload_hash: str = Field(max_length=64, index=True)
     published_at: datetime | None = Field(
         default=None,
@@ -269,9 +261,7 @@ class FinancialReportItem(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     report_id: uuid.UUID = Field(foreign_key="financial_report.id", index=True)
-    item_code: str = Field(
-        max_length=100, index=True
-    )
+    item_code: str = Field(max_length=100, index=True)
     item_name: str = Field(max_length=255)
     value: float | None = None
     order_index: int = Field(default=0)
@@ -337,12 +327,8 @@ class FinancialRatio(AwareSQLModel, table=True):
 
     revenue_growth_yoy: float | None = None
     net_profit_growth_yoy: float | None = None
-    revenue_growth_qoq: float | None = (
-        None
-    )
-    net_profit_growth_qoq: float | None = (
-        None
-    )
+    revenue_growth_qoq: float | None = None
+    net_profit_growth_qoq: float | None = None
 
     data: dict[str, Any] = Field(
         default_factory=dict,
@@ -366,22 +352,14 @@ class CorporateEvent(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
-    event_type: str = Field(
-        max_length=30
-    )
+    event_type: str = Field(max_length=30)
     event_title: str = Field(max_length=500)
-    ex_date: date | None = Field(
-        default=None, index=True
-    )
+    ex_date: date | None = Field(default=None, index=True)
     record_date: date | None = None
     effective_date: date | None = None
     cash_rate: float | None = None
-    stock_rate: float | None = (
-        None
-    )
-    ratio_string: str | None = Field(
-        default=None, max_length=50
-    )
+    stock_rate: float | None = None
+    ratio_string: str | None = Field(default=None, max_length=50)
     notes: str | None = None
     details: dict[str, Any] = Field(
         default_factory=dict,
@@ -423,9 +401,7 @@ class CompanyOfficer(AwareSQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
     officer_name: str = Field(max_length=255)
-    position: str = Field(
-        max_length=255
-    )
+    position: str = Field(max_length=255)
     share_count: float | None = None
     ownership_pct: float | None = None
     updated_at: datetime = Field(
@@ -442,9 +418,7 @@ class CompanySubsidiary(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
-    sub_organ_code: str = Field(
-        max_length=50, index=True
-    )
+    sub_organ_code: str = Field(max_length=50, index=True)
     organ_name: str = Field(max_length=500)
     ownership_percent: float = Field(default=0.0)
     updated_at: datetime = Field(
@@ -463,17 +437,13 @@ class InsiderTrading(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
-    officer_name: str = Field(
-        max_length=255, index=True
-    )
+    officer_name: str = Field(max_length=255, index=True)
     officer_position: str | None = Field(default=None, max_length=255)
     deal_action: str = Field(max_length=50)
     deal_quantity: float | None = None
     deal_price: float | None = None
     deal_ratio: float | None = None
-    deal_announce_date: date | None = Field(
-        default=None, index=True
-    )
+    deal_announce_date: date | None = Field(default=None, index=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore
@@ -488,9 +458,7 @@ class CapitalHistory(AwareSQLModel, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
-    issue_date: date | None = Field(
-        default=None, index=True
-    )
+    issue_date: date | None = Field(default=None, index=True)
     charter_capital: float | None = None
     shares_issued: float | None = None
     description: str | None = Field(default=None, max_length=500)

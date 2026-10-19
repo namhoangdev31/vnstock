@@ -34,6 +34,10 @@ SplashScreen.setOptions({
 });
 
 export default function RootLayout() {
+  React.useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
   return (
     <Providers>
       <Stack>
@@ -56,13 +60,14 @@ function Providers({ children }: { children: React.ReactNode }) {
       <KeyboardProvider>
         <ThemeProvider value={theme}>
           <APIProvider>
-            <View className="w-full flex-1 items-center justify-center bg-surface-canvas dark:bg-aave-inkwell">
-              <View className="relative w-full max-w-[480px] flex-1 overflow-hidden border-black/6 bg-surface-canvas sm:border-x dark:border-white/6 dark:bg-aave-inkwell">
-                <BottomSheetModalProvider>
-                  {children}
-                  <FlashMessage position="top" />
-                </BottomSheetModalProvider>
-              </View>
+            <View
+              className="w-full flex-1 bg-surface-canvas dark:bg-aave-inkwell"
+              style={{ flex: 1, width: '100%' }}
+            >
+              <BottomSheetModalProvider>
+                {children}
+                <FlashMessage position="top" />
+              </BottomSheetModalProvider>
             </View>
           </APIProvider>
         </ThemeProvider>

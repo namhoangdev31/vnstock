@@ -25,9 +25,7 @@ class ProviderRateLimitState(AwareSQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
     )
     consecutive_failures: int = Field(default=0)
-    circuit_state: str = Field(
-        default="closed", max_length=20
-    )
+    circuit_state: str = Field(default="closed", max_length=20)
     circuit_open_until: datetime | None = Field(
         default=None,
         sa_type=DateTime(timezone=True),  # type: ignore

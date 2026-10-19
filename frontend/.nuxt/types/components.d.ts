@@ -20,8 +20,12 @@ interface _GlobalComponents {
   IBoardHeader: typeof import("../../components/IBoardHeader.vue")['default']
   IBoardIndexSummaryTable: typeof import("../../components/IBoardIndexSummaryTable.vue")['default']
   IBoardIntradayCanvas: typeof import("../../components/IBoardIntradayCanvas.vue")['default']
+  IBoardMarketBreadthModal: typeof import("../../components/IBoardMarketBreadthModal.vue")['default']
   IBoardMiniChart: typeof import("../../components/IBoardMiniChart.vue")['default']
   IBoardMiniChartsBar: typeof import("../../components/IBoardMiniChartsBar.vue")['default']
+  IBoardRightSidebar: typeof import("../../components/IBoardRightSidebar.vue")['default']
+  IBoardStockDetailPanel: typeof import("../../components/IBoardStockDetailPanel.vue")['default']
+  IBoardTable: typeof import("../../components/IBoardTable.vue")['default']
   MarkdownViewer: typeof import("../../components/MarkdownViewer.vue")['default']
   MarketTickerBar: typeof import("../../components/MarketTickerBar.vue")['default']
   QuantPulseCard: typeof import("../../components/QuantPulseCard.vue")['default']
@@ -107,8 +111,12 @@ interface _GlobalComponents {
   LazyIBoardHeader: LazyComponent<typeof import("../../components/IBoardHeader.vue")['default']>
   LazyIBoardIndexSummaryTable: LazyComponent<typeof import("../../components/IBoardIndexSummaryTable.vue")['default']>
   LazyIBoardIntradayCanvas: LazyComponent<typeof import("../../components/IBoardIntradayCanvas.vue")['default']>
+  LazyIBoardMarketBreadthModal: LazyComponent<typeof import("../../components/IBoardMarketBreadthModal.vue")['default']>
   LazyIBoardMiniChart: LazyComponent<typeof import("../../components/IBoardMiniChart.vue")['default']>
   LazyIBoardMiniChartsBar: LazyComponent<typeof import("../../components/IBoardMiniChartsBar.vue")['default']>
+  LazyIBoardRightSidebar: LazyComponent<typeof import("../../components/IBoardRightSidebar.vue")['default']>
+  LazyIBoardStockDetailPanel: LazyComponent<typeof import("../../components/IBoardStockDetailPanel.vue")['default']>
+  LazyIBoardTable: LazyComponent<typeof import("../../components/IBoardTable.vue")['default']>
   LazyMarkdownViewer: LazyComponent<typeof import("../../components/MarkdownViewer.vue")['default']>
   LazyMarketTickerBar: LazyComponent<typeof import("../../components/MarketTickerBar.vue")['default']>
   LazyQuantPulseCard: LazyComponent<typeof import("../../components/QuantPulseCard.vue")['default']>

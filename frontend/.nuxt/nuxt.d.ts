@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-=======
 /// <reference types="@vueuse/nuxt" />
->>>>>>> 90c00da (feat: add IBoardHeader component and update configuration settings)
-/// <reference types="@nuxt/ui" />
 /// <reference types="@nuxt/devtools" />
-/// <reference types="@vueuse/nuxt" />
+/// <reference types="@nuxt/ui" />
 /// <reference path="types/nitro-layouts.d.ts" />
 /// <reference path="types/builder-env.d.ts" />
 /// <reference types="nuxt" />

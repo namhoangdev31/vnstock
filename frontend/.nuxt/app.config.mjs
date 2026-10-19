@@ -224,6 +224,7 @@ const inlineConfig = {
       "tv",
       "quant",
       "ticker",
+      "market",
       "primary"
     ],
     "strategy": "merge"

@@ -10,6 +10,10 @@ const props = withDefaults(defineProps<Props>(), {
   indices: () => [],
 })
 
+const emit = defineEmits<{
+  "open-breadth": [symbol: string]
+}>()
+
 const parseNum = (val: string | number | undefined | null): number => {
   if (typeof val === "number") return val
   if (!val) return 0
@@ -120,17 +124,22 @@ const getColorClass = (changeStr: string): string => {
           {{ getValueBillion(item) }}
         </div>
 
-        <div class="col-span-2 text-right flex items-center justify-end gap-1 text-[9px]">
+        <div
+          class="col-span-2 text-right flex items-center justify-end gap-1 text-[9px]"
+          :class="item.breadth ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''"
+          :title="item.breadth ? 'Xem biểu đồ độ rộng thị trường' : undefined"
+          @click="item.breadth ? emit('open-breadth', item.name) : undefined"
+        >
           <template v-if="item.breadth">
-            <span class="text-[#089981] flex items-center">
+            <span class="text-market-advance flex items-center">
               <span>↑</span>
               <span>{{ item.breadth.advance }}</span>
             </span>
-            <span class="text-[#f59e0b] flex items-center">
+            <span class="text-market-unchanged flex items-center">
               <span>—</span>
               <span>{{ item.breadth.unchanged }}</span>
             </span>
-            <span class="text-[#f23645] flex items-center">
+            <span class="text-market-decline flex items-center">
               <span>↓</span>
               <span>{{ item.breadth.decline }}</span>
             </span>

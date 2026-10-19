@@ -100,7 +100,6 @@ class SimulationEngine:
         self.session = session
         self.config = config or SimulationConfig()
 
-
     def create_portfolio(
         self,
         *,
@@ -140,7 +139,6 @@ class SimulationEngine:
                 select(Portfolio).where(Portfolio.user_id == user_id)
             ).all()
         )
-
 
     def place_order(
         self,
@@ -247,7 +245,6 @@ class SimulationEngine:
         self.session.refresh(order)
         return order
 
-
     def _classify(
         self, portfolio_id: UUID, symbol: str, side: str
     ) -> tuple[str, Position | None]:
@@ -311,7 +308,6 @@ class SimulationEngine:
                 f"available {round_money(portfolio.cash_balance)}"
             )
         return None
-
 
     def _fill(
         self,
@@ -600,7 +596,6 @@ class SimulationEngine:
         self.session.refresh(trade)
         return trade
 
-
     def mark_to_market(
         self, portfolio: Portfolio, prices: dict[str, float]
     ) -> Portfolio:
@@ -633,7 +628,6 @@ class SimulationEngine:
         portfolio.equity = round_money(
             portfolio.cash_balance + portfolio.margin_used + unrealized
         )
-
 
     def open_positions(self, portfolio_id: UUID) -> list[Position]:
         return list(

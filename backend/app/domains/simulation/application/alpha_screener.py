@@ -378,7 +378,6 @@ def _compute_piotroski_fscore(
         if current_ratio.current_ratio > prior_ratio.current_ratio:
             fscore += 1
 
-
     if (
         current_ratio.gross_margin is not None
         and prior_ratio

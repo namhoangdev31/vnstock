@@ -229,7 +229,6 @@ class VnstockService:
             logger.warning("%s: %s", err_msg, exc)
         return pd.DataFrame()
 
-
     def fetch_all_symbols(self) -> pd.DataFrame:
         """Lấy danh sách tất cả các mã cổ phiếu đang niêm yết trên thị trường (HOSE, HNX, UPCOM).
 
@@ -425,7 +424,6 @@ class VnstockService:
                 return sub
         return sub
 
-
     def fetch_reference_equity_list(self) -> pd.DataFrame:
         """Liệt kê toàn bộ mã cổ phiếu niêm yết qua Reference.equity().list()."""
 
@@ -477,7 +475,6 @@ class VnstockService:
             err_msg=f"Lỗi tải cổ phiếu nhóm {group} qua Reference.equity.list_by_group",
         )
 
-
     def fetch_reference_index_list(self) -> pd.DataFrame:
         """Danh sách tất cả các chỉ số thị trường (VNINDEX, VN30,...) qua Reference.index().list()."""
 
@@ -522,7 +519,6 @@ class VnstockService:
             _call,
             err_msg=f"Lỗi tải thành phần chỉ số {symbol} qua Reference.index.members",
         )
-
 
     def fetch_reference_etf_list(self) -> pd.DataFrame:
         """Danh sách các chứng chỉ quỹ ETF qua Reference.etf().list()."""
@@ -689,7 +685,6 @@ class VnstockService:
 
         return pd.DataFrame()
 
-
     def search_reference_symbol(self, query: str, limit: int = 10) -> pd.DataFrame:
         """Tìm kiếm mã chứng khoán theo từ khóa qua Reference.search.symbol()."""
 
@@ -733,7 +728,6 @@ class VnstockService:
         if isinstance(result, (list, tuple)):
             return [str(s) for s in result if str(s).strip()]
         return []
-
 
     def fetch_company_overview(self, symbol: str) -> dict[str, Any]:
         """Lấy thông tin tổng quan/hồ sơ cơ bản của doanh nghiệp.
@@ -970,7 +964,6 @@ class VnstockService:
 
         return pd.DataFrame()
 
-
     def fetch_reference_company_info(self, symbol: str) -> pd.DataFrame:
         """Lấy tổng quan về doanh nghiệp (ngành, vốn hóa...) qua Reference.company().info()."""
 
@@ -1169,7 +1162,6 @@ class VnstockService:
             vnstock_show_doc(obj)
         except Exception:
             logger.warning("Lỗi hiển thị tài liệu qua show_doc", exc_info=True)
-
 
     def fetch_price_history(
         self,
@@ -1407,7 +1399,6 @@ class VnstockService:
             count=count if count is not None else 100,
         )
 
-
     def fetch_market_equity_ohlcv(
         self,
         symbol: str,
@@ -1464,7 +1455,6 @@ class VnstockService:
                 self._quote_cache[sym_clean] = (now, df)
         return df
 
-
     def fetch_market_futures_ohlcv(
         self,
         symbol: str = "VN30F1M",
@@ -1505,7 +1495,6 @@ class VnstockService:
         """Alias tương thích ngược cho fetch_market_futures_quote."""
         return self.fetch_market_futures_quote(symbol=symbol)
 
-
     def fetch_market_warrant_ohlcv(
         self,
         symbol: str,
@@ -1541,7 +1530,6 @@ class VnstockService:
             lambda: Market().warrant(symbol).quote(),
             err_msg=f"Lỗi tải bảng giá chứng quyền {symbol} qua Market.warrant.quote",
         )
-
 
     def fetch_market_etf_ohlcv(
         self,
@@ -1579,7 +1567,6 @@ class VnstockService:
             err_msg=f"Lỗi tải bảng giá ETF {symbol} qua Market.etf.quote",
         )
 
-
     def fetch_market_fund_nav(self, symbol: str) -> pd.DataFrame:
         """Lấy giá trị tài sản ròng NAV của quỹ mở qua Market.fund.nav."""
         return self._execute_api_call(
@@ -1614,7 +1601,6 @@ class VnstockService:
             lambda: Market().fund(symbol).industry_holding(),
             err_msg=f"Lỗi tải phân bổ ngành quỹ {symbol} qua Market.fund.industry_holding",
         )
-
 
     def fetch_market_forex_ohlcv(
         self,
@@ -1682,7 +1668,6 @@ class VnstockService:
             err_msg=f"Lỗi tải nến hàng hóa {symbol} qua Market.commodity.ohlcv",
         )
 
-
     def fetch_market_bond_ohlcv(
         self,
         symbol: str,
@@ -1718,7 +1703,6 @@ class VnstockService:
             lambda: Market().bond(symbol).trades(),
             err_msg=f"Lỗi tải khớp lệnh trái phiếu {symbol} qua Market.bond.trades",
         )
-
 
     def fetch_financials(
         self,
@@ -1938,7 +1922,6 @@ class VnstockService:
                 continue
 
         raise VnstockServiceError(f"Không thể tải chỉ số tài chính cho mã {symbol}")
-
 
     def fetch_retail_gold(
         self,

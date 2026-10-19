@@ -58,6 +58,13 @@ export default {
           price: "var(--ticker-price)",
           muted: "var(--ticker-muted)",
         },
+        market: {
+          ceiling: "var(--color-market-ceiling)",
+          advance: "var(--color-market-advance)",
+          unchanged: "var(--color-market-unchanged)",
+          decline: "var(--color-market-decline)",
+          floor: "var(--color-market-floor)",
+        },
       },
     },
   },

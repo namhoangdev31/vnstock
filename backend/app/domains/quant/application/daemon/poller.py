@@ -332,7 +332,6 @@ class MarketDataPoller:
 
         return result
 
-
     def _fetch_history(
         self, symbol: str, limit: int, interval: str = "1m"
     ) -> list[Any] | None:

@@ -1,5 +1,5 @@
 import type { ImageSource } from 'expo-image';
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, ScrollView as RNScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Platform, useWindowDimensions } from 'react-native';
@@ -113,7 +113,7 @@ function OnboardingHeader({
 
 function WelcomeSlide({ slide }: { slide: OnboardingSlide }) {
   return (
-    <View className="flex-1 justify-center pb-8">
+    <View className="flex-1 justify-center pb-8" style={{ flex: 1, justifyContent: 'center' }}>
       <Image
         source={require('../../../assets/vistock-logo-blue.png')}
         className="mb-8 h-32 w-36"
@@ -134,7 +134,7 @@ function WelcomeSlide({ slide }: { slide: OnboardingSlide }) {
 
 function FeatureSlide({ slide }: { slide: OnboardingSlide }) {
   return (
-    <View className="flex-1 items-center justify-center pb-8">
+    <View className="flex-1 items-center justify-center pb-8" style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <View className="mb-8 h-60 w-full items-center justify-center">
         <Image
           source={slide.image}
@@ -234,7 +234,7 @@ function OnboardingActions({
 
 function useOnboardingCarousel(slideWidth: number) {
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollViewRef = React.useRef<RNScrollView>(null);
 
   const handleScroll = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -299,14 +299,14 @@ export function OnboardingScreen() {
   return (
     <View className="flex-1 bg-pure-white">
       <FocusAwareStatusBar />
-      <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+      <SafeAreaView className="flex-1" style={{ flex: 1 }} edges={['top', 'bottom']}>
         <OnboardingHeader
           activeIndex={activeIndex}
           onBack={() => scrollToSlide(activeIndex - 1)}
           onSignIn={() => handleStartLogin('signIn')}
         />
 
-        <View className="flex-1">
+        <View className="flex-1" style={{ flex: 1 }}>
           <ScrollView
             ref={scrollViewRef}
             horizontal
@@ -315,11 +315,13 @@ export function OnboardingScreen() {
             onScroll={handleScroll}
             scrollEventThrottle={16}
             className="flex-1"
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1 }}
           >
             {SLIDES.map(slide => (
               <View
                 key={slide.id}
-                style={{ width: slideWidth }}
+                style={{ width: slideWidth, flex: 1 }}
                 className="flex-1 justify-center px-6"
               >
                 {slide.type === 'welcome'

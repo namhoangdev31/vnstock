@@ -27,6 +27,7 @@ from app.domains.iboard.application.schemas import (
     CorporateEventDTO,
     IBoardStockDetail,
     MatchedTickDTO,
+    ShareholderDTO,
 )
 from app.domains.iboard.domain.policy import (
     make_stock_row,
@@ -253,12 +254,69 @@ class IBoardDetailService:
                     e,
                 )
 
+        company_desc = (
+            str(live_overview.get("company_profile") or "")
+            if live_overview
+            else (prof.description if prof and prof.description else "")
+        )
+
+        shareholders: list[ShareholderDTO] = []
+        try:
+            sh_df = vn.fetch_company_shareholders(sym_code)
+            if sh_df is not None and not sh_df.empty:
+                for _, sh_row in sh_df.head(6).iterrows():
+                    sh_name = str(sh_row.get("share_holder") or "")
+                    sh_pct = round(
+                        float(sh_row.get("share_own_percent") or 0.0) * 100, 2
+                    )
+                    sh_qty = int(sh_row.get("quantity") or 0)
+                    if sh_name and sh_pct > 0:
+                        shareholders.append(
+                            ShareholderDTO(
+                                name=sh_name,
+                                share_percent=sh_pct,
+                                quantity=sh_qty,
+                            )
+                        )
+        except Exception as e:
+            logger.debug("Không thể tải danh sách cổ đông cho %s: %s", sym_code, e)
+
+        perf_5d: float | None = None
+        perf_1y: float | None = None
+        if daily_rows and len(daily_rows) >= 5:
+            base_5d = float(daily_rows[4].close)
+            curr_close = float(daily_rows[0].close)
+            if base_5d > 0:
+                perf_5d = round(((curr_close - base_5d) / base_5d) * 100, 2)
+        if daily_rows and len(daily_rows) >= 20:
+            base_1y = float(daily_rows[-1].close)
+            curr_close = float(daily_rows[0].close)
+            if base_1y > 0:
+                perf_1y = round(((curr_close - base_1y) / base_1y) * 100, 2)
+
+        active_buy = sum(t.volume for t in matched_ticks if t.side == "B")
+        active_sell = sum(t.volume for t in matched_ticks if t.side == "S")
+        if active_buy == 0 and active_sell == 0 and stock_row.volume > 0:
+            active_buy = int(stock_row.volume * (stock_row.buy_ratio / 100.0))
+            active_sell = stock_row.volume - active_buy
+
+        tot_bid_qtty = sum(b.volume for b in stock_row.bid_book)
+        tot_ask_qtty = sum(a.volume for a in stock_row.ask_book)
+
         return IBoardStockDetail(
             stock=stock_row,
             matched_ticks=matched_ticks,
             overview=overview,
             events=events,
             candles=candles,
+            company_profile=company_desc,
+            shareholders=shareholders,
+            performance_5d=perf_5d,
+            performance_1y=perf_1y,
+            active_buy_vol=active_buy,
+            active_sell_vol=active_sell,
+            total_bid_qtty=tot_bid_qtty,
+            total_ask_qtty=tot_ask_qtty,
         )
 
 

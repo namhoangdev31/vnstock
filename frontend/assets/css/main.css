@@ -41,6 +41,12 @@
     --color-quant-bull: #35c07b;
     --color-quant-bear: #ff6b5e;
 
+    --color-market-ceiling: #d000ff;
+    --color-market-advance: #0bdf39;
+    --color-market-unchanged: #f5a623;
+    --color-market-decline: #ff0017;
+    --color-market-floor: #00e5ff;
+
     --ticker-bg: var(--color-paper);
     --ticker-border: rgba(34, 29, 29, 0.06);
     --ticker-hover: rgba(34, 29, 29, 0.04);

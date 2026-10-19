@@ -84,7 +84,6 @@ class SymbolRegistry:
             len(self._entries),
         )
 
-
     def register(
         self,
         symbol: str,
@@ -154,7 +153,6 @@ class SymbolRegistry:
             len(symbols),
             source,
         )
-
 
     def get_active_symbols(
         self,

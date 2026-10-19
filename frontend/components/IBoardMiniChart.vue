@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: "close", symbol: string): void
   (e: "expand", symbol: string): void
+  (e: "open-breadth", symbol: string): void
   (e: "change-symbol", oldSym: string, newSym: string): void
 }>()
 
@@ -146,6 +147,18 @@ onBeforeUnmount(() => {
         class="absolute top-0.5 right-0.5 flex items-center gap-0.5 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <button
+          v-if="props.symbol !== MarketIndexSymbol.VN30F1M"
+          type="button"
+          class="p-0.5 rounded text-zinc-500 hover:text-aave-violet hover:bg-white/10 transition-colors cursor-pointer"
+          title="Xem độ rộng thị trường"
+          @click="emit('open-breadth', props.symbol)"
+        >
+          <UIcon
+            name="i-heroicons-chart-pie"
+            class="w-3 h-3"
+          />
+        </button>
+        <button
           type="button"
           class="p-0.5 rounded text-zinc-500 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           title="Mở biểu đồ kỹ thuật"
@@ -241,26 +254,28 @@ onBeforeUnmount(() => {
 
         <div
           v-else-if="indexData.breadth"
-          class="flex items-center gap-1.5 leading-none"
+          class="flex items-center gap-1.5 leading-none cursor-pointer hover:opacity-80 transition-opacity"
+          title="Xem biểu đồ độ rộng thị trường"
+          @click="emit('open-breadth', props.symbol)"
         >
 
-          <span class="text-[#089981] flex items-center gap-0.5">
+          <span class="text-market-advance flex items-center gap-0.5">
             <span>↑</span>
             <span>{{ indexData.breadth.advance }}</span>
-            <span class="text-[#c084fc]"
+            <span class="text-market-ceiling"
               >({{ indexData.breadth.ceiling }})</span
             >
           </span>
 
-          <span class="text-[#f59e0b] flex items-center gap-0.5">
+          <span class="text-market-unchanged flex items-center gap-0.5">
             <span>—</span>
             <span>{{ indexData.breadth.unchanged }}</span>
           </span>
 
-          <span class="text-[#f23645] flex items-center gap-0.5">
+          <span class="text-market-decline flex items-center gap-0.5">
             <span>↓</span>
             <span>{{ indexData.breadth.decline }}</span>
-            <span class="text-[#22d3ee]"
+            <span class="text-market-floor"
               >({{ indexData.breadth.floor }})</span
             >
           </span>

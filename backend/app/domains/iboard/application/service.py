@@ -22,6 +22,7 @@ from typing import Any
 
 from sqlmodel import Session
 
+from app.domains.dnse import DNSEMarketBreadthGateway
 from app.domains.iboard.application.board_service import IBoardTableService
 from app.domains.iboard.application.candles_service import IBoardCandlesService
 from app.domains.iboard.application.detail_service import IBoardDetailService
@@ -33,8 +34,11 @@ from app.domains.iboard.application.schemas import (
     IBoardIndexItem,
     IBoardMarketPulse,
     IBoardNewsItem,
+    IBoardPutThroughSummary,
     IBoardStockDetail,
     IBoardStockRow,
+    MarketBreadthDetailResponse,
+    MarketBreadthSeriesResponse,
 )
 from app.domains.iboard.infrastructure.external_indices import (
     IndexSparklineGateway,
@@ -95,6 +99,26 @@ class IBoardService:
     ) -> list[IBoardNewsItem]:
         return IBoardNewsService.get_recent_news(
             session=session, limit=limit, randomize=randomize
+        )
+
+    @classmethod
+    def get_market_breadth_series(cls, index_code: str) -> MarketBreadthSeriesResponse:
+        return DNSEMarketBreadthGateway.get_market_breadth_series(index_code)
+
+    @classmethod
+    def get_market_breadth_detail(cls, index_code: str) -> MarketBreadthDetailResponse:
+        return DNSEMarketBreadthGateway.get_market_breadth_detail(index_code)
+
+    @classmethod
+    def get_put_through_summary(
+        cls, session: Session, exchange: str = "HSX"
+    ) -> IBoardPutThroughSummary:
+        from app.domains.iboard.application.put_through_service import (
+            IBoardPutThroughService,
+        )
+
+        return IBoardPutThroughService.get_put_through_summary(
+            session=session, exchange=exchange
         )
 
     @classmethod

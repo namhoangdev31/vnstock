@@ -54,19 +54,13 @@ class Instrument(AwareSQLModel, table=True):
     legal_entity_id: uuid.UUID | None = Field(
         default=None, foreign_key="legal_entity.id", index=True
     )
-    instrument_type: str = Field(
-        max_length=30, index=True
-    )
-    canonical_code: str = Field(
-        max_length=50, unique=True, index=True
-    )
+    instrument_type: str = Field(max_length=30, index=True)
+    canonical_code: str = Field(max_length=50, unique=True, index=True)
     isin: str | None = Field(default=None, max_length=20, unique=True, index=True)
     figi: str | None = Field(default=None, max_length=20, unique=True, index=True)
     exchange: str = Field(max_length=20, index=True)
     currency: str = Field(default="VND", max_length=10)
-    roll_rule: str | None = Field(
-        default=None, max_length=100
-    )
+    roll_rule: str | None = Field(default=None, max_length=100)
     is_active: bool = Field(default=True, index=True)
     created_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -115,9 +109,7 @@ class InstrumentAlias(AwareSQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     instrument_id: uuid.UUID = Field(foreign_key="instrument.id", index=True)
     alias: str = Field(max_length=30, index=True)
-    alias_type: str = Field(
-        default="TICKER", max_length=30
-    )
+    alias_type: str = Field(default="TICKER", max_length=30)
     valid_from: date = Field(default_factory=lambda: date(2000, 1, 1), index=True)
     valid_to: date | None = Field(default=None, index=True)
     created_at: datetime = Field(
@@ -145,9 +137,7 @@ class InstrumentRelation(AwareSQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     source_instrument_id: uuid.UUID = Field(foreign_key="instrument.id", index=True)
     target_instrument_id: uuid.UUID = Field(foreign_key="instrument.id", index=True)
-    relation_type: str = Field(
-        max_length=50, index=True
-    )
+    relation_type: str = Field(max_length=50, index=True)
     weight: float | None = None
     valid_from: date = Field(default_factory=lambda: date(2000, 1, 1))
     valid_to: date | None = None

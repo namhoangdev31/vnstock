@@ -215,17 +215,13 @@ class SignalLog(AwareSQLModel, table=True):
     __tablename__ = "signal_log"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    strategy_name: str = Field(
-        max_length=50, index=True
-    )
+    strategy_name: str = Field(max_length=50, index=True)
     symbol: str = Field(max_length=20, index=True)
     signal_type: str = Field(max_length=10)
     action_price: float
     stop_loss: float | None = None
     take_profit: float | None = None
-    timeframe: str = Field(
-        default="1m", max_length=10
-    )
+    timeframe: str = Field(default="1m", max_length=10)
     strength: float = Field(default=1.0)
     metadata_info: dict = Field(
         default_factory=dict,

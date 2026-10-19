@@ -155,7 +155,6 @@ class QuantSyncManager:
         self.session = session
         self.svc = vnstock_svc or VnstockService()
 
-
     def sync_macro(self, *, date_str: str | None = None) -> DataSyncLog:
         """Sync SJC gold + USD/VND for a date (default today)."""
         log = self._create_log("macro")
@@ -257,7 +256,6 @@ class QuantSyncManager:
             )
         self.session.commit()
         return 1
-
 
     def sync_tick_orderflow(self, symbol: str, *, page_size: int = 100) -> DataSyncLog:
         """Fetch matched ticks and persist aggregated 1-minute delta bars."""
@@ -369,7 +367,6 @@ class QuantSyncManager:
             self.session.rollback()
             logger.exception("Tick order-flow sync failed for %s", symbol)
             return self._finish_log(log, "failed", error_message=str(exc))
-
 
     def _create_log(self, sync_type: str, symbol: str | None = None) -> DataSyncLog:
         log = DataSyncLog(

@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { ActivityIndicator } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as z from 'zod';
 
 import {
@@ -12,6 +11,7 @@ import {
   Image,
   Input,
   Pressable,
+  SafeAreaView,
   ScrollView,
   Text,
   View,
@@ -303,11 +303,11 @@ export function LoginForm({
   });
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-pure-white" behavior="padding" keyboardVerticalOffset={10}>
-      <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+    <KeyboardAvoidingView className="flex-1 bg-pure-white" style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={10}>
+      <SafeAreaView className="flex-1" style={{ flex: 1 }} edges={['top', 'bottom']}>
         <AuthHeader onCancel={handleCancel} />
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1" style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
           <AuthTitle mode={mode} />
 
           <View className="px-6 pb-6">

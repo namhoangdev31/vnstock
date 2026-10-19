@@ -249,9 +249,7 @@ class EnsembleSignalResponse(SQLModel):
     engine_weights: dict
     engine_scores: dict
     model_version: str = "v2.0.0"
-    engine_disagreement: float = (
-        0.0
-    )
+    engine_disagreement: float = 0.0
     disclaimer: str = (
         "CẢNH BÁO RỦI RO (RULE 4): Tín hiệu mô phỏng định lượng mang tính chất tham khảo "
         "và nghiên cứu giáo dục, không phải là lời khuyên đầu tư tài chính hay khuyến nghị đặt lệnh."

@@ -92,7 +92,7 @@ class IBoardPulseService:
             )
             sector_pnl.setdefault(sec, []).append(pct)
             s_name = sym_info.organ_name if sym_info and sym_info.organ_name else sym
-            movers.append((sym, s_name, bar.close, chg, pct))
+            movers.append((sym, s_name, bar.close, chg, pct, bar.volume))
 
         movers.sort(key=lambda x: x[4], reverse=True)
 
@@ -102,6 +102,8 @@ class IBoardPulseService:
                 name=m[1],
                 price=f"{m[2]:,.2f}",
                 change=f"{m[4]:+.2f}%",
+                change_percent=round(m[4], 2),
+                volume=f"{int(m[5]):,}",
             )
             for m in movers[:4]
         ]
@@ -111,8 +113,22 @@ class IBoardPulseService:
                 name=m[1],
                 price=f"{m[2]:,.2f}",
                 change=f"{m[4]:+.2f}%",
+                change_percent=round(m[4], 2),
+                volume=f"{int(m[5]):,}",
             )
             for m in reversed(movers[-4:])
+        ]
+        vol_sorted = sorted(movers, key=lambda x: x[5], reverse=True)
+        top_volume = [
+            TopMoverItem(
+                symbol=m[0],
+                name=m[1],
+                price=f"{m[2]:,.2f}",
+                change=f"{m[4]:+.2f}%",
+                change_percent=round(m[4], 2),
+                volume=f"{int(m[5]):,}",
+            )
+            for m in vol_sorted[:4]
         ]
 
         sector_avg = {
@@ -163,6 +179,7 @@ class IBoardPulseService:
             ai_insight=insight,
             top_gainers=top_gainers,
             top_losers=top_losers,
+            top_volume=top_volume,
             sector_performance=sector_avg,
         )
 

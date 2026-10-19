@@ -3,6 +3,13 @@
 from __future__ import annotations
 
 from app.domains.dnse.config import DNSEStreamConfig
+from app.domains.dnse.market_breadth_gateway import DNSEMarketBreadthGateway
+from app.domains.dnse.schemas import (
+    DNSEIndexBreadth,
+    MarketBreadthDetailResponse,
+    MarketBreadthPoint,
+    MarketBreadthSeriesResponse,
+)
 from app.domains.dnse.stream_manager import DNSEStreamManager
 from app.domains.dnse.tick_handler import TickNormalizer
 
@@ -28,8 +35,13 @@ class _LazyStreamManagerProxy:
 dnse_stream_manager = _LazyStreamManagerProxy()  # type: ignore[assignment]
 
 __all__ = [
+    "DNSEIndexBreadth",
+    "DNSEMarketBreadthGateway",
     "DNSEStreamConfig",
     "DNSEStreamManager",
+    "MarketBreadthDetailResponse",
+    "MarketBreadthPoint",
+    "MarketBreadthSeriesResponse",
     "TickNormalizer",
     "dnse_stream_manager",
     "get_dnse_stream_manager",

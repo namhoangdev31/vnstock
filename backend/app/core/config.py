@@ -52,9 +52,7 @@ class Settings(BaseSettings):
     VNSTOCK_SOURCE: str = "VCI"
     VNSTOCK_FALLBACK_SOURCE: str = "KBS"
     VNSTOCK_TERTIARY_SOURCE: str = "MSN"
-    VNSTOCK_TIER: str = (
-        "community"
-    )
+    VNSTOCK_TIER: str = "community"
     VNSTOCK_REALTIME_CACHE_TTL: int = 5
     VNSTOCK_METADATA_CACHE_TTL: int = 86400
     VNSTOCK_REQUEST_MIN_DELAY: float = 1.0

@@ -43,12 +43,8 @@ class StockSymbol(AwareSQLModel, table=True):
     exchange: str | None = Field(default=None, max_length=10)
     industry: str | None = Field(default=None, max_length=100)
     icb_code: str | None = Field(default=None, max_length=20)
-    icb_name: str | None = Field(
-        default=None, max_length=255
-    )
-    index_group: str | None = Field(
-        default=None, max_length=50
-    )
+    icb_name: str | None = Field(default=None, max_length=255)
+    index_group: str | None = Field(default=None, max_length=50)
     asset_type: str = Field(
         default="stock",
         max_length=20,
@@ -108,9 +104,7 @@ class StockOHLCVDaily(AwareSQLModel, table=True):
     foreign_sell_volume: int | None = None
     foreign_net_volume: int | None = None
     open_interest: int | None = None
-    basis: float | None = (
-        None
-    )
+    basis: float | None = None
     source: str = Field(max_length=10)
 
 
@@ -159,14 +153,10 @@ class StockTickIntraday(AwareSQLModel, table=True):
     timestamp: datetime = Field(sa_type=DateTime(timezone=True), index=True)  # type: ignore
     price: float
     volume: int
-    match_type: str = Field(
-        max_length=10
-    )
+    match_type: str = Field(max_length=10)
     accumulated_volume: int | None = None
     accumulated_value: float | None = None
-    sequence_number: int = Field(
-        default=0
-    )
+    sequence_number: int = Field(default=0)
     source: str = Field(max_length=10)
 
 
@@ -180,9 +170,7 @@ class IndexConstituent(AwareSQLModel, table=True):
     )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    index_code: str = Field(
-        max_length=20, index=True
-    )
+    index_code: str = Field(max_length=20, index=True)
     symbol: str = Field(max_length=20, foreign_key="stock_symbol.symbol", index=True)
     weight: float = Field(default=0.0)
     free_float_shares: float | None = None
@@ -203,9 +191,7 @@ class DataSyncLog(AwareSQLModel, table=True):
     )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    sync_type: str = Field(
-        max_length=30
-    )
+    sync_type: str = Field(max_length=30)
     symbol: str | None = Field(default=None, max_length=20)
     source: str = Field(max_length=10)
     status: str = Field(max_length=15)
@@ -282,23 +268,15 @@ class CoveredWarrant(AwareSQLModel, table=True):
         foreign_key="stock_symbol.symbol",
         index=True,
     )
-    issuer_name: str | None = Field(
-        default=None, max_length=255
-    )
+    issuer_name: str | None = Field(default=None, max_length=255)
     warrant_type: str = Field(default="call", max_length=10)
     exercise_price: float | None = None
-    conversion_ratio: str | None = Field(
-        default=None, max_length=20
-    )
+    conversion_ratio: str | None = Field(default=None, max_length=20)
     exercise_ratio: float | None = None
     issue_date: date | None = None
-    maturity_date: date | None = Field(
-        default=None, index=True
-    )
+    maturity_date: date | None = Field(default=None, index=True)
     last_trading_date: date | None = None
-    settlement_type: str | None = Field(
-        default="cash", max_length=20
-    )
+    settlement_type: str | None = Field(default="cash", max_length=20)
     is_active: bool = Field(default=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,
@@ -341,19 +319,13 @@ class BondSpecification(AwareSQLModel, table=True):
         index=True,
         nullable=True,
     )
-    issuer_name: str | None = Field(
-        default=None, max_length=255
-    )
+    issuer_name: str | None = Field(default=None, max_length=255)
     par_value: float = Field(default=100_000.0)
     coupon_rate: float | None = None
-    coupon_type: str | None = Field(
-        default="fixed", max_length=20
-    )
+    coupon_type: str | None = Field(default="fixed", max_length=20)
     tenor_years: float | None = None
     issue_date: date | None = None
-    maturity_date: date | None = Field(
-        default=None, index=True
-    )
+    maturity_date: date | None = Field(default=None, index=True)
     is_active: bool = Field(default=True)
     updated_at: datetime = Field(
         default_factory=get_datetime_utc,

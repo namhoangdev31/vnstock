@@ -41,7 +41,6 @@ class ForecastJournalService:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-
     def record(
         self,
         *,
@@ -108,7 +107,6 @@ class ForecastJournalService:
         )
         return entry
 
-
     def resolve(
         self,
         forecast_id,
@@ -156,7 +154,6 @@ class ForecastJournalService:
         self.session.refresh(entry)
         logger.info("Resolved forecast %s -> actual=%s", entry.id, actual_value)
         return entry
-
 
     def score(self, forecast_id) -> ForecastJournal:
         """Compute MAE / directional accuracy. Status → ``scored``.
@@ -232,7 +229,6 @@ class ForecastJournalService:
         if p == ForecastDirection.NEUTRAL or a == ForecastDirection.NEUTRAL:
             return None
         return p == a
-
 
     def aggregate(
         self,

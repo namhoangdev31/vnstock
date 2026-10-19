@@ -248,7 +248,6 @@ class DataSyncManager:
         bind = self.session.get_bind()
         return getattr(getattr(bind, "dialect", None), "name", "") == "postgresql"
 
-
     def _create_log(self, sync_type: str, symbol: str | None = None) -> DataSyncLog:
         """Create a sync log entry with status 'started'."""
         source_val = getattr(self.svc, "source", None)
@@ -620,7 +619,6 @@ class DataSyncManager:
         )
         self.session.commit()
 
-
     @staticmethod
     def _extract_val(row: Any, *keys: str, default: Any = None) -> Any:
         """Trích xuất giá trị đầu tiên tồn tại và không rỗng từ danh sách keys trong row."""
@@ -685,7 +683,6 @@ class DataSyncManager:
         """Trích xuất ngày giờ (datetime) an toàn."""
         val = cls._extract_val(row, *keys)
         return cls._parse_datetime(val)
-
 
     @staticmethod
     def _normalize_to_dataframe(data: Any, symbol_col: str = "symbol") -> pd.DataFrame:
@@ -836,7 +833,6 @@ class DataSyncManager:
                     return float(value)
                 except (ValueError, TypeError):
                     return None
-
 
     def _sync_vn30_group(self) -> int:
         """Cập nhật cờ index_group='VN30' cho các cổ phiếu thuộc rổ VN30."""
@@ -1196,7 +1192,6 @@ class DataSyncManager:
 
         self.session.commit()
         return len(bond_records)
-
 
     def sync_covered_warrants(self) -> DataSyncLog:
         """Đồng bộ riêng danh mục chứng quyền có bảo đảm (Covered Warrants)."""

@@ -11,6 +11,7 @@ from sqlmodel import Session, col, select
 
 from app.core.cache import realtime_cache
 from app.core.enums import MarketIndex
+from app.domains.dnse import DNSEMarketBreadthGateway
 from app.domains.iboard.application.schemas import (
     IBoardIndexBreadth,
     IBoardIndexItem,
@@ -121,7 +122,6 @@ class IBoardIndicesService:
             elif not cached_idx and code == MarketIndex.UPCOMINDEX:
                 cached_idx = realtime_cache.get(f"index:{MarketIndex.UPCOM}")
 
-            breadth: IBoardIndexBreadth
             if (
                 cached_idx
                 and isinstance(cached_idx, dict)
@@ -136,21 +136,6 @@ class IBoardIndicesService:
                     raw_vol = float(cached_idx["total_volume"])
                 if cached_idx.get("total_value") is not None:
                     raw_val = float(cached_idx["total_value"])
-                if cached_idx.get("advance") is not None:
-                    breadth = IBoardIndexBreadth(
-                        advance=int(cached_idx.get("advance") or 0),
-                        ceiling=int(cached_idx.get("ceiling") or 0),
-                        unchanged=int(cached_idx.get("no_change") or 0),
-                        decline=int(cached_idx.get("decline") or 0),
-                        floor=int(cached_idx.get("floor") or 0),
-                    )
-                else:
-                    breadth = compute_market_breadth(
-                        today_bars=today_bars,
-                        prev_bars=prev_bars,
-                        subset=subset,
-                        is_hnx="HNX" in code,
-                    )
             elif is_deriv:
                 cached_rt = realtime_cache.get(
                     f"realtime:{MarketIndex.VN30F1M}"
@@ -165,6 +150,28 @@ class IBoardIndicesService:
                             raw_vol = float(cached_rt["volume"])
                         elif cached_rt.get("volume_accumulated") is not None:
                             raw_vol = float(cached_rt["volume_accumulated"])
+
+            live_breadth = (
+                DNSEMarketBreadthGateway.get_market_breadth_latest(code)
+                if not is_deriv
+                else None
+            )
+            breadth: IBoardIndexBreadth
+            if live_breadth:
+                breadth = live_breadth
+            elif (
+                cached_idx
+                and isinstance(cached_idx, dict)
+                and cached_idx.get("advance") is not None
+            ):
+                breadth = IBoardIndexBreadth(
+                    advance=int(cached_idx.get("advance") or 0),
+                    ceiling=int(cached_idx.get("ceiling") or 0),
+                    unchanged=int(cached_idx.get("no_change") or 0),
+                    decline=int(cached_idx.get("decline") or 0),
+                    floor=int(cached_idx.get("floor") or 0),
+                )
+            elif is_deriv:
                 breadth = IBoardIndexBreadth(
                     advance=1 if chg > 0 else 0,
                     ceiling=0,

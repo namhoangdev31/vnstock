@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import type { IBoardIndexItem } from "~/client/types.gen"
 import { MarketIndexSymbol } from "~/types/market"
 import IBoardIndexSummaryTable from "./IBoardIndexSummaryTable.vue"
+import IBoardMarketBreadthModal from "./IBoardMarketBreadthModal.vue"
 import IBoardMiniChart from "./IBoardMiniChart.vue"
 import TradingViewChart from "./TradingViewChart.vue"
 
@@ -51,6 +52,13 @@ const openExpandModal = (symbol: string) => {
 }
 const closeExpandModal = () => {
   expandedSymbol.value = null
+}
+
+const breadthModalOpen = ref(false)
+const selectedBreadthIndex = ref("VNINDEX")
+const handleOpenBreadth = (symbol: string) => {
+  selectedBreadthIndex.value = symbol
+  breadthModalOpen.value = true
 }
 
 const desiredOrder = ["vnindex", "vn30", "hnx30", "vn30f1m", "hnx", "upcom"]
@@ -107,6 +115,7 @@ onBeforeUnmount(() => {
             :available-symbols="availableIndices"
             @close="closeSymbol"
             @expand="openExpandModal"
+            @open-breadth="handleOpenBreadth"
             @change-symbol="handleChangeSymbol"
           />
         </div>
@@ -130,9 +139,17 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="w-full xl:w-[420px] shrink-0">
-        <IBoardIndexSummaryTable :indices="tableIndices" />
+        <IBoardIndexSummaryTable
+          :indices="tableIndices"
+          @open-breadth="handleOpenBreadth"
+        />
       </div>
     </div>
+
+    <IBoardMarketBreadthModal
+      v-model="breadthModalOpen"
+      :initial-index="selectedBreadthIndex"
+    />
 
     <UModal
       :model-value="expandedSymbol !== null"

@@ -13,8 +13,11 @@ from app.domains.iboard.application.schemas import (
     IBoardIndexItem,
     IBoardMarketPulse,
     IBoardNewsItem,
+    IBoardPutThroughSummary,
     IBoardStockDetail,
     IBoardStockRow,
+    MarketBreadthDetailResponse,
+    MarketBreadthSeriesResponse,
 )
 from app.domains.iboard.application.service import IBoardService
 from app.domains.iboard.application.ws_manager import iboard_ws_manager
@@ -114,6 +117,33 @@ def get_iboard_news(
 ) -> Any:
     """Truy xuất danh sách tin tức tài chính trong ngày hoặc ngày hôm trước (T & T-1)."""
     return IBoardService.get_news(session=session, limit=limit, randomize=randomize)
+
+
+@router.get("/market-breadth/{index_code}", response_model=MarketBreadthSeriesResponse)
+def get_iboard_market_breadth(
+    index_code: str,
+) -> Any:
+    """Truy xuất chuỗi thời gian tỷ lệ độ rộng thị trường (100% Stacked Area)."""
+    return IBoardService.get_market_breadth_series(index_code=index_code)
+
+
+@router.get(
+    "/market-breadth/{index_code}/detail", response_model=MarketBreadthDetailResponse
+)
+def get_iboard_market_breadth_detail(
+    index_code: str,
+) -> Any:
+    """Truy xuất danh sách mã cổ phiếu phân nhóm theo 5 trạng thái biến động."""
+    return IBoardService.get_market_breadth_detail(index_code=index_code)
+
+
+@router.get("/put-through", response_model=IBoardPutThroughSummary)
+def get_iboard_put_through(
+    session: SessionDep,
+    exchange: str = Query(default="HSX", description="HSX, HNX, UPCOM"),
+) -> Any:
+    """Truy xuất tổng hợp và danh sách giao dịch thỏa thuận (Put-Through)."""
+    return IBoardService.get_put_through_summary(session=session, exchange=exchange)
 
 
 @router.websocket("/ws")
