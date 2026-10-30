@@ -5,6 +5,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   telemetry: false,
   ssr: false,
+  devServer: {
+    port: 5173,
+    host: "0.0.0.0",
+  },
   typescript: {
     typeCheck: false,
   },
@@ -71,7 +75,7 @@ export default defineNuxtConfig({
       apiUrl:
         process.env.VITE_API_URL ||
         process.env.NUXT_PUBLIC_API_URL ||
-        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8800",
       dnseApiKey:
         process.env.DNSE_API_KEY || process.env.NUXT_PUBLIC_DNSE_API_KEY,
       dnseApiSecret:
@@ -98,7 +102,7 @@ export default defineNuxtConfig({
       proxy: "https://openapi.dnse.com.vn/**",
     },
     "/api/**": {
-      proxy: `${process.env.VITE_API_URL || process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/api/**`,
+      proxy: `${process.env.VITE_API_URL || process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:8800"}/api/**`,
     },
   },
   colorMode: {
@@ -106,3 +110,4 @@ export default defineNuxtConfig({
     fallback: "dark",
   },
 })
+

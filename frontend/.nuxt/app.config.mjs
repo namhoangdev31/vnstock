@@ -237,6 +237,6 @@ if (import.meta.hot) {
   })
 }
 
-import cfg0 from "/Volumes/developer101/code/vnstock/frontend/app.config.ts"
+import cfg0 from "/home/lkct-lee-park/var/vnstock/frontend/app.config.ts"
 
 export default /*@__PURE__*/ defuFn(cfg0, inlineConfig)

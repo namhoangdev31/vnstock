@@ -25,11 +25,11 @@ install: ## Cài đặt dependencies cho cả Backend (uv) và Frontend (bun)
 	cd frontend && bun install
 
 ##@ Phát triển Local
-dev: ## Khởi chạy Backend FastAPI server ở chế độ dev (port 8000)
-	cd backend && uv run fastapi dev
+dev: ## Khởi chạy Backend FastAPI server ở chế độ dev (port 8800)
+	cd backend && uv run fastapi dev --port 8800
 
-frontend: ## Khởi chạy Frontend Vite/Nuxt dev server (port 5173)
-	cd frontend && bun run dev
+frontend: ## Khởi chạy Frontend Nuxt dev server (port 5173)
+	cd frontend && bun run dev --port 5173
 
 build-frontend: ## Build Frontend tĩnh xuất vào backend/app/frontend
 	cd frontend && bun run build

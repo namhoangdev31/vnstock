@@ -1,19 +1,25 @@
+name: vnstock
+
 services:
 
   proxy:
     profiles: ["prod", "production"]
     image: traefik:v3.7
+    container_name: vnstock-traefik
     restart: ${RESTART_POLICY:-unless-stopped}
     ports:
-      - "${PORT_HTTP:-80}:80"
-      - "${PORT_HTTPS:-443}:443"
+      - "${PORT_HTTP:-8088}:80"
+      - "${PORT_HTTPS:-8443}:443"
       - "${PORT_TRAEFIK_DASHBOARD:-8090}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik-certificates:/certificates
+      - vnstock-traefik-certificates:/certificates
+    networks:
+      - vnstock-network
     command:
       - --providers.docker
       - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=vnstock-network
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
@@ -27,10 +33,11 @@ services:
   db:
     profiles: ["prod", "production"]
     image: postgres:18
+    container_name: vnstock-postgres
     restart: ${RESTART_POLICY:-unless-stopped}
     shm_size: 512mb
     ports:
-      - "${PORT_DB:-5432}:5432"
+      - "${PORT_DB:-5435}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d app"]
       interval: 10s
@@ -38,13 +45,16 @@ services:
       start_period: 30s
       timeout: 10s
     volumes:
-      - app-db-data:/var/lib/postgresql/data
+      - vnstock-db-data:/var/lib/postgresql/data
+    networks:
+      - vnstock-network
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changethis}
       - POSTGRES_DB=app
 
   backend:
-    image: backend:latest
+    image: vnstock-backend:latest
+    container_name: vnstock-backend
     restart: ${RESTART_POLICY:-unless-stopped}
     depends_on:
       db:
@@ -52,7 +62,7 @@ services:
         restart: true
         required: false
     ports:
-      - "${PORT_BACKEND:-8000}:8000"
+      - "${PORT_BACKEND:-8800}:8000"
     command: ${BACKEND_COMMAND:-fastapi dev --host 0.0.0.0}
     develop:
       watch:
@@ -102,8 +112,11 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    networks:
+      - vnstock-network
     labels:
       - traefik.enable=true
+      - traefik.docker.network=vnstock-network
       - traefik.http.services.backend.loadbalancer.server.port=8000
       - traefik.http.routers.backend-http.rule=Host(`${DOMAIN:-localhost}`)
       - traefik.http.routers.backend-http.entrypoints=http
@@ -115,6 +128,13 @@ services:
       - traefik.http.routers.backend-https.tls=${ENABLE_TLS:-false}
       - traefik.http.routers.backend-https.tls.certresolver=${CERT_RESOLVER:-le}
 
+networks:
+  vnstock-network:
+    name: vnstock-network
+    driver: bridge
+
 volumes:
-  app-db-data:
-  traefik-certificates:
+  vnstock-db-data:
+    name: vnstock-db-data
+  vnstock-traefik-certificates:
+    name: vnstock-traefik-certificates
