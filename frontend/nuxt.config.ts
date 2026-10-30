@@ -75,7 +75,7 @@ export default defineNuxtConfig({
       apiUrl:
         process.env.VITE_API_URL ||
         process.env.NUXT_PUBLIC_API_URL ||
-        "http://127.0.0.1:8800",
+        "https://api.vidub.ai",
       dnseApiKey:
         process.env.DNSE_API_KEY || process.env.NUXT_PUBLIC_DNSE_API_KEY,
       dnseApiSecret:
@@ -102,7 +102,7 @@ export default defineNuxtConfig({
       proxy: "https://openapi.dnse.com.vn/**",
     },
     "/api/**": {
-      proxy: `${process.env.VITE_API_URL || process.env.NUXT_PUBLIC_API_URL || "http://127.0.0.1:8800"}/api/**`,
+      proxy: `${process.env.VITE_API_URL || process.env.NUXT_PUBLIC_API_URL || "https://api.vidub.ai"}/api/**`,
     },
   },
   colorMode: {
@@ -110,4 +110,3 @@ export default defineNuxtConfig({
     fallback: "dark",
   },
 })
-

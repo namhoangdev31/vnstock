@@ -1,140 +1,45 @@
 name: vnstock
 
 services:
-
-  proxy:
-    profiles: ["prod", "production"]
-    image: traefik:v3.7
-    container_name: vnstock-traefik
-    restart: ${RESTART_POLICY:-unless-stopped}
-    ports:
-      - "${PORT_HTTP:-8088}:80"
-      - "${PORT_HTTPS:-8443}:443"
-      - "${PORT_TRAEFIK_DASHBOARD:-8090}:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - vnstock-traefik-certificates:/certificates
-    networks:
-      - vnstock-network
-    command:
-      - --providers.docker
-      - --providers.docker.exposedbydefault=false
-      - --providers.docker.network=vnstock-network
-      - --entrypoints.http.address=:80
-      - --entrypoints.https.address=:443
-      - --certificatesresolvers.le.acme.storage=/certificates/acme.json
-      - --certificatesresolvers.le.acme.tlschallenge=true
-      - --accesslog
-      - --log
-      - --log.level=${TRAEFIK_LOG_LEVEL:-INFO}
-      - --api.dashboard=true
-      - --api.insecure=true
-
-  db:
-    profiles: ["prod", "production"]
-    image: postgres:18
-    container_name: vnstock-postgres
-    restart: ${RESTART_POLICY:-unless-stopped}
-    shm_size: 512mb
-    ports:
-      - "${PORT_DB:-5435}:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d app"]
-      interval: 10s
-      retries: 5
-      start_period: 30s
-      timeout: 10s
-    volumes:
-      - vnstock-db-data:/var/lib/postgresql/data
-    networks:
-      - vnstock-network
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changethis}
-      - POSTGRES_DB=app
-
   backend:
     image: vnstock-backend:latest
     container_name: vnstock-backend
     restart: ${RESTART_POLICY:-unless-stopped}
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
-        required: false
     ports:
       - "${PORT_BACKEND:-8800}:8000"
-    command: ${BACKEND_COMMAND:-fastapi dev --host 0.0.0.0}
-    develop:
-      watch:
-        - path: ./backend
-          action: sync
-          target: /app/backend
-          ignore:
-            - .venv
-            - app/frontend
-            - "app/frontend/**"
-            - "**/__pycache__"
-            - "**/*.pyc"
-            - .pytest_cache
-            - .ruff_cache
-            - .mypy_cache
-            - .git
-            - "**/.DS_Store"
-            - "**/._*"
-        - path: ./backend/app/frontend
-          action: sync
-          target: /app/backend/app/frontend
-        - path: ./backend/pyproject.toml
-          action: rebuild
+    command: ${BACKEND_COMMAND:-fastapi run --workers 4 app/main.py}
     env_file:
       - .env
     environment:
       FASTAPI_ENV: ${FASTAPI_ENV:-development}
-      PROJECT_NAME: ${PROJECT_NAME:?Variable not set}
-      SECRET_KEY: ${SECRET_KEY:?Variable not set}
-      FIRST_SUPERUSER: ${FIRST_SUPERUSER:?Variable not set}
-      FIRST_SUPERUSER_PASSWORD: ${FIRST_SUPERUSER_PASSWORD:?Variable not set}
-      FRONTEND_HOST: ${FRONTEND_HOST:-http://${DOMAIN:-localhost}}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:-changethis}@db:5432/app}
-      SENTRY_DSN: ${SENTRY_DSN:-}
-      DNSE_API_KEY: ${DNSE_API_KEY:-}
-      DNSE_API_SECRET: ${DNSE_API_SECRET:-}
-      DNSE_API_KEY_SANDBOX: ${DNSE_API_KEY_SANDBOX:-}
-      DNSE_API_SECRET_SANDBOX: ${DNSE_API_SECRET_SANDBOX:-}
-      DNSE_WS_ENABLED: ${DNSE_WS_ENABLED:-True}
-      VNSTOCK_API_KEY: ${VNSTOCK_API_KEY:-}
-      VNSTOCK_APIKEY: ${VNSTOCK_APIKEY:-}
-      CRON_SECRET_KEY: ${CRON_SECRET_KEY:-}
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
       TZ: "Asia/Ho_Chi_Minh"
-      WATCHFILES_FORCE_POLLING: "false"
     build:
       context: .
       dockerfile: backend/Dockerfile
     networks:
       - vnstock-network
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=vnstock-network
-      - traefik.http.services.backend.loadbalancer.server.port=8000
-      - traefik.http.routers.backend-http.rule=Host(`${DOMAIN:-localhost}`)
-      - traefik.http.routers.backend-http.entrypoints=http
-      - traefik.http.routers.backend-http.middlewares=${HTTP_MIDDLEWARES:-}
-      - traefik.http.middlewares.redirect-https.redirectscheme.scheme=https
-      - traefik.http.middlewares.redirect-https.redirectscheme.permanent=true
-      - traefik.http.routers.backend-https.rule=Host(`${DOMAIN:-localhost}`)
-      - traefik.http.routers.backend-https.entrypoints=https
-      - traefik.http.routers.backend-https.tls=${ENABLE_TLS:-false}
-      - traefik.http.routers.backend-https.tls.certresolver=${CERT_RESOLVER:-le}
+      - sanauto-production-net
+
+  frontend:
+    image: vnstock-frontend:latest
+    container_name: vnstock-frontend
+    restart: ${RESTART_POLICY:-unless-stopped}
+    ports:
+      - "${PORT_FRONTEND_PROD:-8801}:80"
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.vidub.ai}
+    networks:
+      - vnstock-network
+      - sanauto-production-net
 
 networks:
   vnstock-network:
     name: vnstock-network
     driver: bridge
-
-volumes:
-  vnstock-db-data:
-    name: vnstock-db-data
-  vnstock-traefik-certificates:
-    name: vnstock-traefik-certificates
+  sanauto-production-net:
+    external: true

@@ -1,4 +1,0 @@
-{
-  "extends": ["../../frontend/biome.json"],
-  "root": false
-}

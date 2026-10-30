@@ -7,7 +7,7 @@ YELLOW := \033[1;33m
 RED    := \033[1;31m
 RESET  := \033[0m
 
-.PHONY: help install dev frontend build-frontend docker-watch docker-up docker-down docker-logs docker-prod-up docker-prod-down docker-prod-logs db-migrate db-seed db-revision lint format check prek test test-cov clean
+.PHONY: help install dev frontend build-frontend docker-up docker-build docker-down docker-logs docker-ps docker-restart db-migrate db-seed db-revision lint format check prek test test-cov clean
 
 ##@ Trợ giúp
 help: ## Hiển thị danh sách các lệnh có sẵn
@@ -34,28 +34,24 @@ frontend: ## Khởi chạy Frontend Nuxt dev server (port 5173)
 build-frontend: ## Build Frontend tĩnh xuất vào backend/app/frontend
 	cd frontend && bun run build
 
-##@ Docker Compose (Local Dev)
-docker-watch: ## Chạy backend với Docker Compose kèm hot-reload (develop.watch)
-	docker compose watch
+##@ Docker (Production)
+docker-up: ## Khởi chạy hệ thống Production (backend & frontend) ở chế độ background
+	docker compose up -d backend frontend
 
-docker-up: ## Khởi chạy container backend ở chế độ background
-	docker compose up -d
+docker-build: ## Build lại Docker images và khởi chạy hệ thống Production
+	docker compose up --build -d backend frontend
 
-docker-down: ## Dừng toàn bộ Docker containers môi trường local
+docker-down: ## Dừng và gỡ bỏ toàn bộ Docker containers
 	docker compose down
 
-docker-logs: ## Xem log backend thời gian thực
-	docker compose logs -f backend
+docker-logs: ## Xem log các container thời gian thực
+	docker compose logs -f
 
-##@ Docker Compose (Production)
-docker-prod-up: ## Triển khai Production (Bao gồm Traefik HTTPS, PostgreSQL, Backend)
-	docker compose --profile prod up --build -d
+docker-ps: ## Xem trạng thái các containers đang chạy
+	docker compose ps
 
-docker-prod-down: ## Dừng toàn bộ dịch vụ Production
-	docker compose --profile prod down
-
-docker-prod-logs: ## Xem log toàn bộ hệ thống Production
-	docker compose --profile prod logs -f
+docker-restart: ## Khởi động lại các container (backend & frontend)
+	docker compose restart backend frontend
 
 ##@ Cơ sở dữ liệu (Alembic)
 db-migrate: ## Chạy Alembic migrations lên bản mới nhất (upgrade head)
