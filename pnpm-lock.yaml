@@ -12,7 +12,7 @@ importers:
         specifier: ^2.5.12
         version: 2.5.15
 
-  apps/vnstock:
+  apps/vistock:
     dependencies:
       '@expo-google-fonts/inter':
         specifier: ^0.4.2
@@ -10934,6 +10934,7 @@ packages:
 
   react-native-edge-to-edge@1.8.2:
     resolution: {integrity: sha512-9yhI/RpaXVkMqFKNHz72A7Vi8KrT6BqDcY8HOdck/so+qH0fq1EkIeNTSLplnoFW84DcLn2D7s9L/xfYSN8gyQ==}
+    deprecated: This package is deprecated. Set edgeToEdgeEnabled=true in android/gradle.properties instead.
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -13700,7 +13701,7 @@ snapshots:
       '@babel/code-frame': 7.29.7
       '@babel/generator': 7.29.8
       '@babel/helper-globals': 7.29.7
-      '@babel/parser': 7.29.2
+      '@babel/parser': 7.29.9
       '@babel/template': 7.29.7
       '@babel/types': 7.29.8
       debug: 4.4.3(supports-color@10.2.2)
@@ -18076,7 +18077,7 @@ snapshots:
 
   '@types/react-test-renderer@19.3.0':
     dependencies:
-      '@types/react': 19.2.18
+      '@types/react': 19.3.0
 
   '@types/react@19.2.18':
     dependencies:
