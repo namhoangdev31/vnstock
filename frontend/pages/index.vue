@@ -861,7 +861,6 @@
 </template>
 
 <script setup lang="ts">
-import { useHead } from "#app";
 import { definePageMeta, useAuth } from "#imports";
 import { ref, onMounted, onUnmounted } from "vue";
 
