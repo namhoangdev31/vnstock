@@ -42,8 +42,8 @@ watch(
 useHead({
   title: computed(() =>
     isDerivatives.value
-      ? "Bảng giá phái sinh VN30F1M - Vistock"
-      : "Bảng giá cổ phiếu cơ sở - Vistock",
+      ? "Bảng giá phái sinh VN30F1M - Vistocks"
+      : "Bảng giá cổ phiếu cơ sở - Vistocks",
   ),
 })
 
@@ -171,7 +171,7 @@ onUnmounted(() => {
         <!-- Brand Logo -->
         <NuxtLink to="/iboard" class="flex items-center gap-2 mr-1 group">
           <span class="font-bold tracking-tight text-sm text-white group-hover:text-rose-400 transition-colors">
-            VISTOCK
+            VISTOCKS
           </span>
         </NuxtLink>
 
@@ -562,7 +562,7 @@ onUnmounted(() => {
       class="lg:hidden border-b border-white/[0.08] bg-surface-midnight px-4 py-3 space-y-2 animate-fade-in-down"
     >
       <div class="flex items-center justify-between pb-2 border-b border-white/[0.08] text-xs font-mono text-aave-graphite">
-        <span>Bảng giá trực tuyến Vistock</span>
+        <span>Bảng giá trực tuyến Vistocks</span>
         <span>{{ currentTime }}</span>
       </div>
 
@@ -647,7 +647,7 @@ onUnmounted(() => {
             />
             <div class="flex items-center gap-2">
               <h2 class="text-base font-semibold text-white">
-                {{ isDerivatives ? 'Bảng giá phái sinh VN30F1M' : 'Bảng giá cổ phiếu cơ sở Vistock' }}
+                {{ isDerivatives ? 'Bảng giá phái sinh VN30F1M' : 'Bảng giá cổ phiếu cơ sở Vistocks' }}
               </h2>
               <span
                 class="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase"

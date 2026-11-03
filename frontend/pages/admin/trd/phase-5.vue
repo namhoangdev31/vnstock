@@ -135,7 +135,7 @@
 <script setup lang="ts">
 import { phase5Markdown } from "~/data/trd/phase5SpecContent"
 useHead({
-  title: "TRD Phase 5: Forecast Journal - Vistock Quants",
+  title: "TRD Phase 5: Forecast Journal - Vistocks Quants",
 })
 
 const activeTab = ref<"spec" | "tests" | "ledger">("spec")

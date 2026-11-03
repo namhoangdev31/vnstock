@@ -49,7 +49,7 @@ export default defineNuxtConfig({
   css: ["~/assets/css/main.css"],
   app: {
     head: {
-      title: "Vistock Quants & Predictive Analytics Engine",
+      title: "Vistocks Quants & Predictive Analytics Engine",
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -94,7 +94,7 @@ export default defineNuxtConfig({
   },
   nitro: {
     output: {
-      publicDir: path.resolve(__dirname, "../backend/app/frontend"),
+      publicDir: path.resolve(__dirname, "dist"),
     },
   },
   routeRules: {

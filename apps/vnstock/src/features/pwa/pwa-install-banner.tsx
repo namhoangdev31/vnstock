@@ -44,7 +44,7 @@ export function PWAInstallBanner() {
     >
       <View className="flex-row items-center gap-3 border-b border-white/6 bg-aave-obsidian px-4 py-3">
         <View className="flex-1">
-          <Text className="mb-0.5 text-[13px] font-bold text-aave-paper">Cài đặt Vistock</Text>
+          <Text className="mb-0.5 text-[13px] font-bold text-aave-paper">Cài đặt Vistocks</Text>
           <Text className="text-xs text-aave-graphite">Trải nghiệm mượt mà hơn trên màn hình chính</Text>
         </View>
         <Pressable

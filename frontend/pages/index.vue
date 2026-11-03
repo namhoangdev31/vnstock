@@ -9,7 +9,7 @@
           <div class="max-w-[1200px] mx-auto px-6 py-2 h-18 flex items-center justify-between">
             <NuxtLink to="/" class="flex items-center gap-2 group">
               <span class="font-semibold tracking-tight text-base text-aave-obsidian flex items-center gap-2 font-sans group-hover:text-aave-violet transition-colors">
-                Vistock
+                Vistocks
               </span>
             </NuxtLink>
 
@@ -466,7 +466,7 @@
             <div class="space-y-4">
               <NuxtLink to="/" class="inline-flex items-center gap-2 group">
                 <span class="font-semibold tracking-tight text-xl text-white font-sans group-hover:text-aave-violet transition-colors">
-                  Vistock
+                  Vistocks
                 </span>
               </NuxtLink>
 
@@ -572,7 +572,7 @@
               Lưu Ý Quan Trọng & Tuyên Bố Miễn Trừ
             </h4>
             <p class="mb-2 max-w-5xl text-xs leading-relaxed text-aave-iron">
-              Vistock chỉ vận hành như một nền tảng nghiên cứu định lượng độc lập và môi trường giả lập Paper Trading. Hệ thống không huy động vốn, không nhận ủy thác đầu tư dưới bất kỳ hình thức nào và tuyệt đối không kết nối tài khoản chứng khoán thực để tự động đặt lệnh.
+              Vistocks chỉ vận hành như một nền tảng nghiên cứu định lượng độc lập và môi trường giả lập Paper Trading. Hệ thống không huy động vốn, không nhận ủy thác đầu tư dưới bất kỳ hình thức nào và tuyệt đối không kết nối tài khoản chứng khoán thực để tự động đặt lệnh.
             </p>
             <p class="mb-2 max-w-5xl text-xs leading-relaxed text-aave-iron">
               Số liệu thị trường, bảng yếu tố định lượng và các biểu đồ hiệu suất mô phỏng trên nền tảng nhằm minh họa phương pháp luận nghiên cứu thuật toán. Kết quả trong quá khứ hoặc trong môi trường mô phỏng không đảm bảo cho kết quả giao dịch thực tế trong tương lai.
@@ -585,7 +585,7 @@
           <!-- Bottom Footer Bar -->
           <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-5 text-xs font-mono text-aave-iron">
             <div>
-              © 2026 Vistock Quants. Bảo lưu mọi quyền.
+              © 2026 Vistocks Quants. Bảo lưu mọi quyền.
             </div>
 
             <div class="flex flex-wrap items-center justify-center gap-4">
@@ -616,7 +616,7 @@ definePageMeta({
 })
 
 useHead({
-  title: "Vistock Quants - Phân Tích Định Lượng & Dự Báo Giao Dịch",
+  title: "Vistocks Quants - Phân Tích Định Lượng & Dự Báo Giao Dịch",
   meta: [
     {
       name: "description",

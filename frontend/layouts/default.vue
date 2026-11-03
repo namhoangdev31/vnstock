@@ -7,7 +7,7 @@
         <div class="flex items-center gap-6">
           <NuxtLink to="/app" class="flex items-center gap-2 group">
             <span class="font-semibold tracking-tight text-base text-white group-hover:text-aave-violet transition-colors">
-              VISTOCK
+              VISTOCKS
             </span>
           </NuxtLink>
 
@@ -156,7 +156,7 @@
 
     <!-- Minimalist Quiet Footer -->
     <footer class="border-t border-white/[0.06] bg-aave-obsidian py-3.5 px-6 text-center text-xs text-aave-graphite font-mono">
-      <span>© 2026 Vistock Quants · Nền tảng nghiên cứu định lượng & mô phỏng giao dịch</span>
+      <span>© 2026 Vistocks Quants · Nền tảng nghiên cứu định lượng & mô phỏng giao dịch</span>
     </footer>
   </div>
 </template>

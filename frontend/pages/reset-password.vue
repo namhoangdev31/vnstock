@@ -70,7 +70,7 @@ definePageMeta({
 })
 
 useHead({
-  title: "Đặt lại mật khẩu - Vistock Quants",
+  title: "Đặt lại mật khẩu - Vistocks Quants",
 })
 
 const route = useRoute()

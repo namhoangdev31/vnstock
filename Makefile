@@ -11,7 +11,7 @@ RESET  := \033[0m
 
 ##@ Trợ giúp
 help: ## Hiển thị danh sách các lệnh có sẵn
-	@echo "$(BLUE)VNStock Quantitative Engine - Makefile Commands$(RESET)"
+	@echo "$(BLUE)Vistocks Quantitative Engine - Makefile Commands$(RESET)"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Sử dụng: make $(GREEN)<lệnh>$(RESET)\n\n"} \
 		/^[a-zA-Z_-]+:.*?##/ { printf "  $(GREEN)%-18s$(RESET) %s\n", $$1, $$2 } \
@@ -31,7 +31,7 @@ dev: ## Khởi chạy Backend FastAPI server ở chế độ dev (port 8800)
 frontend: ## Khởi chạy Frontend Nuxt dev server (port 5173)
 	cd frontend && bun run dev --port 5173
 
-build-frontend: ## Build Frontend tĩnh xuất vào backend/app/frontend
+build-frontend: ## Build Frontend tĩnh xuất vào frontend/dist
 	cd frontend && bun run build
 
 ##@ Docker (Production)

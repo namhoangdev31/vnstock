@@ -1,9 +1,9 @@
-name: vnstock
+name: vistocks
 
 services:
   backend:
-    image: vnstock-backend:latest
-    container_name: vnstock-backend
+    image: vistocks-backend:latest
+    container_name: vistocks-backend
     restart: ${RESTART_POLICY:-unless-stopped}
     ports:
       - "${PORT_BACKEND:-8800}:8000"
@@ -19,12 +19,15 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     networks:
-      - vnstock-network
-      - sanauto-production-net
+      vistocks-network: {}
+      sanauto-production-net:
+        aliases:
+          - vistocks-backend
+          - vnstock-backend
 
   frontend:
-    image: vnstock-frontend:latest
-    container_name: vnstock-frontend
+    image: vistocks-frontend:latest
+    container_name: vistocks-frontend
     restart: ${RESTART_POLICY:-unless-stopped}
     ports:
       - "${PORT_FRONTEND_PROD:-8801}:80"
@@ -34,12 +37,15 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL:-https://api.vidub.ai}
     networks:
-      - vnstock-network
-      - sanauto-production-net
+      vistocks-network: {}
+      sanauto-production-net:
+        aliases:
+          - vistocks-frontend
+          - vnstock-frontend
 
 networks:
-  vnstock-network:
-    name: vnstock-network
+  vistocks-network:
+    name: vistocks-network
     driver: bridge
   sanauto-production-net:
     external: true

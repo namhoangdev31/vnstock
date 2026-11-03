@@ -15,7 +15,6 @@ from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
-from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 from starlette.middleware.cors import CORSMiddleware
 
@@ -24,7 +23,6 @@ from app.core.config import settings
 from app.core.db import engine, init_db
 from app.domains.quant.application.daemon import quant_daemon_controller
 
-FRONTEND_DIR = Path(__file__).parent / "frontend"
 logger = logging.getLogger(__name__)
 
 
@@ -193,14 +191,12 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
-if FRONTEND_DIR.is_dir():
-    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
-else:
 
-    @app.get("/", include_in_schema=False)
-    async def root():
-        return {
-            "project": settings.PROJECT_NAME,
-            "status": "online",
-            "docs": f"{settings.API_V1_STR}/docs",
-        }
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return {
+        "project": settings.PROJECT_NAME,
+        "status": "online",
+        "docs": "/docs",
+    }

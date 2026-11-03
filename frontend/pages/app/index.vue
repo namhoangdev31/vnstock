@@ -564,7 +564,7 @@ import { useAuth } from "~/composables/useAuth"
 import { useCustomToast } from "~/composables/useCustomToast"
 
 useHead({
-  title: "Ứng Dụng Phân Tích Định Lượng & Mô Phỏng Sandbox - Vistock",
+  title: "Ứng Dụng Phân Tích Định Lượng & Mô Phỏng Sandbox - Vistocks",
 })
 
 const { user } = useAuth()
